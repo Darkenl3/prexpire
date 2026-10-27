@@ -22,7 +22,7 @@ import { ScanFrame } from '../components/ScanFrame';
 import { ResultSheet, type SaveInput } from '../components/ResultSheet';
 import { useItems, type CategoryId, type Item } from '../items';
 import { ocrAvailability } from '../scanner/ocr';
-import { useExpiryScanner, type ScanHint } from '../scanner/useExpiryScanner';
+import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
@@ -32,6 +32,9 @@ type Props = {
   onSaved: (item: Item) => void;
   // Category to preselect when the scanner is opened from a category.
   category?: CategoryId;
+  // A detection handed in by a native WebView shell (docs/native-shell.md): the save
+  // sheet opens straight away pre-filled and no camera is started.
+  initialDetection?: Detection | null;
 };
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
@@ -54,7 +57,7 @@ function frameSize(area: Size, hintSpace: number) {
   return { width, height };
 }
 
-export function ScannerScreen({ onClose, onSaved, category }: Props) {
+export function ScannerScreen({ onClose, onSaved, category, initialDetection }: Props) {
   const insets = useSafeAreaInsets();
   const { defaultCategory, addItem } = useItems();
   const [permission, requestPermission] = useCameraPermissions();
@@ -71,6 +74,8 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const [manual, setManual] = useState(false);
   const [askedPermission, setAskedPermission] = useState(false);
+  // Seeded by a native shell scan; set back to null by "Scan again"/closing.
+  const [seeded, setSeeded] = useState<Detection | null>(initialDetection ?? null);
 
   const landscape = root.width > root.height && root.height > 0;
   const granted = !!permission?.granted;
@@ -110,9 +115,10 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
   const { state, reset } = useExpiryScanner({
     camera,
     geometry,
-    enabled: granted && cameraReady && appActive && ocrReady && !manual && !cameraError,
+    enabled: granted && cameraReady && appActive && ocrReady && !manual && !cameraError && !seeded,
   });
-  const detected = state.status === 'detected';
+  const detection: Detection | null = seeded ?? (state.status === 'detected' ? state.detection : null);
+  const detected = detection !== null;
   const sheetOpen = detected || manual;
 
   useEffect(() => {
@@ -151,6 +157,7 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
 
   const scanAgain = useCallback(() => {
     setManual(false);
+    setSeeded(null);
     reset();
   }, [reset]);
 
@@ -187,7 +194,10 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
   );
 
   let body: ReactNode;
-  if (!permission) {
+  if (seeded) {
+    // A native shell already read the label: no camera prompts, just the save sheet.
+    body = null;
+  } else if (!permission) {
     body = null;
   } else if (!granted) {
     body = (
@@ -283,8 +293,8 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
   const sheet = sheetOpen ? (
     <ResultSheet
       // A new detection gets a fresh sheet; "Scan again" then a new read starts clean.
-      key={detected ? state.detection.key : 'manual'}
-      detection={detected ? state.detection : null}
+      key={detected ? detection.key : 'manual'}
+      detection={detected ? detection : null}
       initialCategory={category ?? defaultCategory}
       layout={landscape ? 'side' : 'bottom'}
       maxHeight={landscape ? root.height : Math.round(root.height * 0.62)}
@@ -297,7 +307,7 @@ export function ScannerScreen({ onClose, onSaved, category }: Props) {
 
   return (
     <View style={s.root} onLayout={(e) => setRoot({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
-      {granted && !cameraError && (
+      {granted && !cameraError && !seeded && (
         <ScannerCamera
           key={cameraKey}
           ref={camera}

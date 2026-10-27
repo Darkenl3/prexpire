@@ -12,6 +12,8 @@ import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } fro
 import { SettingsProvider, useSettings } from './src/settings';
 import { remindersDue } from './src/preferences';
 import { useLayout } from './src/layout';
+import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
+import type { Detection } from './src/scanner/useExpiryScanner';
 
 type Route = { tab: TabId; category?: CategoryId } | { tab: 'scan' };
 
@@ -56,7 +58,29 @@ function Shell() {
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
   const [notice, setNotice] = useState<string | null>(null);
+  // A detection handed in by a native wrapper (see docs/native-shell.md).
+  const [nativeScan, setNativeScan] = useState<Detection | null>(null);
   useFocusStyles();
+
+  // Native bridge: when this app runs inside a React Native WebView shell, the shell can
+  // scan a label with its own native camera + OCR (Apple Vision / ML Kit — far stronger
+  // than the in-browser reader) and hand us the text lines. We parse them with the same
+  // date parser the camera path uses and open the save sheet pre-filled.
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const onNativeScan = (event: Event) => {
+      const detail = (event as CustomEvent<{ lines?: unknown }>).detail;
+      const lines = Array.isArray(detail?.lines) ? detail.lines.filter((l): l is string => typeof l === 'string') : [];
+      if (!lines.length) return;
+      const region = typeof navigator !== 'undefined' ? navigator.language.split('-')[1] : undefined;
+      const result = parseExpiry(lines, { today: new Date(), preferredOrder: dayOrderForRegion(region) });
+      if (result.kind !== 'found') return;
+      setNativeScan(result);
+      setRoute({ tab: 'scan' });
+    };
+    window.addEventListener('prexpire:native-scan', onNativeScan);
+    return () => window.removeEventListener('prexpire:native-scan', onNativeScan);
+  }, []);
 
   useEffect(() => writeHash(route), [route]);
 
@@ -66,7 +90,21 @@ function Shell() {
   );
 
   const onNavigate = useCallback((to: string) => {
-    if (to === 'scan') return setRoute({ tab: 'scan' });
+    if (to === 'scan') {
+      // Inside a native WebView shell (docs/native-shell.md) let the shell scan with its
+      // native camera + OCR (Apple Vision / ML Kit). The shell hands the reading back
+      // via the 'prexpire:native-scan' event; outside a shell this is a no-op.
+      const shell = WEB && typeof window !== 'undefined' ? (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView : undefined;
+      if (shell?.postMessage) {
+        try {
+          shell.postMessage(JSON.stringify({ type: 'scan' }));
+          return;
+        } catch {
+          // Fall through to the in-app scanner.
+        }
+      }
+      return setRoute({ tab: 'scan' });
+    }
     if (to.startsWith('tab:')) {
       const tab = to.slice(4) as TabId;
       if (TABS.includes(tab)) {
@@ -83,9 +121,13 @@ function Shell() {
       }
     }
   }, []);
-  const closeScanner = useCallback(() => setRoute({ tab: lastTab }), [lastTab]);
+  const closeScanner = useCallback(() => {
+    setNativeScan(null);
+    setRoute({ tab: lastTab });
+  }, [lastTab]);
   const onSaved = useCallback(
     (item: Item) => {
+      setNativeScan(null);
       setNotice(`${item.name} added · expires ${formatDate(item.expiresOn, item.datePrecision)}`);
       setRoute({ tab: 'home' });
       setLastTab('home');
@@ -96,7 +138,7 @@ function Shell() {
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
   // is only mounted, and only running, while the user is scanning.
-  if (route.tab === 'scan') return <ScannerScreen onClose={closeScanner} onSaved={onSaved} />;
+  if (route.tab === 'scan') return <ScannerScreen onClose={closeScanner} onSaved={onSaved} initialDetection={nativeScan} />;
 
   const screen =
     route.tab === 'items' ? (
