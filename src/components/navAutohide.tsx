@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, type ViewStyle } from 'react-native';
+import { Animated, Easing, Platform, View, type ViewStyle } from 'react-native';
+import { useTheme } from '../theme';
 import { Header } from './HomeComponents';
 
 // YouTube-style auto-hide navigation: scrolling down collapses the header (and,
@@ -24,7 +25,7 @@ import { Header } from './HomeComponents';
 type ScrollLike = { nativeEvent: { contentOffset: { y: number } } };
 
 // Keep in sync with the header's own height in HomeComponents.tsx.
-const HEADER_HEIGHT = 64;
+export const HEADER_HEIGHT = 64;
 // How far the position must move (net) before we call it a direction.
 const DECIDE_PX = 8;
 // Within this distance of the bottom edge, direction changes need the bigger
@@ -33,6 +34,12 @@ const DECIDE_PX = 8;
 const EDGE_DECIDE_PX = 24;
 // The top of the page always shows the chrome (YouTube shows its bars there).
 const TOP_ZONE = 48;
+// A direction CHANGE is accepted only this long after the previous one:
+// anything faster is flutter, not intent. Without this, any stray oscillation
+// (a settle tail, a clamped position) could rattle the bars in and out while
+// the user simply holds the scroll - now the bars change at most ~4 times a
+// second, and a real reverse flick after a real scroll is never this fast.
+const MIN_DWELL_MS = 240;
 // While scrolling, re-report to the shell at most this often (ms) - in
 // addition to every direction change, so a single lost message can never
 // leave the glass bar stuck: the next report self-heals it.
@@ -64,6 +71,7 @@ export function useNavAutohide() {
   const acc = useRef(0);
   const hiddenRef = useRef(false);
   const lastReport = useRef(0);
+  const lastFlip = useRef(0);
   // The element currently being polled, the rAF handle, and the last raw
   // position seen by the poll (for idle detection).
   const tracked = useRef<HTMLElement | null>(null);
@@ -105,7 +113,13 @@ export function useNavAutohide() {
       }
     }
     const changed = goingDown !== hiddenRef.current;
+    const now = typeof Date !== 'undefined' ? Date.now() : 0;
+    // Flutter guard: a direction change inside MIN_DWELL_MS of the previous
+    // one is noise, not intent - hold the current state and wait. Real
+    // gestures (scroll a while, then genuinely reverse) always clear it.
+    if (changed && now - lastFlip.current < MIN_DWELL_MS) return;
     if (changed) {
+      lastFlip.current = now;
       hiddenRef.current = goingDown;
       setHidden(goingDown);
       if (typeof window !== 'undefined') {
@@ -115,7 +129,6 @@ export function useNavAutohide() {
     }
     // Tell the native shell on every change and as a light heartbeat while
     // scrolling - the glass bar recomputes its visibility from every message.
-    const now = typeof Date !== 'undefined' ? Date.now() : 0;
     if (changed || now - lastReport.current >= REPORT_MS) {
       lastReport.current = now;
       postToShell({ type: 'scroll', dir: goingDown ? 'down' : 'up', y: Math.round(y) });
@@ -184,9 +197,15 @@ export function useNavAutohide() {
     // scrolling is deliberately ignored: when a nested list hits its end on
     // iOS the remaining gesture chains to the page, whose own position
     // (and rubber-band) has nothing to do with the list the user scrolls.
+    // Scrollers OUTSIDE the app root are ignored too: react-native-web
+    // renders Modal content into a portal on the body, so a picker sheet or
+    // dialog scrolling is not the page scrolling - the chrome behind it
+    // must not react.
+    const appRoot = document.getElementById('root');
     const onAnyScroll = (event: Event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement) || target === document.documentElement || target === document.body) return;
+      if (appRoot && !appRoot.contains(target)) return;
       kick(target);
     };
     document.addEventListener('scroll', onAnyScroll, { capture: true, passive: true });
@@ -200,31 +219,57 @@ export function useNavAutohide() {
   return { hidden, onScroll };
 }
 
-// The brand header that slides up and collapses away when the page scrolls down.
+// The brand header that slides up and collapses away when the page scrolls
+// down. It is an OVERLAY, not a layout row: it floats above the scrolling
+// content (which pads its top by HEADER_HEIGHT instead), so hiding it never
+// resizes the scroller. That is the difference between YouTube's feel and
+// the old bug where collapsing the header visibly yanked the content upward
+// ("scrolling faster") and, near the bottom edge, the resized scroller's
+// clamped positions oscillated the direction back and forth (the bars
+// flickering in and out while the user held the scroll).
 export function AutohideHeader({
   hidden,
   badge,
   gutter = 0,
+  maxWidth,
   onMenu,
   onBell,
 }: {
   hidden: boolean;
   badge: number;
   gutter?: number;
+  // Matches the page's content column so the wordmark lines up with it.
+  maxWidth?: number;
   onMenu: () => void;
   onBell: () => void;
 }) {
+  const c = useTheme();
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(t, { toValue: hidden ? 1 : 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+    Animated.timing(t, { toValue: hidden ? 1 : 0, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [hidden, t]);
-  const height = t.interpolate({ inputRange: [0, 1], outputRange: [HEADER_HEIGHT, 0] });
-  const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, -HEADER_HEIGHT] });
+  const translateY = t.interpolate({ inputRange: [0, 1], outputRange: [0, -HEADER_HEIGHT - 12] });
+  const opacity = t.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
   return (
-    <Animated.View style={{ height, overflow: 'hidden' }}>
-      <Animated.View style={{ transform: [{ translateY }] }}>
-        <Header badge={badge} gutter={gutter} onMenu={onMenu} onBell={onBell} />
-      </Animated.View>
+    <Animated.View
+      pointerEvents={hidden ? 'none' : 'auto'}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 40,
+        elevation: 40,
+        // Opaque, like YouTube's returning top bar: content scrolled under
+        // it while it was away, so it must cover, not blend.
+        backgroundColor: c.bg,
+        transform: [{ translateY }],
+        opacity,
+      }}
+    >
+      <View style={{ alignSelf: 'center', width: '100%', maxWidth, paddingHorizontal: gutter }}>
+        <Header badge={badge} gutter={0} onMenu={onMenu} onBell={onBell} />
+      </View>
     </Animated.View>
   );
 }

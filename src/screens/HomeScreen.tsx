@@ -3,19 +3,20 @@ import { Animated, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } 
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, space, useTheme, LIGHT } from '../theme';
+import { makeStyles, space, useTheme, LIGHT, type Tint } from '../theme';
 import { categories, type ArtKey } from '../data';
 import { useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
 import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
-import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
+import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
 import { ItemRow } from '../components/ItemRow';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
 import { SmallButton } from '../components/SettingsRows';
+import { FadeIn } from '../components/Press';
 
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
@@ -33,6 +34,11 @@ function categoryArt(art: ArtKey, size: number) {
       return <AddArt size={0.82 * size} />;
   }
 }
+
+// How many item rows a long category grid shows before collapsing: the rest
+// waits behind a "Show N more" toggle, so a phone full of folders never
+// pushes the rest of Home off the screen. Add is always visible and last.
+const COLLAPSED_ROWS = 2;
 
 // How many items "Coming up next" shows, soonest first.
 const UPCOMING_COUNT = 4;
@@ -98,13 +104,44 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     if (w !== measuredGrid) setMeasuredGrid(w);
   };
   const gridWidth = measuredGrid || leftWidth;
-  const { tileWidth } = gridFor(gridWidth, gridGap, 100);
+  const { columns, tileWidth } = gridFor(gridWidth, gridGap, 100);
   const compact = tileWidth < 112 || layout.short;
 
   // The grid in order: the built-ins the user keeps, then their own folders,
   // and the Add-category tile always last (it opens Settings' category page).
   const keptBuiltins = categories.filter((x) => x.tint !== 'add' && !removed.includes(x.id));
   const addTile = categories.find((x) => x.tint === 'add');
+
+  // A long grid collapses to two full rows; the folders beyond them wait
+  // behind the toggle. Add always stays visible (its slot is reserved), so
+  // it is reachable and last whatever the user's folder count.
+  const [gridExpanded, setGridExpanded] = useState(false);
+  const catTiles = [
+    ...keptBuiltins.map((t) => ({
+      key: t.id,
+      tint: t.tint,
+      name: t.name,
+      sub: `${saved.filter((i) => i.category === t.id).length} items`,
+      status: tileStatus(attention.byCategory(t.id)),
+      art: categoryArt(t.art, compact ? 56 : 64),
+      onPress: () => go(`category:${t.id}`),
+    })),
+    ...custom.map((cat) => ({
+      key: cat.id,
+      tint: cat.tint as Tint,
+      name: cat.name,
+      sub: `${saved.filter((i) => i.category === cat.id).length} items`,
+      status: tileStatus(attention.byCategory(cat.id)),
+      art: <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color={folderIconColor} />,
+      onPress: () => go(`category:${cat.id}`),
+    })),
+  ];
+  // When collapsed, the last visible category slot is reserved for Add, so
+  // the collapsed grid is always exactly COLLAPSED_ROWS full rows.
+  const cap = columns * COLLAPSED_ROWS;
+  const overflow = catTiles.length + 1 > cap;
+  const shownCats = gridExpanded || !overflow ? catTiles : catTiles.slice(0, cap - 1);
+  const hiddenCount = catTiles.length - shownCats.length;
 
   const bottomClearance = NAV_HEIGHT + navOffset(insets.bottom) + 16;
 
@@ -125,33 +162,24 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     <>
       <SectionHeader title="Your categories" action="See all" onAction={() => go('tab:items')} />
       <View style={[c.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
-        {keptBuiltins.map((t) => (
-          <CategoryTile
-            key={t.id}
-            tint={t.tint}
-            width={tileWidth}
-            name={t.name}
-            sub={`${saved.filter((i) => i.category === t.id).length} items`}
-            status={tileStatus(attention.byCategory(t.id))}
-            art={categoryArt(t.art, compact ? 56 : 64)}
-            compact={compact}
-            onPress={() => go(`category:${t.id}`)}
-          />
-        ))}
-        {/* The user's own "category folders", added in Settings. */}
-        {custom.map((cat) => (
-          <CategoryTile
-            key={cat.id}
-            tint={cat.tint}
-            width={tileWidth}
-            name={cat.name}
-            sub={`${saved.filter((i) => i.category === cat.id).length} items`}
-            status={tileStatus(attention.byCategory(cat.id))}
-            art={<Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color={folderIconColor} />}
-            compact={compact}
-            onPress={() => go(`category:${cat.id}`)}
-          />
-        ))}
+        {shownCats.map((tile, i) => {
+          const el = (
+            <CategoryTile
+              key={tile.key}
+              tint={tile.tint}
+              width={tileWidth}
+              name={tile.name}
+              sub={tile.sub}
+              status={tile.status}
+              art={tile.art}
+              compact={compact}
+              onPress={tile.onPress}
+            />
+          );
+          // Tiles revealed by expanding fade in gently; the always-visible
+          // ones (and a grid that never overflows) render as before.
+          return overflow && gridExpanded && i >= cap - 1 ? <FadeIn key={tile.key}>{el}</FadeIn> : el;
+        })}
         {/* Add category is always the last tile in the order. */}
         {addTile && (
           <CategoryTile
@@ -165,6 +193,19 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           />
         )}
       </View>
+      {overflow && (
+        <View style={c.moreRow}>
+          <SmallButton
+            label={gridExpanded ? 'Show less' : `Show ${hiddenCount} more`}
+            icon={gridExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            onPress={() => {
+              Haptics.selectionAsync().catch(() => {});
+              setGridExpanded((e) => !e);
+            }}
+            accessibilityLabel={gridExpanded ? 'Show less categories' : `Show ${hiddenCount} more categories`}
+          />
+        </View>
+      )}
     </>
   );
 
@@ -192,13 +233,14 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
 
   return (
     <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <View style={[c.frame, frame]}>
-        <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
-      </View>
+      {/* The header overlays the content (see navAutohide.tsx): hiding it
+          never resizes the scroller, so the content never jumps and the
+          scroll direction never oscillates while it slides. */}
+      <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={layout.maxContentWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
       <ScrollView
         style={[c.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
-        contentContainerStyle={[c.scrollContent, { paddingBottom: bottomClearance }]}
+        contentContainerStyle={[c.scrollContent, { paddingTop: HEADER_HEIGHT, paddingBottom: bottomClearance }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={[c.frame, frame]}>
@@ -265,6 +307,8 @@ const useStyles = makeStyles((t) => ({
   rightColumn: { flex: 1, minWidth: 0 },
   // space-between absorbs the rounding left over from whole-pixel tile widths.
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  // The collapse toggle sits centered under a long grid.
+  moreRow: { alignItems: 'center', marginTop: 14 },
   // 8px between "Coming up next" rows.
   list: { gap: 8 },
   listCompact: { gap: 6 },

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles } from '../theme';
 import { useLayout } from '../layout';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
-import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
+import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
 import { AlertSpacer } from './ExpiryAlert';
 
 type Props = {
@@ -28,13 +28,20 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
   const frame = { maxWidth: Math.min(layout.maxContentWidth, maxWidth), paddingHorizontal: layout.gutter };
   return (
     <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <View style={[c.frame, frame]}>
-        <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => onNavigate('tab:settings')} onBell={() => onNavigate('tab:reminders')} />
-      </View>
+      {/* The header overlays the content (see navAutohide.tsx): hiding it
+          never resizes the scroller, so the content never jumps mid-scroll. */}
+      <AutohideHeader
+        hidden={hidden}
+        badge={badge}
+        gutter={layout.gutter}
+        maxWidth={Math.min(layout.maxContentWidth, maxWidth)}
+        onMenu={() => onNavigate('tab:settings')}
+        onBell={() => onNavigate('tab:reminders')}
+      />
       <ScrollView
         style={[c.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
-        contentContainerStyle={{ paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
+        contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={[c.frame, frame]}>
