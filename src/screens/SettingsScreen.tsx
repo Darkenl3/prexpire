@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { makeStyles, useTheme, accents } from '../theme';
+import { makeStyles, useTheme, accents, LIGHT } from '../theme';
 import { useItems } from '../items';
 import { useCategories } from '../categories';
 import { useSettings } from '../settings';
@@ -459,8 +459,9 @@ const useStyles = makeStyles((t) => ({
     gap: 14,
     padding: 14,
     marginBottom: 24,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 18,
+    // Borderless in light, like the settings cards (contrast does the work).
+    borderWidth: t === LIGHT ? 0 : 1,
     borderColor: t.surfaceBorder,
     backgroundColor: t.surface,
   },

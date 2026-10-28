@@ -113,17 +113,20 @@ export const DARK: Palette = {
 };
 
 export const LIGHT: Palette = {
-  bg: '#F6F9F7',
+  // A neutral light gray, like the reference's settings page: white cards
+  // separate by contrast, not by borders.
+  bg: '#F2F6F3',
   surface: '#FFFFFF',
-  surfaceBorder: '#E8F0EC',
+  surfaceBorder: '#EDF2EF',
   text: '#101D1B',
   textMuted: '#5C6E6A',
   mint: '#0FA67C',
   scan: '#12C894',
   scanInk: '#04241B',
-  amber: '#B98613',
-  amberText: '#8F5E10',
-  green: '#0E8F6B',
+  // Expiring-soon accents read soft and light on the pale page.
+  amber: '#D2A43E',
+  amberText: '#B18A3E',
+  green: '#3BAB84',
   red: '#D92B3E',
   navBg: 'rgba(250,253,252,0.82)',
   navBorder: 'rgba(16,29,27,0.10)',
@@ -148,8 +151,11 @@ export const LIGHT: Palette = {
   statusOkBg: 'rgba(15,166,124,0.08)',
   statusWarnBorder: '#D9B871',
   statusWarnBg: '#F8EFD8',
-  glassBg: 'rgba(255,255,255,0.62)',
-  glassBorder: 'rgba(16,29,27,0.08)',
+  // The header's liquid-glass circles keep the SAME look in both themes —
+  // a subtle frosted disc with a hairline ring (white over dark, ink over
+  // light; the shared GLASS_FX blur/saturate does the rest).
+  glassBg: 'rgba(16,29,27,0.06)',
+  glassBorder: 'rgba(16,29,27,0.12)',
   // Soft pastel tiles: mint, sky, lilac, blush and cream — the category
   // cards read as gentle colour cards, not saturated blocks (the reference
   // keeps its pastels gently tinted, never washed out).
@@ -163,8 +169,10 @@ export const LIGHT: Palette = {
   },
   addTile: { bg: '#FFFFFF', border: '#BFCFC9' },
   pills: {
-    amber: { bg: '#FCF0C8', text: '#B26E06' },
-    green: { bg: '#D7F3E5', text: '#0D7F5B' },
+    // Softer, lighter day pills: gentle pastel fill with soft (never dark)
+    // ink — "1 day", "3 days" whisper rather than shout.
+    amber: { bg: '#FCF4D8', text: '#C09344' },
+    green: { bg: '#E1F4EC', text: '#4BA983' },
   },
   switchColors: { track: '#CBD5D3', trackOn: '#17B586', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };

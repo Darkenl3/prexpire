@@ -1,7 +1,7 @@
 import { Children, Fragment, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { accents, makeStyles, useTheme, type Accent } from '../theme';
+import { accents, makeStyles, useTheme, LIGHT, type Accent } from '../theme';
 
 // Building blocks of the Settings page: a section heading, a card that groups rows,
 // and rows with a tinted icon, a title, a short description and a control.
@@ -185,7 +185,10 @@ export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled =
 const useStyles = makeStyles((c) => ({
   section: { marginBottom: 22 },
   sectionTitle: { color: c.textMuted, fontSize: 13, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8, marginLeft: 4 },
-  card: { backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.surfaceBorder, overflow: 'hidden' },
+  // The reference's settings cards carry no border: white surfaces separate
+  // from the light-gray page by contrast alone (the dark theme keeps its
+  // hairline, where a border is what separates surface from background).
+  card: { backgroundColor: c.surface, borderRadius: 18, borderWidth: c === LIGHT ? 0 : 1, borderColor: c.surfaceBorder, overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginLeft: 64 },
   rowWrap: { paddingVertical: 12, paddingHorizontal: 14 },
   pressable: { borderRadius: 10 },
