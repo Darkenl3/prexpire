@@ -140,13 +140,12 @@ export function BreadArt({ size = 30 }: ArtProps) {
 }
 
 export function AddArt({ size = 56 }: ArtProps) {
-  // The ghost tile's icon follows the theme: a soft neutral disc with a dark
-  // plus on light, the deep slate disc with a white plus on dark.
+  // The ghost tile's plus: bold and borderless, sitting directly on the tile's
+  // lined background like the reference - soft slate ink on light, white on dark.
   const light = useTheme() === LIGHT;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
-      <Circle cx="50" cy="50" r="44" fill={light ? '#EFF4F1' : '#2E3B52'} stroke={light ? '#D9E4DF' : '#3F4F6B'} strokeWidth={2} />
-      <Path d="M50 30 V70 M30 50 H70" stroke={light ? '#4A5D57' : '#FFFFFF'} strokeWidth={7} strokeLinecap="round" />
+      <Path d="M50 26 V74 M26 50 H74" stroke={light ? '#5C6E6A' : 'rgba(255,255,255,0.92)'} strokeWidth={10} strokeLinecap="round" />
     </Svg>
   );
 }

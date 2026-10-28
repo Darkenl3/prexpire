@@ -10,11 +10,11 @@ import { Header } from './HomeComponents';
 // The tracker deliberately reads the scroll position from SEVERAL redundant
 // sources, because iOS WebViews can deliver inner-element scroll events
 // sparsely or stop mid-gesture (a long-standing WebKit quirk):
-//   1. a capture-phase listener on the document — scroll events do not
+//   1. a capture-phase listener on the document - scroll events do not
 //      bubble, but they DO travel the capture path, so one listener sees
 //      every scrollable element in the page;
 //   2. a requestAnimationFrame poll that reads the scroller's scrollTop
-//      directly every frame while scrolling is active — this works even if
+//      directly every frame while scrolling is active - this works even if
 //      no scroll event fires at all, and it keeps running through momentum;
 //   3. the ScrollView's own onScroll prop as an extra "keep polling" kick.
 // The direction decision itself is jitter-proof (same-sign deltas accumulate
@@ -33,7 +33,7 @@ const DECIDE_PX = 8;
 const EDGE_DECIDE_PX = 24;
 // The top of the page always shows the chrome (YouTube shows its bars there).
 const TOP_ZONE = 48;
-// While scrolling, re-report to the shell at most this often (ms) — in
+// While scrolling, re-report to the shell at most this often (ms) - in
 // addition to every direction change, so a single lost message can never
 // leave the glass bar stuck: the next report self-heals it.
 const REPORT_MS = 200;
@@ -41,8 +41,8 @@ const REPORT_MS = 200;
 const IDLE_FRAMES = 30;
 
 // Applied to every main screen scroller: modern engines (iOS 16+ WebKit,
-// Chromium, Android) make the list simply STOP at its end — no rubber-band,
-// no out-of-range positions, no overscroll glow — exactly like YouTube's
+// Chromium, Android) make the list simply STOP at its end - no rubber-band,
+// no out-of-range positions, no overscroll glow - exactly like YouTube's
 // lists. Older engines ignore the property and fall back to the range
 // clamping inside decide() above, so both generations of iOS are covered.
 export const NO_RUBBER_BAND = { overscrollBehavior: 'none' } as ViewStyle;
@@ -75,7 +75,7 @@ export function useNavAutohide() {
     // Clamp the position into the scroller's REAL range first: while a list
     // rubber-bands past its end, iOS reports out-of-range positions (the
     // overshoot and its settle-back). Unclamped, that oscillation flips the
-    // direction back and forth — the "bar jumps when you reach the bottom"
+    // direction back and forth - the "bar jumps when you reach the bottom"
     // bug. Clamped, the overshoot and the settle-back cancel out and never
     // reach the decision threshold.
     const el = tracked.current;
@@ -93,7 +93,7 @@ export function useNavAutohide() {
     } else {
       // Near the bottom edge a direction change needs a bigger net movement:
       // a real flick moves dozens of pixels per frame, while the tail of a
-      // rubber-band settle wiggles by a few — this keeps the very end of a
+      // rubber-band settle wiggles by a few - this keeps the very end of a
       // list from toggling the bars while staying invisible to real scrolls.
       const nearBottom = maxY !== Number.POSITIVE_INFINITY && y >= maxY - 12;
       const threshold = nearBottom ? EDGE_DECIDE_PX : DECIDE_PX;
@@ -114,7 +114,7 @@ export function useNavAutohide() {
       }
     }
     // Tell the native shell on every change and as a light heartbeat while
-    // scrolling — the glass bar recomputes its visibility from every message.
+    // scrolling - the glass bar recomputes its visibility from every message.
     const now = typeof Date !== 'undefined' ? Date.now() : 0;
     if (changed || now - lastReport.current >= REPORT_MS) {
       lastReport.current = now;
@@ -123,7 +123,7 @@ export function useNavAutohide() {
   }, []);
 
   // The poll: read the scroller's scrollTop every frame and decide. This is
-  // what makes the tracker immune to missing scroll events — the position is
+  // what makes the tracker immune to missing scroll events - the position is
   // read straight from the element, events or not.
   const poll = useCallback(() => {
     raf.current = 0;
@@ -148,7 +148,7 @@ export function useNavAutohide() {
       if (el && el !== tracked.current) {
         // A different scroller took over (a sheet, a freshly opened tab):
         // start fresh from its position so the switch itself is not read
-        // as a jump — clamped into the scroller's range, so taking over
+        // as a jump - clamped into the scroller's range, so taking over
         // mid-bounce is not read as movement either.
         tracked.current = el;
         const maxY = Math.max(0, el.scrollHeight - el.clientHeight);
@@ -165,14 +165,14 @@ export function useNavAutohide() {
   );
 
   // Extra kick from the ScrollView's own onScroll prop (browsers deliver it
-  // reliably; on iOS it may be sparse — the poll covers the gaps).
+  // reliably; on iOS it may be sparse - the poll covers the gaps).
   const onScroll = useCallback(() => {
     kick();
   }, [kick]);
 
   useEffect(() => {
     // A freshly opened screen starts at the top: show the chrome again. The
-    // previous tab may have left it hidden — in the browser that strands the
+    // previous tab may have left it hidden - in the browser that strands the
     // web nav, and inside the native shell it strands the glass tab bar.
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('prexpire:nav', { detail: { hidden: false } }));

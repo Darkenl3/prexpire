@@ -34,8 +34,9 @@ export type Palette = {
   btnDangerBorder: string;
   // Category tile colours: rich gradients on dark, soft pastels on light.
   tints: Record<Tint, { top: string; bottom: string; border: string }>;
-  // The "Add category" tile: a plain card with a dashed outline.
-  addTile: { bg: string; border: string };
+  // The "Add category" tile: a soft fill crossed by fine diagonal lines,
+  // like the reference's empty slot.
+  addTile: { bg: string; line: string };
   alertBg: string;
   alertBorder: string;
   alertIconBg: string;
@@ -78,7 +79,7 @@ export const DARK: Palette = {
   btnMintBorder: 'rgba(46,232,182,0.45)',
   btnDangerBg: 'rgba(248,113,113,0.08)',
   btnDangerBorder: 'rgba(248,113,113,0.45)',
-  // The "items need attention" card is RED in both themes — urgency reads
+  // The "items need attention" card is RED in both themes - urgency reads
   // the same in light and dark, like a warning triangle on any dashboard.
   alertBg: '#2A1216',
   alertBorder: '#5A2530',
@@ -102,7 +103,7 @@ export const DARK: Palette = {
     pantry: { top: '#4D3617', bottom: '#1B1A11', border: '#5E4420' },
     add: { top: '#222E46', bottom: '#0F1A25', border: '#2C3B57' },
   },
-  addTile: { bg: 'rgba(255,255,255,0.03)', border: '#3A4A50' },
+  addTile: { bg: 'rgba(255,255,255,0.03)', line: 'rgba(255,255,255,0.09)' },
   // Pills carry no border: a soft filled capsule, lighter than the text it
   // sits next to ("1 day", "3 days"…).
   pills: {
@@ -157,11 +158,12 @@ export const LIGHT: Palette = {
   statusOkBg: 'rgba(0,168,107,0.08)',
   statusWarnBorder: '#E3C77E',
   statusWarnBg: '#F8EFD8',
-  // The header's liquid-glass circles keep the EXACT same glass in both
-  // themes — one translucent treatment, never re-tinted per theme.
-  glassBg: 'rgba(255,255,255,0.10)',
-  glassBorder: 'rgba(255,255,255,0.14)',
-  // Soft pastel tiles: mint, sky, lilac, blush and cream — the category
+  // The header's liquid-glass circles keep one translucent treatment in both
+  // themes - but mirrored: a whisper of light on the dark page, a whisper of
+  // dark on the light page, so the glass is always visible, never invisible.
+  glassBg: 'rgba(15,23,42,0.08)',
+  glassBorder: 'rgba(15,23,42,0.10)',
+  // Soft pastel tiles: mint, sky, lilac, blush and cream - the category
   // cards read as gentle colour cards with no borders, like the reference.
   tints: {
     food: { top: '#E7F8EF', bottom: '#D3F0E0', border: '#BCE7CD' },
@@ -171,8 +173,8 @@ export const LIGHT: Palette = {
     pantry: { top: '#FCF2DC', bottom: '#F9E8C3', border: '#EFD9A2' },
     add: { top: '#F7FAF8', bottom: '#F3F7F4', border: '#D7E2DC' },
   },
-  // The Add-category tile: a plain, borderless soft card.
-  addTile: { bg: '#F1F5F9', border: '#E5EDF3' },
+  // The Add-category tile: a borderless soft card with fine diagonal lines.
+  addTile: { bg: '#F4F8FB', line: 'rgba(100,116,139,0.16)' },
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance.
@@ -190,7 +192,7 @@ export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
 
 // The reference's airy depth: soft, low-opacity blue-gray shadows that let
 // white cards float gently above the cool-white page. Applied on the LIGHT
-// theme only — the dark theme separates surfaces with hairlines instead.
+// theme only - the dark theme separates surfaces with hairlines instead.
 export const CARD_SHADOW: ViewStyle = {
   shadowColor: '#64748B',
   shadowOffset: { width: 0, height: 4 },
@@ -244,7 +246,7 @@ export function useTheme(): Palette {
 
 // Builds a styles object per palette (cached: one build per active theme). The
 // constraint mirrors StyleSheet.create's NamedStyles, so every property of the
-// literal gets contextual typing — RN's literal types (flex alignment, font
+// literal gets contextual typing - RN's literal types (flex alignment, font
 // weights, …) survive without casts.
 // Usage: const useStyles = makeStyles((c) => ({ root: { backgroundColor: c.bg } }));
 export function makeStyles<S extends { [P in string]: ViewStyle | TextStyle | ImageStyle }>(build: (c: Palette) => S): () => S {

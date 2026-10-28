@@ -14,16 +14,22 @@ const wordmarkLightInk = require('../../assets/wordmark.png');
 const WORDMARK_ASPECT = 1228 / 294;
 
 // Liquid-glass treatment for the header buttons (the same visual language as
-// the shell's glass tab bar): a frosted translucent circle with a hairline
-// ring. React Native's style types don't know these two CSS properties, but
-// react-native-web passes them straight through to the DOM — including the
+// the shell's glass tab bar): a frosted translucent circle. React Native's
+// style types don't know these two CSS properties, but react-native-web
+// passes them straight through to the DOM - including the
 // -webkit- spelling older iOS Safari needs.
 const GLASS_FX = {
   backdropFilter: 'blur(18px) saturate(160%)',
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
 
-// The brand wordmark: the real logo in every theme — dark forest-green
+// The Add-category tile's lined background, like the reference's empty slot:
+// fine diagonal hairlines over a soft fill. React Native's style types don't
+// know backgroundImage, but react-native-web passes it through to the DOM.
+const hatchFx = (line: string): ViewStyle =>
+  ({ backgroundImage: `repeating-linear-gradient(45deg, ${line} 0px, ${line} 2px, transparent 2px, transparent 9px)` } as ViewStyle);
+
+// The brand wordmark: the real logo in every theme - dark forest-green
 // letters with the green X on light, near-white letters on dark.
 export function Brandmark({ height }: { height: number }) {
   const c = useTheme();
@@ -114,8 +120,8 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
   const c = useTheme();
   const s = useStyles();
   const t = c.tints[tint];
-  // The Add-category tile is a ghost card: a plain, borderless soft fill
-  // (no dashed outline), so it reads as an empty slot waiting for a new folder.
+  // The Add-category tile is a ghost card: a borderless soft fill crossed by
+  // fine diagonal lines, so it reads as an empty slot waiting for a new folder.
   const ghost = tint === 'add';
   const body = (
     <>
@@ -153,7 +159,7 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={name} style={({ pressed }) => [{ width }, pressed && s.pressed]}>
       {ghost ? (
-        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }]}>{body}</View>
+        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }, hatchFx(c.addTile.line)]}>{body}</View>
       ) : (
         <LinearGradient
           colors={[t.top, t.bottom]}
@@ -184,7 +190,7 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
   const s = useStyles();
   const p = c.pills[tone];
   // Every row's icon sits in the SAME light square (the theme's neutral
-  // tile), like the reference's Coming up next list — no per-category tints.
+  // tile), like the reference's Coming up next list - no per-category tints.
   const content = (
     <>
       <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
@@ -230,7 +236,7 @@ type BottomNavProps = {
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
   // YouTube-style: the nav slides below the screen while the user scrolls down
-  // (the screens report their scroll direction — see navAutohide.tsx).
+  // (the screens report their scroll direction - see navAutohide.tsx).
   hidden?: boolean;
   onTab: (id: TabId) => void;
   onScan: () => void;
@@ -314,10 +320,11 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
 const useStyles = makeStyles((c) => ({
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
   // A taller top bar gives the wordmark room to breathe (brand-forward,
-  // like the reference) — keep HEADER_HEIGHT in navAutohide.tsx in sync.
+  // like the reference) - keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  // Liquid-glass circle (with GLASS_FX): borderless in both themes — one
-  // translucent treatment, sized to sit comfortably inside the 64pt header.
+  // Liquid-glass circle (with GLASS_FX): borderless in both themes - the
+  // palette gives each theme its mirrored translucent tint, so the glass
+  // circle is always visible against the page.
   headerBtn: {
     width: 42,
     height: 42,
@@ -384,7 +391,7 @@ const useStyles = makeStyles((c) => ({
     // Borderless pastel cards that float on the light page.
     ...(c === LIGHT ? CARD_SHADOW : null),
   },
-  // The Add-category tile: a plain, borderless soft card.
+  // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },

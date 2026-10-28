@@ -25,7 +25,7 @@ import { isoToday } from '../scanner/dateParser';
 import { Brandmark, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
 import { useNavAutohide } from '../components/navAutohide';
 import { CategoryManager } from '../components/CategoryManager';
-import { IconTile, Note, OptionList, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
+import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
 import appConfig from '../../app.json';
@@ -36,8 +36,9 @@ type IconName = keyof typeof Ionicons.glyphMap;
 
 // The Settings tab, restructured after the reference: a grouped list of
 // simple rows (icon tile + title + value + chevron) where every row opens its
-// own detail page instead of expanding in place. Detail pages slide in from
-// the right; the root list stays one glanceable screen.
+// own destination - a detail page for browsing subjects, or an iOS-style
+// picker sheet for choosing a value (warning period, date format, sorting…).
+// The root list stays one glanceable screen.
 
 type PageId =
   | 'profile'
@@ -45,9 +46,6 @@ type PageId =
   | 'notifications'
   | 'categories'
   | 'appearance'
-  | 'warning'
-  | 'date'
-  | 'sorting'
   | 'backup'
   | 'help'
   | 'terms';
@@ -58,9 +56,6 @@ const PAGE_TITLES: Record<PageId, string> = {
   notifications: 'Notifications',
   categories: 'Categories',
   appearance: 'Appearance',
-  warning: 'Warning period',
-  date: 'Date format',
-  sorting: 'Default sorting',
   backup: 'Backup & Sync',
   help: 'Help & Support',
   terms: 'Terms & Privacy',
@@ -73,7 +68,7 @@ export function SettingsScreen({ onNavigate }: Props) {
   const s = useStyles();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { settings, update, saveError, reset, motion } = useSettings();
+  const { settings, update, saveError, reset, motion, formatDate } = useSettings();
   const { saved, clearSaved } = useItems();
   const { all, clearAll: clearCategories } = useCategories();
   const [confirmClear, setConfirmClear] = useState(false);
@@ -160,9 +155,36 @@ export function SettingsScreen({ onNavigate }: Props) {
 
       <SettingsSection title="Expiry & Lists">
         <SettingsCard>
-          <SettingRow icon="hourglass-outline" accent="mint" title="Warning period" value={`${settings.warningDays} days`} description="Items count as expiring soon this far ahead." onPress={() => open('warning')} />
-          <SettingRow icon="calendar-outline" accent="teal" title="Date format" value={DATE_FORMAT_LABELS[settings.dateFormat]} onPress={() => open('date')} />
-          <SettingRow icon="swap-vertical-outline" accent="blue" title="Default sorting" value={SORT_LABELS[settings.sort]} description="Order of the Items list." onPress={() => open('sorting')} />
+          <PickerRow
+            icon="hourglass-outline"
+            accent="mint"
+            title="Warning period"
+            label="Warning period"
+            description="Items count as expiring soon this far ahead: amber pills, the attention card and reminders."
+            value={settings.warningDays}
+            options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
+            onChange={(v) => update({ warningDays: v })}
+          />
+          <PickerRow
+            icon="calendar-outline"
+            accent="teal"
+            title="Date format"
+            label="Date format"
+            description={`Today shows as ${formatDate(isoToday(new Date()))}.`}
+            value={settings.dateFormat}
+            options={DATE_FORMATS.map((f) => ({ value: f, label: DATE_FORMAT_LABELS[f] }))}
+            onChange={(v) => update({ dateFormat: v })}
+          />
+          <PickerRow
+            icon="swap-vertical-outline"
+            accent="blue"
+            title="Default sorting"
+            label="Default sorting"
+            description="Order of the Items list: newest scan or closest expiry first."
+            value={settings.sort}
+            options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
+            onChange={(v) => update({ sort: v })}
+          />
           <SettingRow
             icon="eye-outline"
             accent="teal"
@@ -178,7 +200,7 @@ export function SettingsScreen({ onNavigate }: Props) {
             icon="cloud-upload-outline"
             accent="mint"
             title="Backup & Sync"
-            description="Nothing is uploaded — your data stays with you."
+            description="Nothing is uploaded; your data stays with you."
             right={<StatusBadge label="Off" />}
             onPress={() => open('backup')}
           />
@@ -295,12 +317,6 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void) {
       return <CategoriesDetail onNavigate={onNavigate} />;
     case 'appearance':
       return <AppearanceDetail />;
-    case 'warning':
-      return <WarningDetail />;
-    case 'date':
-      return <DateDetail />;
-    case 'sorting':
-      return <SortingDetail />;
     case 'backup':
       return <BackupDetail />;
     case 'help':
@@ -387,19 +403,15 @@ function NotificationsDetail() {
             description="Get notified before items expire."
             right={<Toggle label="Expiry reminders" value={settings.reminders} onChange={(v) => update({ reminders: v })} />}
           />
-          <SettingRow
+          <PickerRow
             icon="time-outline"
             accent="amber"
             title="Reminder timing"
+            label="Reminder timing"
             description="When a reminder appears before the expiry date."
-            below={
-              <OptionList
-                label="Reminder timing"
-                value={settings.reminderLead}
-                onChange={(v) => update({ reminderLead: v })}
-                options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l), disabled: !settings.reminders }))}
-              />
-            }
+            value={settings.reminderLead}
+            options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l) }))}
+            onChange={(v) => update({ reminderLead: v })}
           />
           <SettingRow
             icon="today-outline"
@@ -489,19 +501,15 @@ function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void 
       </SettingsSection>
       <SettingsSection title="Defaults">
         <SettingsCard>
-          <SettingRow
+          <PickerRow<DefaultCategory>
             icon="pricetag-outline"
             accent="blue"
             title="Default category"
+            label="Default category"
             description="Preselected when you add an item."
-            below={
-              <OptionList<DefaultCategory>
-                label="Default category"
-                value={settings.defaultCategory}
-                onChange={(v) => update({ defaultCategory: v })}
-                options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
-              />
-            }
+            value={settings.defaultCategory}
+            onChange={(v) => update({ defaultCategory: v })}
+            options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
           />
           <SettingRow
             icon="flask-outline"
@@ -526,27 +534,23 @@ function AppearanceDetail() {
   return (
     <SettingsSection title="Appearance">
       <SettingsCard>
-        <SettingRow
+        <PickerRow
           icon="contrast-outline"
           accent="purple"
           title="Theme"
+          label="Theme"
           description="Dark, light, or follow your device."
+          value={settings.theme}
+          options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
+          onChange={(v) => update({ theme: v })}
           below={
-            <>
-              <OptionList
-                label="Theme"
-                value={settings.theme}
-                onChange={(v) => update({ theme: v })}
-                options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
-              />
-              <Note>
-                {settings.theme === 'system'
-                  ? 'System follows your device\u2019s appearance and switches live.'
-                  : settings.theme === 'light'
-                    ? 'A bright take on the same design.'
-                    : 'The classic near-black look.'}
-              </Note>
-            </>
+            <Note>
+              {settings.theme === 'system'
+                ? 'System follows your device\u2019s appearance and switches live.'
+                : settings.theme === 'light'
+                  ? 'A bright take on the same design.'
+                  : 'The classic near-black look.'}
+            </Note>
           }
         />
         <SettingRow
@@ -563,78 +567,6 @@ function AppearanceDetail() {
           description="Fades and the scanner's sweep line."
           right={<Toggle label="Animations" value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
           below={systemReduceMotion ? <Note>Your device asks for reduced motion, so animations stay off.</Note> : undefined}
-        />
-      </SettingsCard>
-    </SettingsSection>
-  );
-}
-
-function WarningDetail() {
-  const { settings, update } = useSettings();
-  return (
-    <SettingsSection title="Warning period">
-      <SettingsCard>
-        <SettingRow
-          icon="hourglass-outline"
-          accent="mint"
-          title="Expiring soon, this far ahead"
-          description="Items within this window count as expiring soon — amber pills, the attention card and reminders."
-          below={
-            <OptionList
-              label="Warning period"
-              value={settings.warningDays}
-              onChange={(v) => update({ warningDays: v })}
-              options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
-            />
-          }
-        />
-      </SettingsCard>
-    </SettingsSection>
-  );
-}
-
-function DateDetail() {
-  const { settings, update, formatDate } = useSettings();
-  return (
-    <SettingsSection title="Date format">
-      <SettingsCard>
-        <SettingRow
-          icon="calendar-outline"
-          accent="teal"
-          title="How dates are written"
-          description={`Today shows as ${formatDate(isoToday(new Date()))}.`}
-          below={
-            <OptionList
-              label="Date format"
-              value={settings.dateFormat}
-              onChange={(v) => update({ dateFormat: v })}
-              options={DATE_FORMATS.map((f) => ({ value: f, label: DATE_FORMAT_LABELS[f] }))}
-            />
-          }
-        />
-      </SettingsCard>
-    </SettingsSection>
-  );
-}
-
-function SortingDetail() {
-  const { settings, update } = useSettings();
-  return (
-    <SettingsSection title="Default sorting">
-      <SettingsCard>
-        <SettingRow
-          icon="swap-vertical-outline"
-          accent="blue"
-          title="Order of the Items list"
-          description="Newest scan or closest expiry first — your pick becomes the default."
-          below={
-            <OptionList
-              label="Default sorting"
-              value={settings.sort}
-              onChange={(v) => update({ sort: v })}
-              options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
-            />
-          }
         />
       </SettingsCard>
     </SettingsSection>
@@ -701,7 +633,7 @@ function HelpDetail() {
           icon="scan-outline"
           accent="teal"
           title="Scan a label"
-          description="Open the scanner from the middle button in the bottom bar and point at a date. The frame is read on your device — nothing is ever uploaded."
+          description="Open the scanner from the middle button in the bottom bar and point at a date. The frame is read on your device; nothing is ever uploaded."
         />
         <SettingRow
           icon="cube-outline"
@@ -742,7 +674,7 @@ function TermsDetail() {
             icon="lock-closed-outline"
             accent="mint"
             title="Your data"
-            description={WEB ? 'Everything is stored only in this browser, on this device — no account, no cloud, no sync, no tracking.' : 'Everything is stored only on this device — no account, no cloud, no sync, no tracking.'}
+            description={WEB ? 'Everything is stored only in this browser, on this device: no account, no cloud, no sync, no tracking.' : 'Everything is stored only on this device: no account, no cloud, no sync, no tracking.'}
           />
           <SettingRow icon="camera-outline" accent="teal" title="Camera" description="Frames are read locally to find expiry dates and are never uploaded or stored." />
           <SettingRow icon="share-social-outline" accent="purple" title="Exports" description="Files you export go wherever you choose; nothing is sent otherwise." />

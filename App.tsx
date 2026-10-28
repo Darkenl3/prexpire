@@ -73,7 +73,7 @@ function Shell() {
   const inShell = WEB && typeof window !== 'undefined' && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
 
   // Native bridge: when this app runs inside a React Native WebView shell, the shell can
-  // scan a label with its own native camera + OCR (Apple Vision / ML Kit — far stronger
+  // scan a label with its own native camera + OCR (Apple Vision / ML Kit - far stronger
   // than the in-browser reader) and hand us the text lines. We parse them with the same
   // date parser the camera path uses and open the save sheet pre-filled.
   useEffect(() => {
@@ -151,7 +151,7 @@ function Shell() {
   const clearNotice = useCallback(() => setNotice(null), []);
 
   // Native bridge: the shell's liquid-glass tab bar navigates this app exactly like
-  // the web bottom nav does — it dispatches 'prexpire:navigate' events carrying
+  // the web bottom nav does - it dispatches 'prexpire:navigate' events carrying
   // { to: 'tab:home' | 'tab:items' | 'scan' | ... }, which reuse onNavigate verbatim.
   useEffect(() => {
     if (!WEB || typeof window === 'undefined') return;

@@ -39,7 +39,7 @@ type Props = {
   detection: Detection | null;
   initialCategory: CategoryId;
   // True when the category was picked from the label's words (see
-  // scanner/categoryGuess.ts) — shown as a gentle hint under the chips.
+  // scanner/categoryGuess.ts) - shown as a gentle hint under the chips.
   categoryGuessed?: boolean;
   layout: 'bottom' | 'side';
   maxHeight: number;
@@ -136,7 +136,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
             );
           })}
         </ScrollView>
-        {categoryGuessed && <Text style={s.guessed}>Category picked from the label — tap another to change it.</Text>}
+        {categoryGuessed && <Text style={s.guessed}>Category picked from the label; tap another to change it.</Text>}
 
         <View style={s.divider} />
 

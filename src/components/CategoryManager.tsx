@@ -123,7 +123,7 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
           <Text style={s.dialogTitle} accessibilityRole="header">
             New category
           </Text>
-          <Text style={s.dialogText}>A folder for a group of items you track — its tile appears on Home.</Text>
+          <Text style={s.dialogText}>A folder for a group of items you track; its tile appears on Home.</Text>
           <TextInput
             value={name}
             onChangeText={(t) => {

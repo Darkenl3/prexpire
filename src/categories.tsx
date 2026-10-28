@@ -58,7 +58,7 @@ type CategoriesContext = {
   custom: CustomCategory[];
   ready: boolean;
   saveError: boolean;
-  // Built-ins first, then the user's own — the order the UI shows them in.
+  // Built-ins first, then the user's own - the order the UI shows them in.
   all: CategoryDef[];
   ids: string[];
   // Display name for any category id (falls back to "Other" for deleted ids).
