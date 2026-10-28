@@ -23,7 +23,8 @@ import { Header } from './HomeComponents';
 
 type ScrollLike = { nativeEvent: { contentOffset: { y: number } } };
 
-const HEADER_HEIGHT = 56;
+// Keep in sync with the header's own height in HomeComponents.tsx.
+const HEADER_HEIGHT = 64;
 // How far the position must move (net) before we call it a direction.
 const DECIDE_PX = 8;
 // Within this distance of the bottom edge, direction changes need the bigger

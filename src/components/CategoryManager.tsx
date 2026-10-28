@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, tints, useTheme, type Tint } from '../theme';
+import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
 import { CATEGORY_ICONS, CUSTOM_TINTS, useCategories } from '../categories';
 import { useItems } from '../items';
 import { Note, SmallButton } from './SettingsRows';
@@ -11,13 +11,15 @@ import { Note, SmallButton } from './SettingsRows';
 // delete buttons, and the "Add category" dialog with a name, an icon and a
 // tile colour. Rendered inside the Settings page.
 
-// Tile gradient -> Settings icon accent, so a folder keeps its colour language.
-const TINT_ACCENT: Record<string, 'mint' | 'blue' | 'purple' | 'pink' | 'amber'> = {
-  food: 'mint',
-  medicine: 'blue',
-  household: 'purple',
-  skincare: 'pink',
-  pantry: 'amber',
+// Folder icon ink on the light theme's pastel chips (one per tile tint), so
+// each folder keeps its colour language; the dark theme uses plain text ink.
+const TINT_ICON: Record<Tint, string> = {
+  food: '#0E8F6B',
+  medicine: '#3B7BD4',
+  household: '#8B5CF6',
+  skincare: '#E255A0',
+  pantry: '#C77E1E',
+  add: '#5C6E6A',
 };
 
 export function CategoryManager() {
@@ -37,13 +39,16 @@ export function CategoryManager() {
     <View style={s.wrap}>
       {custom.map((cat) => {
         const count = saved.filter((i) => i.category === cat.id).length;
-        const accent = TINT_ACCENT[cat.tint] ?? 'mint';
-        const hex = tints[cat.tint].top;
+        // The folder's colour language, from the theme's tile tints: a soft
+        // pastel chip on light, a whisper of the gradient on dark.
+        const tint = c.tints[cat.tint as Tint];
+        const iconBg = c === LIGHT ? tint.top : `${tint.top}33`;
+        const iconBorder = c === LIGHT ? tint.border : `${tint.top}66`;
         const confirmingThis = confirming === cat.id;
         return (
           <View key={cat.id} style={s.row}>
-            <View style={[s.rowIcon, { backgroundColor: `${hex}33`, borderColor: `${hex}66` }]}>
-              <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={19} color={c.text} />
+            <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
+              <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[cat.tint as Tint] : c.text} />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={s.rowName} numberOfLines={1}>
@@ -156,7 +161,7 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
           <View style={s.tintRow}>
             {CUSTOM_TINTS.map((t) => {
               const on = t === tint;
-              const g = tints[t];
+              const g = c.tints[t];
               return (
                 <Pressable
                   key={t}

@@ -32,6 +32,10 @@ export type Palette = {
   btnMintBorder: string;
   btnDangerBg: string;
   btnDangerBorder: string;
+  // Category tile colours: rich gradients on dark, soft pastels on light.
+  tints: Record<Tint, { top: string; bottom: string; border: string }>;
+  // The "Add category" tile: a plain card with a dashed outline.
+  addTile: { bg: string; border: string };
   alertBg: string;
   alertBorder: string;
   alertIconBg: string;
@@ -46,7 +50,7 @@ export type Palette = {
   statusWarnBg: string;
   glassBg: string; // the header's liquid-glass circles
   glassBorder: string;
-  pills: Record<Tone, { bg: string; border: string; text: string }>;
+  pills: Record<Tone, { bg: string; text: string }>;
   switchColors: { track: string; trackOn: string; thumb: string; thumbOn: string };
 };
 
@@ -74,9 +78,11 @@ export const DARK: Palette = {
   btnMintBorder: 'rgba(46,232,182,0.45)',
   btnDangerBg: 'rgba(248,113,113,0.08)',
   btnDangerBorder: 'rgba(248,113,113,0.45)',
-  alertBg: '#231E11',
-  alertBorder: '#5C4512',
-  alertIconBg: '#4A3811',
+  // The "items need attention" card is RED in both themes — urgency reads
+  // the same in light and dark, like a warning triangle on any dashboard.
+  alertBg: '#2A1216',
+  alertBorder: '#5A2530',
+  alertIconBg: '#461B22',
   dangerBg: '#140F12',
   dangerBorder: '#4A2328',
   dialogBg: '#0E1A1E',
@@ -88,17 +94,28 @@ export const DARK: Palette = {
   statusWarnBg: '#3D2B0E',
   glassBg: 'rgba(255,255,255,0.10)',
   glassBorder: 'rgba(255,255,255,0.14)',
+  tints: {
+    food: { top: '#0E5734', bottom: '#081C17', border: '#1C5A3C' },
+    medicine: { top: '#074164', bottom: '#051C2A', border: '#145273' },
+    household: { top: '#382663', bottom: '#121729', border: '#46327A' },
+    skincare: { top: '#5F2646', bottom: '#161419', border: '#6C2D51' },
+    pantry: { top: '#4D3617', bottom: '#1B1A11', border: '#5E4420' },
+    add: { top: '#222E46', bottom: '#0F1A25', border: '#2C3B57' },
+  },
+  addTile: { bg: 'rgba(255,255,255,0.03)', border: '#3A4A50' },
+  // Pills carry no border: a soft filled capsule, lighter than the text it
+  // sits next to ("1 day", "3 days"…).
   pills: {
-    amber: { bg: '#3D2B0E', border: '#7A5A12', text: '#F5B83D' },
-    green: { bg: '#06352A', border: '#14674C', text: '#36E0A4' },
+    amber: { bg: '#3D2B0E', text: '#F5B83D' },
+    green: { bg: '#0A382C', text: '#3FE0AC' },
   },
   switchColors: { track: '#2A3A40', trackOn: '#1E8A6C', thumb: '#C9D3D6', thumbOn: '#E9FFF8' },
 };
 
 export const LIGHT: Palette = {
-  bg: '#F1F6F4',
+  bg: '#F6F9F7',
   surface: '#FFFFFF',
-  surfaceBorder: '#DDE7E4',
+  surfaceBorder: '#E8F0EC',
   text: '#101D1B',
   textMuted: '#5C6E6A',
   mint: '#0FA67C',
@@ -110,18 +127,18 @@ export const LIGHT: Palette = {
   red: '#D92B3E',
   navBg: 'rgba(250,253,252,0.82)',
   navBorder: 'rgba(16,29,27,0.10)',
-  iconTile: '#E9F0EE',
-  cardAlt: '#EEF4F2',
-  separator: '#E3ECE9',
-  chipOnBg: 'rgba(15,166,124,0.12)',
+  iconTile: '#E6EFEA',
+  cardAlt: '#F0F5F3',
+  separator: '#EDF3F1',
+  chipOnBg: 'rgba(15,166,124,0.10)',
   chipOnBorder: 'rgba(15,166,124,0.55)',
   btnMintBg: 'rgba(15,166,124,0.10)',
   btnMintBorder: 'rgba(15,166,124,0.45)',
   btnDangerBg: 'rgba(217,43,62,0.08)',
   btnDangerBorder: 'rgba(217,43,62,0.45)',
-  alertBg: '#FCF3DC',
-  alertBorder: '#E3C57A',
-  alertIconBg: '#F3E7C2',
+  alertBg: '#FDEFEF',
+  alertBorder: '#F1CBCF',
+  alertIconBg: '#F8DBDF',
   dangerBg: '#FDECEC',
   dangerBorder: '#F0B9BD',
   dialogBg: '#FFFFFF',
@@ -132,30 +149,31 @@ export const LIGHT: Palette = {
   statusWarnBorder: '#D9B871',
   statusWarnBg: '#F8EFD8',
   glassBg: 'rgba(255,255,255,0.62)',
-  glassBorder: 'rgba(16,29,27,0.10)',
+  glassBorder: 'rgba(16,29,27,0.08)',
+  // Soft pastel tiles: mint, sky, lilac, blush and cream — the category
+  // cards read as gentle colour cards, not saturated blocks (the reference
+  // keeps its pastels gently tinted, never washed out).
+  tints: {
+    food: { top: '#E7F8EF', bottom: '#D3F0E0', border: '#BCE7CD' },
+    medicine: { top: '#E9F2FC', bottom: '#D6E8FA', border: '#BBD9F3' },
+    household: { top: '#F0EDFB', bottom: '#E3DDF6', border: '#D2C8EE' },
+    skincare: { top: '#FCEAF2', bottom: '#F8DBE9', border: '#F1C6D9' },
+    pantry: { top: '#FCF2DC', bottom: '#F9E8C3', border: '#EFD9A2' },
+    add: { top: '#F7FAF8', bottom: '#F3F7F4', border: '#D7E2DC' },
+  },
+  addTile: { bg: '#FFFFFF', border: '#BFCFC9' },
   pills: {
-    amber: { bg: '#F8EFD8', border: '#D9B871', text: '#8F5E10' },
-    green: { bg: '#DDF2EA', border: '#8FCDB5', text: '#0E8F6B' },
+    amber: { bg: '#FCF0C8', text: '#B26E06' },
+    green: { bg: '#D7F3E5', text: '#0D7F5B' },
   },
   switchColors: { track: '#CBD5D3', trackOn: '#17B586', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
 export type Tint = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | 'add';
 
-// Tile gradients stay identical in both themes: the tiles are colourful cards
-// (like photos), so they read as accents on a light page too.
-export const tints: Record<Tint, { top: string; bottom: string; border: string }> = {
-  food: { top: '#0E5734', bottom: '#081C17', border: '#1C5A3C' },
-  medicine: { top: '#074164', bottom: '#051C2A', border: '#145273' },
-  household: { top: '#382663', bottom: '#121729', border: '#46327A' },
-  skincare: { top: '#5F2646', bottom: '#161419', border: '#6C2D51' },
-  pantry: { top: '#4D3617', bottom: '#1B1A11', border: '#5E4420' },
-  add: { top: '#222E46', bottom: '#0F1A25', border: '#2C3B57' },
-};
-
 export type Tone = 'amber' | 'green';
 
-export const radius = { card: 13, row: 13, alert: 14, tile: 12, pill: 999 };
+export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
 
 export const space = { gutter: 14, gridGap: 9 };
 

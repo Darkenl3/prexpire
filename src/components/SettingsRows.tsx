@@ -185,7 +185,7 @@ export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled =
 const useStyles = makeStyles((c) => ({
   section: { marginBottom: 22 },
   sectionTitle: { color: c.textMuted, fontSize: 13, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8, marginLeft: 4 },
-  card: { backgroundColor: c.surface, borderRadius: 16, borderWidth: 1, borderColor: c.surfaceBorder, overflow: 'hidden' },
+  card: { backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.surfaceBorder, overflow: 'hidden' },
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginLeft: 64 },
   rowWrap: { paddingVertical: 12, paddingHorizontal: 14 },
   pressable: { borderRadius: 10 },

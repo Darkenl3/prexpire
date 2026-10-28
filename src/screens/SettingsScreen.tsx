@@ -321,7 +321,7 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
       <SettingsSection title="About">
         <SettingsCard>
           <View style={s.about}>
-            <Brandmark height={38} />
+            <Brandmark height={44} />
             <Text style={s.aboutText}>Keep track of what matters before it expires.</Text>
             <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
           </View>
@@ -452,7 +452,7 @@ function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfir
 }
 
 const useStyles = makeStyles((t) => ({
-  banner: { borderRadius: 12, borderWidth: 1, borderColor: t.alertBorder, backgroundColor: t.alertBg, padding: 12, marginBottom: 16 },
+  banner: { borderRadius: 12, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   profile: {
     flexDirection: 'row',
     alignItems: 'center',

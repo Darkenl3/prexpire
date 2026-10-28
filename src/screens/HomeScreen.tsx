@@ -3,7 +3,7 @@ import { Animated, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } 
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, space, useTheme } from '../theme';
+import { makeStyles, space, useTheme, LIGHT } from '../theme';
 import { categories, type ArtKey } from '../data';
 import { useCategories } from '../categories';
 import { useItems } from '../items';
@@ -50,7 +50,11 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { items, saved } = useItems();
   const { settings, motion } = useSettings();
   const { custom } = useCategories();
+  const t = useTheme();
   const c = useStyles();
+  // Folder icons sit on the tile gradient: white on the dark theme's rich
+  // gradients, dark ink on the light theme's pastels.
+  const folderIconColor = t === LIGHT ? t.text : 'rgba(255,255,255,0.92)';
   const { warningDays, showExpired, showSamples } = settings;
   const upcoming = useMemo(
     () =>
@@ -139,7 +143,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
             name={cat.name}
             sub={`${saved.filter((i) => i.category === cat.id).length} items`}
             status={tileStatus(attention.byCategory(cat.id))}
-            art={<Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color="rgba(255,255,255,0.92)" />}
+            art={<Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color={folderIconColor} />}
             compact={compact}
             onPress={() => go(`category:${cat.id}`)}
           />

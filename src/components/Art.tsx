@@ -1,4 +1,5 @@
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import { LIGHT, useTheme } from '../theme';
 
 type ArtProps = { size?: number };
 
@@ -139,10 +140,13 @@ export function BreadArt({ size = 30 }: ArtProps) {
 }
 
 export function AddArt({ size = 56 }: ArtProps) {
+  // The ghost tile's icon follows the theme: a soft neutral disc with a dark
+  // plus on light, the deep slate disc with a white plus on dark.
+  const light = useTheme() === LIGHT;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
-      <Circle cx="50" cy="50" r="44" fill="#2E3B52" stroke="#3F4F6B" strokeWidth={2} />
-      <Path d="M50 30 V70 M30 50 H70" stroke="#FFFFFF" strokeWidth={7} strokeLinecap="round" />
+      <Circle cx="50" cy="50" r="44" fill={light ? '#EFF4F1' : '#2E3B52'} stroke={light ? '#D9E4DF' : '#3F4F6B'} strokeWidth={2} />
+      <Path d="M50 30 V70 M30 50 H70" stroke={light ? '#4A5D57' : '#FFFFFF'} strokeWidth={7} strokeLinecap="round" />
     </Svg>
   );
 }

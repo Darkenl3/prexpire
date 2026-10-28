@@ -3,9 +3,15 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { makeStyles, tints, useTheme, LIGHT, type Tint, type Tone } from '../theme';
+import { makeStyles, useTheme, LIGHT, type Tint, type Tone } from '../theme';
 
-const wordmark = require('../../assets/wordmark.png');
+// The brand wordmark: dark ink on light backgrounds, light ink on dark ones.
+// Both were cut from the same artwork (white background un-blended into
+// alpha), so they share geometry and the green X stays green in both.
+const wordmarkDarkInk = require('../../assets/wordmark-light.png');
+const wordmarkLightInk = require('../../assets/wordmark.png');
+// Cropped artwork size: 1234 x 299.
+const WORDMARK_ASPECT = 1234 / 299;
 
 // Liquid-glass treatment for the header buttons (the same visual language as
 // the shell's glass tab bar): a frosted translucent circle with a hairline
@@ -17,19 +23,13 @@ const GLASS_FX = {
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
 
-// The brand wordmark: the light image on the dark theme, crisp type on the
-// light theme (the PNG asset is drawn for dark backgrounds).
+// The brand wordmark: the real logo in every theme — dark forest-green
+// letters with the green X on light, near-white letters on dark.
 export function Brandmark({ height }: { height: number }) {
   const c = useTheme();
-  if (c === LIGHT) {
-    return (
-      <Text style={{ fontSize: Math.round(height * 0.62), fontWeight: '800', letterSpacing: Math.round(height * 0.08), color: c.text }} accessibilityLabel="Prexpire">
-        PREXPIRE
-      </Text>
-    );
-  }
-  const width = Math.round((height * 118) / 30);
-  return <Image source={wordmark} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
+  const source = c === LIGHT ? wordmarkDarkInk : wordmarkLightInk;
+  const width = Math.round(height * WORDMARK_ASPECT);
+  return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
 }
 
 export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; gutter?: number; onMenu: () => void; onBell: () => void }) {
@@ -46,7 +46,7 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
       >
         <Ionicons name="menu" size={24} color={c.text} />
       </Pressable>
-      <Brandmark height={30} />
+      <Brandmark height={36} />
       <Pressable
         onPress={onBell}
         hitSlop={10}
@@ -71,7 +71,8 @@ export function AttentionCard({ title, subtitle, onPress }: { title: string; sub
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.alert, pressed && s.pressed]}>
       <View style={[s.alertIcon, { backgroundColor: c.alertIconBg }]}>
-        <Ionicons name="warning-outline" size={25} color={c.amber} />
+        {/* Red in both themes: urgency reads the same whatever the theme. */}
+        <Ionicons name="warning" size={24} color={c.red} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
@@ -112,44 +113,57 @@ type CategoryTileProps = {
 export function CategoryTile({ tint, art, name, sub, status, width, compact = false, onPress }: CategoryTileProps) {
   const c = useTheme();
   const s = useStyles();
-  const t = tints[tint];
+  const t = c.tints[tint];
+  // The Add-category tile is a ghost card: a dashed outline instead of a
+  // filled gradient, so it reads as an empty slot waiting for a new folder.
+  const dashed = tint === 'add';
+  const body = (
+    <>
+      <View style={[s.tileArt, compact && s.tileArtCompact, !status && s.tileArtTight]}>{art}</View>
+      {/* Tiles without a status line (Add category) have room for a two-line name on narrow tiles. */}
+      <Text
+        style={[s.tileName, { color: dashed ? c.textMuted : c.text }, compact && s.tileNameCompact]}
+        numberOfLines={status ? 1 : 2}
+        adjustsFontSizeToFit={!!status}
+        minimumFontScale={0.85}
+      >
+        {name}
+      </Text>
+      {!!sub && (
+        <Text style={[s.tileSub, { color: c.textMuted }, compact && s.textCompact]} numberOfLines={1}>
+          {sub}
+        </Text>
+      )}
+      {status ? (
+        <View style={s.status}>
+          <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : c.green }]} />
+          <Text
+            style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : c.green }]}
+            numberOfLines={1}
+          >
+            {status.label}
+          </Text>
+        </View>
+      ) : sub ? (
+        <View style={s.statusSpacer} />
+      ) : null}
+    </>
+  );
+  const tileStyle = [s.tile, compact && s.tileCompact, !sub && !status && s.tileCentered];
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={name} style={({ pressed }) => [{ width }, pressed && s.pressed]}>
-      <LinearGradient
-        colors={[t.top, t.bottom]}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={[s.tile, compact && s.tileCompact, !sub && !status && s.tileCentered, { borderColor: t.border }]}
-      >
-        <View style={[s.tileArt, compact && s.tileArtCompact, !status && s.tileArtTight]}>{art}</View>
-        {/* Tiles without a status line (Add category) have room for a two-line name on narrow tiles. */}
-        <Text
-          style={[s.tileName, { color: c.text }, compact && s.tileNameCompact]}
-          numberOfLines={status ? 1 : 2}
-          adjustsFontSizeToFit={!!status}
-          minimumFontScale={0.85}
+      {dashed ? (
+        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg, borderColor: c.addTile.border }]}>{body}</View>
+      ) : (
+        <LinearGradient
+          colors={[t.top, t.bottom]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[...tileStyle, { borderColor: t.border }]}
         >
-          {name}
-        </Text>
-        {!!sub && (
-          <Text style={[s.tileSub, { color: c.textMuted }, compact && s.textCompact]} numberOfLines={1}>
-            {sub}
-          </Text>
-        )}
-        {status ? (
-          <View style={s.status}>
-            <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : c.green }]} />
-            <Text
-              style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : c.green }]}
-              numberOfLines={1}
-            >
-              {status.label}
-            </Text>
-          </View>
-        ) : sub ? (
-          <View style={s.statusSpacer} />
-        ) : null}
-      </LinearGradient>
+          {body}
+        </LinearGradient>
+      )}
     </Pressable>
   );
 }
@@ -160,18 +174,24 @@ type ExpiryRowProps = {
   sub: string[];
   pill: string;
   tone: Tone;
+  // The item's category tint: the icon square takes a pastel of the same
+  // colour family on the light theme (the dark theme keeps its neutral tile).
+  iconTint?: Tint;
   // Compact layout (Settings): shorter rows with a one-line subtitle.
   compact?: boolean;
   onPress?: () => void;
 };
 
-export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPress }: ExpiryRowProps) {
+export function ExpiryRow({ art, title, sub, pill, tone, iconTint, compact = false, onPress }: ExpiryRowProps) {
   const c = useTheme();
   const s = useStyles();
   const p = c.pills[tone];
+  // On light, each row's icon sits in its category's pastel — the list reads
+  // as colour-coded by category, like the reference. Dark keeps the deep tile.
+  const iconBg = iconTint && c === LIGHT ? c.tints[iconTint].bottom : c.iconTile;
   const content = (
     <>
-      <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
+      <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: iconBg }]}>{art}</View>
       <View style={{ flex: 1 }}>
         <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1}>
           {title}
@@ -180,7 +200,7 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
           {sub.join('  •  ')}
         </Text>
       </View>
-      <View style={[s.pill, compact && s.pillCompact, { backgroundColor: p.bg, borderColor: p.border }]}>
+      <View style={[s.pill, compact && s.pillCompact, { backgroundColor: p.bg }]}>
         <Text style={[s.pillText, compact && s.pillTextCompact, { color: p.text }]}>{pill}</Text>
       </View>
       {onPress && <Ionicons name="chevron-forward" size={20} color={c.textMuted} style={{ marginLeft: 2 }} />}
@@ -297,13 +317,15 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
 
 const useStyles = makeStyles((c) => ({
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
-  header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  // A taller top bar gives the wordmark room to breathe (brand-forward,
+  // like the reference) — keep HEADER_HEIGHT in navAutohide.tsx in sync.
+  header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   // Liquid-glass circle (with GLASS_FX): the same frosted look as the shell's
-  // tab bar, sized to sit comfortably inside the 56pt header.
+  // tab bar, sized to sit comfortably inside the 64pt header.
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -336,7 +358,7 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
   },
   alertIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  alertTitle: { color: c.text, fontSize: 16, fontWeight: '600' },
+  alertTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
   alertSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', marginTop: 2 },
   section: {
     flexDirection: 'row',
@@ -349,7 +371,9 @@ const useStyles = makeStyles((c) => ({
   sectionTitle: { color: c.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   sectionLink: { color: c.mint, fontSize: 14.5, fontWeight: '600' },
-  tile: { height: 156, borderRadius: 13, borderWidth: 1, overflow: 'hidden', alignItems: 'center', paddingHorizontal: 8, paddingTop: 12 },
+  tile: { height: 156, borderRadius: 16, borderWidth: 1, overflow: 'hidden', alignItems: 'center', paddingHorizontal: 8, paddingTop: 12 },
+  // The Add-category ghost tile: dashed outline, no fill gradient.
+  tileAdd: { borderStyle: 'dashed', borderWidth: 1.5 },
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },
@@ -358,15 +382,15 @@ const useStyles = makeStyles((c) => ({
   tileCentered: { justifyContent: 'center', paddingTop: 0, paddingBottom: 4 },
   tileNameCompact: { fontSize: 14 },
   textCompact: { fontSize: 12.5 },
-  tileName: { color: c.text, fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  tileName: { color: c.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
   tileSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', textAlign: 'center', marginTop: 2 },
   status: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4, height: 18 },
   statusSpacer: { height: 18, marginTop: 4 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontSize: 13.5, fontWeight: '500' },
+  statusText: { fontSize: 13.5, fontWeight: '600' },
   row: {
-    minHeight: 53,
-    paddingVertical: 6,
+    minHeight: 58,
+    paddingVertical: 8,
     borderRadius: 13,
     borderWidth: 1,
     flexDirection: 'row',
@@ -375,13 +399,13 @@ const useStyles = makeStyles((c) => ({
     paddingRight: 8,
     gap: 11,
   },
-  rowIcon: { width: 44, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  rowCompact: { minHeight: 44, paddingVertical: 4, gap: 9 },
+  rowIcon: { width: 44, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  rowCompact: { minHeight: 48, paddingVertical: 5, gap: 9 },
   rowIconCompact: { width: 36, height: 32, borderRadius: 10 },
   rowTitle: { color: c.text, fontSize: 15.5, fontWeight: '600' },
   rowTitleCompact: { fontSize: 14.5 },
   rowSub: { color: c.textMuted, fontSize: 12.5, fontWeight: '400', marginTop: 1 },
-  pill: { height: 30, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  pill: { height: 30, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontSize: 14, fontWeight: '600' },
   pillCompact: { height: 26, paddingHorizontal: 9 },
   pillTextCompact: { fontSize: 13 },

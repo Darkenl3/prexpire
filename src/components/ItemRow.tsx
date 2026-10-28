@@ -1,8 +1,9 @@
-import { expiryPhrase, type Item } from '../items';
+import { CATEGORY_IDS, expiryPhrase, type Item } from '../items';
 import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
 import { expiryStatus } from '../preferences';
 import { useSettings } from '../settings';
+import type { Tint } from '../theme';
 import { BreadArt, MilkArt, PillArt } from './Art';
 import { ExpiryRow } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
@@ -36,8 +37,12 @@ type Props = {
 // An item in a list, styled by the Settings preferences (compact rows, warning period, date format).
 export function ItemRow({ item, showDate = false, note, onPress }: Props) {
   const { settings, formatDate } = useSettings();
-  const { nameOf } = useCategories();
+  const { nameOf, custom } = useCategories();
   const { pill, tone } = itemPill(item, settings.warningDays);
+  // The row's icon square takes the category's colour family (built-in ids
+  // share their tint's name; custom folders carry their chosen tint).
+  const folder = custom.find((cat) => cat.id === item.category);
+  const iconTint: Tint | undefined = (CATEGORY_IDS as string[]).includes(item.category) ? (item.category as Tint) : folder?.tint;
   const sub = [nameOf(item.category), note ?? expiryPhrase(item.expiresOn)];
   if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (
@@ -47,6 +52,7 @@ export function ItemRow({ item, showDate = false, note, onPress }: Props) {
       sub={sub}
       pill={pill}
       tone={tone}
+      iconTint={iconTint}
       compact={settings.compact}
       onPress={onPress}
     />
