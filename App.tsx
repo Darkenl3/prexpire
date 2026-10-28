@@ -154,6 +154,21 @@ function Shell() {
     return () => window.removeEventListener('prexpire:navigate', onShellNavigate);
   }, [onNavigate]);
 
+  // The screens report their scroll direction (see navAutohide.tsx) so the browser's
+  // own bottom nav can hide on scroll-down and return on scroll-up, YouTube-style.
+  // Inside the native shell the glass tab bar follows the same motion via the
+  // { type: 'scroll', dir } bridge message the tracker posts directly.
+  const [webNavHidden, setWebNavHidden] = useState(false);
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const onNavVisibility = (event: Event) => {
+      const detail = (event as CustomEvent<{ hidden?: unknown }>).detail;
+      if (typeof detail?.hidden === 'boolean') setWebNavHidden(detail.hidden);
+    };
+    window.addEventListener('prexpire:nav', onNavVisibility);
+    return () => window.removeEventListener('prexpire:nav', onNavVisibility);
+  }, []);
+
   // Keep the shell's tab bar in sync: report the active tab and the reminder badge
   // whenever either changes, so the shell can highlight its active tab, show the
   // badge, and hide its bar while the scanner screen is open (tab === 'scan').
@@ -190,6 +205,7 @@ function Shell() {
         <BottomNav
           active={route.tab}
           badge={badge}
+          hidden={webNavHidden}
           insets={insets}
           maxWidth={layout.mode === 'phone' ? 560 : 520}
           onTab={(id) => onNavigate(`tab:${id}`)}

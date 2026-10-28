@@ -3,7 +3,8 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import { useLayout } from '../layout';
-import { Header, NAV_HEIGHT, navOffset } from './HomeComponents';
+import { NAV_HEIGHT, navOffset } from './HomeComponents';
+import { AutohideHeader, useNavAutohide } from './navAutohide';
 
 type Props = {
   title: string;
@@ -20,14 +21,17 @@ type Props = {
 export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
+  // YouTube-style: the header (and the nav bars) hide when scrolling down.
+  const { hidden, onScroll } = useNavAutohide();
   const frame = { maxWidth: Math.min(layout.maxContentWidth, maxWidth), paddingHorizontal: layout.gutter };
   return (
     <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <View style={[s.frame, frame]}>
-        <Header badge={badge} gutter={0} onMenu={() => onNavigate('tab:settings')} onBell={() => onNavigate('tab:reminders')} />
+        <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => onNavigate('tab:settings')} onBell={() => onNavigate('tab:reminders')} />
       </View>
       <ScrollView
         style={s.scroll}
+        onScroll={onScroll}
         contentContainerStyle={{ paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
         showsVerticalScrollIndicator={false}
       >

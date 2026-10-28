@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, pills, radius, space, tints, type, type Tint, type Tone } from '../theme';
@@ -161,6 +162,9 @@ type BottomNavProps = {
   badge: number;
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
+  // YouTube-style: the nav slides below the screen while the user scrolls down
+  // (the screens report their scroll direction — see navAutohide.tsx).
+  hidden?: boolean;
   onTab: (id: TabId) => void;
   onScan: () => void;
 };
@@ -169,10 +173,18 @@ type BottomNavProps = {
 export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
-export function BottomNav({ active, badge, insets, maxWidth = 560, onTab, onScan }: BottomNavProps) {
+export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = false, onTab, onScan }: BottomNavProps) {
   // Narrow phones give the five tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(t, { toValue: hidden ? 1 : 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [hidden, t]);
+  const navY = t.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, NAV_HEIGHT + navOffset(insets.bottom) + 12],
+  });
   const renderTab = (tab: (typeof tabs)[number]) => {
     const selected = tab.id === active;
     return (
@@ -205,9 +217,12 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, onTab, onScan
   };
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[s.navWrap, { bottom: navOffset(insets.bottom), left: sideMargin + insets.left, right: sideMargin + insets.right }]}
+    <Animated.View
+      pointerEvents={hidden ? 'none' : 'box-none'}
+      style={[
+        s.navWrap,
+        { bottom: navOffset(insets.bottom), left: sideMargin + insets.left, right: sideMargin + insets.right, transform: [{ translateY: navY }] },
+      ]}
     >
       <View style={[s.navShadow, { maxWidth }]}>
         <View style={[s.nav, s.navFallback]}>
@@ -223,7 +238,7 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, onTab, onScan
           {renderTab(tabs[3])}
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

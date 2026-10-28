@@ -8,7 +8,8 @@ import { categories, type ArtKey } from '../data';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
-import { AttentionCard, CategoryTile, Header, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
+import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
+import { AutohideHeader, useNavAutohide } from '../components/navAutohide';
 import { ItemRow } from '../components/ItemRow';
 import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
@@ -143,14 +144,17 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   );
 
   const frame = { maxWidth: layout.maxContentWidth, paddingHorizontal: gutter };
+  // YouTube-style: the header (and the nav bars) hide when scrolling down.
+  const { hidden, onScroll } = useNavAutohide();
 
   return (
     <View style={[styles.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <View style={[styles.frame, frame]}>
-        <Header badge={badge} gutter={0} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
+        <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
       </View>
       <ScrollView
         style={styles.scroll}
+        onScroll={onScroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomClearance }]}
         showsVerticalScrollIndicator={false}
       >
