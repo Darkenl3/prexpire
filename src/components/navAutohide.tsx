@@ -26,6 +26,10 @@ type ScrollLike = { nativeEvent: { contentOffset: { y: number } } };
 const HEADER_HEIGHT = 56;
 // How far the position must move (net) before we call it a direction.
 const DECIDE_PX = 8;
+// Within this distance of the bottom edge, direction changes need the bigger
+// EDGE_DECIDE_PX net movement (rubber-band settle tails stay under it, real
+// flicks clear it in a single frame).
+const EDGE_DECIDE_PX = 24;
 // The top of the page always shows the chrome (YouTube shows its bars there).
 const TOP_ZONE = 48;
 // While scrolling, re-report to the shell at most this often (ms) — in
@@ -78,11 +82,19 @@ export function useNavAutohide() {
     if (y <= TOP_ZONE) {
       goingDown = false; // the top of the page always shows the chrome
       acc.current = 0;
-    } else if (Math.abs(acc.current) >= DECIDE_PX) {
-      goingDown = acc.current > 0;
-      acc.current = 0;
     } else {
-      return; // not decisive yet
+      // Near the bottom edge a direction change needs a bigger net movement:
+      // a real flick moves dozens of pixels per frame, while the tail of a
+      // rubber-band settle wiggles by a few — this keeps the very end of a
+      // list from toggling the bars while staying invisible to real scrolls.
+      const nearBottom = maxY !== Number.POSITIVE_INFINITY && y >= maxY - 12;
+      const threshold = nearBottom ? EDGE_DECIDE_PX : DECIDE_PX;
+      if (Math.abs(acc.current) >= threshold) {
+        goingDown = acc.current > 0;
+        acc.current = 0;
+      } else {
+        return; // not decisive yet
+      }
     }
     const changed = goingDown !== hiddenRef.current;
     if (changed) {
