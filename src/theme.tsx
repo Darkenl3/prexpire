@@ -113,52 +113,56 @@ export const DARK: Palette = {
 };
 
 export const LIGHT: Palette = {
-  // A neutral light gray, like the reference's settings page: white cards
-  // separate by contrast, not by borders.
-  bg: '#F2F6F3',
+  // The reference's airy light theme: a cool blue-white page where white
+  // cards float on very soft shadows, separated by contrast and fine
+  // #E5EDF3 hairlines rather than heavy borders.
+  bg: '#F9FCFE',
   surface: '#FFFFFF',
-  surfaceBorder: '#EDF2EF',
-  text: '#101D1B',
-  textMuted: '#5C6E6A',
-  mint: '#0FA67C',
+  surfaceBorder: '#E5EDF3',
+  text: '#111827',
+  textMuted: '#64748B',
+  // The accent takes its hue from the wordmark's green X: a light, fresh
+  // green (links, active tab, selected states).
+  mint: '#1BC491',
   scan: '#12C894',
   scanInk: '#04241B',
-  // Expiring-soon accents read soft and light on the pale page.
-  amber: '#D2A43E',
-  amberText: '#B18A3E',
-  green: '#3BAB84',
+  // Expiring-soon accents: strong enough to read clearly on pastel fills
+  // (never washed-out).
+  amber: '#DFA42E',
+  amberText: '#966E12',
+  green: '#10A374',
   red: '#D92B3E',
   navBg: 'rgba(250,253,252,0.82)',
   navBorder: 'rgba(16,29,27,0.10)',
-  iconTile: '#E6EFEA',
-  cardAlt: '#F0F5F3',
-  separator: '#EDF3F1',
-  chipOnBg: 'rgba(15,166,124,0.10)',
-  chipOnBorder: 'rgba(15,166,124,0.55)',
-  btnMintBg: 'rgba(15,166,124,0.10)',
-  btnMintBorder: 'rgba(15,166,124,0.45)',
+  // Every product row's icon square: the SAME light cool-gray for all
+  // items, like the reference's Coming up next list.
+  iconTile: '#EAF1F7',
+  cardAlt: '#F4F8FB',
+  separator: '#E5EDF3',
+  chipOnBg: 'rgba(18,192,140,0.12)',
+  chipOnBorder: 'rgba(18,192,140,0.5)',
+  btnMintBg: 'rgba(0,168,107,0.10)',
+  btnMintBorder: 'rgba(0,168,107,0.4)',
   btnDangerBg: 'rgba(217,43,62,0.08)',
   btnDangerBorder: 'rgba(217,43,62,0.45)',
   alertBg: '#FDEFEF',
   alertBorder: '#F1CBCF',
   alertIconBg: '#F8DBDF',
-  dangerBg: '#FDECEC',
-  dangerBorder: '#F0B9BD',
+  dangerBg: '#FDF1F2',
+  dangerBorder: '#F5C9CD',
   dialogBg: '#FFFFFF',
   toastBg: '#0D3B31',
   toastBorder: 'rgba(15,166,124,0.5)',
-  statusOkBorder: 'rgba(15,166,124,0.45)',
-  statusOkBg: 'rgba(15,166,124,0.08)',
-  statusWarnBorder: '#D9B871',
+  statusOkBorder: 'rgba(0,168,107,0.45)',
+  statusOkBg: 'rgba(0,168,107,0.08)',
+  statusWarnBorder: '#E3C77E',
   statusWarnBg: '#F8EFD8',
-  // The header's liquid-glass circles keep the SAME look in both themes —
-  // a subtle frosted disc with a hairline ring (white over dark, ink over
-  // light; the shared GLASS_FX blur/saturate does the rest).
-  glassBg: 'rgba(16,29,27,0.06)',
-  glassBorder: 'rgba(16,29,27,0.12)',
+  // The header's liquid-glass circles keep the EXACT same glass in both
+  // themes — one translucent treatment, never re-tinted per theme.
+  glassBg: 'rgba(255,255,255,0.10)',
+  glassBorder: 'rgba(255,255,255,0.14)',
   // Soft pastel tiles: mint, sky, lilac, blush and cream — the category
-  // cards read as gentle colour cards, not saturated blocks (the reference
-  // keeps its pastels gently tinted, never washed out).
+  // cards read as gentle colour cards with no borders, like the reference.
   tints: {
     food: { top: '#E7F8EF', bottom: '#D3F0E0', border: '#BCE7CD' },
     medicine: { top: '#E9F2FC', bottom: '#D6E8FA', border: '#BBD9F3' },
@@ -167,14 +171,15 @@ export const LIGHT: Palette = {
     pantry: { top: '#FCF2DC', bottom: '#F9E8C3', border: '#EFD9A2' },
     add: { top: '#F7FAF8', bottom: '#F3F7F4', border: '#D7E2DC' },
   },
-  addTile: { bg: '#FFFFFF', border: '#BFCFC9' },
+  // The Add-category tile: a plain, borderless soft card.
+  addTile: { bg: '#F1F5F9', border: '#E5EDF3' },
   pills: {
-    // Softer, lighter day pills: gentle pastel fill with soft (never dark)
-    // ink — "1 day", "3 days" whisper rather than shout.
-    amber: { bg: '#FCF4D8', text: '#C09344' },
-    green: { bg: '#E1F4EC', text: '#4BA983' },
+    // Day pills with real presence: a clearly-tinted fill and a deep-toned
+    // ink, so "1 day" / "3 days" read at a glance.
+    amber: { bg: '#F9E7B8', text: '#8A600C' },
+    green: { bg: '#C6EDD8', text: '#0A7A55' },
   },
-  switchColors: { track: '#CBD5D3', trackOn: '#17B586', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
+  switchColors: { track: '#CBD5E1', trackOn: '#12BE8A', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
 export type Tint = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | 'add';
@@ -182,6 +187,26 @@ export type Tint = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | '
 export type Tone = 'amber' | 'green';
 
 export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
+
+// The reference's airy depth: soft, low-opacity blue-gray shadows that let
+// white cards float gently above the cool-white page. Applied on the LIGHT
+// theme only — the dark theme separates surfaces with hairlines instead.
+export const CARD_SHADOW: ViewStyle = {
+  shadowColor: '#64748B',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.07,
+  shadowRadius: 12,
+  elevation: 3,
+};
+
+// Slightly more presence for the profile card and dialogs.
+export const CARD_SHADOW_LIFTED: ViewStyle = {
+  shadowColor: '#64748B',
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.09,
+  shadowRadius: 16,
+  elevation: 4,
+};
 
 export const space = { gutter: 14, gridGap: 9 };
 
@@ -198,14 +223,15 @@ export const type = {
 } as const;
 
 // Icon accents used by Settings rows; mid-tone so they read on both themes.
+// The green follows the reference's primary green.
 export const accents = {
   amber: '#D99B2B',
   purple: '#8B5CF6',
-  mint: '#12B984',
+  mint: '#00A86B',
   blue: '#3B82F6',
   teal: '#3FA8AE',
   pink: '#E255A0',
-  red: '#E5484D',
+  red: '#FF334F',
 } as const;
 
 export type Accent = keyof typeof accents;

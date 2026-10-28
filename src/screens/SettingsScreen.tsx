@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { makeStyles, useTheme, accents, LIGHT } from '../theme';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { makeStyles, useTheme, accents, LIGHT, CARD_SHADOW_LIFTED } from '../theme';
 import { useItems } from '../items';
 import { useCategories } from '../categories';
 import { useSettings } from '../settings';
@@ -20,57 +22,117 @@ import {
   type DefaultCategory,
 } from '../preferences';
 import { isoToday } from '../scanner/dateParser';
-import { Page } from '../components/Page';
-import { Brandmark } from '../components/HomeComponents';
+import { Brandmark, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
+import { useNavAutohide } from '../components/navAutohide';
 import { CategoryManager } from '../components/CategoryManager';
-import { IconTile, Note, Options, SettingRow, SettingsCard, SettingsSection, SmallButton, Toggle } from '../components/SettingsRows';
+import { IconTile, Note, OptionList, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
 import appConfig from '../../app.json';
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
+type IconName = keyof typeof Ionicons.glyphMap;
+
+// The Settings tab, restructured after the reference: a grouped list of
+// simple rows (icon tile + title + value + chevron) where every row opens its
+// own detail page instead of expanding in place. Detail pages slide in from
+// the right; the root list stays one glanceable screen.
+
+type PageId =
+  | 'profile'
+  | 'privacy'
+  | 'notifications'
+  | 'categories'
+  | 'appearance'
+  | 'warning'
+  | 'date'
+  | 'sorting'
+  | 'backup'
+  | 'help'
+  | 'terms';
+
+const PAGE_TITLES: Record<PageId, string> = {
+  profile: 'Profile',
+  privacy: 'Privacy & Security',
+  notifications: 'Notifications',
+  categories: 'Categories',
+  appearance: 'Appearance',
+  warning: 'Warning period',
+  date: 'Date format',
+  sorting: 'Default sorting',
+  backup: 'Backup & Sync',
+  help: 'Help & Support',
+  terms: 'Terms & Privacy',
+};
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
-export function SettingsScreen({ badge, onNavigate }: Props) {
+export function SettingsScreen({ onNavigate }: Props) {
   const t = useTheme();
   const s = useStyles();
-  const { settings, update, saveError, systemReduceMotion, formatDate, reset } = useSettings();
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { settings, update, saveError, reset, motion } = useSettings();
   const { saved, clearSaved } = useItems();
   const { all, clearAll: clearCategories } = useCategories();
   const [confirmClear, setConfirmClear] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [page, setPage] = useState<PageId | null>(null);
 
-  const exportAs = async (kind: 'json' | 'csv') => {
-    setExportError(null);
-    const now = new Date();
-    try {
-      if (kind === 'json') await saveTextFile(exportFileName('json', now), 'application/json', itemsToJson(saved, now, APP_VERSION));
-      else {
-        // Custom categories export with their own names.
-        const names: Record<string, string> = {};
-        for (const cat of all) names[cat.id] = cat.name;
-        await saveTextFile(exportFileName('csv', now), 'text/csv', itemsToCsv(saved, names));
-      }
-    } catch {
-      setExportError('The file could not be created. Your browser may be blocking downloads on this page.');
+  // The shell heartbeat + bottom-nav autohide tracker (reporting only here:
+  // the settings header itself stays fixed, like the reference).
+  const { onScroll } = useNavAutohide();
+
+  // Motion as a ref so animation timings never retrigger a running animation.
+  const motionRef = useRef(motion);
+  motionRef.current = motion;
+
+  // Gentle one-time fade-in of the settings content.
+  const appear = useRef(new Animated.Value(motion ? 0 : 1)).current;
+  useEffect(() => {
+    Animated.timing(appear, { toValue: 1, duration: motionRef.current ? 240 : 0, useNativeDriver: true }).start();
+  }, [appear]);
+
+  // The detail page slides in from the right edge; the root list drifts a
+  // little left for depth. Everything is transform/opacity only.
+  const slide = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (page) {
+      slide.setValue(0);
+      Animated.timing(slide, { toValue: 1, duration: motionRef.current ? 230 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
     }
-  };
+  }, [page, slide]);
+  const closePage = useCallback(() => {
+    Animated.timing(slide, { toValue: 0, duration: motionRef.current ? 210 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => setPage(null));
+  }, [slide]);
+  const slideX = slide.interpolate({ inputRange: [0, 1], outputRange: [width, 0] });
+  const rootShift = slide.interpolate({ inputRange: [0, 1], outputRange: [0, -28] });
 
-  return (
-    <Page title="Settings" subtitle="Make PREXPIRE work for you." badge={badge} onNavigate={onNavigate}>
+  const open = (p: PageId) => setPage(p);
+
+  const customCount = all.filter((cat) => cat.custom).length;
+  const bottomPad = NAV_HEIGHT + navOffset(insets.bottom) + 24;
+
+  const root = (
+    <>
       {saveError && (
         <View style={s.banner} accessibilityRole="alert">
           <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>
         </View>
       )}
 
-      <View style={s.profile}>
-        <IconTile icon="person" accent="mint" size={48} />
+      <Pressable
+        onPress={() => open('profile')}
+        accessibilityRole="button"
+        accessibilityLabel="Profile"
+        style={({ pressed }) => [s.profileCard, pressed && s.pressedCard]}
+      >
+        <View style={s.avatar}>
+          <Ionicons name="person" size={30} color={accents.mint} />
+        </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.profileTitle}>Your preferences</Text>
-          <Text style={s.profileSub}>
+          <Text style={s.profileSub} numberOfLines={1}>
             {WEB ? 'Saved in this browser' : 'Saved on this device'}. No account needed.
           </Text>
         </View>
@@ -78,260 +140,110 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
           <Text style={s.profileCount}>{saved.length}</Text>
           <Text style={s.profileCountLabel}>{saved.length === 1 ? 'item added' : 'items added'}</Text>
         </View>
-      </View>
+        <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
+      </Pressable>
 
-      <SettingsSection title="Notifications">
+      <SettingsSection title="Account">
         <SettingsCard>
-          <SettingRow
-            icon="notifications"
-            accent="amber"
-            title="Expiry reminders"
-            description="Get notified before items expire."
-            right={<Toggle label="Expiry reminders" value={settings.reminders} onChange={(v) => update({ reminders: v })} />}
-            below={
-              <Note>
-                {settings.reminders
-                  ? 'Due reminders appear in the Reminders tab and its badge. PREXPIRE does not send notifications yet.'
-                  : 'Off. The Reminders tab lists nothing and its badge stays clear.'}
-              </Note>
-            }
-          />
-          <SettingRow
-            icon="time"
-            accent="amber"
-            title="Reminder timing"
-            description="Choose when reminders arrive."
-            below={
-              <Options
-                label="Reminder timing"
-                value={settings.reminderLead}
-                onChange={(v) => update({ reminderLead: v })}
-                options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l), disabled: !settings.reminders }))}
-              />
-            }
-          />
-          <SettingRow
-            icon="today"
-            accent="amber"
-            title="Daily summary"
-            description="See what's expiring soon."
-            right={<Toggle label="Daily summary" value={settings.dailySummary} onChange={(v) => update({ dailySummary: v })} />}
-            below={settings.dailySummary ? <Note>Saved. A daily summary needs notification delivery, which isn't built yet, so none is sent.</Note> : undefined}
-          />
-          <BrowserNotificationsRow />
+          <SettingRow icon="person-outline" accent="mint" title="Profile" description="Your items and where they're stored." onPress={() => open('profile')} />
+          <SettingRow icon="shield-checkmark-outline" accent="blue" title="Privacy & Security" description="Camera access and data storage." onPress={() => open('privacy')} />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Appearance">
+      <SettingsSection title="App Preferences">
         <SettingsCard>
-          <SettingRow
-            icon="contrast"
-            accent="purple"
-            title="Theme"
-            description="Dark, light, or follow your device."
-            below={
-              <>
-                <Options
-                  label="Theme"
-                  value={settings.theme}
-                  onChange={(v) => update({ theme: v })}
-                  options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
-                />
-                <Note>
-                  {settings.theme === 'system'
-                    ? 'System follows your device\u2019s appearance and switches live.'
-                    : settings.theme === 'light'
-                      ? 'A bright take on the same design.'
-                      : 'The classic near-black look.'}
-                </Note>
-              </>
-            }
-          />
-          <SettingRow
-            icon="reorder-four"
-            accent="blue"
-            title="Compact layout"
-            description="Shorter rows in item lists."
-            right={<Toggle label="Compact layout" value={settings.compact} onChange={(v) => update({ compact: v })} />}
-          />
-          <SettingRow
-            icon="sparkles"
-            accent="purple"
-            title="Animations"
-            description="Fades and the scanner's sweep line."
-            right={
-              <Toggle
-                label="Animations"
-                value={settings.animations && !systemReduceMotion}
-                disabled={systemReduceMotion}
-                onChange={(v) => update({ animations: v })}
-              />
-            }
-            below={systemReduceMotion ? <Note>Your device asks for reduced motion, so animations stay off.</Note> : undefined}
-          />
+          <SettingRow icon="notifications-outline" accent="amber" title="Notifications" description="Expiry reminders and their timing." onPress={() => open('notifications')} />
+          <SettingRow icon="grid" accent="purple" title="Categories" description="Your folders, the default category and samples." onPress={() => open('categories')} />
+          <SettingRow icon="color-palette-outline" accent="pink" title="Appearance" description="Theme, layout density and animations." onPress={() => open('appearance')} />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Expiry preferences">
+      <SettingsSection title="Expiry & Lists">
         <SettingsCard>
+          <SettingRow icon="hourglass-outline" accent="mint" title="Warning period" value={`${settings.warningDays} days`} description="Items count as expiring soon this far ahead." onPress={() => open('warning')} />
+          <SettingRow icon="calendar-outline" accent="teal" title="Date format" value={DATE_FORMAT_LABELS[settings.dateFormat]} onPress={() => open('date')} />
+          <SettingRow icon="swap-vertical-outline" accent="blue" title="Default sorting" value={SORT_LABELS[settings.sort]} description="Order of the Items list." onPress={() => open('sorting')} />
           <SettingRow
-            icon="hourglass"
-            accent="mint"
-            title="Default warning period"
-            description="Items count as expiring soon this far ahead."
-            below={
-              <Options
-                label="Default warning period"
-                value={settings.warningDays}
-                onChange={(v) => update({ warningDays: v })}
-                options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
-              />
-            }
-          />
-          <SettingRow
-            icon="calendar"
-            accent="mint"
-            title="Date format"
-            description={`Today shows as ${formatDate(isoToday(new Date()))}.`}
-            below={
-              <Options
-                label="Date format"
-                value={settings.dateFormat}
-                onChange={(v) => update({ dateFormat: v })}
-                options={DATE_FORMATS.map((f) => ({ value: f, label: DATE_FORMAT_LABELS[f] }))}
-              />
-            }
-          />
-          <SettingRow
-            icon="swap-vertical"
-            accent="mint"
-            title="Default sorting"
-            description="Order of the Items list."
-            below={
-              <Options
-                label="Default sorting"
-                value={settings.sort}
-                onChange={(v) => update({ sort: v })}
-                options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
-              />
-            }
-          />
-          <SettingRow
-            icon="eye"
-            accent="mint"
+            icon="eye-outline"
+            accent="teal"
             title="Show expired items"
-            description="Keep expired items in the Home and Items lists."
             right={<Toggle label="Show expired items" value={settings.showExpired} onChange={(v) => update({ showExpired: v })} />}
           />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Categories and inventory">
+      <SettingsSection title="Data & Storage">
         <SettingsCard>
           <SettingRow
-            icon="grid"
-            accent="blue"
-            title="Browse categories"
-            description="Food, Medicine, Household, Skincare, Pantry and the ones you add."
-            onPress={() => onNavigate('tab:items')}
-          />
-          <SettingRow
-            icon="folder-open-outline"
-            accent="blue"
-            title="Your categories"
-            description="Add a category folder and it appears on Home, in lists and in the scanner."
-            below={<CategoryManager />}
-          />
-          <SettingRow
-            icon="pricetag"
-            accent="blue"
-            title="Default category"
-            description="Preselected when you add an item."
-            below={
-              <Options<DefaultCategory>
-                label="Default category"
-                value={settings.defaultCategory}
-                onChange={(v) => update({ defaultCategory: v })}
-                options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
-              />
-            }
-          />
-          <SettingRow
-            icon="flask"
-            accent="blue"
-            title="Show sample items"
-            description="The example items Oat milk, Ibuprofen and Bread."
-            right={<Toggle label="Show sample items" value={settings.showSamples} onChange={(v) => update({ showSamples: v })} />}
-          />
-        </SettingsCard>
-      </SettingsSection>
-
-      <SettingsSection title="Privacy and data">
-        <SettingsCard>
-          <SettingRow
-            icon="camera"
-            accent="teal"
-            title="Camera access"
-            description={
-              WEB
-                ? "The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings."
-                : 'The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app.'
-            }
-            below={<SmallButton label="Open scanner" icon="scan-outline" onPress={() => onNavigate('scan')} />}
-          />
-          <SettingRow
-            icon="server"
-            accent="teal"
-            title="Data storage"
-            description={
-              WEB
-                ? "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them."
-                : 'Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.'
-            }
-          />
-          <SettingRow
-            icon="download"
-            accent="teal"
-            title="Export data"
-            description={saved.length ? `Download your ${saved.length} added ${saved.length === 1 ? 'item' : 'items'}: name, category, expiry date, date precision, when added and source.` : 'Nothing to export yet. Items you add will be exported here (sample items are not included).'}
-            below={
-              <>
-                <View style={s.buttons}>
-                  <SmallButton label="JSON" icon="code-slash" disabled={!saved.length} onPress={() => exportAs('json')} accessibilityLabel="Export items as JSON" />
-                  <SmallButton label="CSV" icon="document-text" disabled={!saved.length} onPress={() => exportAs('csv')} accessibilityLabel="Export items as CSV" />
-                </View>
-                {exportError && <Note tone="warn">{exportError}</Note>}
-              </>
-            }
-          />
-        </SettingsCard>
-        <View style={{ height: 12 }} />
-        <SettingsCard danger>
-          <SettingRow
-            icon="trash"
-            accent="red"
-            title="Clear all data"
-            titleColor={accents.red}
-            description="Delete your added items and categories, and reset every setting."
-            onPress={() => setConfirmClear(true)}
+            icon="cloud-upload-outline"
+            accent="mint"
+            title="Backup & Sync"
+            description="Nothing is uploaded — your data stays with you."
+            right={<StatusBadge label="Off" />}
+            onPress={() => open('backup')}
           />
         </SettingsCard>
       </SettingsSection>
 
       <SettingsSection title="About">
         <SettingsCard>
-          <View style={s.about}>
-            <Brandmark height={44} />
-            <Text style={s.aboutText}>Keep track of what matters before it expires.</Text>
-            <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
-          </View>
+          <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION} />
+          <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" onPress={() => open('help')} />
+          <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
         </SettingsCard>
       </SettingsSection>
+
+      <SettingsCard danger>
+        <SettingRow
+          icon="trash-outline"
+          accent="red"
+          title="Clear all data"
+          titleColor={accents.red}
+          description="Delete your added items and categories, and reset every setting."
+          onPress={() => setConfirmClear(true)}
+        />
+      </SettingsCard>
+    </>
+  );
+
+  return (
+    <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }] }}>
+        <View style={[s.frame, s.rootFrame]}>
+          <View style={s.header}>
+            <CircleButton icon="chevron-back" label="Back to Home" onPress={() => onNavigate('tab:home')} />
+            <Text style={s.headerTitle} accessibilityRole="header">
+              Settings
+            </Text>
+          </View>
+        </View>
+        <ScrollViewLike onScroll={onScroll} bottomPad={bottomPad}>
+          <View style={[s.frame, s.rootFrame]}>{root}</View>
+        </ScrollViewLike>
+      </Animated.View>
+
+      {page && (
+        <Animated.View style={[s.overlay, { transform: [{ translateX: slideX }] }]}>
+          <View style={[s.root, { paddingTop: insets.top }]}>
+            <View style={[s.frame, s.rootFrame]}>
+              <View style={s.header}>
+                <CircleButton icon="chevron-back" label="Back" onPress={closePage} />
+                <Text style={s.detailTitle} accessibilityRole="header">
+                  {PAGE_TITLES[page]}
+                </Text>
+              </View>
+            </View>
+            <ScrollViewLike onScroll={onScroll} bottomPad={bottomPad}>
+              <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate)}</View>
+            </ScrollViewLike>
+          </View>
+        </Animated.View>
+      )}
 
       <ClearDataDialog
         visible={confirmClear}
         itemCount={saved.length}
-        categoryCount={all.filter((cat) => cat.custom).length}
+        categoryCount={customCount}
         onCancel={() => setConfirmClear(false)}
         onConfirm={async () => {
           await clearSaved();
@@ -340,7 +252,170 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
           setConfirmClear(false);
         }}
       />
-    </Page>
+    </View>
+  );
+}
+
+// The scrolling body shared by the root list and every detail page.
+function ScrollViewLike({ children, onScroll, bottomPad }: { children: React.ReactNode; onScroll: () => void; bottomPad: number }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={{ paddingBottom: bottomPad }}>
+      {children}
+    </ScrollView>
+  );
+}
+
+// A circular header button: white, hairline-bordered, faintly floating.
+function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const c = useTheme();
+  const s = useStyles();
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [s.circleBtn, { backgroundColor: c.surface, borderColor: c.surfaceBorder }, pressed && s.circlePressed]}
+    >
+      <Ionicons name={icon} size={22} color={c.text} />
+    </Pressable>
+  );
+}
+
+
+function renderDetail(page: PageId, onNavigate: (route: string) => void) {
+  switch (page) {
+    case 'profile':
+      return <ProfileDetail />;
+    case 'privacy':
+      return <PrivacyDetail onNavigate={onNavigate} />;
+    case 'notifications':
+      return <NotificationsDetail />;
+    case 'categories':
+      return <CategoriesDetail onNavigate={onNavigate} />;
+    case 'appearance':
+      return <AppearanceDetail />;
+    case 'warning':
+      return <WarningDetail />;
+    case 'date':
+      return <DateDetail />;
+    case 'sorting':
+      return <SortingDetail />;
+    case 'backup':
+      return <BackupDetail />;
+    case 'help':
+      return <HelpDetail />;
+    case 'terms':
+      return <TermsDetail />;
+    default:
+      return null;
+  }
+}
+
+function ProfileDetail() {
+  const s = useStyles();
+  const { saved } = useItems();
+  const { all } = useCategories();
+  const { settings } = useSettings();
+  const customCount = all.filter((cat) => cat.custom).length;
+  return (
+    <>
+      <View style={s.heroCard}>
+        <View style={s.heroAvatar}>
+          <Ionicons name="person" size={34} color={accents.mint} />
+        </View>
+        <Text style={s.heroTitle}>Your preferences</Text>
+        <Text style={s.heroSub}>{WEB ? 'Saved in this browser' : 'Saved on this device'}. No account, no sign-in.</Text>
+      </View>
+      <SettingsSection title="Library">
+        <SettingsCard>
+          <SettingRow icon="cube-outline" accent="mint" title="Items added" value={`${saved.length}`} />
+          <SettingRow icon="folder-open-outline" accent="blue" title="Your categories" value={`${customCount}`} />
+          <SettingRow icon="flask-outline" accent="purple" title="Sample items" value={settings.showSamples ? 'Shown' : 'Hidden'} />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Storage">
+        <SettingsCard>
+          <SettingRow icon="server-outline" accent="teal" title="Where data lives" value={WEB ? 'This browser' : 'This device'} />
+          <SettingRow icon="cloud-offline-outline" accent="amber" title="Synced" value="Never" />
+        </SettingsCard>
+      </SettingsSection>
+    </>
+  );
+}
+
+function PrivacyDetail({ onNavigate }: { onNavigate: (route: string) => void }) {
+  return (
+    <SettingsSection title="Privacy & Security">
+      <SettingsCard>
+        <SettingRow
+          icon="camera-outline"
+          accent="teal"
+          title="Camera access"
+          description={
+            WEB
+              ? "The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings."
+              : 'The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app.'
+          }
+          below={<SmallButton label="Open scanner" icon="scan-outline" onPress={() => onNavigate('scan')} />}
+        />
+        <SettingRow
+          icon="lock-closed-outline"
+          accent="mint"
+          title="Data storage"
+          description={
+            WEB
+              ? "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them."
+              : 'Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.'
+          }
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function NotificationsDetail() {
+  const { settings, update } = useSettings();
+  return (
+    <>
+      <SettingsSection title="Reminders">
+        <SettingsCard>
+          <SettingRow
+            icon="notifications-outline"
+            accent="amber"
+            title="Expiry reminders"
+            description="Get notified before items expire."
+            right={<Toggle label="Expiry reminders" value={settings.reminders} onChange={(v) => update({ reminders: v })} />}
+          />
+          <SettingRow
+            icon="time-outline"
+            accent="amber"
+            title="Reminder timing"
+            description="When a reminder appears before the expiry date."
+            below={
+              <OptionList
+                label="Reminder timing"
+                value={settings.reminderLead}
+                onChange={(v) => update({ reminderLead: v })}
+                options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l), disabled: !settings.reminders }))}
+              />
+            }
+          />
+          <SettingRow
+            icon="today-outline"
+            accent="amber"
+            title="Daily summary"
+            description="See what's expiring soon."
+            right={<Toggle label="Daily summary" value={settings.dailySummary} onChange={(v) => update({ dailySummary: v })} />}
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Delivery">
+        <SettingsCard>
+          <BrowserNotificationsRow />
+        </SettingsCard>
+      </SettingsSection>
+    </>
   );
 }
 
@@ -373,17 +448,15 @@ function BrowserNotificationsRow() {
     insecure: { text: 'Browsers only allow notifications on secure (https) pages.', tone: 'muted' },
   };
 
+  const badgeTone = status === 'granted' ? 'green' : status === 'denied' ? 'amber' : 'muted';
+
   return (
     <SettingRow
-      icon="globe"
+      icon="globe-outline"
       accent="amber"
       title={WEB ? 'Browser notifications' : 'Notifications'}
       description={WEB ? 'Allow notifications from this browser.' : 'Allow notifications on this device.'}
-      right={
-        <View style={[s.status, status === 'granted' && { borderColor: t.statusOkBorder, backgroundColor: t.statusOkBg }, status === 'denied' && { borderColor: t.statusWarnBorder, backgroundColor: t.statusWarnBg }]} accessibilityLabel={`Permission: ${label[status]}`}>
-          <Text style={[s.statusText, status === 'granted' && { color: t.mint }, status === 'denied' && { color: t.amberText }]}>{label[status]}</Text>
-        </View>
-      }
+      right={<StatusBadge label={label[status]} tone={badgeTone} check={status === 'granted'} />}
       below={
         <>
           <Note tone={note[status].tone}>{note[status].text}</Note>
@@ -395,6 +468,292 @@ function BrowserNotificationsRow() {
         </>
       }
     />
+  );
+}
+
+function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void }) {
+  const { settings, update } = useSettings();
+  const { all } = useCategories();
+  return (
+    <>
+      <SettingsSection title="Your categories">
+        <SettingsCard>
+          <SettingRow
+            icon="folder-open-outline"
+            accent="blue"
+            title="Your categories"
+            description="Add a category folder and it appears on Home, in lists and in the scanner."
+            below={<CategoryManager />}
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Defaults">
+        <SettingsCard>
+          <SettingRow
+            icon="pricetag-outline"
+            accent="blue"
+            title="Default category"
+            description="Preselected when you add an item."
+            below={
+              <OptionList<DefaultCategory>
+                label="Default category"
+                value={settings.defaultCategory}
+                onChange={(v) => update({ defaultCategory: v })}
+                options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
+              />
+            }
+          />
+          <SettingRow
+            icon="flask-outline"
+            accent="blue"
+            title="Show sample items"
+            description="The example items Oat milk, Ibuprofen and Bread."
+            right={<Toggle label="Show sample items" value={settings.showSamples} onChange={(v) => update({ showSamples: v })} />}
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Browse">
+        <SettingsCard>
+          <SettingRow icon="grid" accent="purple" title="Browse categories" description="Food, Medicine, Household, Skincare, Pantry and the ones you add." onPress={() => onNavigate('tab:items')} />
+        </SettingsCard>
+      </SettingsSection>
+    </>
+  );
+}
+
+function AppearanceDetail() {
+  const { settings, update, systemReduceMotion } = useSettings();
+  return (
+    <SettingsSection title="Appearance">
+      <SettingsCard>
+        <SettingRow
+          icon="contrast-outline"
+          accent="purple"
+          title="Theme"
+          description="Dark, light, or follow your device."
+          below={
+            <>
+              <OptionList
+                label="Theme"
+                value={settings.theme}
+                onChange={(v) => update({ theme: v })}
+                options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
+              />
+              <Note>
+                {settings.theme === 'system'
+                  ? 'System follows your device\u2019s appearance and switches live.'
+                  : settings.theme === 'light'
+                    ? 'A bright take on the same design.'
+                    : 'The classic near-black look.'}
+              </Note>
+            </>
+          }
+        />
+        <SettingRow
+          icon="reorder-four-outline"
+          accent="blue"
+          title="Compact layout"
+          description="Shorter rows in item lists."
+          right={<Toggle label="Compact layout" value={settings.compact} onChange={(v) => update({ compact: v })} />}
+        />
+        <SettingRow
+          icon="sparkles-outline"
+          accent="purple"
+          title="Animations"
+          description="Fades and the scanner's sweep line."
+          right={<Toggle label="Animations" value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
+          below={systemReduceMotion ? <Note>Your device asks for reduced motion, so animations stay off.</Note> : undefined}
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function WarningDetail() {
+  const { settings, update } = useSettings();
+  return (
+    <SettingsSection title="Warning period">
+      <SettingsCard>
+        <SettingRow
+          icon="hourglass-outline"
+          accent="mint"
+          title="Expiring soon, this far ahead"
+          description="Items within this window count as expiring soon — amber pills, the attention card and reminders."
+          below={
+            <OptionList
+              label="Warning period"
+              value={settings.warningDays}
+              onChange={(v) => update({ warningDays: v })}
+              options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
+            />
+          }
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function DateDetail() {
+  const { settings, update, formatDate } = useSettings();
+  return (
+    <SettingsSection title="Date format">
+      <SettingsCard>
+        <SettingRow
+          icon="calendar-outline"
+          accent="teal"
+          title="How dates are written"
+          description={`Today shows as ${formatDate(isoToday(new Date()))}.`}
+          below={
+            <OptionList
+              label="Date format"
+              value={settings.dateFormat}
+              onChange={(v) => update({ dateFormat: v })}
+              options={DATE_FORMATS.map((f) => ({ value: f, label: DATE_FORMAT_LABELS[f] }))}
+            />
+          }
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function SortingDetail() {
+  const { settings, update } = useSettings();
+  return (
+    <SettingsSection title="Default sorting">
+      <SettingsCard>
+        <SettingRow
+          icon="swap-vertical-outline"
+          accent="blue"
+          title="Order of the Items list"
+          description="Newest scan or closest expiry first — your pick becomes the default."
+          below={
+            <OptionList
+              label="Default sorting"
+              value={settings.sort}
+              onChange={(v) => update({ sort: v })}
+              options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
+            />
+          }
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function BackupDetail() {
+  const { saved } = useItems();
+  const { all } = useCategories();
+  const s = useStyles();
+  const [exportError, setExportError] = useState<string | null>(null);
+  const exportAs = async (kind: 'json' | 'csv') => {
+    setExportError(null);
+    const now = new Date();
+    try {
+      if (kind === 'json') await saveTextFile(exportFileName('json', now), 'application/json', itemsToJson(saved, now, APP_VERSION));
+      else {
+        const names: Record<string, string> = {};
+        for (const cat of all) names[cat.id] = cat.name;
+        await saveTextFile(exportFileName('csv', now), 'text/csv', itemsToCsv(saved, names));
+      }
+    } catch {
+      setExportError('The file could not be created. Your browser may be blocking downloads on this page.');
+    }
+  };
+  return (
+    <>
+      <SettingsSection title="Backup & Sync">
+        <SettingsCard>
+          <SettingRow
+            icon="cloud-offline-outline"
+            accent="mint"
+            title="Sync"
+            description={WEB ? 'PREXPIRE has no cloud: items, categories and settings live only in this browser, on this device.' : 'PREXPIRE has no cloud: items, categories and settings live only on this device.'}
+            right={<StatusBadge label="Off" />}
+          />
+          <SettingRow
+            icon="download-outline"
+            accent="teal"
+            title="Export data"
+            description={saved.length ? `Download your ${saved.length} added ${saved.length === 1 ? 'item' : 'items'}: name, category, expiry date, date precision, when added and source.` : 'Nothing to export yet. Items you add will be exported here (sample items are not included).'}
+            below={
+              <>
+                <View style={s.buttons}>
+                  <SmallButton label="JSON" icon="code-slash-outline" disabled={!saved.length} onPress={() => exportAs('json')} accessibilityLabel="Export items as JSON" />
+                  <SmallButton label="CSV" icon="document-text-outline" disabled={!saved.length} onPress={() => exportAs('csv')} accessibilityLabel="Export items as CSV" />
+                </View>
+                {exportError && <Note tone="warn">{exportError}</Note>}
+              </>
+            }
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <Note>To keep a copy, export before clearing your browser data or moving devices.</Note>
+    </>
+  );
+}
+
+function HelpDetail() {
+  return (
+    <SettingsSection title="How PREXPIRE works">
+      <SettingsCard>
+        <SettingRow
+          icon="scan-outline"
+          accent="teal"
+          title="Scan a label"
+          description="Open the scanner from the middle button in the bottom bar and point at a date. The frame is read on your device — nothing is ever uploaded."
+        />
+        <SettingRow
+          icon="cube-outline"
+          accent="mint"
+          title="Track items"
+          description="A scan becomes an item with its category, expiry date and a reminder. Home shows what needs attention first."
+        />
+        <SettingRow
+          icon="folder-open-outline"
+          accent="blue"
+          title="Organise"
+          description="Add your own category folders in Settings → Categories. Their tiles appear on Home, in lists and in the scanner."
+        />
+        <SettingRow
+          icon="notifications-outline"
+          accent="amber"
+          title="Reminders"
+          description="The Reminders tab lists what's due soon, and the bell shows how many items need attention."
+        />
+        <SettingRow
+          icon="download-outline"
+          accent="purple"
+          title="Keep a copy"
+          description="Export your items as JSON or CSV from Settings → Data & Storage."
+        />
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function TermsDetail() {
+  const s = useStyles();
+  return (
+    <>
+      <SettingsSection title="Privacy">
+        <SettingsCard>
+          <SettingRow
+            icon="lock-closed-outline"
+            accent="mint"
+            title="Your data"
+            description={WEB ? 'Everything is stored only in this browser, on this device — no account, no cloud, no sync, no tracking.' : 'Everything is stored only on this device — no account, no cloud, no sync, no tracking.'}
+          />
+          <SettingRow icon="camera-outline" accent="teal" title="Camera" description="Frames are read locally to find expiry dates and are never uploaded or stored." />
+          <SettingRow icon="share-social-outline" accent="purple" title="Exports" description="Files you export go wherever you choose; nothing is sent otherwise." />
+        </SettingsCard>
+      </SettingsSection>
+      <View style={s.aboutFooter}>
+        <Brandmark height={38} />
+        <Text style={s.aboutTagline}>Keep track of what matters before it expires.</Text>
+        <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
+      </View>
+    </>
   );
 }
 
@@ -426,7 +785,7 @@ function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfir
       <View style={s.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onCancel} accessibilityLabel="Close" importantForAccessibility="no" />
         <View style={[s.dialog, { backgroundColor: t.dialogBg, borderColor: t.dangerBorder }]} accessibilityRole={'dialog' as never} accessibilityLabel="Clear all data" {...({ 'aria-modal': true } as object)}>
-          <IconTile icon="trash" accent="red" size={44} />
+          <IconTile icon="trash-outline" accent="red" size={48} />
           <Text style={s.dialogTitle} accessibilityRole="header">
             Clear all data?
           </Text>
@@ -452,38 +811,63 @@ function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfir
 }
 
 const useStyles = makeStyles((t) => ({
-  banner: { borderRadius: 12, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
-  profile: {
+  root: { flex: 1, backgroundColor: t.bg },
+  frame: { width: '100%', alignSelf: 'center' },
+  // Settings reads best a touch narrower than the lists.
+  rootFrame: { maxWidth: 640, paddingHorizontal: 16 },
+  header: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 0 },
+  headerTitle: { color: t.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 },
+  detailTitle: { color: t.text, fontSize: 23, fontWeight: '700', letterSpacing: -0.4 },
+  // The circular back/search buttons: a hairline ring, a whisper of shadow.
+  circleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...(t === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } } : null),
+  },
+  circlePressed: { transform: [{ scale: 0.92 }], opacity: 0.8 },
+  // The profile card floats a little higher than the section cards.
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    padding: 14,
-    marginBottom: 24,
-    borderRadius: 18,
-    // Borderless in light, like the settings cards (contrast does the work).
-    borderWidth: t === LIGHT ? 0 : 1,
+    padding: 16,
+    marginBottom: 26,
+    borderRadius: 20,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
     backgroundColor: t.surface,
+    ...(t === LIGHT ? CARD_SHADOW_LIFTED : null),
   },
-  profileTitle: { color: t.text, fontSize: 17, fontWeight: '700' },
-  profileSub: { color: t.textMuted, fontSize: 13, marginTop: 2 },
+  pressedCard: { opacity: 0.9, transform: [{ scale: 0.995 }] },
+  avatar: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', backgroundColor: '#D9FBF0' },
+  profileTitle: { color: t.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
+  profileSub: { color: t.textMuted, fontSize: 13.5, marginTop: 2 },
   profileStat: { alignItems: 'flex-end' },
   profileCount: { color: t.text, fontSize: 20, fontWeight: '700' },
   profileCountLabel: { color: t.textMuted, fontSize: 12 },
-  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  status: { paddingHorizontal: 10, height: 26, borderRadius: 999, borderWidth: 1, borderColor: t.surfaceBorder, justifyContent: 'center' },
-  statusText: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
-  about: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 16, gap: 8 },
-  aboutText: { color: t.text, fontSize: 14.5, textAlign: 'center' },
+  heroCard: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 16, marginBottom: 24, borderRadius: 20, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, ...(t === LIGHT ? CARD_SHADOW_LIFTED : null) },
+  heroAvatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: '#D9FBF0', marginBottom: 12 },
+  heroTitle: { color: t.text, fontSize: 21, fontWeight: '700', letterSpacing: -0.3 },
+  heroSub: { color: t.textMuted, fontSize: 14, marginTop: 4, textAlign: 'center' },
+  aboutFooter: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 16, gap: 8 },
+  aboutTagline: { color: t.text, fontSize: 14.5, textAlign: 'center' },
   aboutVersion: { color: t.textMuted, fontSize: 13 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  banner: { borderRadius: 14, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: t.bg, zIndex: 10, elevation: 6 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {
     width: '100%',
     maxWidth: 420,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     padding: 20,
     gap: 10,
+    ...(t === LIGHT ? CARD_SHADOW_LIFTED : null),
   },
   dialogTitle: { color: t.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
   dialogText: { color: t.text, fontSize: 14.5, lineHeight: 20 },

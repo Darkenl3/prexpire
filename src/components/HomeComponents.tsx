@@ -3,15 +3,15 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { makeStyles, useTheme, LIGHT, type Tint, type Tone } from '../theme';
+import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
 
 // The brand wordmark: dark ink on light backgrounds, light ink on dark ones.
 // Both were cut from the same artwork (white background un-blended into
 // alpha), so they share geometry and the green X stays green in both.
 const wordmarkDarkInk = require('../../assets/wordmark-light.png');
 const wordmarkLightInk = require('../../assets/wordmark.png');
-// Cropped artwork size: 1234 x 299.
-const WORDMARK_ASPECT = 1234 / 299;
+// Cropped artwork size: 1228 x 294.
+const WORDMARK_ASPECT = 1228 / 294;
 
 // Liquid-glass treatment for the header buttons (the same visual language as
 // the shell's glass tab bar): a frosted translucent circle with a hairline
@@ -42,7 +42,7 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Menu"
-        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg, borderColor: c.glassBorder }, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, pressed && s.pressed]}
       >
         <Ionicons name="menu" size={24} color={c.text} />
       </Pressable>
@@ -52,7 +52,7 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={`${badge} notifications`}
-        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg, borderColor: c.glassBorder }, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, pressed && s.pressed]}
       >
         <Ionicons name="notifications-outline" size={22} color={c.text} />
         {badge > 0 && (
@@ -114,15 +114,15 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
   const c = useTheme();
   const s = useStyles();
   const t = c.tints[tint];
-  // The Add-category tile is a ghost card: a dashed outline instead of a
-  // filled gradient, so it reads as an empty slot waiting for a new folder.
-  const dashed = tint === 'add';
+  // The Add-category tile is a ghost card: a plain, borderless soft fill
+  // (no dashed outline), so it reads as an empty slot waiting for a new folder.
+  const ghost = tint === 'add';
   const body = (
     <>
       <View style={[s.tileArt, compact && s.tileArtCompact, !status && s.tileArtTight]}>{art}</View>
       {/* Tiles without a status line (Add category) have room for a two-line name on narrow tiles. */}
       <Text
-        style={[s.tileName, { color: dashed ? c.textMuted : c.text }, compact && s.tileNameCompact]}
+        style={[s.tileName, { color: ghost ? c.textMuted : c.text }, compact && s.tileNameCompact]}
         numberOfLines={status ? 1 : 2}
         adjustsFontSizeToFit={!!status}
         minimumFontScale={0.85}
@@ -152,14 +152,14 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
   const tileStyle = [s.tile, compact && s.tileCompact, !sub && !status && s.tileCentered];
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={name} style={({ pressed }) => [{ width }, pressed && s.pressed]}>
-      {dashed ? (
-        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg, borderColor: c.addTile.border }]}>{body}</View>
+      {ghost ? (
+        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }]}>{body}</View>
       ) : (
         <LinearGradient
           colors={[t.top, t.bottom]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
-          style={[...tileStyle, { borderColor: t.border }]}
+          style={tileStyle}
         >
           {body}
         </LinearGradient>
@@ -174,24 +174,20 @@ type ExpiryRowProps = {
   sub: string[];
   pill: string;
   tone: Tone;
-  // The item's category tint: the icon square takes a pastel of the same
-  // colour family on the light theme (the dark theme keeps its neutral tile).
-  iconTint?: Tint;
   // Compact layout (Settings): shorter rows with a one-line subtitle.
   compact?: boolean;
   onPress?: () => void;
 };
 
-export function ExpiryRow({ art, title, sub, pill, tone, iconTint, compact = false, onPress }: ExpiryRowProps) {
+export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPress }: ExpiryRowProps) {
   const c = useTheme();
   const s = useStyles();
   const p = c.pills[tone];
-  // On light, each row's icon sits in its category's pastel — the list reads
-  // as colour-coded by category, like the reference. Dark keeps the deep tile.
-  const iconBg = iconTint && c === LIGHT ? c.tints[iconTint].bottom : c.iconTile;
+  // Every row's icon sits in the SAME light square (the theme's neutral
+  // tile), like the reference's Coming up next list — no per-category tints.
   const content = (
     <>
-      <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: iconBg }]}>{art}</View>
+      <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
       <View style={{ flex: 1 }}>
         <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1}>
           {title}
@@ -207,12 +203,12 @@ export function ExpiryRow({ art, title, sub, pill, tone, iconTint, compact = fal
     </>
   );
   // Rows without a destination are plain text, not buttons.
-  if (!onPress) return <View style={[s.row, compact && s.rowCompact, { borderColor: c.surfaceBorder, backgroundColor: c.surface }]}>{content}</View>;
+  if (!onPress) return <View style={[s.row, compact && s.rowCompact]}>{content}</View>;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [s.row, compact && s.rowCompact, { borderColor: c.surfaceBorder, backgroundColor: c.surface }, pressed && s.pressed]}
+      style={({ pressed }) => [s.row, compact && s.rowCompact, pressed && s.pressed]}
     >
       {content}
     </Pressable>
@@ -320,15 +316,19 @@ const useStyles = makeStyles((c) => ({
   // A taller top bar gives the wordmark room to breathe (brand-forward,
   // like the reference) — keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  // Liquid-glass circle (with GLASS_FX): the same frosted look as the shell's
-  // tab bar, sized to sit comfortably inside the 64pt header.
+  // Liquid-glass circle (with GLASS_FX): borderless in both themes — one
+  // translucent treatment, sized to sit comfortably inside the 64pt header.
   headerBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
+    // A faint cool shadow keeps the glass readable on the light page.
+    shadowColor: '#64748B',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
   badge: {
     position: 'absolute',
@@ -356,6 +356,8 @@ const useStyles = makeStyles((c) => ({
     paddingLeft: 9,
     paddingRight: 14,
     gap: 12,
+    // The red card floats gently on the light page (hairline still on dark).
+    ...(c === LIGHT ? CARD_SHADOW : null),
   },
   alertIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   alertTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
@@ -371,9 +373,19 @@ const useStyles = makeStyles((c) => ({
   sectionTitle: { color: c.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   sectionLink: { color: c.mint, fontSize: 14.5, fontWeight: '600' },
-  tile: { height: 156, borderRadius: 16, borderWidth: 1, overflow: 'hidden', alignItems: 'center', paddingHorizontal: 8, paddingTop: 12 },
-  // The Add-category ghost tile: dashed outline, no fill gradient.
-  tileAdd: { borderStyle: 'dashed', borderWidth: 1.5 },
+  tile: {
+    height: 156,
+    borderRadius: 16,
+    borderWidth: 0,
+    overflow: 'hidden',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    // Borderless pastel cards that float on the light page.
+    ...(c === LIGHT ? CARD_SHADOW : null),
+  },
+  // The Add-category tile: a plain, borderless soft card.
+  tileAdd: {},
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },
@@ -392,12 +404,17 @@ const useStyles = makeStyles((c) => ({
     minHeight: 58,
     paddingVertical: 8,
     borderRadius: 13,
-    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 9,
     paddingRight: 8,
     gap: 11,
+    backgroundColor: c.surface,
+    // Light: borderless white cards floating on soft shadows; dark keeps
+    // its hairline, which is what separates surfaces there.
+    borderWidth: c === LIGHT ? 0 : 1,
+    borderColor: c.surfaceBorder,
+    ...(c === LIGHT ? CARD_SHADOW : null),
   },
   rowIcon: { width: 44, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowCompact: { minHeight: 48, paddingVertical: 5, gap: 9 },

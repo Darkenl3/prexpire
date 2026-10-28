@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
+import { makeStyles, useTheme, LIGHT, CARD_SHADOW_LIFTED, type Tint } from '../theme';
 import { CATEGORY_ICONS, CUSTOM_TINTS, useCategories } from '../categories';
 import { useItems } from '../items';
 import { Note, SmallButton } from './SettingsRows';
@@ -193,16 +193,16 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
-    backgroundColor: c.cardAlt,
+    backgroundColor: c.surface,
+    ...(c === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } } : null),
   },
   rowIcon: {
     width: 38,
     height: 38,
     borderRadius: 11,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -215,11 +215,12 @@ const useStyles = makeStyles((c) => ({
     width: '100%',
     maxWidth: 420,
     backgroundColor: c.dialogBg,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     padding: 20,
     gap: 10,
+    ...(c === LIGHT ? CARD_SHADOW_LIFTED : null),
   },
   dialogTitle: { color: c.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
   dialogText: { color: c.textMuted, fontSize: 13.5, lineHeight: 18 },
