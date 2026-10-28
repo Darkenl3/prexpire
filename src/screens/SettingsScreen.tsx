@@ -64,9 +64,9 @@ const PAGE_TITLES: Record<PageId, string> = {
   terms: 'Terms & Privacy',
 };
 
-type Props = { badge: number; onNavigate: (route: string) => void };
+type Props = { badge: number; onNavigate: (route: string) => void; initialPage?: 'categories' };
 
-export function SettingsScreen({ onNavigate }: Props) {
+export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const t = useTheme();
   const s = useStyles();
   const insets = useSafeAreaInsets();
@@ -76,7 +76,7 @@ export function SettingsScreen({ onNavigate }: Props) {
   const { all, clearAll: clearCategories } = useCategories();
   const { items: shoppingItems, clearAll: clearShopping } = useShopping();
   const [confirmClear, setConfirmClear] = useState(false);
-  const [page, setPage] = useState<PageId | null>(null);
+  const [page, setPage] = useState<PageId | null>(initialPage ?? null);
 
   // The shell heartbeat + bottom-nav autohide tracker (reporting only here:
   // the settings header itself stays fixed, like the reference).
@@ -355,7 +355,6 @@ function ProfileDetail() {
   const { saved } = useItems();
   const { all } = useCategories();
   const { items: shopping } = useShopping();
-  const customCount = all.filter((cat) => cat.custom).length;
   return (
     <>
       <View style={s.heroCard}>
@@ -369,7 +368,7 @@ function ProfileDetail() {
         <SettingsCard>
           <SettingRow icon="cube-outline" accent="mint" title="Items added" value={`${saved.length}`} />
           <SettingRow icon="cart-outline" accent="mint" title="Shopping list entries" value={`${shopping.length}`} />
-          <SettingRow icon="folder-open-outline" accent="blue" title="Your categories" value={`${customCount}`} />
+          <SettingRow icon="folder-open-outline" accent="blue" title="Your categories" value={`${all.length}`} />
         </SettingsCard>
       </SettingsSection>
       <SettingsSection title="Storage">
@@ -520,7 +519,7 @@ function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void 
             icon="folder-open-outline"
             accent="blue"
             title="Your categories"
-            description="Add a category folder and it appears on Home, in lists and in the scanner."
+            description="The built-ins you keep and the folders you add, all in one place."
             below={<CategoryManager />}
           />
         </SettingsCard>
@@ -541,7 +540,7 @@ function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void 
       </SettingsSection>
       <SettingsSection title="Browse">
         <SettingsCard>
-          <SettingRow icon="grid" accent="purple" title="Browse categories" description="Food, Medicine, Household, Skincare, Pantry and the ones you add." onPress={() => onNavigate('tab:items')} />
+          <SettingRow icon="grid" accent="purple" title="Browse categories" description="The lists for the categories you keep." onPress={() => onNavigate('tab:items')} />
         </SettingsCard>
       </SettingsSection>
     </>

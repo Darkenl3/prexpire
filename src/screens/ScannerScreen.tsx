@@ -20,6 +20,7 @@ import { SCANNER_COLORS as colors, radius } from '../theme';
 import { ScanFrame } from '../components/ScanFrame';
 import { ResultSheet, type SaveInput } from '../components/ResultSheet';
 import { useItems, type CategoryId, type Item } from '../items';
+import { useCategories } from '../categories';
 import { ocrAvailability } from '../scanner/ocr';
 import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
@@ -61,6 +62,7 @@ function frameSize(area: Size, hintSpace: number) {
 export function ScannerScreen({ onClose, onSaved, category, initialDetection }: Props) {
   const insets = useSafeAreaInsets();
   const { defaultCategory, addItem } = useItems();
+  const { ids: keptCategoryIds } = useCategories();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<ScannerCameraHandle>(null);
 
@@ -122,8 +124,12 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const detected = detection !== null;
   const sheetOpen = detected || manual;
   // Auto-category: the words around the date usually name the product, so the
-  // save sheet opens with the folder the item most likely belongs in.
-  const guessed = useMemo(() => (detection ? guessCategory(detection.text) : null), [detection]);
+  // save sheet opens with the folder the item most likely belongs in. A guess
+  // (or default) that names a category the user removed is ignored: they chose
+  // not to track that folder, so the first category they keep wins instead.
+  const guessedRaw = useMemo(() => (detection ? guessCategory(detection.text) : null), [detection]);
+  const guessed = guessedRaw && keptCategoryIds.includes(guessedRaw) ? guessedRaw : null;
+  const fallbackCategory = keptCategoryIds.includes(defaultCategory) ? defaultCategory : keptCategoryIds[0] ?? defaultCategory;
 
   useEffect(() => {
     if (detected) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -300,7 +306,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
       // A new detection gets a fresh sheet; "Scan again" then a new read starts clean.
       key={detected ? detection.key : 'manual'}
       detection={detected ? detection : null}
-      initialCategory={category ?? guessed ?? defaultCategory}
+      initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
       layout={landscape ? 'side' : 'bottom'}
       maxHeight={landscape ? root.height : Math.round(root.height * 0.62)}

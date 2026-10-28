@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, useTheme, LIGHT, CARD_SHADOW_LIFTED, type Tint } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
 import { CATEGORY_ICONS, CUSTOM_TINTS, useCategories } from '../categories';
 import { useItems } from '../items';
+import { useSettings } from '../settings';
+import { categories } from '../data';
 import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
+import { categoryArt } from './ResultSheet';
 
-// Managing the user's custom categories ("category folders"): the list with
-// delete buttons, and the "Add category" dialog with a name, an icon and a
-// tile colour. Rendered inside the Settings page.
+// Managing the user's categories: the unified list (the built-ins they keep
+// plus the folders they added, all removable), a restore section for the
+// built-ins they removed, and the full-screen "New category" page.
 
 // Folder icon ink on the light theme's pastel chips (one per tile tint), so
 // each folder keeps its colour language; the dark theme uses plain text ink.
@@ -23,11 +27,19 @@ const TINT_ICON: Record<Tint, string> = {
   add: '#5C6E6A',
 };
 
+// The built-in category definitions (id, tile tint, artwork), for the rows.
+const BUILTINS = categories.filter((x) => x.tint !== 'add');
+
+// True while running inside the native Expo shell: its floating glass tab bar
+// sits over the page, so the full-screen page keeps extra room at the bottom.
+const SHELL = Platform.OS === 'web' && typeof window !== 'undefined' && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
+
 export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
-  const { custom, add, remove, saveError } = useCategories();
+  const { all, custom, removed, add, remove, restore, saveError } = useCategories();
   const { saved } = useItems();
+  const { settings, update } = useSettings();
   const [adding, setAdding] = useState(false);
   // Two-tap delete: the button flips to "Remove?" and confirms on the second tap.
   const [confirming, setConfirming] = useState<string | null>(null);
@@ -36,59 +48,110 @@ export function CategoryManager() {
     if (!adding) setConfirming(null);
   }, [adding]);
 
+  const doRemove = (id: string) => {
+    remove(id);
+    // A default that pointed at the removed category falls back to "last used".
+    if (settings.defaultCategory === id) update({ defaultCategory: 'last' });
+  };
+
+  const countFor = (id: string) => saved.filter((i) => i.category === id).length;
+
+  // One row shape for every category the user keeps, built-in or their own.
+  const renderRow = (id: string, name: string, isCustom: boolean) => {
+    const folder = custom.find((x) => x.id === id);
+    const def = BUILTINS.find((x) => x.id === id);
+    const tint: Tint = isCustom && folder ? folder.tint : def ? def.tint : 'add';
+    const g = c.tints[tint];
+    const iconBg = c === LIGHT ? g.top : `${g.top}33`;
+    const iconBorder = c === LIGHT ? g.border : `${g.top}66`;
+    const confirmingThis = confirming === id;
+    return (
+      <View key={id} style={s.row}>
+        <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
+          {def ? categoryArt(id, 24) : (
+            <Ionicons name={(folder?.icon ?? 'folder') as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[tint] : c.text} />
+          )}
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={s.rowName} numberOfLines={1}>
+            {name}
+          </Text>
+          <Text style={s.rowSub}>
+            {def ? 'Default category' : 'Your folder'} · {countFor(id) === 1 ? '1 item' : `${countFor(id)} items`}
+          </Text>
+        </View>
+        <PressScale
+          onPress={() => {
+            if (confirmingThis) {
+              Haptics.selectionAsync().catch(() => {});
+              doRemove(id);
+              setConfirming(null);
+            } else {
+              Haptics.selectionAsync().catch(() => {});
+              setConfirming(id);
+            }
+          }}
+          hitSlop={8}
+          scaleTo={0.97}
+          accessibilityRole="button"
+          accessibilityLabel={confirmingThis ? `Confirm removing ${name}` : `Remove ${name}`}
+          style={[s.remove, confirmingThis && s.removeConfirm]}
+        >
+          <Ionicons name={confirmingThis ? 'trash' : 'trash-outline'} size={17} color={confirmingThis ? c.red : c.textMuted} />
+        </PressScale>
+      </View>
+    );
+  };
+
   return (
     <View style={s.wrap}>
-      {custom.map((cat) => {
-        const count = saved.filter((i) => i.category === cat.id).length;
-        // The folder's colour language, from the theme's tile tints: a soft
-        // pastel chip on light, a whisper of the gradient on dark.
-        const tint = c.tints[cat.tint as Tint];
-        const iconBg = c === LIGHT ? tint.top : `${tint.top}33`;
-        const iconBorder = c === LIGHT ? tint.border : `${tint.top}66`;
-        const confirmingThis = confirming === cat.id;
-        return (
-          <View key={cat.id} style={s.row}>
-            <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
-              <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[cat.tint as Tint] : c.text} />
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={s.rowName} numberOfLines={1}>
-                {cat.name}
-              </Text>
-              <Text style={s.rowSub}>{count === 1 ? '1 item' : `${count} items`}</Text>
-            </View>
-            <PressScale
-              onPress={() => {
-                if (confirmingThis) {
-                  Haptics.selectionAsync().catch(() => {});
-                  remove(cat.id);
-                  setConfirming(null);
-                } else {
-                  Haptics.selectionAsync().catch(() => {});
-                  setConfirming(cat.id);
-                }
-              }}
-              hitSlop={8}
-              scaleTo={0.97}
-              accessibilityRole="button"
-              accessibilityLabel={confirmingThis ? `Confirm removing ${cat.name}` : `Remove ${cat.name}`}
-              style={[s.remove, confirmingThis && s.removeConfirm]}
-            >
-              <Ionicons name={confirmingThis ? 'trash' : 'trash-outline'} size={17} color={confirmingThis ? c.red : c.textMuted} />
-            </PressScale>
-          </View>
-        );
-      })}
-      <SmallButton label={custom.length ? 'Add another category' : 'Add category'} icon="add-circle-outline" tone="mint" onPress={() => setAdding(true)} />
+      {all.map((cat) => renderRow(cat.id, cat.name, cat.custom))}
+      {removed.length > 0 && (
+        <View style={s.removedWrap}>
+          <Text style={s.removedTitle}>Removed</Text>
+          {removed.map((id) => {
+            const def = BUILTINS.find((x) => x.id === id);
+            if (!def) return null;
+            const count = countFor(id);
+            return (
+              <View key={id} style={s.rowRemoved}>
+                <View style={[s.rowIcon, { backgroundColor: c === LIGHT ? c.cardAlt : `${c.surfaceBorder}55`, borderColor: c.surfaceBorder }]}>
+                  {categoryArt(id, 22)}
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={s.rowNameRemoved} numberOfLines={1}>
+                    {def.name}
+                  </Text>
+                  <Text style={s.rowSub}>{count === 1 ? '1 item still filed here' : `${count} items still filed here`}</Text>
+                </View>
+                <SmallButton
+                  label="Restore"
+                  icon="return-up-back-outline"
+                  onPress={() => {
+                    Haptics.selectionAsync().catch(() => {});
+                    restore(id);
+                  }}
+                />
+              </View>
+            );
+          })}
+        </View>
+      )}
+      <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => setAdding(true)} />
       {saveError && <Note tone="warn">The last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>}
-      <AddCategoryDialog visible={adding} onClose={() => setAdding(false)} onAdd={(name, icon, tint) => !!add(name, icon, tint)} />
+      <NewCategoryPage visible={adding} onClose={() => setAdding(false)} onAdd={(name, icon, tint) => !!add(name, icon, tint)} />
     </View>
   );
 }
 
-function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onClose: () => void; onAdd: (name: string, icon: string, tint: Tint) => boolean }) {
+// The full-screen "New category" page: a name, an icon and a tile colour get
+// room to breathe (the compact dialog these used to squeeze into is gone).
+// It slides up over the app, keeps its own back button and primary action,
+// and pads its bottom for the shell's floating glass bar.
+function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClose: () => void; onAdd: (name: string, icon: string, tint: Tint) => boolean }) {
   const c = useTheme();
   const s = useStyles();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0]);
   const [tint, setTint] = useState<Tint>(CUSTOM_TINTS[0]);
@@ -118,14 +181,24 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={s.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" importantForAccessibility="no" />
-        <View style={s.dialog} accessibilityRole={'dialog' as never} accessibilityLabel="Add category" {...({ 'aria-modal': true } as object)}>
-          <Text style={s.dialogTitle} accessibilityRole="header">
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={[s.page, { paddingTop: Math.max(insets.top, 10) }]}>
+        <View style={s.pageHeader}>
+          <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Cancel" style={s.backBtn}>
+            <Ionicons name="chevron-back" size={24} color={c.text} />
+          </PressScale>
+          <Text style={s.pageTitle} accessibilityRole="header">
             New category
           </Text>
-          <Text style={s.dialogText}>A folder for a group of items you track; its tile appears on Home.</Text>
+          <View style={s.backBtn} />
+        </View>
+        <ScrollView
+          style={s.pageScroll}
+          contentContainerStyle={[s.pageBody, { paddingBottom: Math.max(insets.bottom, 20) + (SHELL ? 96 : 16) }]}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={s.pageIntro}>A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.</Text>
+          <Text style={s.label}>Name</Text>
           <TextInput
             value={name}
             onChangeText={(t) => {
@@ -155,7 +228,7 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
                   accessibilityLabel={`Icon ${ic}`}
                   style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
                 >
-                  <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={20} color={on ? c.mint : c.textMuted} />
+                  <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.mint : c.textMuted} />
                 </PressScale>
               );
             })}
@@ -180,18 +253,18 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
               );
             })}
           </View>
-          <View style={s.dialogButtons}>
+          <View style={s.pageActions}>
             <SmallButton label="Cancel" onPress={onClose} />
             <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
           </View>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const useStyles = makeStyles((c) => ({
-  wrap: { gap: 8 },
+  wrap: { gap: 8, marginTop: 4 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,52 +282,63 @@ const useStyles = makeStyles((c) => ({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   rowName: { color: c.text, fontSize: 15.5, fontWeight: '600' },
   rowSub: { color: c.textMuted, fontSize: 12.5, marginTop: 1 },
   remove: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   removeConfirm: { backgroundColor: c.btnDangerBg, borderWidth: 1, borderColor: c.btnDangerBorder },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: 20 },
-  dialog: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: c.dialogBg,
-    borderRadius: 20,
+  // Removed built-ins: still listed (their items keep their label), restorable
+  // in one tap. No delete button; restoring is the only action.
+  removedWrap: { marginTop: 8, gap: 8 },
+  removedTitle: { color: c.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginLeft: 2 },
+  rowRemoved: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
-    padding: 20,
-    gap: 10,
-    ...(c === LIGHT ? CARD_SHADOW_LIFTED : null),
+    backgroundColor: c === LIGHT ? c.cardAlt : 'transparent',
+    opacity: 0.85,
   },
-  dialogTitle: { color: c.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
-  dialogText: { color: c.textMuted, fontSize: 13.5, lineHeight: 18 },
+  rowNameRemoved: { color: c.textMuted, fontSize: 15.5, fontWeight: '600' },
+  // The full-screen page.
+  page: { flex: 1, backgroundColor: c.bg },
+  pageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, height: 52 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  pageTitle: { color: c.text, fontSize: 17, fontWeight: '700' },
+  pageScroll: { flex: 1 },
+  pageBody: { paddingHorizontal: 20, gap: 10, paddingTop: 4 },
+  pageIntro: { color: c.textMuted, fontSize: 13.5, lineHeight: 18, marginBottom: 6 },
   input: {
     color: c.text,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.cardAlt,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   inputWarn: { borderColor: c.amberText },
   warn: { color: c.amberText, fontSize: 12.5 },
-  label: { color: c.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 },
-  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  label: { color: c.textMuted, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8 },
+  iconGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   iconCell: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tintRow: { flexDirection: 'row', gap: 10 },
-  tintDot: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
+  tintRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  tintDot: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   tintDotOn: { borderColor: c.mint },
-  tintFill: { width: 26, height: 26, borderRadius: 13, borderWidth: 1 },
-  dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
+  tintFill: { width: 30, height: 30, borderRadius: 15, borderWidth: 1 },
+  pageActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
 }));

@@ -329,7 +329,8 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
   const { addManual } = useShopping();
   const { all } = useCategories();
   const { defaultCategory } = useItems();
-  const known = all.some((cat) => cat.id === defaultCategory) ? defaultCategory : ('food' as CategoryId);
+  // The default may name a category the user removed; fall back to the first one they keep.
+  const known = (all.some((cat) => cat.id === defaultCategory) ? defaultCategory : (all[0]?.id ?? 'food')) as CategoryId;
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [category, setCategory] = useState<CategoryId>(known);

@@ -1,8 +1,10 @@
 import type { Tint } from './theme';
 
-// The five built-in categories shown as Home tiles (the user's own "category
-// folders" are added on top of these from Settings). Counts and expiry status
-// are always computed from the user's real items; there is no sample data.
+// The five built-in category tiles. They are ordinary members of "Your
+// categories": the user can remove any of them in Settings and bring it back
+// later, and the folders they add sit after them in the grid (the Add-category
+// tile is always last). Counts and expiry status are always computed from the
+// user's real items; there is no sample data.
 
 export type ArtKey = 'apple' | 'capsule' | 'house' | 'pump' | 'jar' | 'add';
 

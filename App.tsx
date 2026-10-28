@@ -20,7 +20,7 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
-type Route = { tab: TabId; category?: CategoryId } | { tab: 'scan' };
+type Route = { tab: TabId; category?: CategoryId; settingsPage?: 'categories' } | { tab: 'scan' };
 
 const TABS: TabId[] = ['home', 'items', 'shop', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
@@ -130,6 +130,15 @@ function Shell() {
         }
         return;
       }
+      if (to.startsWith('settings:')) {
+        // Home's Add-category tile opens Settings straight onto its category
+        // page, so the user lands where the category list lives.
+        if (to === 'settings:categories') {
+          setRoute({ tab: 'settings', settingsPage: 'categories' });
+          setLastTab('settings');
+        }
+        return;
+      }
       if (to.startsWith('category:')) {
         const category = to.slice(9) as CategoryId;
         // Includes the user's custom categories (ids from the context).
@@ -211,7 +220,9 @@ function Shell() {
     ) : route.tab === 'reminders' ? (
       <RemindersScreen badge={badge} onNavigate={onNavigate} />
     ) : route.tab === 'settings' ? (
-      <SettingsScreen badge={badge} onNavigate={onNavigate} />
+      // key: arriving through settings:categories (Home's Add tile) remounts
+      // Settings onto its category page; plain tab:settings opens the root.
+      <SettingsScreen key={route.settingsPage ?? 'root'} initialPage={route.settingsPage} badge={badge} onNavigate={onNavigate} />
     ) : (
       <HomeScreen badge={badge} onNavigate={onNavigate} notice={notice} onNoticeDone={clearNotice} />
     );

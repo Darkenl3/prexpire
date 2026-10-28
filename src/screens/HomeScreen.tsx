@@ -51,7 +51,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const layout = useLayout();
   const { items, saved } = useItems();
   const { settings, motion } = useSettings();
-  const { custom } = useCategories();
+  const { custom, removed } = useCategories();
   const t = useTheme();
   const c = useStyles();
   // Folder icons sit on the tile gradient: white on the dark theme's rich
@@ -101,8 +101,10 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { tileWidth } = gridFor(gridWidth, gridGap, 100);
   const compact = tileWidth < 112 || layout.short;
 
+  // The grid in order: the built-ins the user keeps, then their own folders,
+  // and the Add-category tile always last (it opens Settings' category page).
+  const keptBuiltins = categories.filter((x) => x.tint !== 'add' && !removed.includes(x.id));
   const addTile = categories.find((x) => x.tint === 'add');
-  const tiles = [...categories.filter((x) => x.tint !== 'add').slice(0, 5), ...(addTile ? [addTile] : [])];
 
   const bottomClearance = NAV_HEIGHT + navOffset(insets.bottom) + 16;
 
@@ -123,17 +125,17 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     <>
       <SectionHeader title="Your categories" action="See all" onAction={() => go('tab:items')} />
       <View style={[c.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
-        {tiles.map((t) => (
+        {keptBuiltins.map((t) => (
           <CategoryTile
             key={t.id}
             tint={t.tint}
             width={tileWidth}
             name={t.name}
-            sub={t.tint === 'add' ? undefined : `${saved.filter((i) => i.category === t.id).length} items`}
-            status={t.tint === 'add' ? undefined : tileStatus(attention.byCategory(t.id))}
+            sub={`${saved.filter((i) => i.category === t.id).length} items`}
+            status={tileStatus(attention.byCategory(t.id))}
             art={categoryArt(t.art, compact ? 56 : 64)}
             compact={compact}
-            onPress={() => go(t.tint === 'add' ? 'tab:settings' : `category:${t.id}`)}
+            onPress={() => go(`category:${t.id}`)}
           />
         ))}
         {/* The user's own "category folders", added in Settings. */}
@@ -150,6 +152,18 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
             onPress={() => go(`category:${cat.id}`)}
           />
         ))}
+        {/* Add category is always the last tile in the order. */}
+        {addTile && (
+          <CategoryTile
+            key={addTile.id}
+            tint={addTile.tint}
+            width={tileWidth}
+            name={addTile.name}
+            art={categoryArt(addTile.art, compact ? 56 : 64)}
+            compact={compact}
+            onPress={() => go('settings:categories')}
+          />
+        )}
       </View>
     </>
   );
