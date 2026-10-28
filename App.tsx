@@ -61,6 +61,10 @@ function Shell() {
   // A detection handed in by a native wrapper (see docs/native-shell.md).
   const [nativeScan, setNativeScan] = useState<Detection | null>(null);
   useFocusStyles();
+  // Inside the Expo WebView shell, the website hides its own bottom nav: the shell
+  // renders a native liquid-glass tab bar instead (the same look, real glass) and
+  // drives this app's navigation through the 'prexpire:navigate' bridge below.
+  const inShell = WEB && typeof window !== 'undefined' && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
 
   // Native bridge: when this app runs inside a React Native WebView shell, the shell can
   // scan a label with its own native camera + OCR (Apple Vision / ML Kit — far stronger
@@ -136,6 +140,34 @@ function Shell() {
   );
   const clearNotice = useCallback(() => setNotice(null), []);
 
+  // Native bridge: the shell's liquid-glass tab bar navigates this app exactly like
+  // the web bottom nav does — it dispatches 'prexpire:navigate' events carrying
+  // { to: 'tab:home' | 'tab:items' | 'scan' | ... }, which reuse onNavigate verbatim.
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const onShellNavigate = (event: Event) => {
+      const detail = (event as CustomEvent<{ to?: unknown }>).detail;
+      if (typeof detail?.to !== 'string') return;
+      onNavigate(detail.to);
+    };
+    window.addEventListener('prexpire:navigate', onShellNavigate);
+    return () => window.removeEventListener('prexpire:navigate', onShellNavigate);
+  }, [onNavigate]);
+
+  // Keep the shell's tab bar in sync: report the active tab and the reminder badge
+  // whenever either changes, so the shell can highlight its active tab, show the
+  // badge, and hide its bar while the scanner screen is open (tab === 'scan').
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    try {
+      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab, badge }));
+    } catch {
+      // The shell went away; navigation still works locally.
+    }
+  }, [route, badge]);
+
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
   // is only mounted, and only running, while the user is scanning.
   if (route.tab === 'scan') return <ScannerScreen onClose={closeScanner} onSaved={onSaved} initialDetection={nativeScan} />;
@@ -154,14 +186,16 @@ function Shell() {
   return (
     <>
       {screen}
-      <BottomNav
-        active={route.tab}
-        badge={badge}
-        insets={insets}
-        maxWidth={layout.mode === 'phone' ? 560 : 520}
-        onTab={(id) => onNavigate(`tab:${id}`)}
-        onScan={() => onNavigate('scan')}
-      />
+      {!inShell && (
+        <BottomNav
+          active={route.tab}
+          badge={badge}
+          insets={insets}
+          maxWidth={layout.mode === 'phone' ? 560 : 520}
+          onTab={(id) => onNavigate(`tab:${id}`)}
+          onScan={() => onNavigate('scan')}
+        />
+      )}
     </>
   );
 }
