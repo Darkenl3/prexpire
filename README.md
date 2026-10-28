@@ -15,7 +15,17 @@ The home screen adapts to iPhone and iPad in portrait and landscape: a single co
 - **Reminders**: items whose reminder is due (expired, or within the reminder timing) and the date each upcoming reminder falls on. The bell and tab badges count due reminders. Reminders are listed in the app only; nothing is sent as a notification yet.
 - **Settings**: notifications (reminders on/off, timing, daily summary, browser notification permission), appearance (compact rows, animations), expiry preferences (warning period, date format, sorting, show/hide expired), default category, sample items, camera and storage information, JSON/CSV export and Clear all data. Preferences are saved with AsyncStorage (`prexpire.settings.v1`, localStorage in the browser) and apply across the app. On the web the open tab is kept in the address, e.g. `#settings`.
 
-Category tile counts and three upcoming items are still sample data (`src/data.ts`, `src/items.tsx`); Settings can hide the sample items. Only the dark theme exists, and there is no notification delivery: the daily summary and reminder settings are saved for when it is built.
+Category tile counts and three upcoming items are still sample data (`src/data.ts`, `src/items.tsx`); Settings can hide the sample items. There is no notification delivery yet: the daily summary and reminder settings are saved for when it is built.
+
+## Feel and polish
+
+The whole app shares one motion vocabulary (`src/components/Press.tsx`), so every screen feels the same:
+
+- **Tactile presses.** Every button, card, row and chip gently scales down (about 0.98) with a whisper of opacity while pressed (~130 ms in, ~200 ms out), driven by the native animation driver. A same-element lock absorbs accidental double taps so navigation and destructive actions never fire twice.
+- **Soft subpage transitions.** Settings detail pages slide in from the right with a fade (~230 ms in, ~210 ms out); the root list drifts slightly left for depth. Pickers rise from the bottom and settle back down.
+- **State changes fade in.** Checkmarks, status badges and notes fade in (~180 ms) when they appear or change, instead of popping.
+- **Floating cards done right.** On the light theme, every grouped card, tile and row carries a soft blue-gray shadow (`#64748B`, 8% opacity, 12 px blur, 4 px offset, Android elevation 3) on an outer wrapper that never sets `overflow: 'hidden'` - iOS clips a view's own shadow as soon as it masks its bounds, so the white background's rounded clipping lives on an inner container. The shadow stays whole whether a card is short or tall.
+- **Reduced motion respected.** The Animations setting and the OS-level reduce-motion flag collapse every duration to zero; nothing animates when the user asks it not to.
 
 ## Live Scan
 
@@ -81,6 +91,7 @@ src/screens/RemindersScreen.tsx
 src/screens/SettingsScreen.tsx
 src/components/Page.tsx         header + title + scroll frame shared by the tabs
 src/components/SettingsRows.tsx settings sections, rows, toggles, option chips
+src/components/Press.tsx        shared tactile press + fade-in motion (PressScale, FadeIn)
 src/components/ItemRow.tsx      item row styled by the preferences
 src/screens/ScannerScreen.tsx   Live Scan
 plugins/withMlKitOcrModel.js    Android: preload the ML Kit text model

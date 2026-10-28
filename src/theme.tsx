@@ -190,13 +190,16 @@ export type Tone = 'amber' | 'green';
 
 export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
 
-// The reference's airy depth: soft, low-opacity blue-gray shadows that let
-// white cards float gently above the cool-white page. Applied on the LIGHT
-// theme only - the dark theme separates surfaces with hairlines instead.
+// The reference's airy depth: soft, diffuse blue-gray shadows that let white
+// cards float gently above the cool-white page. Applied on the LIGHT theme
+// only - the dark theme separates surfaces with hairlines instead.
+// The shadow lives on an OUTER wrapper that never sets overflow: 'hidden'
+// (iOS clips a view's own shadow as soon as it masks its bounds), with the
+// white background and rounded clipping on an inner container.
 export const CARD_SHADOW: ViewStyle = {
   shadowColor: '#64748B',
   shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.07,
+  shadowOpacity: 0.08,
   shadowRadius: 12,
   elevation: 3,
 };

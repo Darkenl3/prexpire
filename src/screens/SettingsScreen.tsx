@@ -25,6 +25,7 @@ import { isoToday } from '../scanner/dateParser';
 import { Brandmark, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
 import { useNavAutohide } from '../components/navAutohide';
 import { CategoryManager } from '../components/CategoryManager';
+import { FadeIn, PressScale } from '../components/Press';
 import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
@@ -88,8 +89,10 @@ export function SettingsScreen({ onNavigate }: Props) {
     Animated.timing(appear, { toValue: 1, duration: motionRef.current ? 240 : 0, useNativeDriver: true }).start();
   }, [appear]);
 
-  // The detail page slides in from the right edge; the root list drifts a
-  // little left for depth. Everything is transform/opacity only.
+  // The detail page slides in from the right edge with a soft fade, and the
+  // root list drifts a little left for depth. Everything is transform/opacity
+  // only, so the whole transition rides the native driver without ever
+  // blocking touch: the animations describe the change, never gate it.
   const slide = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (page) {
@@ -101,6 +104,7 @@ export function SettingsScreen({ onNavigate }: Props) {
     Animated.timing(slide, { toValue: 0, duration: motionRef.current ? 210 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => setPage(null));
   }, [slide]);
   const slideX = slide.interpolate({ inputRange: [0, 1], outputRange: [width, 0] });
+  const pageFade = slide.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
   const rootShift = slide.interpolate({ inputRange: [0, 1], outputRange: [0, -28] });
 
   const open = (p: PageId) => setPage(p);
@@ -116,11 +120,12 @@ export function SettingsScreen({ onNavigate }: Props) {
         </View>
       )}
 
-      <Pressable
+      <PressScale
         onPress={() => open('profile')}
         accessibilityRole="button"
         accessibilityLabel="Profile"
-        style={({ pressed }) => [s.profileCard, pressed && s.pressedCard]}
+        style={s.profileCard}
+        scaleTo={0.99}
       >
         <View style={s.avatar}>
           <Ionicons name="person" size={30} color={accents.mint} />
@@ -136,7 +141,7 @@ export function SettingsScreen({ onNavigate }: Props) {
           <Text style={s.profileCountLabel}>{saved.length === 1 ? 'item added' : 'items added'}</Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
-      </Pressable>
+      </PressScale>
 
       <SettingsSection title="Account">
         <SettingsCard>
@@ -245,7 +250,7 @@ export function SettingsScreen({ onNavigate }: Props) {
       </Animated.View>
 
       {page && (
-        <Animated.View style={[s.overlay, { transform: [{ translateX: slideX }] }]}>
+        <Animated.View style={[s.overlay, { transform: [{ translateX: slideX }], opacity: pageFade }]}>
           <View style={[s.root, { paddingTop: insets.top }]}>
             <View style={[s.frame, s.rootFrame]}>
               <View style={s.header}>
@@ -287,20 +292,22 @@ function ScrollViewLike({ children, onScroll, bottomPad }: { children: React.Rea
   );
 }
 
-// A circular header button: white, hairline-bordered, faintly floating.
+// A circular header button: white, hairline-bordered, faintly floating, with
+// the shared tactile press feedback.
 function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const c = useTheme();
   const s = useStyles();
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       hitSlop={6}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [s.circleBtn, { backgroundColor: c.surface, borderColor: c.surfaceBorder }, pressed && s.circlePressed]}
+      scaleTo={0.97}
+      style={[s.circleBtn, { backgroundColor: c.surface, borderColor: c.surfaceBorder }]}
     >
       <Ionicons name={icon} size={22} color={c.text} />
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -468,14 +475,18 @@ function BrowserNotificationsRow() {
       accent="amber"
       title={WEB ? 'Browser notifications' : 'Notifications'}
       description={WEB ? 'Allow notifications from this browser.' : 'Allow notifications on this device.'}
-      right={<StatusBadge label={label[status]} tone={badgeTone} check={status === 'granted'} />}
+      right={<StatusBadge key={status} label={label[status]} tone={badgeTone} check={status === 'granted'} />}
       below={
         <>
-          <Note tone={note[status].tone}>{note[status].text}</Note>
+          <FadeIn key={status}>
+            <Note tone={note[status].tone}>{note[status].text}</Note>
+          </FadeIn>
           {status === 'default' && (
-            <View style={s.buttons}>
-              <SmallButton label={asking ? 'Waiting for browser…' : 'Allow notifications'} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />
-            </View>
+            <FadeIn>
+              <View style={s.buttons}>
+                <SmallButton label={asking ? 'Waiting for browser…' : 'Allow notifications'} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />
+              </View>
+            </FadeIn>
           )}
         </>
       }
@@ -544,13 +555,15 @@ function AppearanceDetail() {
           options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
           onChange={(v) => update({ theme: v })}
           below={
-            <Note>
-              {settings.theme === 'system'
-                ? 'System follows your device\u2019s appearance and switches live.'
-                : settings.theme === 'light'
-                  ? 'A bright take on the same design.'
-                  : 'The classic near-black look.'}
-            </Note>
+            <FadeIn key={settings.theme}>
+              <Note>
+                {settings.theme === 'system'
+                  ? 'System follows your device\u2019s appearance and switches live.'
+                  : settings.theme === 'light'
+                    ? 'A bright take on the same design.'
+                    : 'The classic near-black look.'}
+              </Note>
+            </FadeIn>
           }
         />
         <SettingRow
@@ -564,9 +577,9 @@ function AppearanceDetail() {
           icon="sparkles-outline"
           accent="purple"
           title="Animations"
-          description="Fades and the scanner's sweep line."
+          description="Fades, press feedback and the scanner's sweep line."
           right={<Toggle label="Animations" value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
-          below={systemReduceMotion ? <Note>Your device asks for reduced motion, so animations stay off.</Note> : undefined}
+          below={systemReduceMotion ? <FadeIn><Note>Your device asks for reduced motion, so animations stay off.</Note></FadeIn> : undefined}
         />
       </SettingsCard>
     </SettingsSection>
@@ -681,7 +694,7 @@ function TermsDetail() {
         </SettingsCard>
       </SettingsSection>
       <View style={s.aboutFooter}>
-        <Brandmark height={38} />
+        <Brandmark height={35} />
         <Text style={s.aboutTagline}>Keep track of what matters before it expires.</Text>
         <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
       </View>
@@ -760,7 +773,6 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
     ...(t === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } } : null),
   },
-  circlePressed: { transform: [{ scale: 0.92 }], opacity: 0.8 },
   // The profile card floats a little higher than the section cards.
   profileCard: {
     flexDirection: 'row',
@@ -774,7 +786,6 @@ const useStyles = makeStyles((t) => ({
     backgroundColor: t.surface,
     ...(t === LIGHT ? CARD_SHADOW_LIFTED : null),
   },
-  pressedCard: { opacity: 0.9, transform: [{ scale: 0.995 }] },
   avatar: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', backgroundColor: '#D9FBF0' },
   profileTitle: { color: t.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
   profileSub: { color: t.textMuted, fontSize: 13.5, marginTop: 2 },

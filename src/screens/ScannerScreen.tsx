@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Linking,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -24,6 +23,7 @@ import { useItems, type CategoryId, type Item } from '../items';
 import { ocrAvailability } from '../scanner/ocr';
 import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
+import { PressScale } from '../components/Press';
 import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
@@ -175,23 +175,24 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const header = (
     <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (landscape && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
-        <Pressable onPress={onClose} hitSlop={8} style={s.roundBtn} accessibilityRole="button" accessibilityLabel="Back">
+        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.97} style={s.roundBtn} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
+        </PressScale>
         <Text style={s.title} accessibilityRole="header">
           Live Scan
         </Text>
-        <Pressable
+        <PressScale
           onPress={() => setTorch((t) => !t)}
           disabled={!torchAvailable}
           hitSlop={8}
+          scaleTo={0.97}
           style={[s.roundBtn, torch && s.roundBtnOn, !torchAvailable && s.disabled]}
           accessibilityRole="switch"
           accessibilityLabel={torchAvailable ? 'Flashlight' : 'Flashlight unavailable'}
           accessibilityState={{ checked: torch, disabled: !torchAvailable }}
         >
           <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? colors.scanInk : colors.text} />
-        </Pressable>
+        </PressScale>
       </View>
       <Text style={s.instruction}>Point at an expiry date.</Text>
     </View>
@@ -264,9 +265,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
                 <Text style={s.unavailableText}>
                   Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.
                 </Text>
-                <Pressable onPress={() => setManual(true)} style={s.linkBtn} accessibilityRole="button">
+                <PressScale onPress={() => setManual(true)} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
                   <Text style={s.linkText}>Enter date manually</Text>
-                </Pressable>
+                </PressScale>
               </View>
             )
           ) : !cameraReady ? (
@@ -359,13 +360,13 @@ function Notice({ icon, title, text, action, onAction, secondary, onSecondary, h
         <Text style={s.noticeTitle}>{title}</Text>
         <Text style={s.noticeText}>{text}</Text>
         {action && onAction && (
-          <Pressable onPress={onAction} style={({ pressed }) => [s.noticeBtn, pressed && { opacity: 0.8 }]} accessibilityRole="button">
+          <PressScale onPress={onAction} scaleTo={0.98} style={s.noticeBtn} accessibilityRole="button">
             <Text style={s.noticeBtnText}>{action}</Text>
-          </Pressable>
+          </PressScale>
         )}
-        <Pressable onPress={onSecondary} style={s.linkBtn} accessibilityRole="button">
+        <PressScale onPress={onSecondary} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
           <Text style={s.linkText}>{secondary}</Text>
-        </Pressable>
+        </PressScale>
       </View>
     </View>
   );

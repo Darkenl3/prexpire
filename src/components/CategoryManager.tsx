@@ -6,6 +6,7 @@ import { makeStyles, useTheme, LIGHT, CARD_SHADOW_LIFTED, type Tint } from '../t
 import { CATEGORY_ICONS, CUSTOM_TINTS, useCategories } from '../categories';
 import { useItems } from '../items';
 import { Note, SmallButton } from './SettingsRows';
+import { PressScale } from './Press';
 
 // Managing the user's custom categories ("category folders"): the list with
 // delete buttons, and the "Add category" dialog with a name, an icon and a
@@ -56,7 +57,7 @@ export function CategoryManager() {
               </Text>
               <Text style={s.rowSub}>{count === 1 ? '1 item' : `${count} items`}</Text>
             </View>
-            <Pressable
+            <PressScale
               onPress={() => {
                 if (confirmingThis) {
                   Haptics.selectionAsync().catch(() => {});
@@ -68,12 +69,13 @@ export function CategoryManager() {
                 }
               }}
               hitSlop={8}
+              scaleTo={0.97}
               accessibilityRole="button"
               accessibilityLabel={confirmingThis ? `Confirm removing ${cat.name}` : `Remove ${cat.name}`}
-              style={({ pressed }) => [s.remove, confirmingThis && s.removeConfirm, pressed && { opacity: 0.7 }]}
+              style={[s.remove, confirmingThis && s.removeConfirm]}
             >
               <Ionicons name={confirmingThis ? 'trash' : 'trash-outline'} size={17} color={confirmingThis ? c.red : c.textMuted} />
-            </Pressable>
+            </PressScale>
           </View>
         );
       })}
@@ -144,16 +146,17 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
             {CATEGORY_ICONS.map((ic) => {
               const on = ic === icon;
               return (
-                <Pressable
+                <PressScale
                   key={ic}
                   onPress={() => setIcon(ic)}
+                  scaleTo={0.97}
                   accessibilityRole="radio"
                   aria-checked={on}
                   accessibilityLabel={`Icon ${ic}`}
-                  style={({ pressed }) => [s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }, pressed && { opacity: 0.7 }]}
+                  style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
                 >
                   <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={20} color={on ? c.mint : c.textMuted} />
-                </Pressable>
+                </PressScale>
               );
             })}
           </View>
@@ -163,16 +166,17 @@ function AddCategoryDialog({ visible, onClose, onAdd }: { visible: boolean; onCl
               const on = t === tint;
               const g = c.tints[t];
               return (
-                <Pressable
+                <PressScale
                   key={t}
                   onPress={() => setTint(t)}
+                  scaleTo={0.97}
                   accessibilityRole="radio"
                   aria-checked={on}
                   accessibilityLabel={`Colour ${t}`}
-                  style={({ pressed }) => [s.tintDot, on && s.tintDotOn, pressed && { opacity: 0.7 }]}
+                  style={[s.tintDot, on && s.tintDotOn]}
                 >
                   <View style={[s.tintFill, { backgroundColor: g.top, borderColor: g.border }]} />
-                </Pressable>
+                </PressScale>
               );
             })}
           </View>

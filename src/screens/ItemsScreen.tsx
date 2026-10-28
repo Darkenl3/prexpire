@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressScale } from '../components/Press';
 import { makeStyles } from '../theme';
 import { useCategories } from '../categories';
 import { useItems, type CategoryId } from '../items';
@@ -39,9 +40,9 @@ export function ItemsScreen({ badge, category, onNavigate }: Props) {
         <Text style={c.metaText}>
           {shown.length === 1 ? '1 item' : `${shown.length} items`} · {SORT_LABELS[settings.sort]}
         </Text>
-        <Pressable onPress={() => onNavigate('tab:settings')} accessibilityRole="link" hitSlop={8}>
+        <PressScale onPress={() => onNavigate('tab:settings')} accessibilityRole="link" hitSlop={8} scaleTo={0.97}>
           <Text style={c.link}>Change</Text>
-        </Pressable>
+        </PressScale>
       </View>
       {!settings.showExpired && expired.length > 0 && (
         <View style={c.hidden}>

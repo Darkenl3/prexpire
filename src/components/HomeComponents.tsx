@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
+import { PressScale } from './Press';
 
 // The brand wordmark: dark ink on light backgrounds, light ink on dark ones.
 // Both were cut from the same artwork (white background un-blended into
@@ -43,22 +44,24 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
   const s = useStyles();
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
-      <Pressable
+      <PressScale
         onPress={onMenu}
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Menu"
-        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        scaleTo={0.97}
+        style={[s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle]}
       >
         <Ionicons name="menu" size={24} color={c.text} />
-      </Pressable>
-      <Brandmark height={36} />
-      <Pressable
+      </PressScale>
+      <Brandmark height={33} />
+      <PressScale
         onPress={onBell}
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={`${badge} notifications`}
-        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        scaleTo={0.97}
+        style={[s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle]}
       >
         <Ionicons name="notifications-outline" size={22} color={c.text} />
         {badge > 0 && (
@@ -66,7 +69,7 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
             <Text style={s.badgeText}>{badge}</Text>
           </View>
         )}
-      </Pressable>
+      </PressScale>
     </View>
   );
 }
@@ -75,7 +78,7 @@ export function AttentionCard({ title, subtitle, onPress }: { title: string; sub
   const c = useTheme();
   const s = useStyles();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.alert, pressed && s.pressed]}>
+    <PressScale onPress={onPress} accessibilityRole="button" style={s.alert} scaleTo={0.985}>
       <View style={[s.alertIcon, { backgroundColor: c.alertIconBg }]}>
         {/* Red in both themes: urgency reads the same whatever the theme. */}
         <Ionicons name="warning" size={24} color={c.red} />
@@ -85,7 +88,7 @@ export function AttentionCard({ title, subtitle, onPress }: { title: string; sub
         <Text style={[s.alertSub, { color: c.textMuted }]}>{subtitle.join('  •  ')}</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -97,10 +100,10 @@ export function SectionHeader({ title, action, first = false, onAction }: Sectio
   return (
     <View style={[s.section, first && s.sectionFirst]}>
       <Text style={[s.sectionTitle, { color: c.text }]}>{title}</Text>
-      <Pressable onPress={onAction} hitSlop={8} style={s.sectionAction}>
+      <PressScale onPress={onAction} hitSlop={8} scaleTo={0.97} style={s.sectionAction}>
         <Text style={[s.sectionLink, { color: c.mint }]}>{action}</Text>
         <Ionicons name="chevron-forward" size={17} color={c.mint} />
-      </Pressable>
+      </PressScale>
     </View>
   );
 }
@@ -156,8 +159,19 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
     </>
   );
   const tileStyle = [s.tile, compact && s.tileCompact, !sub && !status && s.tileCentered];
+  // The tile's floating shadow sits on the OUTER pressable wrapper, which
+  // never clips (iOS drops a view's own shadow when it masks its bounds);
+  // the gradient/ghost fill and its rounded clipping stay on the inner view.
+  // The opaque outer fill gives iOS and Android the shape to lift.
+  const outerBg = ghost ? c.addTile.bg : t.top;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={name} style={({ pressed }) => [{ width }, pressed && s.pressed]}>
+    <PressScale
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={name}
+      scaleTo={0.98}
+      style={[{ width, borderRadius: 16 }, ...(c === LIGHT ? [CARD_SHADOW, { backgroundColor: outerBg }] : [])]}
+    >
       {ghost ? (
         <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }, hatchFx(c.addTile.line)]}>{body}</View>
       ) : (
@@ -170,7 +184,7 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
           {body}
         </LinearGradient>
       )}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -211,13 +225,14 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
   // Rows without a destination are plain text, not buttons.
   if (!onPress) return <View style={[s.row, compact && s.rowCompact]}>{content}</View>;
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       accessibilityRole="button"
-      style={({ pressed }) => [s.row, compact && s.rowCompact, pressed && s.pressed]}
+      style={[s.row, compact && s.rowCompact]}
+      scaleTo={0.985}
     >
       {content}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -263,10 +278,11 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
   const renderTab = (tab: (typeof tabs)[number]) => {
     const selected = tab.id === active;
     return (
-      <Pressable
+      <PressScale
         key={tab.id}
         onPress={() => onTab(tab.id)}
         style={s.tab}
+        scaleTo={0.97}
         accessibilityRole="tab"
         aria-selected={selected}
         accessibilityLabel={tab.label}
@@ -287,7 +303,7 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
         >
           {tab.label}
         </Text>
-      </Pressable>
+      </PressScale>
     );
   };
 
@@ -304,10 +320,10 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
           {renderTab(tabs[0])}
           {renderTab(tabs[1])}
           <View style={s.tab}>
-            <Pressable onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" style={({ pressed }) => [s.scan, pressed && s.pressed]}>
+            <PressScale onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" scaleTo={0.97} style={s.scan}>
               <Ionicons name="scan-outline" size={26} color={c.scanInk} />
               <View style={s.scanLine} />
-            </Pressable>
+            </PressScale>
           </View>
           {renderTab(tabs[2])}
           {renderTab(tabs[3])}
@@ -318,7 +334,6 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
 }
 
 const useStyles = makeStyles((c) => ({
-  pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
   // A taller top bar gives the wordmark room to breathe (brand-forward,
   // like the reference) - keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -388,8 +403,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingTop: 12,
-    // Borderless pastel cards that float on the light page.
-    ...(c === LIGHT ? CARD_SHADOW : null),
+    // Borderless pastel cards that float on the light page: the shadow sits
+    // on the outer PressScale wrapper (see CategoryTile), never here, because
+    // this view clips its corners - and a view that clips cannot cast iOS's
+    // soft shadow.
   },
   // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},

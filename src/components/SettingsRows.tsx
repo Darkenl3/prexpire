@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, type Accent } from '../theme';
 import { useSettings } from '../settings';
+import { FadeIn, PressScale } from './Press';
 
 // Building blocks of the Settings page, styled after the reference's grouped
 // card design: white cards on a cool-white page, fine #E5EDF3 hairlines, soft
@@ -39,18 +40,30 @@ export function SettingsSection({ title, children }: { title: string; children: 
 
 // Groups rows in one card with fine separators between them (aligned with the
 // text column, never under the icons, and none after the last row).
+//
+// Shadow architecture (the part that makes the reference's floating look
+// actually render): the soft blue-gray shadow, the corner radius and the
+// Android elevation sit on the OUTER wrapper, which never sets
+// overflow: 'hidden' - iOS clips a view's own shadow the moment it masks its
+// bounds, so the two must never meet. The white background rides on that same
+// outer wrapper (an opaque layer gives iOS and Android the shape to lift),
+// while the hairline border and the rounded clipping of row content live on
+// the inner container. No parent in the hierarchy clips the wrapper, so the
+// shadow stays soft and whole whether the card is short or tall.
 export function SettingsCard({ children, danger = false }: { children: ReactNode; danger?: boolean }) {
   const c = useTheme();
   const s = useStyles();
   const rows = Children.toArray(children).filter(Boolean);
   return (
-    <View style={[s.card, danger && { borderColor: c.dangerBorder, backgroundColor: c.dangerBg }]}>
-      {rows.map((row, i) => (
-        <Fragment key={i}>
-          {i > 0 && <View style={s.separator} />}
-          {row}
-        </Fragment>
-      ))}
+    <View style={[s.cardOuter, danger && { backgroundColor: c.dangerBg }, ...(c === LIGHT ? [CARD_SHADOW] : [])]}>
+      <View style={[s.cardInner, danger && { borderColor: c.dangerBorder }]}>
+        {rows.map((row, i) => (
+          <Fragment key={i}>
+            {i > 0 && <View style={s.separator} />}
+            {row}
+          </Fragment>
+        ))}
+      </View>
     </View>
   );
 }
@@ -108,15 +121,16 @@ export function SettingRow({ icon, accent, title, description, value, right, bel
   return (
     <View style={s.rowWrap}>
       {onPress ? (
-        <Pressable
+        <PressScale
           onPress={onPress}
           accessibilityRole="button"
           accessibilityLabel={title}
           accessibilityHint={description}
-          style={({ pressed }) => [s.pressable, pressed && s.rowPressed]}
+          style={s.pressable}
+          pressedStyle={s.rowPressed}
         >
           {body}
-        </Pressable>
+        </PressScale>
       ) : (
         body
       )}
@@ -141,14 +155,19 @@ export function Toggle({ value, onChange, label, disabled = false }: { value: bo
   );
 }
 
-// A compact rounded status badge, e.g. "Off" or "Up to date".
+// A compact rounded status badge, e.g. "Off" or "Up to date". Remount it with
+// a fresh key when its meaning changes and the new badge fades in softly.
 export function StatusBadge({ label, tone = 'muted', check = false }: { label: string; tone?: 'green' | 'amber' | 'muted'; check?: boolean }) {
   const s = useStyles();
   return (
-    <View style={[s.badge, tone === 'green' && s.badgeGreen, tone === 'amber' && s.badgeAmber]} accessibilityRole="text" accessibilityLabel={label}>
+    <FadeIn
+      style={[s.badge, tone === 'green' && s.badgeGreen, tone === 'amber' && s.badgeAmber]}
+      accessibilityRole="text"
+      accessibilityLabel={label}
+    >
       {check && tone === 'green' && <Ionicons name="checkmark" size={13} color="#00A86B" />}
       <Text style={[s.badgeText, tone === 'green' && s.badgeTextGreen, tone === 'amber' && s.badgeTextAmber]}>{label}</Text>
-    </View>
+    </FadeIn>
   );
 }
 
@@ -163,7 +182,7 @@ export function Options<T extends string | number>({ label, options, value, onCh
       {options.map((o) => {
         const on = o.value === value;
         return (
-          <Pressable
+          <PressScale
             key={String(o.value)}
             onPress={() => !o.disabled && onChange(o.value)}
             disabled={o.disabled}
@@ -171,11 +190,15 @@ export function Options<T extends string | number>({ label, options, value, onCh
             aria-checked={on}
             aria-disabled={!!o.disabled}
             accessibilityLabel={o.label}
-            style={({ pressed }) => [s.chip, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }, o.disabled && s.chipDisabled, pressed && s.pressed]}
+            style={[s.chip, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }, o.disabled && s.chipDisabled]}
           >
-            {on && <Ionicons name="checkmark" size={14} color={c.mint} />}
+            {on && (
+              <FadeIn>
+                <Ionicons name="checkmark" size={14} color={c.mint} />
+              </FadeIn>
+            )}
             <Text style={[s.chipText, on && s.chipTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
-          </Pressable>
+          </PressScale>
         );
       })}
     </View>
@@ -192,7 +215,7 @@ export function OptionList<T extends string | number>({ label, options, value, o
       {options.map((o) => {
         const on = o.value === value;
         return (
-          <Pressable
+          <PressScale
             key={String(o.value)}
             onPress={() => !o.disabled && onChange(o.value)}
             disabled={o.disabled}
@@ -200,11 +223,16 @@ export function OptionList<T extends string | number>({ label, options, value, o
             aria-checked={on}
             aria-disabled={!!o.disabled}
             accessibilityLabel={o.label}
-            style={({ pressed }) => [s.optionRow, o.disabled && s.chipDisabled, pressed && s.rowPressed]}
+            style={[s.optionRow, o.disabled && s.chipDisabled]}
+            pressedStyle={s.rowPressed}
           >
             <Text style={[s.optionText, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
-            {on && <Ionicons name="checkmark" size={19} color={c.mint} />}
-          </Pressable>
+            {on && (
+              <FadeIn>
+                <Ionicons name="checkmark" size={19} color={c.mint} />
+              </FadeIn>
+            )}
+          </PressScale>
         );
       })}
     </View>
@@ -246,7 +274,7 @@ export function OptionSheet<T extends string | number>({
     }
   }, [visible, rise]);
   const close = useCallback(() => {
-    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 170 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onClose());
+    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 190 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onClose());
   }, [rise, onClose]);
   const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [64, 0] });
 
@@ -267,7 +295,7 @@ export function OptionSheet<T extends string | number>({
             {options.map((o) => {
               const on = o.value === value;
               return (
-                <Pressable
+                <PressScale
                   key={String(o.value)}
                   onPress={() => {
                     if (o.disabled) return;
@@ -279,17 +307,22 @@ export function OptionSheet<T extends string | number>({
                   aria-checked={on}
                   aria-disabled={!!o.disabled}
                   accessibilityLabel={o.label}
-                  style={({ pressed }) => [s.sheetOption, o.disabled && s.chipDisabled, pressed && s.rowPressed]}
+                  style={[s.sheetOption, o.disabled && s.chipDisabled]}
+                  pressedStyle={s.rowPressed}
                 >
                   <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
-                  {on && <Ionicons name="checkmark" size={19} color={c.mint} />}
-                </Pressable>
+                  {on && (
+                    <FadeIn>
+                      <Ionicons name="checkmark" size={19} color={c.mint} />
+                    </FadeIn>
+                  )}
+                </PressScale>
               );
             })}
           </View>
-          <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={({ pressed }) => [s.sheetCancel, pressed && s.rowPressed]}>
+          <PressScale onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={s.sheetCancel} pressedStyle={s.rowPressed}>
             <Text style={s.sheetCancelText}>Cancel</Text>
-          </Pressable>
+          </PressScale>
         </Animated.View>
       </View>
     </Modal>
@@ -349,23 +382,22 @@ export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled =
   const s = useStyles();
   const color = tone === 'mint' ? accents.mint : tone === 'danger' ? accents.red : c.text;
   return (
-    <Pressable
+    <PressScale
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       aria-disabled={disabled}
-      style={({ pressed }) => [
+      style={[
         s.button,
         tone === 'mint' && { borderColor: c.btnMintBorder, backgroundColor: c.btnMintBg },
         tone === 'danger' && { borderColor: c.btnDangerBorder, backgroundColor: c.btnDangerBg },
         disabled && s.chipDisabled,
-        pressed && s.pressed,
       ]}
     >
       {icon && <Ionicons name={icon} size={16} color={color} />}
       <Text style={[s.buttonText, { color }]}>{label}</Text>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -373,15 +405,20 @@ const useStyles = makeStyles((c) => ({
   section: { marginBottom: 24 },
   // Section headings sit just above their card, slightly inset from its edge.
   sectionTitle: { color: c.textMuted, fontSize: 16, fontWeight: '600', letterSpacing: 0.1, marginBottom: 8, marginLeft: 6 },
-  // White cards with a fine hairline and the reference's soft floating shadow
-  // (light); dark keeps its flat surface + hairline.
-  card: {
+  // The accordion's outer wrapper: opaque background, corner radius and (on
+  // light) the soft floating shadow + Android elevation. NO overflow clipping
+  // here - clipping belongs to the inner container, or the shadow is lost.
+  cardOuter: {
     backgroundColor: c.surface,
+    borderRadius: 20,
+  },
+  // The inner container: hairline border and rounded clipping of the rows,
+  // presses and separators inside. Transparent - the outer holds the fill.
+  cardInner: {
     borderRadius: 20,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     overflow: 'hidden',
-    ...(c === LIGHT ? CARD_SHADOW : null),
   },
   // Separators start after the icon tile, aligned with the title text.
   separator: { height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginLeft: 82 },
@@ -394,7 +431,8 @@ const useStyles = makeStyles((c) => ({
   rowDesc: { color: c.textMuted, fontSize: 14, marginTop: 2, lineHeight: 19 },
   rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8 },
   chevron: { marginLeft: 2, opacity: 0.75 },
-  // Gentle press feedback: a whisper of tint behind the row.
+  // Gentle press feedback: a whisper of tint behind the row (the scale-down
+  // and opacity settle come from PressScale, timed like the rest).
   rowPressed: { backgroundColor: c === LIGHT ? 'rgba(100,116,139,0.07)' : 'rgba(255,255,255,0.05)' },
   below: { marginTop: 12, marginLeft: 66, gap: 10 },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -464,5 +502,4 @@ const useStyles = makeStyles((c) => ({
     ...(c === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null),
   },
   buttonText: { fontSize: 14, fontWeight: '600' },
-  pressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
 }));

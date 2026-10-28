@@ -7,6 +7,7 @@ import { expiryPhrase, type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
 import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
+import { PressScale } from './Press';
 
 export function categoryArt(id: CategoryId, size: number) {
   switch (id) {
@@ -123,16 +124,17 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           {all.map((cat) => {
             const on = cat.id === category;
             return (
-              <Pressable
+              <PressScale
                 key={cat.id}
                 onPress={() => setCategory(cat.id)}
+                scaleTo={0.97}
                 style={[s.chip, on && s.chipOn]}
                 accessibilityRole="radio"
                 aria-checked={on}
                 accessibilityState={{ selected: on }}
               >
                 <Text style={[s.chipText, on && s.chipTextOn]}>{cat.name}</Text>
-              </Pressable>
+              </PressScale>
             );
           })}
         </ScrollView>
@@ -140,8 +142,9 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
 
         <View style={s.divider} />
 
-        <Pressable
+        <PressScale
           onPress={() => setEditing((e) => !e)}
+          scaleTo={0.99}
           style={s.dateRow}
           accessibilityRole="button"
           accessibilityLabel={`${dateTitle}: ${date ? formatDate(date) : 'not chosen'}. Edit date`}
@@ -154,22 +157,23 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
             <Text style={s.dateValue}>{date ? formatDate(date) : 'Choose the date below'}</Text>
           </View>
           <Ionicons name={editing ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.textMuted} />
-        </Pressable>
+        </PressScale>
 
         {ambiguous && !edited && (
           <View style={s.block}>
             <Text style={s.question}>The day and month could be either way round. Which is it?</Text>
             <View style={s.choiceRow}>
               {readings.map((r, i) => (
-                <Pressable
+                <PressScale
                   key={r.iso}
                   onPress={() => setPicked(i)}
+                  scaleTo={0.97}
                   style={[s.choice, picked === i && s.choiceOn]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: picked === i }}
                 >
                   <Text style={[s.choiceText, picked === i && s.chipTextOn]}>{formatDate(r)}</Text>
-                </Pressable>
+                </PressScale>
               ))}
             </View>
           </View>
@@ -196,22 +200,24 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
       </ScrollView>
 
       {needsTick && !edited && (
-        <Pressable
+        <PressScale
           onPress={() => setTicked((t) => !t)}
+          scaleTo={0.99}
           style={s.tickRow}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: ticked }}
         >
           <Ionicons name={ticked ? 'checkbox' : 'square-outline'} size={22} color={ticked ? colors.mint : colors.textMuted} />
           <Text style={s.tickText}>Yes, this is the expiry date</Text>
-        </Pressable>
+        </PressScale>
       )}
 
       {save === 'error' && <Text style={s.error}>Couldn't save the item. Please try again.</Text>}
-      <Pressable
+      <PressScale
         onPress={submit}
         disabled={!canSave}
-        style={({ pressed }) => [s.primary, !canSave && save !== 'saved' && s.disabled, pressed && s.pressed]}
+        scaleTo={0.98}
+        style={[s.primary, !canSave && save !== 'saved' && s.disabled]}
         accessibilityRole="button"
         accessibilityState={{ disabled: !canSave, busy: save === 'saving' }}
         accessibilityLabel={save === 'saved' ? 'Item added' : 'Add item'}
@@ -226,15 +232,16 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
         ) : (
           <Text style={s.primaryText}>Add item</Text>
         )}
-      </Pressable>
-      <Pressable
+      </PressScale>
+      <PressScale
         onPress={onSecondary}
         disabled={save === 'saving' || save === 'saved'}
-        style={({ pressed }) => [s.secondary, pressed && s.pressed]}
+        scaleTo={0.98}
+        style={s.secondary}
         accessibilityRole="button"
       >
         <Text style={s.secondaryText}>{secondaryLabel}</Text>
-      </Pressable>
+      </PressScale>
     </View>
   );
 }
