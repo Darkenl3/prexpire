@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, pills, radius, space, tints, type, type Tint, type Tone } from '../theme';
+import { makeStyles, tints, useTheme, LIGHT, type Tint, type Tone } from '../theme';
 
 const wordmark = require('../../assets/wordmark.png');
 
@@ -17,7 +17,24 @@ const GLASS_FX = {
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
 
-export function Header({ badge, gutter = space.gutter, onMenu, onBell }: { badge: number; gutter?: number; onMenu: () => void; onBell: () => void }) {
+// The brand wordmark: the light image on the dark theme, crisp type on the
+// light theme (the PNG asset is drawn for dark backgrounds).
+export function Brandmark({ height }: { height: number }) {
+  const c = useTheme();
+  if (c === LIGHT) {
+    return (
+      <Text style={{ fontSize: Math.round(height * 0.62), fontWeight: '800', letterSpacing: Math.round(height * 0.08), color: c.text }} accessibilityLabel="Prexpire">
+        PREXPIRE
+      </Text>
+    );
+  }
+  const width = Math.round((height * 118) / 30);
+  return <Image source={wordmark} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
+}
+
+export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; gutter?: number; onMenu: () => void; onBell: () => void }) {
+  const c = useTheme();
+  const s = useStyles();
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
       <Pressable
@@ -25,21 +42,21 @@ export function Header({ badge, gutter = space.gutter, onMenu, onBell }: { badge
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel="Menu"
-        style={({ pressed }) => [s.headerBtn, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg, borderColor: c.glassBorder }, GLASS_FX as ViewStyle, pressed && s.pressed]}
       >
-        <Ionicons name="menu" size={24} color={colors.text} />
+        <Ionicons name="menu" size={24} color={c.text} />
       </Pressable>
-      <Image source={wordmark} style={s.wordmark} resizeMode="contain" accessibilityLabel="Prexpire" />
+      <Brandmark height={30} />
       <Pressable
         onPress={onBell}
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={`${badge} notifications`}
-        style={({ pressed }) => [s.headerBtn, GLASS_FX as ViewStyle, pressed && s.pressed]}
+        style={({ pressed }) => [s.headerBtn, { backgroundColor: c.glassBg, borderColor: c.glassBorder }, GLASS_FX as ViewStyle, pressed && s.pressed]}
       >
-        <Ionicons name="notifications-outline" size={22} color={colors.text} />
+        <Ionicons name="notifications-outline" size={22} color={c.text} />
         {badge > 0 && (
-          <View style={s.badge}>
+          <View style={[s.badge, { backgroundColor: c.red, borderColor: c.bg }]}>
             <Text style={s.badgeText}>{badge}</Text>
           </View>
         )}
@@ -49,16 +66,18 @@ export function Header({ badge, gutter = space.gutter, onMenu, onBell }: { badge
 }
 
 export function AttentionCard({ title, subtitle, onPress }: { title: string; subtitle: string[]; onPress: () => void }) {
+  const c = useTheme();
+  const s = useStyles();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.alert, pressed && s.pressed]}>
-      <View style={s.alertIcon}>
-        <Ionicons name="warning-outline" size={25} color={colors.amber} />
+      <View style={[s.alertIcon, { backgroundColor: c.alertIconBg }]}>
+        <Ionicons name="warning-outline" size={25} color={c.amber} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={s.alertTitle}>{title}</Text>
-        <Text style={s.alertSub}>{subtitle.join('  •  ')}</Text>
+        <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
+        <Text style={[s.alertSub, { color: c.textMuted }]}>{subtitle.join('  •  ')}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
     </Pressable>
   );
 }
@@ -66,12 +85,14 @@ export function AttentionCard({ title, subtitle, onPress }: { title: string; sub
 type SectionHeaderProps = { title: string; action: string; first?: boolean; onAction: () => void };
 
 export function SectionHeader({ title, action, first = false, onAction }: SectionHeaderProps) {
+  const c = useTheme();
+  const s = useStyles();
   return (
     <View style={[s.section, first && s.sectionFirst]}>
-      <Text style={s.sectionTitle}>{title}</Text>
+      <Text style={[s.sectionTitle, { color: c.text }]}>{title}</Text>
       <Pressable onPress={onAction} hitSlop={8} style={s.sectionAction}>
-        <Text style={s.sectionLink}>{action}</Text>
-        <Ionicons name="chevron-forward" size={17} color={colors.mint} />
+        <Text style={[s.sectionLink, { color: c.mint }]}>{action}</Text>
+        <Ionicons name="chevron-forward" size={17} color={c.mint} />
       </Pressable>
     </View>
   );
@@ -89,6 +110,8 @@ type CategoryTileProps = {
 };
 
 export function CategoryTile({ tint, art, name, sub, status, width, compact = false, onPress }: CategoryTileProps) {
+  const c = useTheme();
+  const s = useStyles();
   const t = tints[tint];
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={name} style={({ pressed }) => [{ width }, pressed && s.pressed]}>
@@ -101,7 +124,7 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
         <View style={[s.tileArt, compact && s.tileArtCompact, !status && s.tileArtTight]}>{art}</View>
         {/* Tiles without a status line (Add category) have room for a two-line name on narrow tiles. */}
         <Text
-          style={[s.tileName, compact && s.tileNameCompact]}
+          style={[s.tileName, { color: c.text }, compact && s.tileNameCompact]}
           numberOfLines={status ? 1 : 2}
           adjustsFontSizeToFit={!!status}
           minimumFontScale={0.85}
@@ -109,15 +132,15 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
           {name}
         </Text>
         {!!sub && (
-          <Text style={[s.tileSub, compact && s.textCompact]} numberOfLines={1}>
+          <Text style={[s.tileSub, { color: c.textMuted }, compact && s.textCompact]} numberOfLines={1}>
             {sub}
           </Text>
         )}
         {status ? (
           <View style={s.status}>
-            <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? colors.amber : colors.green }]} />
+            <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : c.green }]} />
             <Text
-              style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? colors.amberText : colors.green }]}
+              style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : c.green }]}
               numberOfLines={1}
             >
               {status.label}
@@ -143,28 +166,34 @@ type ExpiryRowProps = {
 };
 
 export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPress }: ExpiryRowProps) {
-  const p = pills[tone];
+  const c = useTheme();
+  const s = useStyles();
+  const p = c.pills[tone];
   const content = (
     <>
-      <View style={[s.rowIcon, compact && s.rowIconCompact]}>{art}</View>
+      <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
       <View style={{ flex: 1 }}>
-        <Text style={[s.rowTitle, compact && s.rowTitleCompact]} numberOfLines={1}>
+        <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1}>
           {title}
         </Text>
-        <Text style={s.rowSub} numberOfLines={compact ? 1 : 2}>
+        <Text style={[s.rowSub, { color: c.textMuted }]} numberOfLines={compact ? 1 : 2}>
           {sub.join('  •  ')}
         </Text>
       </View>
       <View style={[s.pill, compact && s.pillCompact, { backgroundColor: p.bg, borderColor: p.border }]}>
         <Text style={[s.pillText, compact && s.pillTextCompact, { color: p.text }]}>{pill}</Text>
       </View>
-      {onPress && <Ionicons name="chevron-forward" size={20} color={colors.textMuted} style={{ marginLeft: 2 }} />}
+      {onPress && <Ionicons name="chevron-forward" size={20} color={c.textMuted} style={{ marginLeft: 2 }} />}
     </>
   );
   // Rows without a destination are plain text, not buttons.
-  if (!onPress) return <View style={[s.row, compact && s.rowCompact]}>{content}</View>;
+  if (!onPress) return <View style={[s.row, compact && s.rowCompact, { borderColor: c.surfaceBorder, backgroundColor: c.surface }]}>{content}</View>;
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={({ pressed }) => [s.row, compact && s.rowCompact, pressed && s.pressed]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [s.row, compact && s.rowCompact, { borderColor: c.surfaceBorder, backgroundColor: c.surface }, pressed && s.pressed]}
+    >
       {content}
     </Pressable>
   );
@@ -196,6 +225,8 @@ export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
 export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = false, onTab, onScan }: BottomNavProps) {
+  const c = useTheme();
+  const s = useStyles();
   // Narrow phones give the five tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
@@ -219,15 +250,15 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
         accessibilityLabel={tab.label}
       >
         <View>
-          <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? colors.mint : colors.textMuted} />
+          <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.mint : c.textMuted} />
           {tab.id === 'reminders' && badge > 0 && (
-            <View style={[s.badge, { top: -5, right: -9 }]}>
+            <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.red, borderColor: c.navBg }]}>
               <Text style={s.badgeText}>{badge}</Text>
             </View>
           )}
         </View>
         <Text
-          style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? colors.mint : colors.textMuted }]}
+          style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.mint : c.textMuted }]}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.85}
@@ -252,7 +283,7 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
           {renderTab(tabs[1])}
           <View style={s.tab}>
             <Pressable onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" style={({ pressed }) => [s.scan, pressed && s.pressed]}>
-              <Ionicons name="scan-outline" size={26} color={colors.scanInk} />
+              <Ionicons name="scan-outline" size={26} color={c.scanInk} />
               <View style={s.scanLine} />
             </Pressable>
           </View>
@@ -264,7 +295,7 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
   );
 }
 
-const s = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   // Liquid-glass circle (with GLASS_FX): the same frosted look as the shell's
@@ -275,11 +306,8 @@ const s = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.14)',
   },
-  wordmark: { width: 118, height: 30 },
   badge: {
     position: 'absolute',
     top: 2,
@@ -288,30 +316,28 @@ const s = StyleSheet.create({
     height: 18,
     borderRadius: 9,
     paddingHorizontal: 4,
-    backgroundColor: colors.red,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: colors.bg,
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   alert: {
     marginTop: 4,
     minHeight: 58,
     paddingVertical: 7,
-    borderRadius: radius.alert,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#5C4512',
-    backgroundColor: '#231E11',
+    borderColor: c.alertBorder,
+    backgroundColor: c.alertBg,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 9,
     paddingRight: 14,
     gap: 12,
   },
-  alertIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#4A3811', alignItems: 'center', justifyContent: 'center' },
-  alertTitle: { color: colors.text, ...type.alertTitle },
-  alertSub: { color: colors.textMuted, ...type.body, marginTop: 2 },
+  alertIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  alertTitle: { color: c.text, fontSize: 16, fontWeight: '600' },
+  alertSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', marginTop: 2 },
   section: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -320,10 +346,10 @@ const s = StyleSheet.create({
     marginBottom: 9,
   },
   sectionFirst: { marginTop: 4 },
-  sectionTitle: { color: colors.text, ...type.title, flexShrink: 1 },
+  sectionTitle: { color: c.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  sectionLink: { color: colors.mint, ...type.link },
-  tile: { height: 156, borderRadius: radius.card, borderWidth: 1, overflow: 'hidden', alignItems: 'center', paddingHorizontal: 8, paddingTop: 12 },
+  sectionLink: { color: c.mint, fontSize: 14.5, fontWeight: '600' },
+  tile: { height: 156, borderRadius: 13, borderWidth: 1, overflow: 'hidden', alignItems: 'center', paddingHorizontal: 8, paddingTop: 12 },
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },
@@ -332,33 +358,31 @@ const s = StyleSheet.create({
   tileCentered: { justifyContent: 'center', paddingTop: 0, paddingBottom: 4 },
   tileNameCompact: { fontSize: 14 },
   textCompact: { fontSize: 12.5 },
-  tileName: { color: colors.text, ...type.tileName, textAlign: 'center' },
-  tileSub: { color: colors.textMuted, ...type.body, textAlign: 'center', marginTop: 2 },
+  tileName: { color: c.text, fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  tileSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', textAlign: 'center', marginTop: 2 },
   status: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4, height: 18 },
   statusSpacer: { height: 18, marginTop: 4 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { ...type.body, fontWeight: '500' },
+  statusText: { fontSize: 13.5, fontWeight: '500' },
   row: {
     minHeight: 53,
     paddingVertical: 6,
-    borderRadius: radius.row,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 9,
     paddingRight: 8,
     gap: 11,
   },
-  rowIcon: { width: 44, height: 40, borderRadius: radius.tile, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: { width: 44, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowCompact: { minHeight: 44, paddingVertical: 4, gap: 9 },
   rowIconCompact: { width: 36, height: 32, borderRadius: 10 },
-  rowTitle: { color: colors.text, ...type.rowTitle },
+  rowTitle: { color: c.text, fontSize: 15.5, fontWeight: '600' },
   rowTitleCompact: { fontSize: 14.5 },
-  rowSub: { color: colors.textMuted, ...type.rowSub, fontSize: 12.5, marginTop: 1 },
-  pill: { height: 30, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  pillText: { ...type.pill },
+  rowSub: { color: c.textMuted, fontSize: 12.5, fontWeight: '400', marginTop: 1 },
+  pill: { height: 30, paddingHorizontal: 11, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  pillText: { fontSize: 14, fontWeight: '600' },
   pillCompact: { height: 26, paddingHorizontal: 9 },
   pillTextCompact: { fontSize: 13 },
   navWrap: { position: 'absolute', alignItems: 'center' },
@@ -371,13 +395,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 6,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.10)',
   },
   // backdropFilter only applies on web; native gets the translucent fill.
-  navFallback: { backgroundColor: 'rgba(12,24,27,0.72)', backdropFilter: 'blur(22px) saturate(1.4)' } as object,
+  navFallback: { backgroundColor: c.navBg, borderColor: c.navBorder, backdropFilter: 'blur(22px) saturate(1.4)' } as ViewStyle,
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, height: 68 },
-  tabLabel: { ...type.tab },
+  tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
-  scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.scan, alignItems: 'center', justifyContent: 'center' },
-  scanLine: { position: 'absolute', width: 16, height: 2.5, borderRadius: 2, backgroundColor: colors.scanInk },
-});
+  scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },
+  scanLine: { position: 'absolute', width: 16, height: 2.5, borderRadius: 2, backgroundColor: c.scanInk },
+}));

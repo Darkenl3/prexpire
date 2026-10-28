@@ -8,8 +8,10 @@ import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
+import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
+import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue } from './src/preferences';
 import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
@@ -25,7 +27,10 @@ function routeFromHash(): Route {
   if (!WEB || typeof window === 'undefined') return { tab: 'home' };
   const [tab, category] = window.location.hash.replace(/^#\/?/, '').split('/');
   if (!TABS.includes(tab as TabId)) return { tab: 'home' };
-  return { tab: tab as TabId, category: CATEGORY_IDS.includes(category as CategoryId) ? (category as CategoryId) : undefined };
+  // Custom categories are read synchronously here: the hash is parsed in a
+  // state initialiser, before any context exists.
+  const known = CATEGORY_IDS.includes(category) || readCustomCategories().some((c) => c.id === category);
+  return { tab: tab as TabId, category: known ? (category as CategoryId) : undefined };
 }
 
 function writeHash(route: Route) {
@@ -55,6 +60,7 @@ function Shell() {
   const layout = useLayout();
   const { items } = useItems();
   const { settings, formatDate } = useSettings();
+  const { ids: categoryIds } = useCategories();
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
   const [notice, setNotice] = useState<string | null>(null);
@@ -93,38 +99,42 @@ function Shell() {
     [items, settings.reminders, settings.reminderLead],
   );
 
-  const onNavigate = useCallback((to: string) => {
-    if (to === 'scan') {
-      // Inside a native WebView shell (docs/native-shell.md) let the shell scan with its
-      // native camera + OCR (Apple Vision / ML Kit). The shell hands the reading back
-      // via the 'prexpire:native-scan' event; outside a shell this is a no-op.
-      const shell = WEB && typeof window !== 'undefined' ? (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView : undefined;
-      if (shell?.postMessage) {
-        try {
-          shell.postMessage(JSON.stringify({ type: 'scan' }));
-          return;
-        } catch {
-          // Fall through to the in-app scanner.
+  const onNavigate = useCallback(
+    (to: string) => {
+      if (to === 'scan') {
+        // Inside a native WebView shell (docs/native-shell.md) let the shell scan with its
+        // native camera + OCR (Apple Vision / ML Kit). The shell hands the reading back
+        // via the 'prexpire:native-scan' event; outside a shell this is a no-op.
+        const shell = WEB && typeof window !== 'undefined' ? (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView : undefined;
+        if (shell?.postMessage) {
+          try {
+            shell.postMessage(JSON.stringify({ type: 'scan' }));
+            return;
+          } catch {
+            // Fall through to the in-app scanner.
+          }
+        }
+        return setRoute({ tab: 'scan' });
+      }
+      if (to.startsWith('tab:')) {
+        const tab = to.slice(4) as TabId;
+        if (TABS.includes(tab)) {
+          setRoute({ tab });
+          setLastTab(tab);
+        }
+        return;
+      }
+      if (to.startsWith('category:')) {
+        const category = to.slice(9) as CategoryId;
+        // Includes the user's custom categories (ids from the context).
+        if (categoryIds.includes(category)) {
+          setRoute({ tab: 'items', category });
+          setLastTab('items');
         }
       }
-      return setRoute({ tab: 'scan' });
-    }
-    if (to.startsWith('tab:')) {
-      const tab = to.slice(4) as TabId;
-      if (TABS.includes(tab)) {
-        setRoute({ tab });
-        setLastTab(tab);
-      }
-      return;
-    }
-    if (to.startsWith('category:')) {
-      const category = to.slice(9) as CategoryId;
-      if (CATEGORY_IDS.includes(category)) {
-        setRoute({ tab: 'items', category });
-        setLastTab('items');
-      }
-    }
-  }, []);
+    },
+    [categoryIds],
+  );
   const closeScanner = useCallback(() => {
     setNativeScan(null);
     setRoute({ tab: lastTab });
@@ -216,17 +226,31 @@ function Shell() {
   );
 }
 
+// Themed chrome: the page background and the status-bar style follow the theme.
+function ThemedApp() {
+  const c = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      {/* expo-status-bar's "style" is the CONTENT colour: light text on the
+          dark theme, dark text on the light one. */}
+      <StatusBar style={c === LIGHT ? 'dark' : 'light'} />
+      <Shell />
+    </View>
+  );
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
-      <SettingsProvider>
-        <ItemsProvider>
-          <StatusBar style="light" />
-          <View style={{ flex: 1, backgroundColor: '#050D10' }}>
-            <Shell />
-          </View>
-        </ItemsProvider>
-      </SettingsProvider>
+      <CategoriesProvider>
+        <SettingsProvider>
+          <ItemsProvider>
+            <ThemeProvider>
+              <ThemedApp />
+            </ThemeProvider>
+          </ItemsProvider>
+        </SettingsProvider>
+      </CategoriesProvider>
     </SafeAreaProvider>
   );
 }

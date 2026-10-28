@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme';
+import { makeStyles } from '../theme';
 import { useLayout } from '../layout';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
 import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
@@ -21,26 +21,27 @@ type Props = {
 export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
+  const c = useStyles();
   // YouTube-style: the header (and the nav bars) hide when scrolling down.
   const { hidden, onScroll } = useNavAutohide();
   const frame = { maxWidth: Math.min(layout.maxContentWidth, maxWidth), paddingHorizontal: layout.gutter };
   return (
-    <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <View style={[s.frame, frame]}>
+    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <View style={[c.frame, frame]}>
         <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => onNavigate('tab:settings')} onBell={() => onNavigate('tab:reminders')} />
       </View>
       <ScrollView
-        style={[s.scroll, NO_RUBBER_BAND]}
+        style={[c.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
         contentContainerStyle={{ paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[s.frame, frame]}>
-          <View style={s.titleBlock}>
-            <Text style={s.title} accessibilityRole="header">
+        <View style={[c.frame, frame]}>
+          <View style={c.titleBlock}>
+            <Text style={c.title} accessibilityRole="header">
               {title}
             </Text>
-            {!!subtitle && <Text style={s.subtitle}>{subtitle}</Text>}
+            {!!subtitle && <Text style={c.subtitle}>{subtitle}</Text>}
           </View>
           {children}
         </View>
@@ -49,11 +50,11 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
   );
 }
 
-const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+const useStyles = makeStyles((c) => ({
+  root: { flex: 1, backgroundColor: c.bg },
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   titleBlock: { marginTop: 6, marginBottom: 18 },
-  title: { color: colors.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
-  subtitle: { color: colors.textMuted, fontSize: 15, marginTop: 4 },
-});
+  title: { color: c.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
+  subtitle: { color: c.textMuted, fontSize: 15, marginTop: 4 },
+}));

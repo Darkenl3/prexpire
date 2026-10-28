@@ -1,4 +1,5 @@
-import { CATEGORY_NAMES, expiryPhrase, type Item } from '../items';
+import { expiryPhrase, type Item } from '../items';
+import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
 import { expiryStatus } from '../preferences';
 import { useSettings } from '../settings';
@@ -35,8 +36,9 @@ type Props = {
 // An item in a list, styled by the Settings preferences (compact rows, warning period, date format).
 export function ItemRow({ item, showDate = false, note, onPress }: Props) {
   const { settings, formatDate } = useSettings();
+  const { nameOf } = useCategories();
   const { pill, tone } = itemPill(item, settings.warningDays);
-  const sub = [CATEGORY_NAMES[item.category], note ?? expiryPhrase(item.expiresOn)];
+  const sub = [nameOf(item.category), note ?? expiryPhrase(item.expiresOn)];
   if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (
     <ExpiryRow

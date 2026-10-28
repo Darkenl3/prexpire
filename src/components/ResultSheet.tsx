@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius } from '../theme';
-import { CATEGORY_IDS, CATEGORY_NAMES, expiryPhrase, type CategoryId } from '../items';
+import { SCANNER_COLORS as colors, radius } from '../theme';
+import { useCategories } from '../categories';
+import { expiryPhrase, type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
 import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
@@ -37,6 +38,9 @@ type Props = {
   // A scanned detection, or null when the user enters the date by hand.
   detection: Detection | null;
   initialCategory: CategoryId;
+  // True when the category was picked from the label's words (see
+  // scanner/categoryGuess.ts) — shown as a gentle hint under the chips.
+  categoryGuessed?: boolean;
   layout: 'bottom' | 'side';
   maxHeight: number;
   bottomInset: number;
@@ -47,7 +51,8 @@ type Props = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function ResultSheet({ detection, initialCategory, layout, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+export function ResultSheet({ detection, initialCategory, categoryGuessed = false, layout, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+  const { all, nameOf } = useCategories();
   const [name, setName] = useState('');
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const readings = useMemo(() => (detection ? [detection.primary, ...detection.alternatives] : []), [detection]);
@@ -79,7 +84,7 @@ export function ResultSheet({ detection, initialCategory, layout, maxHeight, bot
     busy.current = true;
     setSave('saving');
     try {
-      await onAdd({ name: name.trim() || `${CATEGORY_NAMES[category]} item`, category, date });
+      await onAdd({ name: name.trim() || `${nameOf(category)} item`, category, date });
       if (mounted.current) setSave('saved');
     } catch {
       busy.current = false;
@@ -108,28 +113,30 @@ export function ResultSheet({ detection, initialCategory, layout, maxHeight, bot
               accessibilityLabel="Product name"
             />
             <Text style={s.productSub} numberOfLines={1}>
-              {CATEGORY_NAMES[category]}
+              {nameOf(category)}
               {date ? `  •  ${expiryPhrase(date.iso)}` : ''}
             </Text>
           </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} keyboardShouldPersistTaps="handled">
-          {CATEGORY_IDS.map((id) => {
-            const on = id === category;
+          {all.map((cat) => {
+            const on = cat.id === category;
             return (
               <Pressable
-                key={id}
-                onPress={() => setCategory(id)}
+                key={cat.id}
+                onPress={() => setCategory(cat.id)}
                 style={[s.chip, on && s.chipOn]}
                 accessibilityRole="radio"
+                aria-checked={on}
                 accessibilityState={{ selected: on }}
               >
-                <Text style={[s.chipText, on && s.chipTextOn]}>{CATEGORY_NAMES[id]}</Text>
+                <Text style={[s.chipText, on && s.chipTextOn]}>{cat.name}</Text>
               </Pressable>
             );
           })}
         </ScrollView>
+        {categoryGuessed && <Text style={s.guessed}>Category picked from the label — tap another to change it.</Text>}
 
         <View style={s.divider} />
 
@@ -288,6 +295,7 @@ const s = StyleSheet.create({
   nameInput: { color: colors.text, fontSize: 16.5, fontWeight: '600', paddingVertical: 4, paddingHorizontal: 0 },
   productSub: { color: colors.textMuted, fontSize: 13.5, marginTop: 2 },
   chips: { gap: 8, paddingTop: 12 },
+  guessed: { color: colors.textMuted, fontSize: 12, paddingTop: 8 },
   chip: { height: 32, paddingHorizontal: 13, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.surfaceBorder, justifyContent: 'center' },
   chipOn: { borderColor: colors.mint, backgroundColor: 'rgba(46,232,182,0.10)' },
   chipText: { color: colors.textMuted, fontSize: 13.5, fontWeight: '500' },

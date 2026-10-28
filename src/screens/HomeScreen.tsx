@@ -3,8 +3,9 @@ import { Animated, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } 
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { colors, space } from '../theme';
+import { makeStyles, space, useTheme } from '../theme';
 import { categories, type ArtKey } from '../data';
+import { useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
@@ -48,6 +49,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const layout = useLayout();
   const { items, saved } = useItems();
   const { settings, motion } = useSettings();
+  const { custom } = useCategories();
+  const c = useStyles();
   const { warningDays, showExpired, showSamples } = settings;
   const upcoming = useMemo(
     () =>
@@ -92,8 +95,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { tileWidth } = gridFor(gridWidth, gridGap, 100);
   const compact = tileWidth < 112 || layout.short;
 
-  const addTile = categories.find((c) => c.tint === 'add');
-  const tiles = [...categories.filter((c) => c.tint !== 'add').slice(0, 5), ...(addTile ? [addTile] : [])];
+  const addTile = categories.find((x) => x.tint === 'add');
+  const tiles = [...categories.filter((x) => x.tint !== 'add').slice(0, 5), ...(addTile ? [addTile] : [])];
 
   const bottomClearance = NAV_HEIGHT + navOffset(insets.bottom) + 16;
 
@@ -113,18 +116,32 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const categorySection = (
     <>
       <SectionHeader title="Your categories" action="See all" onAction={() => go('tab:items')} />
-      <View style={[styles.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
-        {tiles.map((c) => (
+      <View style={[c.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
+        {tiles.map((t) => (
           <CategoryTile
-            key={c.id}
-            tint={c.tint}
+            key={t.id}
+            tint={t.tint}
             width={tileWidth}
-            name={c.name}
-            sub={c.count === undefined ? c.sub : `${(showSamples ? c.count : 0) + saved.filter((i) => i.category === c.id).length} items`}
-            status={c.count === undefined ? undefined : tileStatus(attention.byCategory(c.id))}
-            art={categoryArt(c.art, compact ? 56 : 64)}
+            name={t.name}
+            sub={t.count === undefined ? t.sub : `${(showSamples ? t.count : 0) + saved.filter((i) => i.category === t.id).length} items`}
+            status={t.count === undefined ? undefined : tileStatus(attention.byCategory(t.id))}
+            art={categoryArt(t.art, compact ? 56 : 64)}
             compact={compact}
-            onPress={() => go(c.tint === 'add' ? 'tab:settings' : `category:${c.id}`)}
+            onPress={() => go(t.tint === 'add' ? 'tab:settings' : `category:${t.id}`)}
+          />
+        ))}
+        {/* The user's own "category folders", added in Settings. */}
+        {custom.map((cat) => (
+          <CategoryTile
+            key={cat.id}
+            tint={cat.tint}
+            width={tileWidth}
+            name={cat.name}
+            sub={`${saved.filter((i) => i.category === cat.id).length} items`}
+            status={tileStatus(attention.byCategory(cat.id))}
+            art={<Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color="rgba(255,255,255,0.92)" />}
+            compact={compact}
+            onPress={() => go(`category:${cat.id}`)}
           />
         ))}
       </View>
@@ -134,11 +151,11 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const upcomingSection = (first: boolean) => (
     <>
       <SectionHeader title="Coming up next" action="View all" onAction={() => go('tab:items')} first={first} />
-      <View style={[styles.list, settings.compact && styles.listCompact]}>
+      <View style={[c.list, settings.compact && c.listCompact]}>
         {upcoming.map((item) => (
           <ItemRow key={item.id} item={item} onPress={() => go('tab:items')} />
         ))}
-        {upcoming.length === 0 && <Text style={styles.empty}>Nothing coming up. Scan a label to add an item.</Text>}
+        {upcoming.length === 0 && <Text style={c.empty}>Nothing coming up. Scan a label to add an item.</Text>}
       </View>
     </>
   );
@@ -148,24 +165,24 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { hidden, onScroll } = useNavAutohide();
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <View style={[styles.frame, frame]}>
+    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <View style={[c.frame, frame]}>
         <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
       </View>
       <ScrollView
-        style={[styles.scroll, NO_RUBBER_BAND]}
+        style={[c.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomClearance }]}
+        contentContainerStyle={[c.scrollContent, { paddingBottom: bottomClearance }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.frame, frame]}>
+        <View style={[c.frame, frame]}>
           {split ? (
-            <View style={[styles.columns, { columnGap }]}>
+            <View style={[c.columns, { columnGap }]}>
               <View style={{ width: leftWidth }}>
                 {summary}
                 {categorySection}
               </View>
-              <View style={styles.rightColumn}>{upcomingSection(true)}</View>
+              <View style={c.rightColumn}>{upcomingSection(true)}</View>
             </View>
           ) : (
             <>
@@ -186,6 +203,8 @@ function tileStatus(n: number) {
 }
 
 function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number; motion: boolean; onDone?: () => void }) {
+  const t = useTheme();
+  const c = useStyles();
   const opacity = useRef(new Animated.Value(motion ? 0 : 1)).current;
   useEffect(() => {
     // With animations off the toast appears and disappears without fading.
@@ -199,10 +218,10 @@ function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number;
     return () => anim.stop();
   }, [opacity, motion, onDone]);
   return (
-    <Animated.View pointerEvents="none" style={[styles.toastWrap, { bottom, opacity }]} accessibilityLiveRegion="polite">
-      <View style={styles.toast}>
-        <Ionicons name="checkmark-circle" size={18} color={colors.mint} />
-        <Text style={styles.toastText} numberOfLines={2}>
+    <Animated.View pointerEvents="none" style={[c.toastWrap, { bottom, opacity }]} accessibilityLiveRegion="polite">
+      <View style={[c.toast, { backgroundColor: t.toastBg, borderColor: t.toastBorder }]}>
+        <Ionicons name="checkmark-circle" size={18} color={t.mint} />
+        <Text style={[c.toastText, { color: t.text }]} numberOfLines={2}>
           {text}
         </Text>
       </View>
@@ -210,8 +229,8 @@ function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number;
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+const useStyles = makeStyles((t) => ({
+  root: { flex: 1, backgroundColor: t.bg },
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
@@ -222,7 +241,7 @@ const styles = StyleSheet.create({
   // 8px between "Coming up next" rows.
   list: { gap: 8 },
   listCompact: { gap: 6 },
-  empty: { color: colors.textMuted, fontSize: 14, paddingVertical: 12 },
+  empty: { color: t.textMuted, fontSize: 14, paddingVertical: 12 },
   toastWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
   toast: {
     flexDirection: 'row',
@@ -232,9 +251,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 11,
     borderRadius: 999,
-    backgroundColor: '#0D2E28',
     borderWidth: 1,
-    borderColor: 'rgba(46,232,182,0.45)',
   },
-  toastText: { color: colors.text, fontSize: 14, fontWeight: '500', flexShrink: 1 },
-});
+  toastText: { fontSize: 14, fontWeight: '500', flexShrink: 1 },
+}));

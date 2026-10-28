@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme';
+import { Text, View } from 'react-native';
+import { makeStyles } from '../theme';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { reminderDate, reminderLeadLabel, remindersDue, sortItems } from '../preferences';
@@ -15,6 +15,7 @@ type Props = { badge: number; onNavigate: (route: string) => void };
 export function RemindersScreen({ badge, onNavigate }: Props) {
   const { items } = useItems();
   const { settings, formatDate } = useSettings();
+  const c = useStyles();
   const { due, upcoming } = useMemo(() => {
     const dueList = sortItems(remindersDue(items, settings.reminderLead), 'expiry');
     const dueIds = new Set(dueList.map((i) => i.id));
@@ -24,9 +25,9 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
   if (!settings.reminders) {
     return (
       <Page title="Reminders" badge={badge} onNavigate={onNavigate}>
-        <View style={s.off}>
-          <Text style={s.offTitle}>Expiry reminders are off</Text>
-          <Text style={s.offText}>Turn them on in Settings to see which items need a reminder.</Text>
+        <View style={c.off}>
+          <Text style={c.offTitle}>Expiry reminders are off</Text>
+          <Text style={c.offText}>Turn them on in Settings to see which items need a reminder.</Text>
           <SmallButton label="Open Settings" icon="settings-outline" tone="mint" onPress={() => onNavigate('tab:settings')} />
         </View>
       </Page>
@@ -35,24 +36,24 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
 
   return (
     <Page title="Reminders" subtitle={`Reminders come ${reminderLeadLabel(settings.reminderLead).toLowerCase()}.`} badge={badge} onNavigate={onNavigate}>
-      <View style={s.note}>
+      <View style={c.note}>
         <Note>Reminders are listed here. PREXPIRE can't send notifications yet.</Note>
       </View>
-      <Text style={s.heading} accessibilityRole="header">
+      <Text style={c.heading} accessibilityRole="header">
         Due now
       </Text>
-      <View style={[s.list, settings.compact && s.listCompact]}>
+      <View style={[c.list, settings.compact && c.listCompact]}>
         {due.map((item) => (
           <ItemRow key={item.id} item={item} showDate />
         ))}
-        {due.length === 0 && <Text style={s.empty}>No reminders are due.</Text>}
+        {due.length === 0 && <Text style={c.empty}>No reminders are due.</Text>}
       </View>
       {upcoming.length > 0 && (
         <>
-          <Text style={s.heading} accessibilityRole="header">
+          <Text style={c.heading} accessibilityRole="header">
             Upcoming
           </Text>
-          <View style={[s.list, settings.compact && s.listCompact]}>
+          <View style={[c.list, settings.compact && c.listCompact]}>
             {upcoming.map((item) => (
               <ItemRow key={item.id} item={item} note={`Reminder on ${formatDate(reminderDate(item.expiresOn, settings.reminderLead))}`} />
             ))}
@@ -63,13 +64,13 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
   );
 }
 
-const s = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   note: { marginBottom: 6 },
-  heading: { color: colors.text, fontSize: 19, fontWeight: '700', marginTop: 16, marginBottom: 10 },
+  heading: { color: t.text, fontSize: 19, fontWeight: '700', marginTop: 16, marginBottom: 10 },
   list: { gap: 8 },
   listCompact: { gap: 6 },
-  empty: { color: colors.textMuted, fontSize: 14, paddingVertical: 8 },
+  empty: { color: t.textMuted, fontSize: 14, paddingVertical: 8 },
   off: { alignItems: 'center', gap: 8, paddingVertical: 40 },
-  offTitle: { color: colors.text, fontSize: 17, fontWeight: '600' },
-  offText: { color: colors.textMuted, fontSize: 14, textAlign: 'center', marginBottom: 6 },
-});
+  offTitle: { color: t.text, fontSize: 17, fontWeight: '600' },
+  offText: { color: t.textMuted, fontSize: 14, textAlign: 'center', marginBottom: 6 },
+}));

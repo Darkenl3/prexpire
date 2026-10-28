@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { SCANNER_COLORS as colors } from '../theme';
 import { useSettings } from '../settings';
 
 const CORNER = 30;

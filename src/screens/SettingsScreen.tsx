@@ -1,37 +1,44 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme';
-import { CATEGORY_IDS, CATEGORY_NAMES, useItems } from '../items';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { makeStyles, useTheme, accents } from '../theme';
+import { useItems } from '../items';
+import { useCategories } from '../categories';
 import { useSettings } from '../settings';
 import {
   DATE_FORMAT_LABELS,
   DATE_FORMATS,
   exportFileName,
-  itemsToCsv,
   itemsToJson,
+  itemsToCsv,
   REMINDER_LEADS,
   reminderLeadLabel,
   SORT_LABELS,
   SORT_ORDERS,
+  THEME_LABELS,
+  THEME_MODES,
   WARNING_DAYS,
   type DefaultCategory,
 } from '../preferences';
 import { isoToday } from '../scanner/dateParser';
 import { Page } from '../components/Page';
-import { accents, IconTile, Note, Options, SettingRow, SettingsCard, SettingsSection, SmallButton, Toggle } from '../components/SettingsRows';
+import { Brandmark } from '../components/HomeComponents';
+import { CategoryManager } from '../components/CategoryManager';
+import { IconTile, Note, Options, SettingRow, SettingsCard, SettingsSection, SmallButton, Toggle } from '../components/SettingsRows';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
 import appConfig from '../../app.json';
 
-const wordmark = require('../../assets/wordmark.png');
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
 export function SettingsScreen({ badge, onNavigate }: Props) {
+  const t = useTheme();
+  const s = useStyles();
   const { settings, update, saveError, systemReduceMotion, formatDate, reset } = useSettings();
   const { saved, clearSaved } = useItems();
+  const { all, clearAll: clearCategories } = useCategories();
   const [confirmClear, setConfirmClear] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -40,7 +47,12 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
     const now = new Date();
     try {
       if (kind === 'json') await saveTextFile(exportFileName('json', now), 'application/json', itemsToJson(saved, now, APP_VERSION));
-      else await saveTextFile(exportFileName('csv', now), 'text/csv', itemsToCsv(saved, CATEGORY_NAMES));
+      else {
+        // Custom categories export with their own names.
+        const names: Record<string, string> = {};
+        for (const cat of all) names[cat.id] = cat.name;
+        await saveTextFile(exportFileName('csv', now), 'text/csv', itemsToCsv(saved, names));
+      }
     } catch {
       setExportError('The file could not be created. Your browser may be blocking downloads on this page.');
     }
@@ -116,20 +128,22 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
             icon="contrast"
             accent="purple"
             title="Theme"
-            description="PREXPIRE's dark look."
+            description="Dark, light, or follow your device."
             below={
               <>
                 <Options
                   label="Theme"
-                  value="dark"
-                  onChange={() => {}}
-                  options={[
-                    { value: 'dark', label: 'Dark' },
-                    { value: 'light', label: 'Light', disabled: true },
-                    { value: 'system', label: 'System', disabled: true },
-                  ]}
+                  value={settings.theme}
+                  onChange={(v) => update({ theme: v })}
+                  options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
                 />
-                <Note>Only the dark theme exists for now. Light and System will be selectable once the app has a light design.</Note>
+                <Note>
+                  {settings.theme === 'system'
+                    ? 'System follows your device\u2019s appearance and switches live.'
+                    : settings.theme === 'light'
+                      ? 'A bright take on the same design.'
+                      : 'The classic near-black look.'}
+                </Note>
               </>
             }
           />
@@ -218,8 +232,15 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
             icon="grid"
             accent="blue"
             title="Browse categories"
-            description="Food, Medicine, Household, Skincare and Pantry. Custom categories aren't supported yet."
+            description="Food, Medicine, Household, Skincare, Pantry and the ones you add."
             onPress={() => onNavigate('tab:items')}
+          />
+          <SettingRow
+            icon="folder-open-outline"
+            accent="blue"
+            title="Your categories"
+            description="Add a category folder and it appears on Home, in lists and in the scanner."
+            below={<CategoryManager />}
           />
           <SettingRow
             icon="pricetag"
@@ -231,7 +252,7 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
                 label="Default category"
                 value={settings.defaultCategory}
                 onChange={(v) => update({ defaultCategory: v })}
-                options={[{ value: 'last', label: 'Last used' }, ...CATEGORY_IDS.map((id) => ({ value: id, label: CATEGORY_NAMES[id] }))]}
+                options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
               />
             }
           />
@@ -264,8 +285,8 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
             title="Data storage"
             description={
               WEB
-                ? "Items and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them."
-                : 'Items and settings are stored only on this device. Nothing is uploaded, synced or backed up.'
+                ? "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them."
+                : 'Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.'
             }
           />
           <SettingRow
@@ -291,7 +312,7 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
             accent="red"
             title="Clear all data"
             titleColor={accents.red}
-            description="Delete your added items and reset every setting."
+            description="Delete your added items and categories, and reset every setting."
             onPress={() => setConfirmClear(true)}
           />
         </SettingsCard>
@@ -300,7 +321,7 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
       <SettingsSection title="About">
         <SettingsCard>
           <View style={s.about}>
-            <Image source={wordmark} style={s.aboutLogo} resizeMode="contain" accessibilityLabel="PREXPIRE" />
+            <Brandmark height={38} />
             <Text style={s.aboutText}>Keep track of what matters before it expires.</Text>
             <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
           </View>
@@ -310,9 +331,11 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
       <ClearDataDialog
         visible={confirmClear}
         itemCount={saved.length}
+        categoryCount={all.filter((cat) => cat.custom).length}
         onCancel={() => setConfirmClear(false)}
         onConfirm={async () => {
           await clearSaved();
+          await clearCategories();
           await reset();
           setConfirmClear(false);
         }}
@@ -322,6 +345,8 @@ export function SettingsScreen({ badge, onNavigate }: Props) {
 }
 
 function BrowserNotificationsRow() {
+  const t = useTheme();
+  const s = useStyles();
   const [status, setStatus] = useState<NotificationStatus>(notificationStatus);
   const [asking, setAsking] = useState(false);
   const refresh = useCallback(() => setStatus(notificationStatus()), []);
@@ -355,8 +380,8 @@ function BrowserNotificationsRow() {
       title={WEB ? 'Browser notifications' : 'Notifications'}
       description={WEB ? 'Allow notifications from this browser.' : 'Allow notifications on this device.'}
       right={
-        <View style={[s.status, status === 'granted' && s.statusOk, status === 'denied' && s.statusWarn]} accessibilityLabel={`Permission: ${label[status]}`}>
-          <Text style={[s.statusText, status === 'granted' && { color: colors.mint }, status === 'denied' && { color: colors.amberText }]}>{label[status]}</Text>
+        <View style={[s.status, status === 'granted' && { borderColor: t.statusOkBorder, backgroundColor: t.statusOkBg }, status === 'denied' && { borderColor: t.statusWarnBorder, backgroundColor: t.statusWarnBg }]} accessibilityLabel={`Permission: ${label[status]}`}>
+          <Text style={[s.statusText, status === 'granted' && { color: t.mint }, status === 'denied' && { color: t.amberText }]}>{label[status]}</Text>
         </View>
       }
       below={
@@ -373,9 +398,11 @@ function BrowserNotificationsRow() {
   );
 }
 
-type DialogProps = { visible: boolean; itemCount: number; onCancel: () => void; onConfirm: () => Promise<void> };
+type DialogProps = { visible: boolean; itemCount: number; categoryCount: number; onCancel: () => void; onConfirm: () => Promise<void> };
 
-function ClearDataDialog({ visible, itemCount, onCancel, onConfirm }: DialogProps) {
+function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfirm }: DialogProps) {
+  const t = useTheme();
+  const s = useStyles();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -398,7 +425,7 @@ function ClearDataDialog({ visible, itemCount, onCancel, onConfirm }: DialogProp
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => {} : onCancel}>
       <View style={s.backdrop}>
         <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onCancel} accessibilityLabel="Close" importantForAccessibility="no" />
-        <View style={s.dialog} accessibilityRole={'dialog' as never} accessibilityLabel="Clear all data" {...({ 'aria-modal': true } as object)}>
+        <View style={[s.dialog, { backgroundColor: t.dialogBg, borderColor: t.dangerBorder }]} accessibilityRole={'dialog' as never} accessibilityLabel="Clear all data" {...({ 'aria-modal': true } as object)}>
           <IconTile icon="trash" accent="red" size={44} />
           <Text style={s.dialogTitle} accessibilityRole="header">
             Clear all data?
@@ -406,6 +433,9 @@ function ClearDataDialog({ visible, itemCount, onCancel, onConfirm }: DialogProp
           <Text style={s.dialogText}>This permanently deletes from {WEB ? 'this browser' : 'this device'}:</Text>
           <View style={s.dialogList}>
             <Text style={s.dialogText}>•  {itemCount === 1 ? '1 item you added' : `${itemCount} items you added`}</Text>
+            {categoryCount > 0 && (
+              <Text style={s.dialogText}>•  {categoryCount === 1 ? '1 category you added' : `${categoryCount} categories you added`}</Text>
+            )}
             <Text style={s.dialogText}>•  Every setting on this page (back to the defaults)</Text>
             <Text style={s.dialogText}>•  The remembered last-used category</Text>
           </View>
@@ -421,8 +451,8 @@ function ClearDataDialog({ visible, itemCount, onCancel, onConfirm }: DialogProp
   );
 }
 
-const s = StyleSheet.create({
-  banner: { backgroundColor: '#231E11', borderColor: '#5C4512', borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 },
+const useStyles = makeStyles((t) => ({
+  banner: { borderRadius: 12, borderWidth: 1, borderColor: t.alertBorder, backgroundColor: t.alertBg, padding: 12, marginBottom: 16 },
   profile: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -431,37 +461,32 @@ const s = StyleSheet.create({
     marginBottom: 24,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
+    borderColor: t.surfaceBorder,
+    backgroundColor: t.surface,
   },
-  profileTitle: { color: colors.text, fontSize: 17, fontWeight: '700' },
-  profileSub: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  profileTitle: { color: t.text, fontSize: 17, fontWeight: '700' },
+  profileSub: { color: t.textMuted, fontSize: 13, marginTop: 2 },
   profileStat: { alignItems: 'flex-end' },
-  profileCount: { color: colors.text, fontSize: 20, fontWeight: '700' },
-  profileCountLabel: { color: colors.textMuted, fontSize: 12 },
+  profileCount: { color: t.text, fontSize: 20, fontWeight: '700' },
+  profileCountLabel: { color: t.textMuted, fontSize: 12 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  status: { paddingHorizontal: 10, height: 26, borderRadius: 999, borderWidth: 1, borderColor: colors.surfaceBorder, justifyContent: 'center' },
-  statusOk: { borderColor: 'rgba(46,232,182,0.45)', backgroundColor: 'rgba(46,232,182,0.08)' },
-  statusWarn: { borderColor: '#7A5A12', backgroundColor: '#3D2B0E' },
-  statusText: { color: colors.textMuted, fontSize: 12.5, fontWeight: '600' },
+  status: { paddingHorizontal: 10, height: 26, borderRadius: 999, borderWidth: 1, borderColor: t.surfaceBorder, justifyContent: 'center' },
+  statusText: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
   about: { alignItems: 'center', paddingVertical: 20, paddingHorizontal: 16, gap: 8 },
-  aboutLogo: { width: 150, height: 38 },
-  aboutText: { color: colors.text, fontSize: 14.5, textAlign: 'center' },
-  aboutVersion: { color: colors.textMuted, fontSize: 13 },
+  aboutText: { color: t.text, fontSize: 14.5, textAlign: 'center' },
+  aboutVersion: { color: t.textMuted, fontSize: 13 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#0E1A1E',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#4A2328',
     padding: 20,
     gap: 10,
   },
-  dialogTitle: { color: colors.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
-  dialogText: { color: colors.text, fontSize: 14.5, lineHeight: 20 },
+  dialogTitle: { color: t.text, fontSize: 20, fontWeight: '700', marginTop: 4 },
+  dialogText: { color: t.text, fontSize: 14.5, lineHeight: 20 },
   dialogList: { gap: 2 },
-  dialogMuted: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
+  dialogMuted: { color: t.textMuted, fontSize: 13, lineHeight: 18 },
   dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
-});
+}));

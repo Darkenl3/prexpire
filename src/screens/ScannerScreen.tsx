@@ -17,11 +17,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors, radius } from '../theme';
+import { SCANNER_COLORS as colors, radius } from '../theme';
 import { ScanFrame } from '../components/ScanFrame';
 import { ResultSheet, type SaveInput } from '../components/ResultSheet';
 import { useItems, type CategoryId, type Item } from '../items';
 import { ocrAvailability } from '../scanner/ocr';
+import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
@@ -120,6 +121,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const detection: Detection | null = seeded ?? (state.status === 'detected' ? state.detection : null);
   const detected = detection !== null;
   const sheetOpen = detected || manual;
+  // Auto-category: the words around the date usually name the product, so the
+  // save sheet opens with the folder the item most likely belongs in.
+  const guessed = useMemo(() => (detection ? guessCategory(detection.text) : null), [detection]);
 
   useEffect(() => {
     if (detected) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -295,7 +299,8 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
       // A new detection gets a fresh sheet; "Scan again" then a new read starts clean.
       key={detected ? detection.key : 'manual'}
       detection={detected ? detection : null}
-      initialCategory={category ?? defaultCategory}
+      initialCategory={category ?? guessed ?? defaultCategory}
+      categoryGuessed={!category && !!guessed}
       layout={landscape ? 'side' : 'bottom'}
       maxHeight={landscape ? root.height : Math.round(root.height * 0.62)}
       bottomInset={insets.bottom}

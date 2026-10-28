@@ -7,9 +7,11 @@ import { useSettings } from './settings';
 // the three sample items from the prototype stay in memory so the home screen is not empty
 // (Settings can hide them).
 
-export type CategoryId = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry';
+// Categories: the five built-ins plus any custom "category folders" the user
+// adds in Settings (their ids are generated strings like "cat-k2x9a1").
+export type CategoryId = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | (string & {});
 
-export const CATEGORY_NAMES: Record<CategoryId, string> = {
+export const CATEGORY_NAMES: Record<string, string> = {
   food: 'Food',
   medicine: 'Medicine',
   household: 'Household',
@@ -17,6 +19,7 @@ export const CATEGORY_NAMES: Record<CategoryId, string> = {
   pantry: 'Pantry',
 };
 
+// The five built-in ids (custom ones live in src/categories.tsx).
 export const CATEGORY_IDS = Object.keys(CATEGORY_NAMES) as CategoryId[];
 
 export type Item = {
@@ -50,7 +53,9 @@ function sampleItems(): Item[] {
 
 function isItem(x: unknown): x is Item {
   const i = x as Item;
-  return !!i && typeof i.id === 'string' && typeof i.name === 'string' && i.category in CATEGORY_NAMES && /^\d{4}-\d{2}-\d{2}$/.test(i.expiresOn);
+  // The category may be a built-in or a custom id; deleted custom ids simply
+  // display as "Other" rather than rejecting the stored item.
+  return !!i && typeof i.id === 'string' && typeof i.name === 'string' && typeof i.category === 'string' && i.category.length > 0 && i.category.length <= 40 && /^\d{4}-\d{2}-\d{2}$/.test(i.expiresOn);
 }
 
 export type NewItem = Omit<Item, 'id' | 'addedAt'>;
@@ -90,7 +95,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         savedRef.current = list;
         setSaved(list);
-        if (cat[1] && cat[1] in CATEGORY_NAMES) setLastCategory(cat[1] as CategoryId);
+        if (cat[1] && typeof cat[1] === 'string') setLastCategory(cat[1]);
       } catch {
         // Unreadable storage starts empty rather than blocking the app.
       } finally {

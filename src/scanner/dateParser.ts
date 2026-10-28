@@ -54,6 +54,9 @@ export type ScanParseResult =
       label: LabelKind | null;
       labelText: string | null;
       raw: string;
+      // Everything that was read, so callers can guess the product's category
+      // from the words around the date (see scanner/categoryGuess.ts).
+      text: string;
       // Stable across frames that read the same thing, for multi-frame agreement.
       key: string;
     }
@@ -391,6 +394,9 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
     label: chosen.label,
     labelText: chosen.labelText,
     raw: chosen.raw,
+    // The whole text that was read, so the caller can guess the product's
+    // category from the words around the date (see scanner/categoryGuess.ts).
+    text,
     key: [primary.iso, ...alternatives.map((a) => a.iso), chosen.label ?? '-'].join('|'),
   };
 }

@@ -3,7 +3,7 @@ import { AccessibilityInfo } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { dayOrderForRegion } from './scanner/dateParser';
-import { CATEGORY_IDS } from './items';
+import { useCategories } from './categories';
 import { defaultSettings, formatDisplayDate, sanitizeSettings, type Settings } from './preferences';
 
 // User preferences, saved with AsyncStorage (localStorage in the browser) next to the items.
@@ -39,6 +39,7 @@ function regionDefaults() {
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const defaults = useMemo(regionDefaults, []);
+  const { ids: categoryIds } = useCategories();
   const [settings, setSettings] = useState<Settings>(defaults);
   const [ready, setReady] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -54,7 +55,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(SETTINGS_KEY);
         if (cancelled || !raw || touched.current) return;
-        const next = sanitizeSettings(JSON.parse(raw), defaults, CATEGORY_IDS);
+        // Includes custom category ids, so a defaultCategory pointing at one stays valid.
+        const next = sanitizeSettings(JSON.parse(raw), defaults, categoryIds);
         current.current = next;
         setSettings(next);
       } catch {
@@ -66,7 +68,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [defaults]);
+  }, [defaults, categoryIds]);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled()

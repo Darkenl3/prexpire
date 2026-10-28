@@ -8,6 +8,7 @@ export type WarningDays = 3 | 7 | 14 | 30;
 export type DateFormat = 'DMY' | 'MDY' | 'YMD';
 export type SortOrder = 'expiry' | 'added' | 'name';
 export type DefaultCategory = 'last' | CategoryId;
+export type ThemeMode = 'dark' | 'light' | 'system';
 
 export type Settings = {
   // Notifications. Nothing is delivered yet: these drive the Reminders tab and its badge.
@@ -15,6 +16,7 @@ export type Settings = {
   reminderLead: ReminderLead;
   dailySummary: boolean;
   // Appearance
+  theme: ThemeMode;
   compact: boolean;
   animations: boolean;
   // Expiry
@@ -31,6 +33,8 @@ export const REMINDER_LEADS: ReminderLead[] = [0, 1, 3, 7];
 export const WARNING_DAYS: WarningDays[] = [3, 7, 14, 30];
 export const DATE_FORMATS: DateFormat[] = ['DMY', 'MDY', 'YMD'];
 export const SORT_ORDERS: SortOrder[] = ['expiry', 'added', 'name'];
+export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'system'];
+export const THEME_LABELS: Record<ThemeMode, string> = { dark: 'Dark', light: 'Light', system: 'System' };
 
 export const DATE_FORMAT_LABELS: Record<DateFormat, string> = { DMY: 'DD/MM/YYYY', MDY: 'MM/DD/YYYY', YMD: 'YYYY-MM-DD' };
 export const SORT_LABELS: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recently added', name: 'Product name' };
@@ -44,6 +48,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     reminders: true,
     reminderLead: 1,
     dailySummary: false,
+    theme: 'dark',
     compact: false,
     animations: true,
     warningDays: 3,
@@ -65,6 +70,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     reminders: bool('reminders'),
     reminderLead: oneOf('reminderLead', REMINDER_LEADS),
     dailySummary: bool('dailySummary'),
+    theme: oneOf('theme', THEME_MODES),
     compact: bool('compact'),
     animations: bool('animations'),
     warningDays: oneOf('warningDays', WARNING_DAYS),
