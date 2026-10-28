@@ -11,7 +11,9 @@ export type DefaultCategory = 'last' | CategoryId;
 export type ThemeMode = 'dark' | 'light' | 'system';
 
 export type Settings = {
-  // Notifications. Nothing is delivered yet: these drive the Reminders tab and its badge.
+  // Notifications. These drive the Reminders tab, its badge and the in-app
+  // expiry alerts (alerts appear while the app is open; nothing is delivered
+  // in the background).
   reminders: boolean;
   reminderLead: ReminderLead;
   dailySummary: boolean;
@@ -26,7 +28,9 @@ export type Settings = {
   showExpired: boolean;
   // Inventory
   defaultCategory: DefaultCategory;
-  showSamples: boolean;
+  // Shopping List: expiring products are added automatically. Enabled by
+  // default; a preference that has never been saved is treated as enabled.
+  autoShoppingList: boolean;
 };
 
 export const REMINDER_LEADS: ReminderLead[] = [0, 1, 3, 7];
@@ -56,7 +60,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     sort: 'expiry',
     showExpired: true,
     defaultCategory: 'last',
-    showSamples: true,
+    autoShoppingList: true,
   };
 }
 
@@ -78,7 +82,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     sort: oneOf('sort', SORT_ORDERS),
     showExpired: bool('showExpired'),
     defaultCategory: oneOf('defaultCategory', ['last', ...categories] as DefaultCategory[]),
-    showSamples: bool('showSamples'),
+    autoShoppingList: bool('autoShoppingList'),
   };
 }
 

@@ -10,8 +10,9 @@ import { Note, SmallButton } from '../components/SettingsRows';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
-// Reminders worked out from the timing chosen in Settings. They are listed here only:
-// the app has no notification delivery yet.
+// Reminders worked out from the timing chosen in Settings. They are listed
+// here, and expiring products raise an in-app alert while the app is open
+// (see src/components/ExpiryAlert.tsx). Nothing is delivered in the background.
 export function RemindersScreen({ badge, onNavigate }: Props) {
   const { items } = useItems();
   const { settings, formatDate } = useSettings();
@@ -37,7 +38,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
   return (
     <Page title="Reminders" subtitle={`Reminders come ${reminderLeadLabel(settings.reminderLead).toLowerCase()}.`} badge={badge} onNavigate={onNavigate}>
       <View style={c.note}>
-        <Note>Reminders are listed here. PREXPIRE can't send notifications yet.</Note>
+        <Note>Reminders are listed here. Expiry alerts also appear while the app is open; nothing is sent in the background.</Note>
       </View>
       <Text style={c.heading} accessibilityRole="header">
         Due now

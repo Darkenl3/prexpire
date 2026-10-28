@@ -12,8 +12,10 @@ import { expiryStatus } from '../preferences';
 import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
 import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
 import { ItemRow } from '../components/ItemRow';
+import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
+import { SmallButton } from '../components/SettingsRows';
 
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
@@ -55,7 +57,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   // Folder icons sit on the tile gradient: white on the dark theme's rich
   // gradients, dark ink on the light theme's pastels.
   const folderIconColor = t === LIGHT ? t.text : 'rgba(255,255,255,0.92)';
-  const { warningDays, showExpired, showSamples } = settings;
+  const { warningDays, showExpired } = settings;
   const upcoming = useMemo(
     () =>
       items
@@ -127,8 +129,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
             tint={t.tint}
             width={tileWidth}
             name={t.name}
-            sub={t.count === undefined ? t.sub : `${(showSamples ? t.count : 0) + saved.filter((i) => i.category === t.id).length} items`}
-            status={t.count === undefined ? undefined : tileStatus(attention.byCategory(t.id))}
+            sub={t.tint === 'add' ? undefined : `${saved.filter((i) => i.category === t.id).length} items`}
+            status={t.tint === 'add' ? undefined : tileStatus(attention.byCategory(t.id))}
             art={categoryArt(t.art, compact ? 56 : 64)}
             compact={compact}
             onPress={() => go(t.tint === 'add' ? 'tab:settings' : `category:${t.id}`)}
@@ -159,7 +161,13 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         {upcoming.map((item) => (
           <ItemRow key={item.id} item={item} onPress={() => go('tab:items')} />
         ))}
-        {upcoming.length === 0 && <Text style={c.empty}>Nothing coming up. Scan a label to add an item.</Text>}
+        {upcoming.length === 0 && (
+          <View style={c.empty}>
+            <Text style={c.emptyTitle}>Nothing here yet</Text>
+            <Text style={c.emptyText}>Scan your first product to start tracking it.</Text>
+            <SmallButton label="Scan a label" icon="scan-outline" tone="mint" onPress={() => go('scan')} />
+          </View>
+        )}
       </View>
     </>
   );
@@ -180,6 +188,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         showsVerticalScrollIndicator={false}
       >
         <View style={[c.frame, frame]}>
+          <AlertSpacer />
           {split ? (
             <View style={[c.columns, { columnGap }]}>
               <View style={{ width: leftWidth }}>
@@ -245,7 +254,9 @@ const useStyles = makeStyles((t) => ({
   // 8px between "Coming up next" rows.
   list: { gap: 8 },
   listCompact: { gap: 6 },
-  empty: { color: t.textMuted, fontSize: 14, paddingVertical: 12 },
+  empty: { alignItems: 'center', gap: 8, paddingVertical: 26 },
+  emptyTitle: { color: t.text, fontSize: 16.5, fontWeight: '600' },
+  emptyText: { color: t.textMuted, fontSize: 14, marginBottom: 6, textAlign: 'center' },
   toastWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
   toast: {
     flexDirection: 'row',

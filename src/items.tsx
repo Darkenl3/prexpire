@@ -3,9 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { daysUntil } from './scanner/dateParser';
 import { useSettings } from './settings';
 
-// Items the user tracks. Items added in the app are saved on the device with AsyncStorage;
-// the three sample items from the prototype stay in memory so the home screen is not empty
-// (Settings can hide them).
+// Items the user tracks. Every item is real: items added in the app are saved
+// on the device with AsyncStorage, and a fresh install or an emptied storage
+// starts with zero items (empty states guide the first scan instead). There
+// are no sample, demo or placeholder products anywhere in the app.
 
 // Categories: the five built-ins plus any custom "category folders" the user
 // adds in Settings (their ids are generated strings like "cat-k2x9a1").
@@ -30,26 +31,11 @@ export type Item = {
   expiresOn: string;
   datePrecision: 'day' | 'month';
   addedAt: string;
-  source: 'scan' | 'manual' | 'sample';
+  source: 'scan' | 'manual';
 };
 
 const STORAGE_KEY = 'prexpire.items.v1';
 const LAST_CATEGORY_KEY = 'prexpire.lastCategory.v1';
-
-function isoInDays(days: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function sampleItems(): Item[] {
-  const addedAt = new Date(0).toISOString();
-  return [
-    { id: 'sample-oat', name: 'Oat milk', category: 'food', expiresOn: isoInDays(1), datePrecision: 'day', addedAt, source: 'sample' },
-    { id: 'sample-ibu', name: 'Ibuprofen', category: 'medicine', expiresOn: isoInDays(3), datePrecision: 'day', addedAt, source: 'sample' },
-    { id: 'sample-bread', name: 'Bread', category: 'food', expiresOn: isoInDays(5), datePrecision: 'day', addedAt, source: 'sample' },
-  ];
-}
 
 function isItem(x: unknown): x is Item {
   const i = x as Item;
@@ -62,7 +48,6 @@ export type NewItem = Omit<Item, 'id' | 'addedAt'>;
 
 type ItemsContext = {
   items: Item[];
-  // Items added on this device (not the samples).
   saved: Item[];
   ready: boolean;
   lastCategory: CategoryId;
@@ -80,8 +65,6 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [lastCategory, setLastCategory] = useState<CategoryId>('food');
   const { settings } = useSettings();
-  const allSamples = useMemo(sampleItems, []);
-  const samples = settings.showSamples ? allSamples : [];
   // Writes go through this ref so two quick saves never overwrite each other.
   const savedRef = useRef<Item[]>([]);
 
@@ -130,8 +113,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const defaultCategory = settings.defaultCategory === 'last' ? lastCategory : settings.defaultCategory;
   const value = useMemo(
-    () => ({ items: [...samples, ...saved], saved, ready, lastCategory, defaultCategory, addItem, clearSaved }),
-    [samples, saved, ready, lastCategory, defaultCategory, addItem, clearSaved],
+    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, clearSaved }),
+    [saved, ready, lastCategory, defaultCategory, addItem, clearSaved],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

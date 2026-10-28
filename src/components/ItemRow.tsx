@@ -3,15 +3,12 @@ import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
 import { expiryStatus } from '../preferences';
 import { useSettings } from '../settings';
-import { BreadArt, MilkArt, PillArt } from './Art';
 import { ExpiryRow } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
+// Every tracked item's row art is its category's illustration; the category
+// tile art is shared so a row always matches the tile it came from.
 export function itemArt(item: Item, size = 30) {
-  // The prototype's sample items keep their own illustrations.
-  if (item.id === 'sample-oat') return <MilkArt size={size} />;
-  if (item.id === 'sample-ibu') return <PillArt size={size} />;
-  if (item.id === 'sample-bread') return <BreadArt size={size} />;
   return categoryArt(item.category, size);
 }
 

@@ -236,11 +236,12 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
   );
 }
 
-export type TabId = 'home' | 'items' | 'reminders' | 'settings';
+export type TabId = 'home' | 'items' | 'shop' | 'reminders' | 'settings';
 
 const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; iconOn: keyof typeof Ionicons.glyphMap }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', iconOn: 'home' },
   { id: 'items', label: 'Lists', icon: 'list', iconOn: 'list' },
+  { id: 'shop', label: 'Shopping', icon: 'cart-outline', iconOn: 'cart' },
   { id: 'reminders', label: 'Reminders', icon: 'notifications-outline', iconOn: 'notifications' },
   { id: 'settings', label: 'Settings', icon: 'settings-sharp', iconOn: 'settings-sharp' },
 ];
@@ -248,6 +249,8 @@ const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; ic
 type BottomNavProps = {
   active: TabId;
   badge: number;
+  // Open Shopping List entries, shown on the Shopping tab.
+  shopBadge?: number;
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
   // YouTube-style: the nav slides below the screen while the user scrolls down
@@ -261,7 +264,7 @@ type BottomNavProps = {
 export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
-export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = false, onTab, onScan }: BottomNavProps) {
+export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560, hidden = false, onTab, onScan }: BottomNavProps) {
   const c = useTheme();
   const s = useStyles();
   // Narrow phones give the five tabs a little more room so labels are not clipped.
@@ -294,6 +297,11 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
               <Text style={s.badgeText}>{badge}</Text>
             </View>
           )}
+          {tab.id === 'shop' && shopBadge > 0 && (
+            <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.mint, borderColor: c.navBg }]}>
+              <Text style={s.shopBadgeText}>{shopBadge}</Text>
+            </View>
+          )}
         </View>
         <Text
           style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.mint : c.textMuted }]}
@@ -319,14 +327,15 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
         <View style={[s.nav, s.navFallback]}>
           {renderTab(tabs[0])}
           {renderTab(tabs[1])}
+          {renderTab(tabs[2])}
           <View style={s.tab}>
             <PressScale onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" scaleTo={0.97} style={s.scan}>
               <Ionicons name="scan-outline" size={26} color={c.scanInk} />
               <View style={s.scanLine} />
             </PressScale>
           </View>
-          {renderTab(tabs[2])}
           {renderTab(tabs[3])}
+          {renderTab(tabs[4])}
         </View>
       </View>
     </Animated.View>
@@ -365,6 +374,9 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 1.5,
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  // The Shopping tab's count uses the accent colour rather than red: it is
+  // information, not urgency.
+  shopBadgeText: { color: '#04241B', fontSize: 11, fontWeight: '700' },
   alert: {
     marginTop: 4,
     minHeight: 58,

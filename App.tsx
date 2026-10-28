@@ -7,10 +7,13 @@ import { ItemsScreen } from './src/screens/ItemsScreen';
 import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { ShoppingScreen } from './src/screens/ShoppingScreen';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
+import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
+import { ShoppingProvider, useShopping } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue } from './src/preferences';
 import { useLayout } from './src/layout';
@@ -19,7 +22,7 @@ import type { Detection } from './src/scanner/useExpiryScanner';
 
 type Route = { tab: TabId; category?: CategoryId } | { tab: 'scan' };
 
-const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
+const TABS: TabId[] = ['home', 'items', 'shop', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
 
 // On the web the open tab is kept in the address (#settings), so a refresh stays on it.
@@ -61,6 +64,7 @@ function Shell() {
   const { items } = useItems();
   const { settings, formatDate } = useSettings();
   const { ids: categoryIds } = useCategories();
+  const { toBuyCount } = useShopping();
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
   const [notice, setNotice] = useState<string | null>(null);
@@ -98,6 +102,8 @@ function Shell() {
     () => (settings.reminders ? remindersDue(items, settings.reminderLead).length : 0),
     [items, settings.reminders, settings.reminderLead],
   );
+  // Open Shopping List entries, shown on the Shopping tab (information, not urgency).
+  const shopBadge = useMemo(() => Math.min(toBuyCount, 99), [toBuyCount]);
 
   const onNavigate = useCallback(
     (to: string) => {
@@ -179,19 +185,19 @@ function Shell() {
     return () => window.removeEventListener('prexpire:nav', onNavVisibility);
   }, []);
 
-  // Keep the shell's tab bar in sync: report the active tab and the reminder badge
-  // whenever either changes, so the shell can highlight its active tab, show the
-  // badge, and hide its bar while the scanner screen is open (tab === 'scan').
+  // Keep the shell's tab bar in sync: report the active tab and the badges
+  // whenever either changes, so the shell can highlight its active tab, show
+  // the badges, and hide its bar while the scanner screen is open (tab === 'scan').
   useEffect(() => {
     if (!WEB || typeof window === 'undefined') return;
     const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
     if (!shell?.postMessage) return;
     try {
-      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab, badge }));
+      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab, badge, shopBadge }));
     } catch {
       // The shell went away; navigation still works locally.
     }
-  }, [route, badge]);
+  }, [route, badge, shopBadge]);
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
   // is only mounted, and only running, while the user is scanning.
@@ -200,6 +206,8 @@ function Shell() {
   const screen =
     route.tab === 'items' ? (
       <ItemsScreen key={route.category ?? 'all'} badge={badge} category={route.category} onNavigate={onNavigate} />
+    ) : route.tab === 'shop' ? (
+      <ShoppingScreen badge={badge} onNavigate={onNavigate} />
     ) : route.tab === 'reminders' ? (
       <RemindersScreen badge={badge} onNavigate={onNavigate} />
     ) : route.tab === 'settings' ? (
@@ -210,11 +218,15 @@ function Shell() {
 
   return (
     <>
-      {screen}
+      {/* The in-app expiry alert sits above whichever tab is open (and waits
+          while the scanner covers the screen). Each screen reserves space for
+          it, so it pushes content instead of covering it. */}
+      <ExpiryAlertLayer onNavigate={onNavigate}>{screen}</ExpiryAlertLayer>
       {!inShell && (
         <BottomNav
           active={route.tab}
           badge={badge}
+          shopBadge={shopBadge}
           hidden={webNavHidden}
           insets={insets}
           maxWidth={layout.mode === 'phone' ? 560 : 520}
@@ -245,9 +257,11 @@ export default function App() {
       <CategoriesProvider>
         <SettingsProvider>
           <ItemsProvider>
-            <ThemeProvider>
-              <ThemedApp />
-            </ThemeProvider>
+            <ShoppingProvider>
+              <ThemeProvider>
+                <ThemedApp />
+              </ThemeProvider>
+            </ShoppingProvider>
           </ItemsProvider>
         </SettingsProvider>
       </CategoriesProvider>

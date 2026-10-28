@@ -27,6 +27,8 @@ import { useNavAutohide } from '../components/navAutohide';
 import { CategoryManager } from '../components/CategoryManager';
 import { FadeIn, PressScale } from '../components/Press';
 import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
+import { useShopping } from '../shopping';
+import { AlertSpacer } from '../components/ExpiryAlert';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
 import appConfig from '../../app.json';
@@ -72,6 +74,7 @@ export function SettingsScreen({ onNavigate }: Props) {
   const { settings, update, saveError, reset, motion, formatDate } = useSettings();
   const { saved, clearSaved } = useItems();
   const { all, clearAll: clearCategories } = useCategories();
+  const { items: shoppingItems, clearAll: clearShopping } = useShopping();
   const [confirmClear, setConfirmClear] = useState(false);
   const [page, setPage] = useState<PageId | null>(null);
 
@@ -111,7 +114,6 @@ export function SettingsScreen({ onNavigate }: Props) {
 
   const customCount = all.filter((cat) => cat.custom).length;
   const bottomPad = NAV_HEIGHT + navOffset(insets.bottom) + 24;
-
   const root = (
     <>
       {saveError && (
@@ -145,16 +147,16 @@ export function SettingsScreen({ onNavigate }: Props) {
 
       <SettingsSection title="Account">
         <SettingsCard>
-          <SettingRow icon="person-outline" accent="mint" title="Profile" description="Your items and where they're stored." onPress={() => open('profile')} />
-          <SettingRow icon="shield-checkmark-outline" accent="blue" title="Privacy & Security" description="Camera access and data storage." onPress={() => open('privacy')} />
+          <SettingRow icon="person-outline" accent="mint" title="Profile" description="Your library and storage." onPress={() => open('profile')} />
+          <SettingRow icon="shield-checkmark-outline" accent="blue" title="Privacy & Security" description="Camera access and stored data." onPress={() => open('privacy')} />
         </SettingsCard>
       </SettingsSection>
 
       <SettingsSection title="App Preferences">
         <SettingsCard>
-          <SettingRow icon="notifications-outline" accent="amber" title="Notifications" description="Expiry reminders and their timing." onPress={() => open('notifications')} />
-          <SettingRow icon="grid" accent="purple" title="Categories" description="Your folders, the default category and samples." onPress={() => open('categories')} />
-          <SettingRow icon="color-palette-outline" accent="pink" title="Appearance" description="Theme, layout density and animations." onPress={() => open('appearance')} />
+          <SettingRow icon="notifications-outline" accent="amber" title="Notifications" description="Expiry reminders and timing." onPress={() => open('notifications')} />
+          <SettingRow icon="grid" accent="purple" title="Categories" description="Your folders and defaults." onPress={() => open('categories')} />
+          <SettingRow icon="color-palette-outline" accent="pink" title="Appearance" description="Theme, density and motion." onPress={() => open('appearance')} />
         </SettingsCard>
       </SettingsSection>
 
@@ -165,10 +167,17 @@ export function SettingsScreen({ onNavigate }: Props) {
             accent="mint"
             title="Warning period"
             label="Warning period"
-            description="Items count as expiring soon this far ahead: amber pills, the attention card and reminders."
+            description="How early items warn you."
             value={settings.warningDays}
             options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
             onChange={(v) => update({ warningDays: v })}
+          />
+          <SettingRow
+            icon="cart-outline"
+            accent="mint"
+            title="Automatic Shopping List"
+            description="Add expiring products automatically."
+            right={<Toggle label="Automatically add expiring products to the Shopping List" value={settings.autoShoppingList} onChange={(v) => update({ autoShoppingList: v })} />}
           />
           <PickerRow
             icon="calendar-outline"
@@ -185,7 +194,7 @@ export function SettingsScreen({ onNavigate }: Props) {
             accent="blue"
             title="Default sorting"
             label="Default sorting"
-            description="Order of the Items list: newest scan or closest expiry first."
+            description="Order of the Items list."
             value={settings.sort}
             options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
             onChange={(v) => update({ sort: v })}
@@ -194,6 +203,7 @@ export function SettingsScreen({ onNavigate }: Props) {
             icon="eye-outline"
             accent="teal"
             title="Show expired items"
+            description="Keep past-date items visible."
             right={<Toggle label="Show expired items" value={settings.showExpired} onChange={(v) => update({ showExpired: v })} />}
           />
         </SettingsCard>
@@ -205,7 +215,7 @@ export function SettingsScreen({ onNavigate }: Props) {
             icon="cloud-upload-outline"
             accent="mint"
             title="Backup & Sync"
-            description="Nothing is uploaded; your data stays with you."
+            description="Nothing is uploaded or synced."
             right={<StatusBadge label="Off" />}
             onPress={() => open('backup')}
           />
@@ -226,7 +236,7 @@ export function SettingsScreen({ onNavigate }: Props) {
           accent="red"
           title="Clear all data"
           titleColor={accents.red}
-          description="Delete your added items and categories, and reset every setting."
+          description="Delete everything stored here."
           onPress={() => setConfirmClear(true)}
         />
       </SettingsCard>
@@ -271,10 +281,12 @@ export function SettingsScreen({ onNavigate }: Props) {
         visible={confirmClear}
         itemCount={saved.length}
         categoryCount={customCount}
+        listCount={shoppingItems.length}
         onCancel={() => setConfirmClear(false)}
         onConfirm={async () => {
           await clearSaved();
           await clearCategories();
+          await clearShopping();
           await reset();
           setConfirmClear(false);
         }}
@@ -283,10 +295,13 @@ export function SettingsScreen({ onNavigate }: Props) {
   );
 }
 
-// The scrolling body shared by the root list and every detail page.
+// The scrolling body shared by the root list and every detail page. The
+// reserved alert space sits at the very top, so an expiry alert pushes the
+// page's content below it rather than covering it.
 function ScrollViewLike({ children, onScroll, bottomPad }: { children: React.ReactNode; onScroll: () => void; bottomPad: number }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={{ paddingBottom: bottomPad }}>
+      <AlertSpacer />
       {children}
     </ScrollView>
   );
@@ -339,7 +354,7 @@ function ProfileDetail() {
   const s = useStyles();
   const { saved } = useItems();
   const { all } = useCategories();
-  const { settings } = useSettings();
+  const { items: shopping } = useShopping();
   const customCount = all.filter((cat) => cat.custom).length;
   return (
     <>
@@ -353,8 +368,8 @@ function ProfileDetail() {
       <SettingsSection title="Library">
         <SettingsCard>
           <SettingRow icon="cube-outline" accent="mint" title="Items added" value={`${saved.length}`} />
+          <SettingRow icon="cart-outline" accent="mint" title="Shopping list entries" value={`${shopping.length}`} />
           <SettingRow icon="folder-open-outline" accent="blue" title="Your categories" value={`${customCount}`} />
-          <SettingRow icon="flask-outline" accent="purple" title="Sample items" value={settings.showSamples ? 'Shown' : 'Hidden'} />
         </SettingsCard>
       </SettingsSection>
       <SettingsSection title="Storage">
@@ -460,11 +475,11 @@ function BrowserNotificationsRow() {
     insecure: 'Unavailable',
   };
   const note: Record<NotificationStatus, { text: string; tone: 'ok' | 'warn' | 'muted' }> = {
-    granted: { text: 'This browser allows PREXPIRE to show notifications. None are sent yet, because reminder delivery is not built.', tone: 'ok' },
-    denied: { text: "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back.", tone: 'warn' },
-    default: { text: 'Your browser will ask for permission when you select Allow. Nothing is sent yet; this only prepares the browser.', tone: 'muted' },
-    unsupported: { text: WEB ? "This browser doesn't support web notifications." : 'Notifications are not set up in this version of the app.', tone: 'muted' },
-    insecure: { text: 'Browsers only allow notifications on secure (https) pages.', tone: 'muted' },
+    granted: { text: 'This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background.', tone: 'ok' },
+    denied: { text: "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open.", tone: 'warn' },
+    default: { text: 'Your browser will ask for permission when you select Allow. In-app expiry alerts appear while the app is open either way.', tone: 'muted' },
+    unsupported: { text: WEB ? "This browser doesn't support web notifications. In-app expiry alerts still appear while the app is open." : 'System notifications are not set up in this version of the app. In-app expiry alerts appear while it is open.', tone: 'muted' },
+    insecure: { text: 'Browsers only allow notifications on secure (https) pages. In-app expiry alerts still appear while the app is open.', tone: 'muted' },
   };
 
   const badgeTone = status === 'granted' ? 'green' : status === 'denied' ? 'amber' : 'muted';
@@ -521,13 +536,6 @@ function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void 
             value={settings.defaultCategory}
             onChange={(v) => update({ defaultCategory: v })}
             options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
-          />
-          <SettingRow
-            icon="flask-outline"
-            accent="blue"
-            title="Show sample items"
-            description="The example items Oat milk, Ibuprofen and Bread."
-            right={<Toggle label="Show sample items" value={settings.showSamples} onChange={(v) => update({ showSamples: v })} />}
           />
         </SettingsCard>
       </SettingsSection>
@@ -702,9 +710,9 @@ function TermsDetail() {
   );
 }
 
-type DialogProps = { visible: boolean; itemCount: number; categoryCount: number; onCancel: () => void; onConfirm: () => Promise<void> };
+type DialogProps = { visible: boolean; itemCount: number; categoryCount: number; listCount: number; onCancel: () => void; onConfirm: () => Promise<void> };
 
-function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfirm }: DialogProps) {
+function ClearDataDialog({ visible, itemCount, categoryCount, listCount, onCancel, onConfirm }: DialogProps) {
   const t = useTheme();
   const s = useStyles();
   const [busy, setBusy] = useState(false);
@@ -737,13 +745,14 @@ function ClearDataDialog({ visible, itemCount, categoryCount, onCancel, onConfir
           <Text style={s.dialogText}>This permanently deletes from {WEB ? 'this browser' : 'this device'}:</Text>
           <View style={s.dialogList}>
             <Text style={s.dialogText}>•  {itemCount === 1 ? '1 item you added' : `${itemCount} items you added`}</Text>
+            <Text style={s.dialogText}>•  {listCount === 1 ? '1 Shopping List entry' : `${listCount} Shopping List entries`}</Text>
             {categoryCount > 0 && (
               <Text style={s.dialogText}>•  {categoryCount === 1 ? '1 category you added' : `${categoryCount} categories you added`}</Text>
             )}
             <Text style={s.dialogText}>•  Every setting on this page (back to the defaults)</Text>
-            <Text style={s.dialogText}>•  The remembered last-used category</Text>
+            <Text style={s.dialogText}>•  The remembered last-used category and expiration events</Text>
           </View>
-          <Text style={s.dialogMuted}>Sample items are not stored, so they show again. This can't be undone; export your items first if you want a copy.</Text>
+          <Text style={s.dialogMuted}>This can't be undone; export your items first if you want a copy.</Text>
           {error && <Note tone="warn">Nothing could be deleted because this browser's storage refused the change. Try again.</Note>}
           <View style={s.dialogButtons}>
             <SmallButton label="Cancel" onPress={onCancel} disabled={busy} />

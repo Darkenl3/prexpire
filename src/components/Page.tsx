@@ -5,6 +5,7 @@ import { makeStyles } from '../theme';
 import { useLayout } from '../layout';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
 import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
+import { AlertSpacer } from './ExpiryAlert';
 
 type Props = {
   title: string;
@@ -37,6 +38,7 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
         showsVerticalScrollIndicator={false}
       >
         <View style={[c.frame, frame]}>
+          <AlertSpacer />
           <View style={c.titleBlock}>
             <Text style={c.title} accessibilityRole="header">
               {title}
