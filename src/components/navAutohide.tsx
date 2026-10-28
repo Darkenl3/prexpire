@@ -59,7 +59,16 @@ export function useNavAutohide() {
   const lastPolled = useRef(0);
   const idle = useRef(0);
 
-  const decide = useCallback((y: number) => {
+  const decide = useCallback((rawY: number) => {
+    // Clamp the position into the scroller's REAL range first: while a list
+    // rubber-bands past its end, iOS reports out-of-range positions (the
+    // overshoot and its settle-back). Unclamped, that oscillation flips the
+    // direction back and forth — the "bar jumps when you reach the bottom"
+    // bug. Clamped, the overshoot and the settle-back cancel out and never
+    // reach the decision threshold.
+    const el = tracked.current;
+    const maxY = el ? Math.max(0, el.scrollHeight - el.clientHeight) : Number.POSITIVE_INFINITY;
+    const y = Math.min(Math.max(rawY, 0), maxY);
     const dy = y - lastY.current;
     lastY.current = y;
     // Jitter-proof accumulation: same-sign deltas add up until decisive,
@@ -119,9 +128,11 @@ export function useNavAutohide() {
       if (el && el !== tracked.current) {
         // A different scroller took over (a sheet, a freshly opened tab):
         // start fresh from its position so the switch itself is not read
-        // as a jump.
+        // as a jump — clamped into the scroller's range, so taking over
+        // mid-bounce is not read as movement either.
         tracked.current = el;
-        lastY.current = el.scrollTop;
+        const maxY = Math.max(0, el.scrollHeight - el.clientHeight);
+        lastY.current = Math.min(Math.max(el.scrollTop, 0), maxY);
         lastPolled.current = el.scrollTop;
         acc.current = 0;
       }
@@ -148,13 +159,15 @@ export function useNavAutohide() {
       postToShell({ type: 'scroll', dir: 'up' });
     }
     if (typeof document === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
-    // Capture-phase listener: sees scroll events from EVERY scrollable
-    // element (scroll does not bubble, but it does capture).
+    // A capture-phase listener: sees scroll events from EVERY scrollable
+    // element (scroll does not bubble, but it does capture). Document-level
+    // scrolling is deliberately ignored: when a nested list hits its end on
+    // iOS the remaining gesture chains to the page, whose own position
+    // (and rubber-band) has nothing to do with the list the user scrolls.
     const onAnyScroll = (event: Event) => {
-      let el: HTMLElement | null = null;
-      if (event.target instanceof HTMLElement) el = event.target;
-      else el = document.scrollingElement instanceof HTMLElement ? document.scrollingElement : null;
-      kick(el);
+      const target = event.target;
+      if (!(target instanceof HTMLElement) || target === document.documentElement || target === document.body) return;
+      kick(target);
     };
     document.addEventListener('scroll', onAnyScroll, { capture: true, passive: true });
     return () => {

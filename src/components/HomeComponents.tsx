@@ -1,21 +1,43 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, pills, radius, space, tints, type, type Tint, type Tone } from '../theme';
 
 const wordmark = require('../../assets/wordmark.png');
 
+// Liquid-glass treatment for the header buttons (the same visual language as
+// the shell's glass tab bar): a frosted translucent circle with a hairline
+// ring. React Native's style types don't know these two CSS properties, but
+// react-native-web passes them straight through to the DOM — including the
+// -webkit- spelling older iOS Safari needs.
+const GLASS_FX = {
+  backdropFilter: 'blur(18px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+};
+
 export function Header({ badge, gutter = space.gutter, onMenu, onBell }: { badge: number; gutter?: number; onMenu: () => void; onBell: () => void }) {
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
-      <Pressable onPress={onMenu} hitSlop={10} accessibilityRole="button" accessibilityLabel="Menu" style={s.headerBtn}>
-        <Ionicons name="menu" size={30} color={colors.text} />
+      <Pressable
+        onPress={onMenu}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel="Menu"
+        style={({ pressed }) => [s.headerBtn, GLASS_FX as ViewStyle, pressed && s.pressed]}
+      >
+        <Ionicons name="menu" size={24} color={colors.text} />
       </Pressable>
       <Image source={wordmark} style={s.wordmark} resizeMode="contain" accessibilityLabel="Prexpire" />
-      <Pressable onPress={onBell} hitSlop={10} accessibilityRole="button" accessibilityLabel={`${badge} notifications`} style={s.headerBtn}>
-        <Ionicons name="notifications-outline" size={26} color={colors.text} />
+      <Pressable
+        onPress={onBell}
+        hitSlop={10}
+        accessibilityRole="button"
+        accessibilityLabel={`${badge} notifications`}
+        style={({ pressed }) => [s.headerBtn, GLASS_FX as ViewStyle, pressed && s.pressed]}
+      >
+        <Ionicons name="notifications-outline" size={22} color={colors.text} />
         {badge > 0 && (
           <View style={s.badge}>
             <Text style={s.badgeText}>{badge}</Text>
@@ -245,7 +267,18 @@ export function BottomNav({ active, badge, insets, maxWidth = 560, hidden = fals
 const s = StyleSheet.create({
   pressed: { opacity: 0.75, transform: [{ scale: 0.98 }] },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  // Liquid-glass circle (with GLASS_FX): the same frosted look as the shell's
+  // tab bar, sized to sit comfortably inside the 56pt header.
+  headerBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.14)',
+  },
   wordmark: { width: 118, height: 30 },
   badge: {
     position: 'absolute',
