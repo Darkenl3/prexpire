@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../theme';
 import { useLayout } from '../layout';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
-import { AutohideHeader, useNavAutohide } from './navAutohide';
+import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
 
 type Props = {
   title: string;
@@ -30,7 +30,7 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
         <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => onNavigate('tab:settings')} onBell={() => onNavigate('tab:reminders')} />
       </View>
       <ScrollView
-        style={s.scroll}
+        style={[s.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
         contentContainerStyle={{ paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
         showsVerticalScrollIndicator={false}

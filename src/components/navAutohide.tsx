@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform } from 'react-native';
+import { Animated, Easing, Platform, type ViewStyle } from 'react-native';
 import { Header } from './HomeComponents';
 
 // YouTube-style auto-hide navigation: scrolling down collapses the header (and,
@@ -38,6 +38,13 @@ const TOP_ZONE = 48;
 const REPORT_MS = 200;
 // The rAF poll stops after this many frames with no movement (~0.5s).
 const IDLE_FRAMES = 30;
+
+// Applied to every main screen scroller: modern engines (iOS 16+ WebKit,
+// Chromium, Android) make the list simply STOP at its end — no rubber-band,
+// no out-of-range positions, no overscroll glow — exactly like YouTube's
+// lists. Older engines ignore the property and fall back to the range
+// clamping inside decide() above, so both generations of iOS are covered.
+export const NO_RUBBER_BAND = { overscrollBehavior: 'none' } as ViewStyle;
 
 function postToShell(payload: Record<string, unknown>) {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return;

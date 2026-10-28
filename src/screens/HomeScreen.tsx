@@ -9,7 +9,7 @@ import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
 import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
-import { AutohideHeader, useNavAutohide } from '../components/navAutohide';
+import { AutohideHeader, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
 import { ItemRow } from '../components/ItemRow';
 import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
@@ -153,7 +153,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         <AutohideHeader hidden={hidden} badge={badge} gutter={0} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
       </View>
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, NO_RUBBER_BAND]}
         onScroll={onScroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomClearance }]}
         showsVerticalScrollIndicator={false}
