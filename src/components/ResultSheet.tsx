@@ -1,13 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SCANNER_COLORS as colors, radius } from '../theme';
 import { useCategories } from '../categories';
-import { expiryPhrase, type CategoryId } from '../items';
+import { type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
 import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 import { PressScale } from './Press';
+import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
+
+// The sheet's category pills: the same solid-green "selected" language as the
+// Items filters and sort row, rendered in the scanner's fixed dark palette -
+// green fill, no checkmark, soft crossfade when picked.
+const SHEET_PILLS: PillColors = {
+  offBg: 'rgba(255,255,255,0.05)',
+  offBorder: colors.surfaceBorder,
+  offText: colors.textMuted,
+  onBg: colors.mint,
+  onBorder: colors.mint,
+  onText: colors.scanInk,
+};
 
 export function categoryArt(id: CategoryId, size: number) {
   switch (id) {
@@ -53,8 +66,13 @@ type Props = {
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export function ResultSheet({ detection, initialCategory, categoryGuessed = false, layout, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
-  const { all, nameOf } = useCategories();
+  const { all } = useCategories();
   const [name, setName] = useState('');
+  // The name field is a real, visible input box: focus lights its border so it
+  // reads unmistakably as somewhere to type (especially in manual entry, where
+  // the product name is the whole point of the screen).
+  const [nameFocused, setNameFocused] = useState(false);
+  const nameRef = useRef<TextInput>(null);
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const readings = useMemo(() => (detection ? [detection.primary, ...detection.alternatives] : []), [detection]);
   const ambiguous = readings.length > 1;
@@ -69,6 +87,8 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
   // Inline validation: the product name is required, so an empty name shows a
   // concise error under the field instead of silently inventing a placeholder.
   const [nameError, setNameError] = useState(false);
+  // Keep the chip row scrolled so the initially selected category is visible.
+  const { scrollRef: chipsScroll, note: noteChip } = useScrollSelectedIntoView(category);
   // A ref, not state, so a second tap in the same frame is ignored too.
   const busy = useRef(false);
   const mounted = useRef(true);
@@ -107,48 +127,51 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
   return (
     <View style={[s.sheet, layout === 'side' ? s.sheetSide : s.sheetBottom, { maxHeight, paddingBottom: Math.max(bottomInset, 14) }]}>
       {layout === 'bottom' && <View style={s.handle} />}
-      <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent} keyboardShouldPersistTaps="handled" bounces={false}>
-        <View style={s.productRow}>
-          <View style={s.productArt}>{categoryArt(category, 34)}</View>
-          <View style={{ flex: 1 }}>
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={s.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        bounces={false}
+      >
+        <View style={s.nameBlock}>
+          <Text style={s.nameLabel}>Product name</Text>
+          <View style={[s.nameField, nameFocused && !nameError && s.nameFieldFocus, nameError && s.nameFieldWarn]}>
+            <View style={s.nameArt}>{categoryArt(category, 26)}</View>
             <TextInput
+              ref={nameRef}
               value={name}
               onChangeText={(t) => {
                 setName(t);
                 if (nameError && t.trim()) setNameError(false);
               }}
-              placeholder="Product name, e.g. Greek yogurt"
+              placeholder="e.g. Greek yogurt"
               placeholderTextColor={colors.textMuted}
-              style={[s.nameInput, nameError && s.nameInputWarn]}
+              style={s.nameInput}
               returnKeyType="done"
               maxLength={80}
+              autoCorrect={false}
               accessibilityLabel="Product name"
+              onFocus={() => setNameFocused(true)}
+              onBlur={() => setNameFocused(false)}
+              onSubmitEditing={() => nameRef.current?.blur()}
             />
-            {nameError && <Text style={s.nameError}>Give the product a name first.</Text>}
-            <Text style={s.productSub} numberOfLines={1}>
-              {nameOf(category)}
-              {date ? `  •  ${expiryPhrase(date.iso)}` : ''}
-            </Text>
           </View>
+          {nameError && <Text style={s.nameError}>Give the product a name first.</Text>}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} keyboardShouldPersistTaps="handled">
-          {all.map((cat) => {
-            const on = cat.id === category;
-            return (
-              <PressScale
-                key={cat.id}
+        <ScrollView ref={chipsScroll} horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled contentContainerStyle={s.chips} keyboardShouldPersistTaps="handled">
+          {all.map((cat) => (
+            <View key={cat.id} onLayout={(e) => noteChip(cat.id, e)}>
+              <ChoicePill
+                label={cat.name}
+                selected={cat.id === category}
                 onPress={() => setCategory(cat.id)}
-                scaleTo={0.97}
-                style={[s.chip, on && s.chipOn]}
-                accessibilityRole="radio"
-                aria-checked={on}
-                accessibilityState={{ selected: on }}
-              >
-                <Text style={[s.chipText, on && s.chipTextOn]}>{cat.name}</Text>
-              </PressScale>
-            );
-          })}
+                colors={SHEET_PILLS}
+                accessibilityLabel={`Category ${cat.name}`}
+              />
+            </View>
+          ))}
         </ScrollView>
         {categoryGuessed && <Text style={s.guessed}>Category picked from the label; tap another to change it.</Text>}
 
@@ -184,7 +207,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
                   accessibilityRole="radio"
                   accessibilityState={{ selected: picked === i }}
                 >
-                  <Text style={[s.choiceText, picked === i && s.chipTextOn]}>{formatDate(r)}</Text>
+                  <Text style={[s.choiceText, picked === i && s.choiceTextOn]}>{formatDate(r)}</Text>
                 </PressScale>
               ))}
             </View>
@@ -308,19 +331,29 @@ const s = StyleSheet.create({
   sheetSide: { borderTopLeftRadius: 24, borderBottomLeftRadius: 24, borderLeftWidth: StyleSheet.hairlineWidth, paddingTop: 18 },
   handle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#3A4A50', marginBottom: 12 },
   scroll: { flexGrow: 0, flexShrink: 1 },
-  scrollContent: { paddingBottom: 10 },
-  productRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  productArt: { width: 58, height: 58, borderRadius: 16, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
-  nameInput: { color: colors.text, fontSize: 16.5, fontWeight: '600', paddingVertical: 4, paddingHorizontal: 0 },
-  nameInputWarn: { color: colors.amberText },
-  nameError: { color: colors.amberText, fontSize: 12.5, marginTop: 2 },
-  productSub: { color: colors.textMuted, fontSize: 13.5, marginTop: 2 },
-  chips: { gap: 8, paddingTop: 12 },
+  scrollContent: { paddingBottom: 12 },
+  // The product name is a real labelled field: a boxed input with the category
+  // art inside it, sized so a phone keyboard never crowds what is typed.
+  nameBlock: { gap: 8 },
+  nameLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  nameField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: 58,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceBorder,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    paddingHorizontal: 10,
+  },
+  nameFieldFocus: { borderColor: 'rgba(46,232,182,0.55)' },
+  nameFieldWarn: { borderColor: 'rgba(245,184,61,0.65)' },
+  nameArt: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
+  nameInput: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
+  nameError: { color: colors.amberText, fontSize: 12.5 },
+  chips: { gap: 8, paddingTop: 14 },
   guessed: { color: colors.textMuted, fontSize: 12, paddingTop: 8 },
-  chip: { height: 32, paddingHorizontal: 13, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.surfaceBorder, justifyContent: 'center' },
-  chipOn: { borderColor: colors.mint, backgroundColor: 'rgba(46,232,182,0.10)' },
-  chipText: { color: colors.textMuted, fontSize: 13.5, fontWeight: '500' },
-  chipTextOn: { color: colors.mint, fontWeight: '600' },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.surfaceBorder, marginTop: 14 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
   calendar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0D2E28', alignItems: 'center', justifyContent: 'center' },
@@ -331,8 +364,9 @@ const s = StyleSheet.create({
   question: { color: colors.text, fontSize: 14, fontWeight: '500' },
   choiceRow: { flexDirection: 'row', gap: 10 },
   choice: { flex: 1, height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: 'center', justifyContent: 'center' },
-  choiceOn: { borderColor: colors.mint, backgroundColor: 'rgba(46,232,182,0.10)' },
+  choiceOn: { borderColor: colors.mint, backgroundColor: colors.mint },
   choiceText: { color: colors.text, fontSize: 15, fontWeight: '500' },
+  choiceTextOn: { color: colors.scanInk, fontWeight: '700' },
   reason: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   reasonText: { color: colors.amberText, fontSize: 13, flex: 1, lineHeight: 18 },
   raw: { color: colors.textMuted, fontSize: 12.5 },

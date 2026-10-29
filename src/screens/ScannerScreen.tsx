@@ -64,6 +64,40 @@ function frameSize(area: Size, hintSpace: number) {
   return { width, height };
 }
 
+// On the web a phone's virtual keyboard never fires React Native's keyboard
+// events, so KeyboardAvoidingView alone cannot lift the save sheet clear of it.
+// The visual viewport API reports the space the keyboard actually occupies
+// (iOS keeps the layout height and shrinks the visual viewport; Android already
+// resizes the layout, where this correctly measures ~0). We pad the avoider by
+// that amount so the form - especially manual entry - always sits above the keys.
+type VisualViewportLike = {
+  height: number;
+  offsetTop: number;
+  addEventListener: (type: string, listener: () => void) => void;
+  removeEventListener: (type: string, listener: () => void) => void;
+};
+
+function useWebKeyboardInset() {
+  const [inset, setInset] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const vv = (window as unknown as { visualViewport?: VisualViewportLike }).visualViewport;
+    if (!vv) return;
+    const measure = () => {
+      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      setInset((prev) => (Math.abs(prev - kb) < 1 ? prev : kb));
+    };
+    measure();
+    vv.addEventListener('resize', measure);
+    vv.addEventListener('scroll', measure);
+    return () => {
+      vv.removeEventListener('resize', measure);
+      vv.removeEventListener('scroll', measure);
+    };
+  }, []);
+  return inset;
+}
+
 export function ScannerScreen({ onClose, onSaved, category, initialDetection, initialManual }: Props) {
   const insets = useSafeAreaInsets();
   const { defaultCategory, addItem } = useItems();
@@ -84,6 +118,8 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const [askedPermission, setAskedPermission] = useState(false);
   // Seeded by a native shell scan; set back to null by "Scan again"/closing.
   const [seeded, setSeeded] = useState<Detection | null>(initialDetection ?? null);
+  // The phone keyboard's footprint on the web (0 everywhere else).
+  const webKeyboard = useWebKeyboardInset();
 
   const landscape = root.width > root.height && root.height > 0;
   const granted = !!permission?.granted;
@@ -338,7 +374,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
       layout={landscape ? 'side' : 'bottom'}
-      maxHeight={landscape ? root.height : Math.round(root.height * 0.62)}
+      maxHeight={landscape ? root.height : manual ? Math.round(root.height * 0.8) : Math.round(root.height * 0.62)}
       bottomInset={insets.bottom}
       // Entered straight from an "Add manually" entry point: the only way out
       // is Cancel (there is no camera session to return to). Switched over
@@ -363,7 +399,10 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           onError={onCameraError}
         />
       )}
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[StyleSheet.absoluteFill, landscape && s.row]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={[StyleSheet.absoluteFill, landscape && s.row, webKeyboard > 0 && { paddingBottom: webKeyboard }]}
+      >
         <View style={s.column}>
           {header}
           <View style={[s.area, { marginLeft: insets.left, marginRight: landscape && sheetOpen ? 0 : insets.right }]} onLayout={onAreaLayout}>
