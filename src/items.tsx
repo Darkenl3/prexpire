@@ -32,6 +32,9 @@ export type Item = {
   datePrecision: 'day' | 'month';
   addedAt: string;
   source: 'scan' | 'manual';
+  // The EAN/UPC code a native shell scanner decoded for this item, when one
+  // was in view (optional: only the shell's save bridge sends it today).
+  barcode?: string;
 };
 
 const STORAGE_KEY = 'prexpire.items.v1';

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -61,9 +61,9 @@ function useFocusStyles() {
 function Shell() {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
-  const { items } = useItems();
+  const { items, defaultCategory, addItem } = useItems();
   const { settings, formatDate } = useSettings();
-  const { ids: categoryIds } = useCategories();
+  const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
   const { toBuyCount } = useShopping();
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
@@ -95,6 +95,91 @@ function Shell() {
     window.addEventListener('prexpire:native-scan', onNativeScan);
     return () => window.removeEventListener('prexpire:native-scan', onNativeScan);
   }, []);
+
+  // The live category list, reported to the native shell so its scanner result
+  // panel shows the same folders this app uses (the built-ins the user keeps,
+  // plus custom folders with their Ionicons glyph for the panel's chips).
+  const shellCategories = useMemo(() => {
+    const iconById = new Map(customCategories.map((c) => [c.id, c.icon] as const));
+    return allCategories.map((c) => ({ id: c.id, name: c.name, icon: iconById.get(c.id) }));
+  }, [allCategories, customCategories]);
+  useEffect(() => {
+    if (!inShell || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    try {
+      shell.postMessage(JSON.stringify({ type: 'categories', categories: shellCategories }));
+    } catch {
+      // The shell went away; the next change reports again.
+    }
+  }, [inShell, shellCategories]);
+
+  // Native bridge, save path: the shell's scanner result panel saves directly
+  // through this app's real pipeline (docs/native-shell.md). The shell
+  // dispatches a prexpire:save event carrying a structured item plus a
+  // requestId; this handler validates it, saves it, and replies over the
+  // bridge so the panel can show "Added" or keep the user's edits after a
+  // failure. RequestIds are idempotent, so a re-send can never double-save.
+  const fallbackCategory = categoryIds.includes(defaultCategory) ? defaultCategory : (categoryIds[0] ?? defaultCategory);
+  // Mirrors onSaved (with its 650 ms "Added" beat, so the home toast runs
+  // its full length exactly like the app's own save flow): the notice and
+  // route the app's own save flow shows, so a bridge save feels identical.
+  const savedFromShell = useCallback(
+    (item: Item) => {
+      setNativeScan(null);
+      setTimeout(
+        () => {
+          setNotice(`${item.name} added · expires ${formatDate(item.expiresOn, item.datePrecision)}`);
+          setRoute({ tab: 'home' });
+          setLastTab('home');
+        },
+        650,
+      );
+    },
+    [formatDate],
+  );
+  // Completed save request ids, kept across listener re-subscriptions so a
+  // re-delivered event can never save twice.
+  const handledSaves = useRef(new Set<string>());
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const handled = handledSaves.current;
+    const onSave = (event: Event) => {
+      const detail = (event as CustomEvent<{ requestId?: unknown; name?: unknown; category?: unknown; barcode?: unknown; dateIso?: unknown; datePrecision?: unknown }>).detail ?? {};
+      if (typeof detail.requestId !== 'string') return;
+      const requestId = detail.requestId;
+      const reply = (ok: boolean, error?: string) => {
+        const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+        if (!shell?.postMessage) return;
+        try {
+          shell.postMessage(JSON.stringify({ type: 'save-result', requestId, ok, error }));
+        } catch {
+          // The shell went away; nothing to answer.
+        }
+      };
+      if (handled.has(requestId)) return reply(true); // already completed: confirm, never duplicate
+      const name = typeof detail.name === 'string' ? detail.name.trim().slice(0, 80) : '';
+      const dateIso = typeof detail.dateIso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(detail.dateIso) ? detail.dateIso : null;
+      const datePrecision = detail.datePrecision === 'month' ? ('month' as const) : ('day' as const);
+      const barcode = typeof detail.barcode === 'string' && /^\d{6,14}$/.test(detail.barcode) ? detail.barcode : undefined;
+      if (!name) return reply(false, 'The product needs a name.');
+      if (!dateIso) return reply(false, 'The expiry date could not be read.');
+      const wanted = typeof detail.category === 'string' && detail.category ? (detail.category as CategoryId) : null;
+      const category = wanted && categoryIds.includes(wanted) ? wanted : fallbackCategory;
+      handled.add(requestId);
+      addItem({ name, category, expiresOn: dateIso, datePrecision, source: 'scan', ...(barcode ? { barcode } : {}) })
+        .then((item) => {
+          savedFromShell(item);
+          reply(true);
+        })
+        .catch(() => {
+          handled.delete(requestId);
+          reply(false, "Couldn't save the item. Please try again.");
+        });
+    };
+    window.addEventListener('prexpire:save', onSave);
+    return () => window.removeEventListener('prexpire:save', onSave);
+  }, [addItem, categoryIds, fallbackCategory, savedFromShell]);
 
   useEffect(() => writeHash(route), [route]);
 

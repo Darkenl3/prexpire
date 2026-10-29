@@ -217,6 +217,23 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     reset();
   }, [reset]);
 
+  // Inside the native WebView shell (docs/native-shell.md) the WebView camera
+  // is blocked and a seeded sheet has no camera behind it either, so "Scan
+  // again" hands control back to the shell's native scanner instead of trying
+  // to start an impossible in-WebView camera session.
+  const inShell = Platform.OS === 'web' && typeof window !== 'undefined' && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
+  const scanAgainInShell = useCallback(() => {
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (shell?.postMessage) {
+      try {
+        shell.postMessage(JSON.stringify({ type: 'scan' }));
+      } catch {
+        // The shell went away; closing simply returns to the app.
+      }
+    }
+    onClose();
+  }, [onClose]);
+
   const onAreaLayout = (e: LayoutChangeEvent) => {
     const l = e.nativeEvent.layout;
     setArea((prev) => (prev && prev.x === l.x && prev.y === l.y && prev.width === l.width && prev.height === l.height ? prev : l));
@@ -378,10 +395,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       bottomInset={insets.bottom}
       // Entered straight from an "Add manually" entry point: the only way out
       // is Cancel (there is no camera session to return to). Switched over
-      // from a live scan: "Scan again" brings the camera back.
-      secondaryLabel={manualOnly ? 'Cancel' : ocrReady && granted && !cameraError ? 'Scan again' : 'Cancel'}
+      // from a live scan: "Scan again" brings the camera back - inside the
+      // native shell, it reopens the shell's own native scanner.
+      secondaryLabel={manualOnly ? 'Cancel' : seeded && inShell ? 'Scan again' : ocrReady && granted && !cameraError ? 'Scan again' : 'Cancel'}
       onAdd={onAdd}
-      onSecondary={manualOnly ? onClose : ocrReady && granted && !cameraError ? scanAgain : onClose}
+      onSecondary={manualOnly ? onClose : seeded && inShell ? scanAgainInShell : ocrReady && granted && !cameraError ? scanAgain : onClose}
     />
   ) : null;
 
