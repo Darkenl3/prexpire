@@ -10,24 +10,24 @@ import type { DateFormat } from '../preferences';
 import { useShopping, type ShoppingItem as ListEntry } from '../shopping';
 import { groupShopping } from '../shoppingLogic';
 import { daysUntil } from '../scanner/dateParser';
-import { Page } from '../components/Page';
 import { SectionHeader } from '../components/HomeComponents';
 import { FadeIn, PressScale } from '../components/Press';
 import { Note, Options, SmallButton } from '../components/SettingsRows';
 
-type Props = { badge: number; onNavigate: (route: string) => void };
+// The Shopping List, now a view of the Lists tab (ItemsScreen renders this
+// body below its Items/Shopping segmented control): what to buy, what was
+// bought, and the two ways entries arrive (typed by the user, or placed
+// automatically because a tracked product is expiring soon). Empty states
+// guide the first steps; nothing here is ever pre-filled with sample content.
+// The toast is hoisted to the parent (outside the scrolling Page) so it floats
+// at the screen bottom like Home's notice; the add dialog is a Modal and
+// escapes the scroll view on its own.
 
-// The Shopping List tab: what to buy, what was bought, and the two ways
-// entries arrive (typed by the user, or placed automatically because a
-// tracked product is expiring soon). Empty states guide the first steps;
-// nothing here is ever pre-filled with sample content.
-
-export function ShoppingScreen({ badge, onNavigate }: Props) {
+export function ShoppingListBody({ onToast }: { onToast: (text: string) => void }) {
   const c = useStyles();
   const t = useTheme();
   const { items, ready, saveError, setPurchased, remove, clearPurchased } = useShopping();
   const [addOpen, setAddOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
   const { toBuy, purchased } = useMemo(() => groupShopping(items), [items]);
 
   // Rows animate out (collapse) before they are actually moved or removed.
@@ -55,10 +55,10 @@ export function ShoppingScreen({ badge, onNavigate }: Props) {
       Haptics.selectionAsync().catch(() => {});
       runLeave(entry.id, () => {
         setPurchased(entry.id, !entry.purchasedAt);
-        if (!entry.purchasedAt) setToast('Moved to Purchased');
+        if (!entry.purchasedAt) onToast('Moved to Purchased');
       });
     },
-    [runLeave, setPurchased],
+    [runLeave, setPurchased, onToast],
   );
 
   const removeEntry = useCallback(
@@ -66,10 +66,10 @@ export function ShoppingScreen({ badge, onNavigate }: Props) {
       Haptics.selectionAsync().catch(() => {});
       runLeave(entry.id, () => {
         remove(entry.id);
-        setToast('Removed from your list');
+        onToast('Removed from your list');
       });
     },
-    [runLeave, remove],
+    [runLeave, remove, onToast],
   );
 
   // Clearing purchased items asks twice (like deleting a category folder).
@@ -86,19 +86,18 @@ export function ShoppingScreen({ badge, onNavigate }: Props) {
     }
     setConfirmClear(false);
     clearPurchased();
-    setToast('Cleared purchased items');
-  }, [confirmClear, clearPurchased]);
+    onToast('Cleared purchased items');
+  }, [confirmClear, clearPurchased, onToast]);
 
   const empty = ready && toBuy.length === 0 && purchased.length === 0;
 
   return (
     <>
-      <Page title="Shopping List" subtitle="What you need to buy next." badge={badge} maxWidth={640} onNavigate={onNavigate}>
-        {saveError && (
-          <View style={c.banner} accessibilityRole="alert">
-            <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>
-          </View>
-        )}
+      {saveError && (
+        <View style={c.banner} accessibilityRole="alert">
+          <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>
+        </View>
+      )}
 
         {!ready ? (
           <View style={c.loading}>
@@ -161,10 +160,8 @@ export function ShoppingScreen({ badge, onNavigate }: Props) {
             )}
           </>
         )}
-      </Page>
 
-      <AddItemDialog visible={addOpen} onClose={() => setAddOpen(false)} onAdded={(name) => setToast(`${name} added to your list`)} />
-      {toast && <Toast key={toast} text={toast} onDone={() => setToast(null)} />}
+      <AddItemDialog visible={addOpen} onClose={() => setAddOpen(false)} onAdded={(name) => onToast(`${name} added to your list`)} />
     </>
   );
 }
@@ -411,9 +408,11 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
 }
 
 // ---------------------------------------------------------------------------
-// The toast (the same pattern as Home: a soft pill that fades in and out)
+// The toast, rendered by the PARENT (ItemsScreen) outside the scrolling Page
+// so it floats at the screen bottom like Home's notice. Keyed by its text so
+// a follow-up toast restarts the fade.
 
-function Toast({ text, onDone }: { text: string; onDone?: () => void }) {
+export function ShoppingToast({ text, onDone }: { text: string; onDone: () => void }) {
   const t = useTheme();
   const c = useStyles();
   const { motion } = useSettings();

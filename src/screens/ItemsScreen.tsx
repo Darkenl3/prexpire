@@ -10,8 +10,9 @@ import { ItemRow } from '../components/ItemRow';
 import { Note, SmallButton } from '../components/SettingsRows';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from '../components/ChoicePill';
 import { SearchField } from '../components/SearchField';
+import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
 
-type Props = { badge: number; category?: CategoryId; onNavigate: (route: string) => void };
+type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
 
 // The search field appears once there is enough to look through; below this the
 // list is still glanceable at full length (and the field never eats that space).
@@ -21,9 +22,11 @@ const SEARCH_FROM = 8;
 // in full, and both always agree because they edit the same preference.
 const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry', added: 'Recent', name: 'A–Z' };
 
-// Every tracked item, filtered by category (built-in or the user's own),
-// searched by name, and ordered by the sort row right on this page.
-export function ItemsScreen({ badge, category, onNavigate }: Props) {
+// The Lists tab: everything you're tracking (filtered by category, searched
+// and sorted), plus the Shopping List as its second view — the segmented
+// control at the top switches between them, which keeps the bottom nav at
+// four tabs with the scan button dead-centre.
+export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { items } = useItems();
   const { settings, update } = useSettings();
   const { all } = useCategories();
@@ -31,6 +34,9 @@ export function ItemsScreen({ badge, category, onNavigate }: Props) {
   const s = useStyles();
   const [filter, setFilter] = useState<'all' | CategoryId>(category ?? 'all');
   const [query, setQuery] = useState('');
+  // Shopping-list toasts are hoisted here so they float at the screen bottom,
+  // outside the scrolling Page (the body reports them through onToast).
+  const [shopToast, setShopToast] = useState<string | null>(null);
 
   const needle = query.trim().toLowerCase();
   const inCategory = useMemo(() => (filter === 'all' ? items : items.filter((i) => i.category === filter)), [items, filter]);
@@ -48,13 +54,31 @@ export function ItemsScreen({ badge, category, onNavigate }: Props) {
   const { scrollRef: pillsScroll, note: notePill } = useScrollSelectedIntoView(filter);
 
   return (
-    <Page title="Items" subtitle="Everything you're tracking." badge={badge} onNavigate={onNavigate}>
-      {showSearch && (
-        <View style={s.searchWrap}>
-          <SearchField value={query} onChange={setQuery} />
+    <>
+      <Page
+        title={shopping ? 'Shopping List' : 'Items'}
+        subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
+        badge={badge}
+        maxWidth={shopping ? 640 : undefined}
+        onNavigate={onNavigate}
+      >
+        {/* The Lists tab's two views. Tapping either navigates (tab:items /
+            tab:shop), so the address bar, the back button and the shell's
+            glass bar all follow the switch like any other route. */}
+        <View style={s.viewRow} accessibilityRole="radiogroup" aria-label="Lists view">
+          <ChoicePill label="Items" selected={!shopping} onPress={() => onNavigate('tab:items')} colors={pills} accessibilityLabel="Tracked items" />
+          <ChoicePill label="Shopping list" selected={!!shopping} onPress={() => onNavigate('tab:shop')} colors={pills} accessibilityLabel="Shopping list" />
         </View>
-      )}
-      <ScrollView
+        {shopping ? (
+          <ShoppingListBody onToast={setShopToast} />
+        ) : (
+          <>
+            {showSearch && (
+              <View style={s.searchWrap}>
+                <SearchField value={query} onChange={setQuery} />
+              </View>
+            )}
+            <ScrollView
         ref={pillsScroll}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -120,11 +144,17 @@ export function ItemsScreen({ badge, category, onNavigate }: Props) {
           </View>
         </View>
       )}
-    </Page>
+          </>
+        )}
+      </Page>
+      {shopping && shopToast && <ShoppingToast key={shopToast} text={shopToast} onDone={() => setShopToast(null)} />}
+    </>
   );
 }
 
 const useStyles = makeStyles((t) => ({
+  // The Items / Shopping list segmented control (the tab's two views).
+  viewRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 14 },
   searchWrap: { marginBottom: 12 },
   pillRow: { gap: 8, paddingVertical: 2 },
   // The sort row: a quiet "Sort" label followed by the compact pill set.

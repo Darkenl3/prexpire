@@ -7,7 +7,6 @@ import { ItemsScreen } from './src/screens/ItemsScreen';
 import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { ShoppingScreen } from './src/screens/ShoppingScreen';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
 import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
@@ -20,25 +19,31 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
-type Route = { tab: TabId; category?: CategoryId; settingsPage?: 'categories' } | { tab: 'scan'; manual?: boolean };
+type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPage?: 'categories' } | { tab: 'scan'; manual?: boolean };
 
-const TABS: TabId[] = ['home', 'items', 'shop', 'reminders', 'settings'];
+const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
 
 // On the web the open tab is kept in the address (#settings), so a refresh stays on it.
+// The Shopping List is a VIEW of the Lists tab (#items/shopping), and the
+// retired #shop tab still lands there so old bookmarks keep working.
 function routeFromHash(): Route {
   if (!WEB || typeof window === 'undefined') return { tab: 'home' };
-  const [tab, category] = window.location.hash.replace(/^#\/?/, '').split('/');
+  const [tab, second] = window.location.hash.replace(/^#\/?/, '').split('/');
+  if (tab === 'shop') return { tab: 'items', shopping: true };
   if (!TABS.includes(tab as TabId)) return { tab: 'home' };
+  if (tab === 'items' && second === 'shopping') return { tab: 'items', shopping: true };
   // Custom categories are read synchronously here: the hash is parsed in a
   // state initialiser, before any context exists.
-  const known = CATEGORY_IDS.includes(category) || readCustomCategories().some((c) => c.id === category);
-  return { tab: tab as TabId, category: known ? (category as CategoryId) : undefined };
+  const known = CATEGORY_IDS.includes(second) || readCustomCategories().some((c) => c.id === second);
+  return { tab: tab as TabId, category: known ? (second as CategoryId) : undefined };
 }
 
 function writeHash(route: Route) {
   if (!WEB || typeof window === 'undefined' || route.tab === 'scan') return;
-  const hash = route.tab === 'home' ? '' : `#${route.tab}${'category' in route && route.category ? `/${route.category}` : ''}`;
+  let hash = route.tab === 'home' ? '' : `#${route.tab}`;
+  if (route.tab === 'items' && route.shopping) hash = '#items/shopping';
+  else if ('category' in route && route.category) hash += `/${route.category}`;
   try {
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
   } catch {
@@ -214,10 +219,17 @@ function Shell() {
         return setRoute({ tab: 'scan', manual: true });
       }
       if (to.startsWith('tab:')) {
-        const tab = to.slice(4) as TabId;
-        if (TABS.includes(tab)) {
-          setRoute({ tab });
-          setLastTab(tab);
+        const tab = to.slice(4);
+        // The Shopping List is a view of the Lists tab: the tab:shop string
+        // (the segmented control, the alert banner's button) opens it there.
+        if (tab === 'shop') {
+          setRoute({ tab: 'items', shopping: true });
+          setLastTab('items');
+          return;
+        }
+        if (TABS.includes(tab as TabId)) {
+          setRoute({ tab: tab as TabId });
+          setLastTab(tab as TabId);
         }
         return;
       }
@@ -303,9 +315,11 @@ function Shell() {
 
   const screen =
     route.tab === 'items' ? (
-      <ItemsScreen key={route.category ?? 'all'} badge={badge} category={route.category} onNavigate={onNavigate} />
-    ) : route.tab === 'shop' ? (
-      <ShoppingScreen badge={badge} onNavigate={onNavigate} />
+      // key: the shopping view and every category get a fresh mount, so a
+      // view switch never reuses an instance whose props it should have
+      // picked up (the filter starts on the arriving category, shopping
+      // starts clean).
+      <ItemsScreen key={route.shopping ? 'shopping' : (route.category ?? 'all')} badge={badge} category={route.category} shopping={route.shopping} onNavigate={onNavigate} />
     ) : route.tab === 'reminders' ? (
       <RemindersScreen badge={badge} onNavigate={onNavigate} />
     ) : route.tab === 'settings' ? (

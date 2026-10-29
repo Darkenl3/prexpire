@@ -284,12 +284,11 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
   );
 }
 
-export type TabId = 'home' | 'items' | 'shop' | 'reminders' | 'settings';
+export type TabId = 'home' | 'items' | 'reminders' | 'settings';
 
 const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; iconOn: keyof typeof Ionicons.glyphMap }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', iconOn: 'home' },
   { id: 'items', label: 'Lists', icon: 'list', iconOn: 'list' },
-  { id: 'shop', label: 'Shopping', icon: 'cart-outline', iconOn: 'cart' },
   { id: 'reminders', label: 'Reminders', icon: 'notifications-outline', iconOn: 'notifications' },
   { id: 'settings', label: 'Settings', icon: 'settings-sharp', iconOn: 'settings-sharp' },
 ];
@@ -297,7 +296,8 @@ const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; ic
 type BottomNavProps = {
   active: TabId;
   badge: number;
-  // Open Shopping List entries, shown on the Shopping tab.
+  // Open Shopping List entries, shown on the Lists tab (the Shopping List is
+  // a view of it, reached through the segmented control on that page).
   shopBadge?: number;
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
@@ -318,7 +318,7 @@ export const NAV_HEIGHT = 68;
 export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560, onTab, onScan }: BottomNavProps) {
   const c = useTheme();
   const s = useStyles();
-  // Narrow phones give the five tabs a little more room so labels are not clipped.
+  // Narrow phones give the four tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
   const renderTab = (tab: (typeof tabs)[number]) => {
@@ -340,7 +340,7 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
               <Text style={s.badgeText}>{badge}</Text>
             </View>
           )}
-          {tab.id === 'shop' && shopBadge > 0 && (
+          {tab.id === 'items' && shopBadge > 0 && (
             <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.mint, borderColor: c.navBg }]}>
               <Text style={s.shopBadgeText}>{shopBadge}</Text>
             </View>
@@ -365,17 +365,19 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
     >
       <View style={[s.navShadow, { maxWidth }]}>
         <View style={[s.nav, s.navFallback]}>
+          {/* Four tabs with the scan button dead-centre: the Shopping List
+              lives inside the Lists tab (its segmented control), so the bar
+              stays symmetric — home · lists · SCAN · reminders · settings. */}
           {renderTab(tabs[0])}
           {renderTab(tabs[1])}
-          {renderTab(tabs[2])}
           <View style={s.tab}>
             <PressScale onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" scaleTo={0.97} style={s.scan}>
               <Ionicons name="scan-outline" size={26} color={c.scanInk} />
               <View style={s.scanLine} />
             </PressScale>
           </View>
+          {renderTab(tabs[2])}
           {renderTab(tabs[3])}
-          {renderTab(tabs[4])}
         </View>
       </View>
     </View>
@@ -399,8 +401,8 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 1.5,
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  // The Shopping tab's count uses the accent colour rather than red: it is
-  // information, not urgency.
+  // The Lists tab's shopping count uses the accent colour rather than red: it
+  // is information, not urgency (the Shopping List is a view of that tab).
   shopBadgeText: { color: '#04241B', fontSize: 11, fontWeight: '700' },
   alert: {
     marginTop: 4,
