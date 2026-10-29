@@ -13,6 +13,7 @@ import { daysUntil } from '../scanner/dateParser';
 import { SectionHeader } from '../components/HomeComponents';
 import { FadeIn, PressScale } from '../components/Press';
 import { Note, Options, SmallButton } from '../components/SettingsRows';
+import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 
 // The Shopping List, now a view of the Lists tab (ItemsScreen renders this
 // body below its Items/Shopping segmented control): what to buy, what was
@@ -323,6 +324,10 @@ function purchasedLabel(purchasedAt: string, format: DateFormat): string {
 function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClose: () => void; onAdded: (name: string) => void }) {
   const t = useTheme();
   const c = useStyles();
+  // The phone keyboard's footprint on the web (0 everywhere else): the
+  // backdrop pads by it, so the centered dialog rides above the keys and the
+  // name input is never covered while typing.
+  const webKeyboard = useWebKeyboardInset();
   const { addManual } = useShopping();
   const { all } = useCategories();
   const { defaultCategory } = useItems();
@@ -360,7 +365,7 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => {} : onClose}>
-      <View style={c.backdrop}>
+      <View style={[c.backdrop, webKeyboard > 0 && { paddingBottom: webKeyboard }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onClose} accessibilityLabel="Close" importantForAccessibility="no" />
         <View
           style={[c.dialog, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
@@ -525,7 +530,7 @@ const useStyles = makeStyles((t) => ({
     color: t.text,
     fontSize: 16,
     paddingHorizontal: 14,
-    minHeight: 46,
+    minHeight: 52,
   },
   fieldLabel: { color: t.textMuted, fontSize: 13, fontWeight: '600', marginTop: 4 },
   dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8, flexWrap: 'wrap' },

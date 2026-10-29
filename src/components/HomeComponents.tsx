@@ -13,32 +13,40 @@ const wordmarkLightInk = require('../../assets/wordmark.png');
 // Cropped artwork size: 1228 x 294.
 const WORDMARK_ASPECT = 1228 / 294;
 
-// Liquid-glass treatment for the round chrome buttons (the same visual
-// language as the shell's glass tab bar): a frosted translucent circle.
-// React Native's style types don't know these two CSS properties, but
-// react-native-web passes them straight through to the DOM - including the
-// -webkit- spelling older iOS Safari needs.
+// Liquid-glass treatment for the round chrome buttons: the same visual
+// language as the shell's glass tab bar AND its scanner-screen glass circles
+// (46pt, hairline, frosted blur). React Native's style types don't know these
+// two CSS properties, but react-native-web passes them straight through to
+// the DOM - including the -webkit- spelling older iOS Safari needs.
 export const GLASS_FX = {
   backdropFilter: 'blur(18px) saturate(160%)',
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
 
-// The shared liquid-glass circle: one component behind the header's menu and
-// bell buttons, Settings' back buttons and the New-category page's back
-// button, so every round control in the app shares the exact same glass,
-// dimensions, shadow and press feedback.
+// The shared liquid-glass circle: 46pt with a hairline rim, matching the
+// scanner screen's native GlassCircle controls one for one, behind the
+// header's menu and bell buttons, Settings' back buttons and the
+// New-category page's back button, so every round control in the app shares
+// the exact same glass, dimensions, shadow and press feedback. The border
+// colour is theme-set at render time (see GlassIconButton) because the
+// hairline reads differently on light and dark pages.
 export const GLASS_BUTTON: ViewStyle = {
-  width: 42,
-  height: 42,
-  borderRadius: 21,
+  width: 46,
+  height: 46,
+  borderRadius: 23,
   alignItems: 'center',
   justifyContent: 'center',
+  borderWidth: StyleSheet.hairlineWidth,
   // A faint cool shadow keeps the glass readable on the light page.
   shadowColor: '#64748B',
   shadowOpacity: 0.08,
   shadowRadius: 6,
   shadowOffset: { width: 0, height: 2 },
 };
+
+// The hairline rim for the glass circles: bright-on-dark like the scanner's
+// native glass circles, a soft ink line on the light page.
+export const glassRim = (light: boolean) => (light ? 'rgba(16,29,27,0.14)' : 'rgba(255,255,255,0.14)');
 
 export function GlassIconButton({
   icon,
@@ -62,8 +70,9 @@ export function GlassIconButton({
       hitSlop={10}
       accessibilityRole="button"
       accessibilityLabel={label}
-      scaleTo={0.97}
-      style={[GLASS_BUTTON, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, style]}
+      // 0.94 mirrors the native glass circles' press feedback exactly.
+      scaleTo={0.94}
+      style={[GLASS_BUTTON, { backgroundColor: c.glassBg, borderColor: glassRim(c === LIGHT) }, GLASS_FX as ViewStyle, style]}
     >
       {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c.text} />}
     </PressScale>

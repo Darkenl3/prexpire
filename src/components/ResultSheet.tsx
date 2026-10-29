@@ -56,6 +56,10 @@ type Props = {
   // scanner/categoryGuess.ts) - shown as a gentle hint under the chips.
   categoryGuessed?: boolean;
   layout: 'bottom' | 'side';
+  // Full-screen portrait form (the scanner's save sheet now fills everything
+  // below the header bar instead of floating at half height): no drag handle,
+  // taller top padding - the content scrolls and the actions stay pinned.
+  full?: boolean;
   maxHeight: number;
   bottomInset: number;
   secondaryLabel: string;
@@ -65,7 +69,7 @@ type Props = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function ResultSheet({ detection, initialCategory, categoryGuessed = false, layout, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+export function ResultSheet({ detection, initialCategory, categoryGuessed = false, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
   const { all } = useCategories();
   const [name, setName] = useState('');
   // The name field is a real, visible input box: focus lights its border so it
@@ -125,10 +129,21 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
   const dateTitle = !detection ? 'Expiry date' : edited ? 'Expiry date (edited)' : confirmed ? 'Detected expiry date' : 'Check the expiry date';
 
   return (
-    <View style={[s.sheet, layout === 'side' ? s.sheetSide : s.sheetBottom, { maxHeight, paddingBottom: Math.max(bottomInset, 14) }]}>
-      {layout === 'bottom' && <View style={s.handle} />}
+    <View
+      style={[
+        s.sheet,
+        layout === 'side' ? s.sheetSide : s.sheetBottom,
+        full && s.sheetFull,
+        // Full mode: the sheet spans the whole available height (minHeight
+        // pins the action bar to the bottom of the screen; maxHeight still
+        // guards tiny viewports), so the form owns the screen instead of
+        // floating at half height with dead space beneath it.
+        { maxHeight, ...(full ? { minHeight: maxHeight } : null), paddingBottom: Math.max(bottomInset, 14) },
+      ]}
+    >
+      {layout === 'bottom' && !full && <View style={s.handle} />}
       <ScrollView
-        style={s.scroll}
+        style={[s.scroll, full && s.scrollFull]}
         contentContainerStyle={s.scrollContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -137,7 +152,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
         <View style={s.nameBlock}>
           <Text style={s.nameLabel}>Product name</Text>
           <View style={[s.nameField, nameFocused && !nameError && s.nameFieldFocus, nameError && s.nameFieldWarn]}>
-            <View style={s.nameArt}>{categoryArt(category, 26)}</View>
+            <View style={s.nameArt}>{categoryArt(category, 28)}</View>
             <TextInput
               ref={nameRef}
               value={name}
@@ -329,28 +344,36 @@ const s = StyleSheet.create({
   sheet: { backgroundColor: '#081316', borderColor: colors.surfaceBorder, paddingHorizontal: 18, paddingTop: 10 },
   sheetBottom: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: StyleSheet.hairlineWidth },
   sheetSide: { borderTopLeftRadius: 24, borderBottomLeftRadius: 24, borderLeftWidth: StyleSheet.hairlineWidth, paddingTop: 18 },
+  // The full-screen portrait form: no handle (there is nothing to drag it
+  // over), and comfortable top padding where the handle used to be.
+  sheetFull: { paddingTop: 18 },
   handle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#3A4A50', marginBottom: 12 },
   scroll: { flexGrow: 0, flexShrink: 1 },
+  // Full-screen mode: the body GROWS to eat the sheet's extra height, so the
+  // tick/actions always sit pinned at the bottom of the screen and the form
+  // content starts at the top — a real full-screen form, not a floating card.
+  scrollFull: { flexGrow: 1 },
   scrollContent: { paddingBottom: 12 },
-  // The product name is a real labelled field: a boxed input with the category
-  // art inside it, sized so a phone keyboard never crowds what is typed.
+  // The product name is a real labelled field: a tall, generous input with the
+  // category art inside it, sized so the typed text reads clearly while typing
+  // (large type, bright focus treatment) and a phone keyboard never crowds it.
   nameBlock: { gap: 8 },
   nameLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   nameField: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    height: 58,
-    borderRadius: 16,
+    gap: 12,
+    height: 70,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.surfaceBorder,
     backgroundColor: 'rgba(255,255,255,0.03)',
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
   },
-  nameFieldFocus: { borderColor: 'rgba(46,232,182,0.55)' },
+  nameFieldFocus: { borderColor: 'rgba(46,232,182,0.65)', backgroundColor: 'rgba(46,232,182,0.05)' },
   nameFieldWarn: { borderColor: 'rgba(245,184,61,0.65)' },
-  nameArt: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
-  nameInput: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
+  nameArt: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
+  nameInput: { flex: 1, color: colors.text, fontSize: 17.5, fontWeight: '600', paddingVertical: 0, paddingRight: 4 },
   nameError: { color: colors.amberText, fontSize: 12.5 },
   chips: { gap: 8, paddingTop: 14 },
   guessed: { color: colors.textMuted, fontSize: 12, paddingTop: 8 },

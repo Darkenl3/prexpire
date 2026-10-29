@@ -27,6 +27,7 @@ import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import { PressScale } from '../components/Press';
 import { GLASS_FX } from '../components/HomeComponents';
+import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
@@ -62,40 +63,6 @@ function frameSize(area: Size, hintSpace: number) {
   const room = area.height - hintSpace - 24;
   if (height > room) height = Math.max(80, room);
   return { width, height };
-}
-
-// On the web a phone's virtual keyboard never fires React Native's keyboard
-// events, so KeyboardAvoidingView alone cannot lift the save sheet clear of it.
-// The visual viewport API reports the space the keyboard actually occupies
-// (iOS keeps the layout height and shrinks the visual viewport; Android already
-// resizes the layout, where this correctly measures ~0). We pad the avoider by
-// that amount so the form - especially manual entry - always sits above the keys.
-type VisualViewportLike = {
-  height: number;
-  offsetTop: number;
-  addEventListener: (type: string, listener: () => void) => void;
-  removeEventListener: (type: string, listener: () => void) => void;
-};
-
-function useWebKeyboardInset() {
-  const [inset, setInset] = useState(0);
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const vv = (window as unknown as { visualViewport?: VisualViewportLike }).visualViewport;
-    if (!vv) return;
-    const measure = () => {
-      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-      setInset((prev) => (Math.abs(prev - kb) < 1 ? prev : kb));
-    };
-    measure();
-    vv.addEventListener('resize', measure);
-    vv.addEventListener('scroll', measure);
-    return () => {
-      vv.removeEventListener('resize', measure);
-      vv.removeEventListener('scroll', measure);
-    };
-  }, []);
-  return inset;
 }
 
 export function ScannerScreen({ onClose, onSaved, category, initialDetection, initialManual }: Props) {
@@ -244,7 +211,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const header = (
     <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (landscape && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
-        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.97} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel="Back">
+        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.94} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </PressScale>
         <Text style={s.title} accessibilityRole="header">
@@ -254,7 +221,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           onPress={() => setTorch((t) => !t)}
           disabled={!torchAvailable}
           hitSlop={8}
-          scaleTo={0.97}
+          scaleTo={0.94}
           style={[s.roundBtn, GLASS_FX as ViewStyle, torch && s.roundBtnOn, !torchAvailable && s.disabled]}
           accessibilityRole="switch"
           accessibilityLabel={torchAvailable ? 'Flashlight' : 'Flashlight unavailable'}
@@ -391,7 +358,10 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
       layout={landscape ? 'side' : 'bottom'}
-      maxHeight={landscape ? root.height : manual ? Math.round(root.height * 0.8) : Math.round(root.height * 0.62)}
+      // Portrait is a FULL-SCREEN form now: everything below the header bar,
+      // not the old half-height sheet (landscape keeps its side layout).
+      full={!landscape}
+      maxHeight={landscape ? root.height : Math.max(420, Math.round(root.height - insets.top - 104))}
       bottomInset={insets.bottom}
       // Entered straight from an "Add manually" entry point: the only way out
       // is Cancel (there is no camera session to return to). Switched over
@@ -477,8 +447,20 @@ const s = StyleSheet.create({
   // On tablets in portrait the sheet stays phone-width instead of stretching edge to edge.
   bottom: { width: '100%', maxWidth: 600, alignSelf: 'center' },
   header: { backgroundColor: 'rgba(5,13,16,0.82)', paddingBottom: 12, borderBottomLeftRadius: 22, borderBottomRightRadius: 22 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 48 },
-  roundBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52 },
+  // The scanner's glass circles: the same 46pt + hairline treatment the app's
+  // other screens now use for their header buttons (GlassIconButton), pinned
+  // to the scanner's fixed dark palette. Torch "on" fills with the scan colour.
+  roundBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   roundBtnOn: { backgroundColor: colors.scan },
   disabled: { opacity: 0.35 },
   title: { color: colors.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3 },
