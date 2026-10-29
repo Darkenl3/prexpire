@@ -23,7 +23,8 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const c = useStyles();
-  // YouTube-style: the header (and the nav bars) hide when scrolling down.
+  // YouTube-style: ONLY the header hides while scrolling down (the bottom
+  // navigation is permanent).
   const { hidden, onScroll } = useNavAutohide();
   const frame = { maxWidth: Math.min(layout.maxContentWidth, maxWidth), paddingHorizontal: layout.gutter };
   return (

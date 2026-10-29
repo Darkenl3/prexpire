@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Tint } from './theme';
 import { CATEGORY_IDS, CATEGORY_NAMES } from './items';
@@ -21,16 +22,91 @@ export type CustomCategory = {
   name: string;
   // An Ionicons glyph name shown on the tile and in rows.
   icon: string;
-  // One of the five built-in tile gradients.
+  // One of the selectable tile gradients (see CUSTOM_TINTS).
   tint: Tint;
 };
 
-// Tint choices offered when a category is created (the "add" tile gradient is
-// reserved for the Add-category tile itself).
-export const CUSTOM_TINTS: Tint[] = ['food', 'medicine', 'household', 'skincare', 'pantry'];
+// Tint choices offered when a category is created: the five original families
+// plus the extended palette (the "add" tile gradient is reserved for the
+// Add-category tile itself). Previously saved categories keep their tint -
+// every one of these keys renders in both themes.
+export const CUSTOM_TINTS: Tint[] = [
+  'food',
+  'medicine',
+  'household',
+  'skincare',
+  'pantry',
+  'forest',
+  'ocean',
+  'teal',
+  'lavender',
+  'rose',
+  'coral',
+  'sand',
+  'slate',
+];
 
-// A calm, general-purpose icon set for folders.
-export const CATEGORY_ICONS = ['folder', 'leaf', 'paw', 'basket', 'wine', 'cafe', 'bandage', 'water', 'flower', 'shirt', 'car', 'bulb'] as const;
+// The icon menu for new categories: a consistent outline set from Ionicons,
+// grouped by what people actually track - groceries and food first, then home
+// and personal care, then tech and everything else. Every name is verified
+// against the installed glyph map, so the picker never renders a blank tile.
+export const CATEGORY_ICONS = [
+  // Groceries and food
+  'nutrition-outline',
+  'leaf-outline',
+  'egg-outline',
+  'fish-outline',
+  'fast-food-outline',
+  'pizza-outline',
+  'ice-cream-outline',
+  'snow-outline',
+  'wine-outline',
+  'cafe-outline',
+  'pint-outline',
+  'water-outline',
+  'basket-outline',
+  'cube-outline',
+  'archive-outline',
+  // Home and care
+  'home-outline',
+  'restaurant-outline',
+  'brush-outline',
+  'color-fill-outline',
+  'sparkles-outline',
+  'shirt-outline',
+  'eyedrop-outline',
+  'flower-outline',
+  'rose-outline',
+  'medkit-outline',
+  'bandage-outline',
+  'thermometer-outline',
+  'balloon-outline',
+  'paw-outline',
+  // Tech and everything else
+  'battery-charging-outline',
+  'hardware-chip-outline',
+  'bulb-outline',
+  'tv-outline',
+  'laptop-outline',
+  'headset-outline',
+  'watch-outline',
+  'car-outline',
+  'key-outline',
+  'book-outline',
+  'pricetag-outline',
+  'gift-outline',
+  'globe-outline',
+  'folder-outline',
+] as const;
+
+// The default pick for a new category: a neutral folder.
+export const DEFAULT_CATEGORY_ICON = 'folder-outline';
+
+// Old or unknown icon identifiers fall back to the default folder instead of
+// rendering a blank glyph, so saved categories always show something sensible.
+export function safeCategoryIcon(name: string): string {
+  return Ionicons.glyphMap[name as keyof typeof Ionicons.glyphMap] !== undefined ? name : DEFAULT_CATEGORY_ICON;
+}
 
 function isCustomCategory(x: unknown): x is CustomCategory {
   const c = x as CustomCategory;

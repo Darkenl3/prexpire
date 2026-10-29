@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
-import { CATEGORY_ICONS, CUSTOM_TINTS, useCategories } from '../categories';
+import { CATEGORY_ICONS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, safeCategoryIcon, useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { categories } from '../data';
 import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
+import { GlassIconButton } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
 // Managing the user's categories: the unified list (the built-ins they keep
@@ -24,6 +25,14 @@ const TINT_ICON: Record<Tint, string> = {
   household: '#8B5CF6',
   skincare: '#E255A0',
   pantry: '#C77E1E',
+  forest: '#17805A',
+  ocean: '#2D6FA3',
+  teal: '#2E8A8F',
+  lavender: '#6D5BC4',
+  rose: '#C2447A',
+  coral: '#C05E2D',
+  sand: '#96803F',
+  slate: '#5B6B77',
   add: '#5C6E6A',
 };
 
@@ -69,7 +78,7 @@ export function CategoryManager() {
       <View key={id} style={s.row}>
         <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
           {def ? categoryArt(id, 24) : (
-            <Ionicons name={(folder?.icon ?? 'folder') as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[tint] : c.text} />
+            <Ionicons name={safeCategoryIcon(folder?.icon ?? DEFAULT_CATEGORY_ICON) as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[tint] : c.text} />
           )}
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -147,20 +156,23 @@ export function CategoryManager() {
 // The full-screen "New category" page: a name, an icon and a tile colour get
 // room to breathe (the compact dialog these used to squeeze into is gone).
 // It slides up over the app, keeps its own back button and primary action,
-// and pads its bottom for the shell's floating glass bar.
+// and pads its bottom for the shell's floating glass bar. The keyboard stays
+// closed until the user actually taps the name field - no autofocus, no
+// programmatic focus, no flicker - and the layout keeps its place when the
+// keyboard opens (iOS padding) so the actions are never covered.
 function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClose: () => void; onAdd: (name: string, icon: string, tint: Tint) => boolean }) {
   const c = useTheme();
   const s = useStyles();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0]);
+  const [icon, setIcon] = useState<string>(DEFAULT_CATEGORY_ICON);
   const [tint, setTint] = useState<Tint>(CUSTOM_TINTS[0]);
   const [rejected, setRejected] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setName('');
-      setIcon(CATEGORY_ICONS[0]);
+      setIcon(DEFAULT_CATEGORY_ICON);
       setTint(CUSTOM_TINTS[0]);
       setRejected(false);
     }
@@ -182,83 +194,88 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[s.page, { paddingTop: Math.max(insets.top, 10) }]}>
-        <View style={s.pageHeader}>
-          <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Cancel" style={s.backBtn}>
-            <Ionicons name="chevron-back" size={24} color={c.text} />
-          </PressScale>
-          <Text style={s.pageTitle} accessibilityRole="header">
-            New category
-          </Text>
-          <View style={s.backBtn} />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <View style={[s.page, { paddingTop: Math.max(insets.top, 10) }]}>
+          <View style={s.pageHeader}>
+            <GlassIconButton icon="chevron-back" iconSize={24} label="Cancel" onPress={onClose} style={s.backBtn} />
+            <Text style={s.pageTitle} accessibilityRole="header">
+              New category
+            </Text>
+            <View style={s.backBtn} />
+          </View>
+          <ScrollView
+            style={s.pageScroll}
+            contentContainerStyle={[s.pageBody, { paddingBottom: Math.max(insets.bottom, 20) + (SHELL ? 96 : 16) }]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <Text style={s.pageIntro}>A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.</Text>
+            <Text style={s.label}>Name</Text>
+            {/* Deliberately NOT autofocused: the keyboard opens only when the
+                user taps this field. Typed text survives keyboard dismissals
+                (and rerenders) untouched, because the value lives here. */}
+            <TextInput
+              value={name}
+              onChangeText={(t) => {
+                setName(t);
+                setRejected(false);
+              }}
+              placeholder="Name, e.g. Pet food"
+              placeholderTextColor={c.textMuted}
+              style={[s.input, rejected && !trimmed && s.inputWarn]}
+              maxLength={24}
+              returnKeyType="done"
+              accessibilityLabel="Category name"
+            />
+            {rejected && !trimmed && <Text style={s.warn}>Give the category a name first.</Text>}
+            <Text style={s.label}>Icon</Text>
+            <View style={s.iconGrid}>
+              {CATEGORY_ICONS.map((ic) => {
+                const on = ic === icon;
+                return (
+                  <PressScale
+                    key={ic}
+                    onPress={() => setIcon(ic)}
+                    scaleTo={0.97}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`Icon ${ic}`}
+                    style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
+                  >
+                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.mint : c.textMuted} />
+                  </PressScale>
+                );
+              })}
+            </View>
+            <Text style={s.label}>Colour</Text>
+            <View style={s.tintRow}>
+              {CUSTOM_TINTS.map((t) => {
+                const on = t === tint;
+                const g = c.tints[t];
+                return (
+                  <PressScale
+                    key={t}
+                    onPress={() => setTint(t)}
+                    scaleTo={0.97}
+                    accessibilityRole="radio"
+                    aria-checked={on}
+                    accessibilityLabel={`Colour ${t}`}
+                    style={[s.tintDot, on && s.tintDotOn]}
+                  >
+                    <View style={[s.tintFill, { backgroundColor: g.top, borderColor: g.border }]}>
+                      {on && <Ionicons name="checkmark" size={17} color={c === LIGHT ? TINT_ICON[t] : c.text} />}
+                    </View>
+                  </PressScale>
+                );
+              })}
+            </View>
+            <View style={s.pageActions}>
+              <SmallButton label="Cancel" onPress={onClose} />
+              <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
+            </View>
+          </ScrollView>
         </View>
-        <ScrollView
-          style={s.pageScroll}
-          contentContainerStyle={[s.pageBody, { paddingBottom: Math.max(insets.bottom, 20) + (SHELL ? 96 : 16) }]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={s.pageIntro}>A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.</Text>
-          <Text style={s.label}>Name</Text>
-          <TextInput
-            value={name}
-            onChangeText={(t) => {
-              setName(t);
-              setRejected(false);
-            }}
-            placeholder="Name, e.g. Pet food"
-            placeholderTextColor={c.textMuted}
-            style={[s.input, rejected && !trimmed && s.inputWarn]}
-            maxLength={24}
-            returnKeyType="done"
-            accessibilityLabel="Category name"
-            autoFocus
-          />
-          {rejected && !trimmed && <Text style={s.warn}>Give the category a name first.</Text>}
-          <Text style={s.label}>Icon</Text>
-          <View style={s.iconGrid}>
-            {CATEGORY_ICONS.map((ic) => {
-              const on = ic === icon;
-              return (
-                <PressScale
-                  key={ic}
-                  onPress={() => setIcon(ic)}
-                  scaleTo={0.97}
-                  accessibilityRole="radio"
-                  aria-checked={on}
-                  accessibilityLabel={`Icon ${ic}`}
-                  style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
-                >
-                  <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.mint : c.textMuted} />
-                </PressScale>
-              );
-            })}
-          </View>
-          <Text style={s.label}>Colour</Text>
-          <View style={s.tintRow}>
-            {CUSTOM_TINTS.map((t) => {
-              const on = t === tint;
-              const g = c.tints[t];
-              return (
-                <PressScale
-                  key={t}
-                  onPress={() => setTint(t)}
-                  scaleTo={0.97}
-                  accessibilityRole="radio"
-                  aria-checked={on}
-                  accessibilityLabel={`Colour ${t}`}
-                  style={[s.tintDot, on && s.tintDotOn]}
-                >
-                  <View style={[s.tintFill, { backgroundColor: g.top, borderColor: g.border }]} />
-                </PressScale>
-              );
-            })}
-          </View>
-          <View style={s.pageActions}>
-            <SmallButton label="Cancel" onPress={onClose} />
-            <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
-          </View>
-        </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -307,7 +324,8 @@ const useStyles = makeStyles((c) => ({
   // The full-screen page.
   page: { flex: 1, backgroundColor: c.bg },
   pageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, height: 52 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  // A spacer the width of the glass back button, balancing the title.
+  backBtn: { width: 42 },
   pageTitle: { color: c.text, fontSize: 17, fontWeight: '700' },
   pageScroll: { flex: 1 },
   pageBody: { paddingHorizontal: 20, gap: 10, paddingTop: 4 },

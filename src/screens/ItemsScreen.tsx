@@ -59,8 +59,11 @@ export function ItemsScreen({ badge, category, onNavigate }: Props) {
       {shown.length === 0 && (
         <View style={c.empty}>
           <Text style={c.emptyTitle}>{items.length ? 'Nothing here' : 'No items yet'}</Text>
-          <Text style={c.emptyText}>Scan a label or type a date to add an item.</Text>
-          <SmallButton label="Scan a label" icon="scan-outline" tone="mint" onPress={() => onNavigate('scan')} />
+          <Text style={c.emptyText}>Scan a label or add a product by hand.</Text>
+          <View style={c.emptyButtons}>
+            <SmallButton label="Scan a label" icon="scan-outline" tone="mint" onPress={() => onNavigate('scan')} />
+            <SmallButton label="Add manually" icon="create-outline" onPress={() => onNavigate('manual')} />
+          </View>
         </View>
       )}
     </Page>
@@ -77,4 +80,6 @@ const useStyles = makeStyles((t) => ({
   empty: { alignItems: 'center', gap: 8, paddingVertical: 32 },
   emptyTitle: { color: t.text, fontSize: 17, fontWeight: '600' },
   emptyText: { color: t.textMuted, fontSize: 14, marginBottom: 6 },
+  // Empty-state action pairs (scan + manual entry).
+  emptyButtons: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' },
 }));

@@ -11,6 +11,7 @@ import {
   View,
   type LayoutChangeEvent,
   type LayoutRectangle,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCameraPermissions } from 'expo-camera';
@@ -25,6 +26,7 @@ import { ocrAvailability } from '../scanner/ocr';
 import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import { PressScale } from '../components/Press';
+import { GLASS_FX } from '../components/HomeComponents';
 import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
@@ -37,6 +39,9 @@ type Props = {
   // A detection handed in by a native WebView shell (docs/native-shell.md): the save
   // sheet opens straight away pre-filled and no camera is started.
   initialDetection?: Detection | null;
+  // Open straight into manual entry ("Add manually"): the save form without
+  // the camera - the user types the product and its date instead of scanning.
+  initialManual?: boolean;
 };
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
@@ -59,7 +64,7 @@ function frameSize(area: Size, hintSpace: number) {
   return { width, height };
 }
 
-export function ScannerScreen({ onClose, onSaved, category, initialDetection }: Props) {
+export function ScannerScreen({ onClose, onSaved, category, initialDetection, initialManual }: Props) {
   const insets = useSafeAreaInsets();
   const { defaultCategory, addItem } = useItems();
   const { ids: keptCategoryIds } = useCategories();
@@ -75,7 +80,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const [cameraKey, setCameraKey] = useState(0);
   const [torch, setTorch] = useState(false);
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
-  const [manual, setManual] = useState(false);
+  const [manual, setManual] = useState(!!initialManual);
   const [askedPermission, setAskedPermission] = useState(false);
   // Seeded by a native shell scan; set back to null by "Scan again"/closing.
   const [seeded, setSeeded] = useState<Detection | null>(initialDetection ?? null);
@@ -118,11 +123,16 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const { state, reset } = useExpiryScanner({
     camera,
     geometry,
+    // No analysis while the user types the item by hand.
     enabled: granted && cameraReady && appActive && ocrReady && !manual && !cameraError && !seeded,
   });
   const detection: Detection | null = seeded ?? (state.status === 'detected' ? state.detection : null);
   const detected = detection !== null;
   const sheetOpen = detected || manual;
+  // Manual entry that began as manual (the "Add manually" routes): the camera
+  // was never mounted this visit, so the sheet's secondary action closes the
+  // screen instead of offering "Scan again".
+  const manualOnly = manual && !!initialManual && !detected;
   // Auto-category: the words around the date usually name the product, so the
   // save sheet opens with the folder the item most likely belongs in. A guess
   // (or default) that names a category the user removed is ignored: they chose
@@ -181,18 +191,18 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
   const header = (
     <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (landscape && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
-        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.97} style={s.roundBtn} accessibilityRole="button" accessibilityLabel="Back">
+        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.97} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </PressScale>
         <Text style={s.title} accessibilityRole="header">
-          Live Scan
+          {manual ? 'Add item' : 'Live Scan'}
         </Text>
         <PressScale
           onPress={() => setTorch((t) => !t)}
           disabled={!torchAvailable}
           hitSlop={8}
           scaleTo={0.97}
-          style={[s.roundBtn, torch && s.roundBtnOn, !torchAvailable && s.disabled]}
+          style={[s.roundBtn, GLASS_FX as ViewStyle, torch && s.roundBtnOn, !torchAvailable && s.disabled]}
           accessibilityRole="switch"
           accessibilityLabel={torchAvailable ? 'Flashlight' : 'Flashlight unavailable'}
           accessibilityState={{ checked: torch, disabled: !torchAvailable }}
@@ -200,13 +210,16 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
           <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? colors.scanInk : colors.text} />
         </PressScale>
       </View>
-      <Text style={s.instruction}>Point at an expiry date.</Text>
+      <Text style={s.instruction}>{manual ? 'Type the product details.' : 'Point at an expiry date.'}</Text>
     </View>
   );
 
   let body: ReactNode;
   if (seeded) {
     // A native shell already read the label: no camera prompts, just the save sheet.
+    body = null;
+  } else if (manual) {
+    // Manual entry: no camera, no frame - just the calm dark stage under the form.
     body = null;
   } else if (!permission) {
     body = null;
@@ -296,6 +309,22 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
               </View>
             )
           )}
+          {/* Manual entry lives alongside scanning: one tap swaps the camera
+              for the typing form, without leaving this screen. */}
+          {!detected && !manual && ocrReady && granted && !cameraError && cameraReady && (
+            <PressScale
+              onPress={() => {
+                Haptics.selectionAsync().catch(() => {});
+                setManual(true);
+              }}
+              scaleTo={0.97}
+              style={s.manualLink}
+              accessibilityRole="button"
+              accessibilityLabel="Add product manually instead of scanning"
+            >
+              <Text style={s.linkText}>Add manually</Text>
+            </PressScale>
+          )}
         </View>
       </>
     );
@@ -311,15 +340,20 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection }: 
       layout={landscape ? 'side' : 'bottom'}
       maxHeight={landscape ? root.height : Math.round(root.height * 0.62)}
       bottomInset={insets.bottom}
-      secondaryLabel={ocrReady && granted && !cameraError ? 'Scan again' : 'Cancel'}
+      // Entered straight from an "Add manually" entry point: the only way out
+      // is Cancel (there is no camera session to return to). Switched over
+      // from a live scan: "Scan again" brings the camera back.
+      secondaryLabel={manualOnly ? 'Cancel' : ocrReady && granted && !cameraError ? 'Scan again' : 'Cancel'}
       onAdd={onAdd}
-      onSecondary={ocrReady && granted && !cameraError ? scanAgain : onClose}
+      onSecondary={manualOnly ? onClose : ocrReady && granted && !cameraError ? scanAgain : onClose}
     />
   ) : null;
 
   return (
     <View style={s.root} onLayout={(e) => setRoot({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
-      {granted && !cameraError && !seeded && (
+      {/* The camera only mounts for an actual scanning session - never for
+          manual entry, where it would idle behind the form. */}
+      {granted && !cameraError && !seeded && !manual && (
         <ScannerCamera
           key={cameraKey}
           ref={camera}
@@ -395,6 +429,8 @@ const s = StyleSheet.create({
   area: { flex: 1, overflow: 'hidden' },
   dim: { position: 'absolute', backgroundColor: 'rgba(2,7,9,0.5)' },
   hintWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
+  // The "Add manually" escape hatch sits under the live hint pill.
+  manualLink: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 14 },
   hint: {
     flexDirection: 'row',
     alignItems: 'center',

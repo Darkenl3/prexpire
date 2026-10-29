@@ -101,6 +101,15 @@ export const DARK: Palette = {
     household: { top: '#382663', bottom: '#121729', border: '#46327A' },
     skincare: { top: '#5F2646', bottom: '#161419', border: '#6C2D51' },
     pantry: { top: '#4D3617', bottom: '#1B1A11', border: '#5E4420' },
+    // The extended palette: rich gradients in the same depth language.
+    forest: { top: '#0B4A28', bottom: '#07160F', border: '#15623A' },
+    ocean: { top: '#0A3A5C', bottom: '#061A2C', border: '#175B85' },
+    teal: { top: '#0C4A4E', bottom: '#06181C', border: '#177078' },
+    lavender: { top: '#46357A', bottom: '#171425', border: '#554492' },
+    rose: { top: '#6B2440', bottom: '#1B1218', border: '#7D2F4E' },
+    coral: { top: '#69301D', bottom: '#1D1410', border: '#7D3B24' },
+    sand: { top: '#57472B', bottom: '#191610', border: '#6B573A' },
+    slate: { top: '#2E3A44', bottom: '#11181D', border: '#3D4C58' },
     add: { top: '#222E46', bottom: '#0F1A25', border: '#2C3B57' },
   },
   addTile: { bg: 'rgba(255,255,255,0.03)', line: 'rgba(255,255,255,0.09)' },
@@ -163,14 +172,24 @@ export const LIGHT: Palette = {
   // dark on the light page, so the glass is always visible, never invisible.
   glassBg: 'rgba(15,23,42,0.08)',
   glassBorder: 'rgba(15,23,42,0.10)',
-  // Soft pastel tiles: mint, sky, lilac, blush and cream - the category
-  // cards read as gentle colour cards with no borders, like the reference.
+  // Soft pastel tiles: mint, sky, lilac, blush and cream plus the extended
+  // palette - the category cards read as gentle colour cards with no borders,
+  // like the reference.
   tints: {
     food: { top: '#E7F8EF', bottom: '#D3F0E0', border: '#BCE7CD' },
     medicine: { top: '#E9F2FC', bottom: '#D6E8FA', border: '#BBD9F3' },
     household: { top: '#F0EDFB', bottom: '#E3DDF6', border: '#D2C8EE' },
     skincare: { top: '#FCEAF2', bottom: '#F8DBE9', border: '#F1C6D9' },
     pantry: { top: '#FCF2DC', bottom: '#F9E8C3', border: '#EFD9A2' },
+    // The extended palette: the same soft-pastel treatment, one family each.
+    forest: { top: '#E3F4E8', bottom: '#CFE9D8', border: '#B7DEC4' },
+    ocean: { top: '#DCEBFA', bottom: '#C4DCF4', border: '#AACFEC' },
+    teal: { top: '#E2F4F4', bottom: '#CCEAEA', border: '#B3DEDE' },
+    lavender: { top: '#EAEAFB', bottom: '#D8D8F4', border: '#C2C3EA' },
+    rose: { top: '#F9E4EC', bottom: '#F2CFDD', border: '#E8B8CC' },
+    coral: { top: '#FDEDE4', bottom: '#FADDCB', border: '#F3CBB0' },
+    sand: { top: '#F8F1E3', bottom: '#F1E7CF', border: '#E5D6B4' },
+    slate: { top: '#ECF1F5', bottom: '#DFE7ED', border: '#CBD8E2' },
     add: { top: '#F7FAF8', bottom: '#F3F7F4', border: '#D7E2DC' },
   },
   // The Add-category tile: a borderless soft card with fine diagonal lines.
@@ -184,7 +203,21 @@ export const LIGHT: Palette = {
   switchColors: { track: '#CBD5E1', trackOn: '#12BE8A', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
-export type Tint = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | 'add';
+export type Tint =
+  | 'food'
+  | 'medicine'
+  | 'household'
+  | 'skincare'
+  | 'pantry'
+  | 'forest'
+  | 'ocean'
+  | 'teal'
+  | 'lavender'
+  | 'rose'
+  | 'coral'
+  | 'sand'
+  | 'slate'
+  | 'add';
 
 export type Tone = 'amber' | 'green';
 

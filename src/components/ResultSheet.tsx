@@ -66,6 +66,9 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
   const needsTick = !!detection && detection.confidence === 'medium' && detection.reasons.some((r) => r !== 'ambiguous-order' && r !== 'month-only');
   const [ticked, setTicked] = useState(false);
   const [save, setSave] = useState<SaveState>('idle');
+  // Inline validation: the product name is required, so an empty name shows a
+  // concise error under the field instead of silently inventing a placeholder.
+  const [nameError, setNameError] = useState(false);
   // A ref, not state, so a second tap in the same frame is ignored too.
   const busy = useRef(false);
   const mounted = useRef(true);
@@ -82,10 +85,15 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
 
   const submit = async () => {
     if (!canSave || !date || busy.current) return;
+    if (!name.trim()) {
+      // The name is required: show the inline error, keep everything entered.
+      setNameError(true);
+      return;
+    }
     busy.current = true;
     setSave('saving');
     try {
-      await onAdd({ name: name.trim() || `${nameOf(category)} item`, category, date });
+      await onAdd({ name: name.trim(), category, date });
       if (mounted.current) setSave('saved');
     } catch {
       busy.current = false;
@@ -105,14 +113,18 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           <View style={{ flex: 1 }}>
             <TextInput
               value={name}
-              onChangeText={setName}
+              onChangeText={(t) => {
+                setName(t);
+                if (nameError && t.trim()) setNameError(false);
+              }}
               placeholder="Product name, e.g. Greek yogurt"
               placeholderTextColor={colors.textMuted}
-              style={s.nameInput}
+              style={[s.nameInput, nameError && s.nameInputWarn]}
               returnKeyType="done"
               maxLength={80}
               accessibilityLabel="Product name"
             />
+            {nameError && <Text style={s.nameError}>Give the product a name first.</Text>}
             <Text style={s.productSub} numberOfLines={1}>
               {nameOf(category)}
               {date ? `  •  ${expiryPhrase(date.iso)}` : ''}
@@ -300,6 +312,8 @@ const s = StyleSheet.create({
   productRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   productArt: { width: 58, height: 58, borderRadius: 16, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
   nameInput: { color: colors.text, fontSize: 16.5, fontWeight: '600', paddingVertical: 4, paddingHorizontal: 0 },
+  nameInputWarn: { color: colors.amberText },
+  nameError: { color: colors.amberText, fontSize: 12.5, marginTop: 2 },
   productSub: { color: colors.textMuted, fontSize: 13.5, marginTop: 2 },
   chips: { gap: 8, paddingTop: 12 },
   guessed: { color: colors.textMuted, fontSize: 12, paddingTop: 8 },

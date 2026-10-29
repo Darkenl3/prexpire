@@ -20,7 +20,7 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
-type Route = { tab: TabId; category?: CategoryId; settingsPage?: 'categories' } | { tab: 'scan' };
+type Route = { tab: TabId; category?: CategoryId; settingsPage?: 'categories' } | { tab: 'scan'; manual?: boolean };
 
 const TABS: TabId[] = ['home', 'items', 'shop', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
@@ -122,6 +122,12 @@ function Shell() {
         }
         return setRoute({ tab: 'scan' });
       }
+      if (to === 'manual') {
+        // Manual product entry: the save form without the camera (the user
+        // types the product and its date instead of scanning a label).
+        setNativeScan(null);
+        return setRoute({ tab: 'scan', manual: true });
+      }
       if (to.startsWith('tab:')) {
         const tab = to.slice(4) as TabId;
         if (TABS.includes(tab)) {
@@ -179,24 +185,10 @@ function Shell() {
     return () => window.removeEventListener('prexpire:navigate', onShellNavigate);
   }, [onNavigate]);
 
-  // The screens report their scroll direction (see navAutohide.tsx) so the browser's
-  // own bottom nav can hide on scroll-down and return on scroll-up, YouTube-style.
-  // Inside the native shell the glass tab bar follows the same motion via the
-  // { type: 'scroll', dir } bridge message the tracker posts directly.
-  const [webNavHidden, setWebNavHidden] = useState(false);
-  useEffect(() => {
-    if (!WEB || typeof window === 'undefined') return;
-    const onNavVisibility = (event: Event) => {
-      const detail = (event as CustomEvent<{ hidden?: unknown }>).detail;
-      if (typeof detail?.hidden === 'boolean') setWebNavHidden(detail.hidden);
-    };
-    window.addEventListener('prexpire:nav', onNavVisibility);
-    return () => window.removeEventListener('prexpire:nav', onNavVisibility);
-  }, []);
-
   // Keep the shell's tab bar in sync: report the active tab and the badges
-  // whenever either changes, so the shell can highlight its active tab, show
-  // the badges, and hide its bar while the scanner screen is open (tab === 'scan').
+  // whenever either changes, so the shell can highlight its active tab and show
+  // the badges. The shell hides its bar only while the scanner screen is open
+  // (tab === 'scan'); scrolling never affects it, matching the web bottom nav.
   useEffect(() => {
     if (!WEB || typeof window === 'undefined') return;
     const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
@@ -209,8 +201,20 @@ function Shell() {
   }, [route, badge, shopBadge]);
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
-  // is only mounted, and only running, while the user is scanning.
-  if (route.tab === 'scan') return <ScannerScreen onClose={closeScanner} onSaved={onSaved} initialDetection={nativeScan} />;
+  // is only mounted, and only running, while the user is scanning. The manual
+  // entry route opens the same screen with the form instead of the camera. The
+  // key forces a fresh mount when the entry mode changes, so a scan route can
+  // never reuse an instance whose props it should have picked up.
+  if (route.tab === 'scan')
+    return (
+      <ScannerScreen
+        key={route.manual ? 'manual' : 'scan'}
+        onClose={closeScanner}
+        onSaved={onSaved}
+        initialDetection={nativeScan}
+        initialManual={route.manual}
+      />
+    );
 
   const screen =
     route.tab === 'items' ? (
@@ -238,7 +242,6 @@ function Shell() {
           active={route.tab}
           badge={badge}
           shopBadge={shopBadge}
-          hidden={webNavHidden}
           insets={insets}
           maxWidth={layout.mode === 'phone' ? 560 : 520}
           onTab={(id) => onNavigate(`tab:${id}`)}

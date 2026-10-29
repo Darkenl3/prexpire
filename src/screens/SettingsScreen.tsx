@@ -22,8 +22,7 @@ import {
   type DefaultCategory,
 } from '../preferences';
 import { isoToday } from '../scanner/dateParser';
-import { Brandmark, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
-import { useNavAutohide } from '../components/navAutohide';
+import { Brandmark, GlassIconButton, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
 import { CategoryManager } from '../components/CategoryManager';
 import { FadeIn, PressScale } from '../components/Press';
 import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
@@ -35,7 +34,6 @@ import appConfig from '../../app.json';
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
-type IconName = keyof typeof Ionicons.glyphMap;
 
 // The Settings tab, restructured after the reference: a grouped list of
 // simple rows (icon tile + title + value + chevron) where every row opens its
@@ -77,10 +75,6 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const { items: shoppingItems, clearAll: clearShopping } = useShopping();
   const [confirmClear, setConfirmClear] = useState(false);
   const [page, setPage] = useState<PageId | null>(initialPage ?? null);
-
-  // The shell heartbeat + bottom-nav autohide tracker (reporting only here:
-  // the settings header itself stays fixed, like the reference).
-  const { onScroll } = useNavAutohide();
 
   // Motion as a ref so animation timings never retrigger a running animation.
   const motionRef = useRef(motion);
@@ -248,13 +242,13 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }] }}>
         <View style={[s.frame, s.rootFrame]}>
           <View style={s.header}>
-            <CircleButton icon="chevron-back" label="Back to Home" onPress={() => onNavigate('tab:home')} />
+            <GlassIconButton icon="chevron-back" iconSize={22} label="Go back" onPress={() => onNavigate('tab:home')} />
             <Text style={s.headerTitle} accessibilityRole="header">
               Settings
             </Text>
           </View>
         </View>
-        <ScrollViewLike onScroll={onScroll} bottomPad={bottomPad}>
+        <ScrollViewLike bottomPad={bottomPad}>
           <View style={[s.frame, s.rootFrame]}>{root}</View>
         </ScrollViewLike>
       </Animated.View>
@@ -264,13 +258,13 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <View style={[s.root, { paddingTop: insets.top }]}>
             <View style={[s.frame, s.rootFrame]}>
               <View style={s.header}>
-                <CircleButton icon="chevron-back" label="Back" onPress={closePage} />
+                <GlassIconButton icon="chevron-back" iconSize={22} label="Go back" onPress={closePage} />
                 <Text style={s.detailTitle} accessibilityRole="header">
                   {PAGE_TITLES[page]}
                 </Text>
               </View>
             </View>
-            <ScrollViewLike onScroll={onScroll} bottomPad={bottomPad}>
+            <ScrollViewLike bottomPad={bottomPad}>
               <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate)}</View>
             </ScrollViewLike>
           </View>
@@ -297,35 +291,16 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
 
 // The scrolling body shared by the root list and every detail page. The
 // reserved alert space sits at the very top, so an expiry alert pushes the
-// page's content below it rather than covering it.
-function ScrollViewLike({ children, onScroll, bottomPad }: { children: React.ReactNode; onScroll: () => void; bottomPad: number }) {
+// page's content below it rather than covering it. Settings' own header is
+// fixed (like the reference), so there is no scroll-driven chrome here at all.
+function ScrollViewLike({ children, bottomPad }: { children: React.ReactNode; bottomPad: number }) {
   return (
-    <ScrollView showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={32} contentContainerStyle={{ paddingBottom: bottomPad }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad }}>
       <AlertSpacer />
       {children}
     </ScrollView>
   );
 }
-
-// A circular header button: white, hairline-bordered, faintly floating, with
-// the shared tactile press feedback.
-function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  const c = useTheme();
-  const s = useStyles();
-  return (
-    <PressScale
-      onPress={onPress}
-      hitSlop={6}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      scaleTo={0.97}
-      style={[s.circleBtn, { backgroundColor: c.surface, borderColor: c.surfaceBorder }]}
-    >
-      <Ionicons name={icon} size={22} color={c.text} />
-    </PressScale>
-  );
-}
-
 
 function renderDetail(page: PageId, onNavigate: (route: string) => void) {
   switch (page) {
@@ -771,16 +746,6 @@ const useStyles = makeStyles((t) => ({
   header: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 0 },
   headerTitle: { color: t.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 },
   detailTitle: { color: t.text, fontSize: 23, fontWeight: '700', letterSpacing: -0.4 },
-  // The circular back/search buttons: a hairline ring, a whisper of shadow.
-  circleBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(t === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } } : null),
-  },
   // The profile card floats a little higher than the section cards.
   profileCard: {
     flexDirection: 'row',

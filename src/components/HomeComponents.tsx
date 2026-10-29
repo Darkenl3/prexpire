@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
@@ -14,15 +13,62 @@ const wordmarkLightInk = require('../../assets/wordmark.png');
 // Cropped artwork size: 1228 x 294.
 const WORDMARK_ASPECT = 1228 / 294;
 
-// Liquid-glass treatment for the header buttons (the same visual language as
-// the shell's glass tab bar): a frosted translucent circle. React Native's
-// style types don't know these two CSS properties, but react-native-web
-// passes them straight through to the DOM - including the
+// Liquid-glass treatment for the round chrome buttons (the same visual
+// language as the shell's glass tab bar): a frosted translucent circle.
+// React Native's style types don't know these two CSS properties, but
+// react-native-web passes them straight through to the DOM - including the
 // -webkit- spelling older iOS Safari needs.
-const GLASS_FX = {
+export const GLASS_FX = {
   backdropFilter: 'blur(18px) saturate(160%)',
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
+
+// The shared liquid-glass circle: one component behind the header's menu and
+// bell buttons, Settings' back buttons and the New-category page's back
+// button, so every round control in the app shares the exact same glass,
+// dimensions, shadow and press feedback.
+export const GLASS_BUTTON: ViewStyle = {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  alignItems: 'center',
+  justifyContent: 'center',
+  // A faint cool shadow keeps the glass readable on the light page.
+  shadowColor: '#64748B',
+  shadowOpacity: 0.08,
+  shadowRadius: 6,
+  shadowOffset: { width: 0, height: 2 },
+};
+
+export function GlassIconButton({
+  icon,
+  iconSize = 24,
+  label,
+  onPress,
+  children,
+  style,
+}: {
+  icon?: keyof typeof Ionicons.glyphMap;
+  iconSize?: number;
+  label: string;
+  onPress: () => void;
+  children?: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const c = useTheme();
+  return (
+    <PressScale
+      onPress={onPress}
+      hitSlop={10}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      scaleTo={0.97}
+      style={[GLASS_BUTTON, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle, style]}
+    >
+      {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c.text} />}
+    </PressScale>
+  );
+}
 
 // The Add-category tile's lined background, like the reference's empty slot:
 // fine diagonal hairlines over a soft fill. React Native's style types don't
@@ -44,32 +90,16 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
   const s = useStyles();
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
-      <PressScale
-        onPress={onMenu}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel="Menu"
-        scaleTo={0.97}
-        style={[s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle]}
-      >
-        <Ionicons name="menu" size={24} color={c.text} />
-      </PressScale>
+      <GlassIconButton icon="menu" iconSize={24} label="Menu" onPress={onMenu} />
       <Brandmark height={33} />
-      <PressScale
-        onPress={onBell}
-        hitSlop={10}
-        accessibilityRole="button"
-        accessibilityLabel={`${badge} notifications`}
-        scaleTo={0.97}
-        style={[s.headerBtn, { backgroundColor: c.glassBg }, GLASS_FX as ViewStyle]}
-      >
+      <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
         <Ionicons name="notifications-outline" size={22} color={c.text} />
         {badge > 0 && (
           <View style={[s.badge, { backgroundColor: c.red, borderColor: c.bg }]}>
             <Text style={s.badgeText}>{badge}</Text>
           </View>
         )}
-      </PressScale>
+      </GlassIconButton>
     </View>
   );
 }
@@ -92,18 +122,36 @@ export function AttentionCard({ title, subtitle, onPress }: { title: string; sub
   );
 }
 
-type SectionHeaderProps = { title: string; action: string; first?: boolean; onAction: () => void };
+type SectionHeaderProps = {
+  title: string;
+  // Optional action link beside the title (e.g. Home's category "View all").
+  // Omitted when there is nothing useful to show, so no dead controls appear.
+  action?: string;
+  first?: boolean;
+  // An explicit accessibility label for the action (defaults to its text).
+  actionLabel?: string;
+  onAction?: () => void;
+};
 
-export function SectionHeader({ title, action, first = false, onAction }: SectionHeaderProps) {
+export function SectionHeader({ title, action, first = false, actionLabel, onAction }: SectionHeaderProps) {
   const c = useTheme();
   const s = useStyles();
   return (
     <View style={[s.section, first && s.sectionFirst]}>
       <Text style={[s.sectionTitle, { color: c.text }]}>{title}</Text>
-      <PressScale onPress={onAction} hitSlop={8} scaleTo={0.97} style={s.sectionAction}>
-        <Text style={[s.sectionLink, { color: c.mint }]}>{action}</Text>
-        <Ionicons name="chevron-forward" size={17} color={c.mint} />
-      </PressScale>
+      {!!action && !!onAction && (
+        <PressScale
+          onPress={onAction}
+          hitSlop={8}
+          scaleTo={0.97}
+          style={s.sectionAction}
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel ?? action}
+        >
+          <Text style={[s.sectionLink, { color: c.mint }]}>{action}</Text>
+          <Ionicons name="chevron-forward" size={17} color={c.mint} />
+        </PressScale>
+      )}
     </View>
   );
 }
@@ -253,9 +301,6 @@ type BottomNavProps = {
   shopBadge?: number;
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
-  // YouTube-style: the nav slides below the screen while the user scrolls down
-  // (the screens report their scroll direction - see navAutohide.tsx).
-  hidden?: boolean;
   onTab: (id: TabId) => void;
   onScan: () => void;
 };
@@ -264,20 +309,18 @@ type BottomNavProps = {
 export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
-export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560, hidden = false, onTab, onScan }: BottomNavProps) {
+// The bottom navigation is PERMANENT: it never hides, fades, moves or changes
+// with scrolling in any way (only the top header auto-hides - see
+// navAutohide.tsx). Because it is an absolute overlay that never participates
+// in layout, showing or hiding the header cannot move it or resize the
+// scroller, and every screen pads its content bottom so the last item stays
+// reachable above the bar.
+export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560, onTab, onScan }: BottomNavProps) {
   const c = useTheme();
   const s = useStyles();
   // Narrow phones give the five tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
-  const t = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(t, { toValue: hidden ? 1 : 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-  }, [hidden, t]);
-  const navY = t.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, NAV_HEIGHT + navOffset(insets.bottom) + 12],
-  });
   const renderTab = (tab: (typeof tabs)[number]) => {
     const selected = tab.id === active;
     return (
@@ -316,12 +359,9 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
   };
 
   return (
-    <Animated.View
-      pointerEvents={hidden ? 'none' : 'box-none'}
-      style={[
-        s.navWrap,
-        { bottom: navOffset(insets.bottom), left: sideMargin + insets.left, right: sideMargin + insets.right, transform: [{ translateY: navY }] },
-      ]}
+    <View
+      pointerEvents="box-none"
+      style={[s.navWrap, { bottom: navOffset(insets.bottom), left: sideMargin + insets.left, right: sideMargin + insets.right }]}
     >
       <View style={[s.navShadow, { maxWidth }]}>
         <View style={[s.nav, s.navFallback]}>
@@ -338,7 +378,7 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
           {renderTab(tabs[4])}
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -346,21 +386,6 @@ const useStyles = makeStyles((c) => ({
   // A taller top bar gives the wordmark room to breathe (brand-forward,
   // like the reference) - keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  // Liquid-glass circle (with GLASS_FX): borderless in both themes - the
-  // palette gives each theme its mirrored translucent tint, so the glass
-  // circle is always visible against the page.
-  headerBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // A faint cool shadow keeps the glass readable on the light page.
-    shadowColor: '#64748B',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
   badge: {
     position: 'absolute',
     top: 2,

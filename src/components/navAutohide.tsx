@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, View, type ViewStyle } from 'react-native';
+import { Animated, Easing, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
 import { Header } from './HomeComponents';
 
-// YouTube-style auto-hide navigation: scrolling down collapses the header (and,
-// inside the native Expo shell, the liquid-glass tab bar slides away too);
-// scrolling up brings them back. Each screen owns its own tracker so the
-// header always starts visible when a tab opens.
+// Auto-hide navigation: scrolling down collapses ONLY the top header; scrolling
+// up brings it back. The bottom navigation is deliberately NOT part of this
+// system - it is permanent (see BottomNav) - so nothing at the bottom edge of
+// the screen ever moves, fades or reacts to scrolling, and no scroll direction
+// can make the interface appear and disappear at the bottom while you scroll.
 //
 // The tracker deliberately reads the scroll position from SEVERAL redundant
 // sources, because iOS WebViews can deliver inner-element scroll events
@@ -21,8 +22,11 @@ import { Header } from './HomeComponents';
 // The direction decision itself is jitter-proof (same-sign deltas accumulate
 // until decisive; a sign flip restarts the count) and always shows the chrome
 // in the top zone of the page, exactly like YouTube.
-
-type ScrollLike = { nativeEvent: { contentOffset: { y: number } } };
+//
+// State updates only happen on an actual direction CHANGE (hidden is a
+// boolean, not a per-frame value), and the reveal/hide animation is a single
+// transform tween on an overlay - so nothing here can resize the scroller,
+// clamp the scroll position mid-gesture, or retrigger itself every frame.
 
 // Keep in sync with the header's own height in HomeComponents.tsx.
 export const HEADER_HEIGHT = 64;
@@ -36,14 +40,10 @@ const EDGE_DECIDE_PX = 24;
 const TOP_ZONE = 48;
 // A direction CHANGE is accepted only this long after the previous one:
 // anything faster is flutter, not intent. Without this, any stray oscillation
-// (a settle tail, a clamped position) could rattle the bars in and out while
-// the user simply holds the scroll - now the bars change at most ~4 times a
+// (a settle tail, a clamped position) could rattle the header in and out while
+// the user simply holds the scroll - now the header changes at most ~4 times a
 // second, and a real reverse flick after a real scroll is never this fast.
 const MIN_DWELL_MS = 240;
-// While scrolling, re-report to the shell at most this often (ms) - in
-// addition to every direction change, so a single lost message can never
-// leave the glass bar stuck: the next report self-heals it.
-const REPORT_MS = 200;
 // The rAF poll stops after this many frames with no movement (~0.5s).
 const IDLE_FRAMES = 30;
 
@@ -54,23 +54,11 @@ const IDLE_FRAMES = 30;
 // clamping inside decide() above, so both generations of iOS are covered.
 export const NO_RUBBER_BAND = { overscrollBehavior: 'none' } as ViewStyle;
 
-function postToShell(payload: Record<string, unknown>) {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-  const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
-  if (!shell?.postMessage) return;
-  try {
-    shell.postMessage(JSON.stringify(payload));
-  } catch {
-    // The shell went away; the header still hides locally.
-  }
-}
-
 export function useNavAutohide() {
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
   const acc = useRef(0);
   const hiddenRef = useRef(false);
-  const lastReport = useRef(0);
   const lastFlip = useRef(0);
   // The element currently being polled, the rAF handle, and the last raw
   // position seen by the poll (for idle detection).
@@ -122,16 +110,6 @@ export function useNavAutohide() {
       lastFlip.current = now;
       hiddenRef.current = goingDown;
       setHidden(goingDown);
-      if (typeof window !== 'undefined') {
-        // Tell this page's own bottom nav (App listens for this in the browser).
-        window.dispatchEvent(new CustomEvent('prexpire:nav', { detail: { hidden: goingDown } }));
-      }
-    }
-    // Tell the native shell on every change and as a light heartbeat while
-    // scrolling - the glass bar recomputes its visibility from every message.
-    if (changed || now - lastReport.current >= REPORT_MS) {
-      lastReport.current = now;
-      postToShell({ type: 'scroll', dir: goingDown ? 'down' : 'up', y: Math.round(y) });
     }
   }, []);
 
@@ -184,13 +162,12 @@ export function useNavAutohide() {
   }, [kick]);
 
   useEffect(() => {
-    // A freshly opened screen starts at the top: show the chrome again. The
-    // previous tab may have left it hidden - in the browser that strands the
-    // web nav, and inside the native shell it strands the glass tab bar.
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('prexpire:nav', { detail: { hidden: false } }));
-      postToShell({ type: 'scroll', dir: 'up' });
-    }
+    // A freshly opened screen starts at the top: show the header again. The
+    // previous tab may have left it hidden.
+    hiddenRef.current = false;
+    lastY.current = 0;
+    acc.current = 0;
+    setHidden(false);
     if (typeof document === 'undefined' || typeof requestAnimationFrame === 'undefined') return;
     // A capture-phase listener: sees scroll events from EVERY scrollable
     // element (scroll does not bubble, but it does capture). Document-level
@@ -226,7 +203,8 @@ export function useNavAutohide() {
 // the old bug where collapsing the header visibly yanked the content upward
 // ("scrolling faster") and, near the bottom edge, the resized scroller's
 // clamped positions oscillated the direction back and forth (the bars
-// flickering in and out while the user held the scroll).
+// flickering in and out while the user held the scroll). Only this header
+// ever hides - the bottom navigation stays on screen the whole time.
 export function AutohideHeader({
   hidden,
   badge,
