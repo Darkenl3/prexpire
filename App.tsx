@@ -340,11 +340,28 @@ function Shell() {
 // Themed chrome: the page background and the status-bar style follow the theme.
 function ThemedApp() {
   const c = useTheme();
+  const light = c === LIGHT;
+  // Native bridge: report the resolved theme (the Dark/Light/System setting,
+  // with 'system' already resolved by ThemeProvider) to the Expo shell. Inside
+  // the shell's WebView the <StatusBar> below renders nothing — the shell owns
+  // the REAL status bar — so this is what tells it to switch: dark text over
+  // the light page, light text over the dark one. Sent on mount and on every
+  // change; outside a shell there is nothing to report to.
+  useEffect(() => {
+    if (!WEB || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    try {
+      shell.postMessage(JSON.stringify({ type: 'theme', theme: light ? 'light' : 'dark' }));
+    } catch {
+      // The shell went away; the next change reports again.
+    }
+  }, [light]);
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {/* expo-status-bar's "style" is the CONTENT colour: light text on the
           dark theme, dark text on the light one. */}
-      <StatusBar style={c === LIGHT ? 'dark' : 'light'} />
+      <StatusBar style={light ? 'dark' : 'light'} />
       <Shell />
     </View>
   );
