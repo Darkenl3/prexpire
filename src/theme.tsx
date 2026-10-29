@@ -51,6 +51,11 @@ export type Palette = {
   statusWarnBg: string;
   glassBg: string; // the header's liquid-glass circles
   glassBorder: string;
+  // The header STRIP's liquid-glass tint (AutohideHeader): translucent so the
+  // frosted backdrop-filter underneath shows page content scrolling past —
+  // the same material language as the scanner's top chrome and the bottom
+  // nav pill, instead of an opaque bar.
+  glassHeaderBg: string;
   pills: Record<Tone, { bg: string; text: string }>;
   switchColors: { track: string; trackOn: string; thumb: string; thumbOn: string };
 };
@@ -95,6 +100,11 @@ export const DARK: Palette = {
   statusWarnBg: '#3D2B0E',
   glassBg: 'rgba(255,255,255,0.10)',
   glassBorder: 'rgba(255,255,255,0.14)',
+  // The dark page's glass header strip: the page bg at 60% over a blur, so
+  // content flowing under the bar frosts through and the glass circles on
+  // top have something real to refract (like the scanner's chrome over the
+  // camera) instead of sitting on a flat opaque bar.
+  glassHeaderBg: 'rgba(5,13,16,0.60)',
   tints: {
     food: { top: '#0E5734', bottom: '#081C17', border: '#1C5A3C' },
     medicine: { top: '#074164', bottom: '#051C2A', border: '#145273' },
@@ -172,6 +182,10 @@ export const LIGHT: Palette = {
   // dark on the light page, so the glass is always visible, never invisible.
   glassBg: 'rgba(15,23,42,0.08)',
   glassBorder: 'rgba(15,23,42,0.10)',
+  // The light page's glass header strip: the airy blue-white bg at 72% over
+  // a blur — light glass stays brighter and more opaque than dark glass (the
+  // 0.72 keeps dark text readable while content still frosts through).
+  glassHeaderBg: 'rgba(249,252,254,0.72)',
   // Soft pastel tiles: mint, sky, lilac, blush and cream plus the extended
   // palette - the category cards read as gentle colour cards with no borders,
   // like the reference.

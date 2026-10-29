@@ -1,4 +1,8 @@
 {
   "extends": "expo/tsconfig.base",
-  "compilerOptions": { "strict": true, "allowImportingTsExtensions": true }
+  "compilerOptions": { "strict": true, "allowImportingTsExtensions": true },
+  // shellcheck/ is the standalone type-harness for the Expo SHELL files (it
+  // has its own tsconfig with RN stubs and a different root); the app's own
+  // typecheck must not sweep it in.
+  "exclude": ["shellcheck"]
 }

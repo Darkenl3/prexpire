@@ -23,6 +23,17 @@ export const GLASS_FX = {
   WebkitBackdropFilter: 'blur(18px) saturate(160%)',
 };
 
+// The liquid-glass material for the header STRIP itself (AutohideHeader): a
+// slightly deeper frosted blur than the circles, so the bar reads as one
+// continuous piece of glass with the round buttons floating on it — the same
+// layered-material look as the scanner's top chrome over the camera, and the
+// bottom nav pill's blur. Without this the circles blur a flat opaque bar and
+// the "liquid" never shows: there is nothing behind them to refract.
+export const GLASS_STRIP_FX = {
+  backdropFilter: 'blur(20px) saturate(160%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+};
+
 // The shared liquid-glass circle: 46pt with a hairline rim, matching the
 // scanner screen's native GlassCircle controls one for one, behind the
 // header's menu and bell buttons, Settings' back buttons and the

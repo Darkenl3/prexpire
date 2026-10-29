@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
-import { Header } from './HomeComponents';
+import { GLASS_STRIP_FX, Header } from './HomeComponents';
 
 // Auto-hide navigation: scrolling down collapses ONLY the top header; scrolling
 // up brings it back. The bottom navigation is deliberately NOT part of this
@@ -238,9 +238,20 @@ export function AutohideHeader({
         right: 0,
         zIndex: 40,
         elevation: 40,
-        // Opaque, like YouTube's returning top bar: content scrolled under
-        // it while it was away, so it must cover, not blend.
-        backgroundColor: c.bg,
+        // LIQUID GLASS, like the scanner's top chrome and the bottom nav
+        // pill: a translucent tint over a frosted backdrop blur, so page
+        // content scrolling under the bar frosts through instead of being
+        // covered by a flat opaque strip — and the glass circle buttons on
+        // top finally have something behind them to refract (over an opaque
+        // bar their own blur had nothing to show, which is why the glass
+        // never read before). The tint stays strong enough that the bar
+        // still "covers" in the YouTube sense: content under it is blurred
+        // and dimmed, never legible, so the returning bar never fights the
+        // wordmark. react-native-web passes backdropFilter (and the
+        // -webkit- spelling older iOS needs) straight to the DOM; platforms
+        // without it just see the translucent tint.
+        backgroundColor: c.glassHeaderBg,
+        ...(GLASS_STRIP_FX as ViewStyle),
         transform: [{ translateY }],
         opacity,
       }}
