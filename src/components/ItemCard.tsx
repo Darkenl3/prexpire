@@ -40,7 +40,9 @@ const BUILTIN_TINTS: Record<string, Tint> = {
   skincare: 'skincare',
   pantry: 'pantry',
 };
-const tintFor = (id: string, customTint?: Tint): Tint => customTint ?? BUILTIN_TINTS[id] ?? 'slate';
+// Shared with the Reminders screen's cards, so a reminder card's art square
+// always matches the item card the same product shows on the Lists tab.
+export const categoryTint = (id: string, customTint?: Tint): Tint => customTint ?? BUILTIN_TINTS[id] ?? 'slate';
 
 type Props = {
   item: Item;
@@ -78,7 +80,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const barColor = status === 'expired' ? t.red : status === 'soon' ? t.amber : t.mint;
 
   const known = custom.find((cat) => cat.id === item.category);
-  const tint = tintFor(item.category, known?.tint);
+  const tint = categoryTint(item.category, known?.tint);
   const icon = categoryIcon(item.category, known?.icon);
 
   const closeMenu = () => {

@@ -242,7 +242,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }] }}>
         <View style={[s.frame, s.rootFrame]}>
           <View style={s.header}>
-            <GlassIconButton icon="chevron-back" iconSize={22} label="Go back" onPress={() => onNavigate('tab:home')} />
+            {/* The compact 38pt glass back circle: the header's title row
+                stays light, the button stops competing with it. */}
+            <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={() => onNavigate('tab:home')} />
             <Text style={s.headerTitle} accessibilityRole="header">
               Settings
             </Text>
@@ -258,7 +260,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <View style={[s.root, { paddingTop: insets.top }]}>
             <View style={[s.frame, s.rootFrame]}>
               <View style={s.header}>
-                <GlassIconButton icon="chevron-back" iconSize={22} label="Go back" onPress={closePage} />
+                <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={closePage} />
                 <Text style={s.detailTitle} accessibilityRole="header">
                   {PAGE_TITLES[page]}
                 </Text>

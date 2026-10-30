@@ -66,6 +66,7 @@ export function GlassIconButton({
   onPress,
   children,
   style,
+  size = 46,
 }: {
   icon?: keyof typeof Ionicons.glyphMap;
   iconSize?: number;
@@ -73,6 +74,10 @@ export function GlassIconButton({
   onPress: () => void;
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
+  // The glass circle's diameter: 46 (the chrome standard) by default, smaller
+  // for compact placements like Settings' back button (38). Everything else —
+  // the glass fill, hairline rim, blur, shadow and press feedback — is shared.
+  size?: number;
 }) {
   const c = useTheme();
   return (
@@ -83,7 +88,13 @@ export function GlassIconButton({
       accessibilityLabel={label}
       // 0.94 mirrors the native glass circles' press feedback exactly.
       scaleTo={0.94}
-      style={[GLASS_BUTTON, { backgroundColor: c.glassBg, borderColor: glassRim(c === LIGHT) }, GLASS_FX as ViewStyle, style]}
+      style={[
+        GLASS_BUTTON,
+        size !== 46 && { width: size, height: size, borderRadius: size / 2 },
+        { backgroundColor: c.glassBg, borderColor: glassRim(c === LIGHT) },
+        GLASS_FX as ViewStyle,
+        style,
+      ]}
     >
       {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c.text} />}
     </PressScale>

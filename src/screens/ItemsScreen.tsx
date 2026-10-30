@@ -301,7 +301,9 @@ const useStyles = makeStyles((t) => ({
   pillRow: { gap: 8, paddingVertical: 2 },
   // The toolbar row: the count (with its amber "expiring soon" half) on the
   // left and "Sort by" with its pills on the right, wrapped when narrow.
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12 },
+  // Its bottom margin is the breathing room the reference shows between the
+  // sort row and the first item card — without it the cards crowd the pills.
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12, marginBottom: 16 },
   toolbarMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   metaText: { color: t.textMuted, fontSize: 13.5 },
   soonText: { color: t.amberText, fontSize: 13.5, fontWeight: '600' },

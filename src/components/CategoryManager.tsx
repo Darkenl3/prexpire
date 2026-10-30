@@ -197,7 +197,9 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[s.page, { paddingTop: Math.max(insets.top, 10) }]}>
           <View style={s.pageHeader}>
-            <GlassIconButton icon="chevron-back" iconSize={24} label="Cancel" onPress={onClose} style={s.backBtn} />
+            {/* A proper 42pt glass circle (the old width-override left it a
+                touch oval); the spacer opposite keeps the title centred. */}
+            <GlassIconButton icon="chevron-back" iconSize={22} size={42} label="Cancel" onPress={onClose} />
             <Text style={s.pageTitle} accessibilityRole="header">
               New category
             </Text>
