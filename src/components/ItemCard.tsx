@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
+import { makeStyles, useTheme, withAlpha, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
 import { useCategories } from '../categories';
 import { useItems, type Item } from '../items';
 import { expiryStatus } from '../preferences';
@@ -153,7 +153,14 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
         </PressScale>
         <View style={s.pillAnchor}>
-          <View style={[s.pill, compact && s.pillCompact, { backgroundColor: t.pills[tone].bg }]}>
+          <View
+            style={[
+              s.pill,
+              compact && s.pillCompact,
+              { backgroundColor: t.pills[tone].bg, borderColor: withAlpha(t.pills[tone].text, 0.38) },
+            ]}
+          >
+            <Ionicons name="time-outline" size={12.5} color={t.pills[tone].text} />
             <Text
               style={[s.pillText, compact && s.pillTextCompact, { color: t.pills[tone].text }]}
               numberOfLines={1}
@@ -213,14 +220,14 @@ const useStyles = makeStyles((t) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     backgroundColor: t.surface,
     borderWidth: 1,
     borderColor: t.surfaceBorder,
   },
-  cardCompact: { paddingVertical: 10, paddingHorizontal: 10, gap: 10 },
+  cardCompact: { paddingVertical: 11, paddingHorizontal: 11, gap: 10 },
   // The art square: the reference's pale-green image tile, in both themes
   // (the dark page gets the same soft green so the category art pops).
   thumb: {
@@ -244,13 +251,15 @@ const useStyles = makeStyles((t) => ({
   // Subtexts breathe a little teal (theme.textSub) and grow a size, so the
   // category and date read at a glance like the reference's metadata rows.
   metaText: { color: t.textSub, fontSize: 13.5, flexShrink: 1 },
-  // The days-left pill: the real expiry maths as a single quiet badge on the
-  // card's right edge — never a counting bar. It centres in the space below
-  // the three-dot menu, like the reference's right-hand stack.
+  // The days-left pill (the reference's right-hand badge): the real expiry
+  // maths as a single compact badge on the card's right edge — the tone's
+  // translucent fill, a hairline rim of the same colour, and the little clock
+  // glyph before the number. Never a counting bar; the expired tone stays a
+  // restrained red.
   side: { alignSelf: 'stretch', alignItems: 'flex-end' },
   pillAnchor: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
-  pill: { height: 24, paddingHorizontal: 11, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  pillCompact: { height: 22, paddingHorizontal: 9 },
+  pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, height: 24, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1 },
+  pillCompact: { height: 22, paddingHorizontal: 8 },
   pillText: { fontSize: 12.5, fontWeight: '700' },
   pillTextCompact: { fontSize: 12 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
