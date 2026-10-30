@@ -4,7 +4,7 @@
     "slug": "prexpire",
     "version": "0.1.0",
     "orientation": "default",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "backgroundColor": "#030709",
     "web": {
       "bundler": "metro"
@@ -30,15 +30,6 @@
         }
       ],
       "expo-localization",
-      [
-        "expo-splash-screen",
-        {
-          "splash": {
-            "backgroundColor": "#F8FCFB",
-            "dark": { "backgroundColor": "#030709" }
-          }
-        }
-      ],
       "./plugins/withMlKitOcrModel"
     ]
   }

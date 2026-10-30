@@ -62,12 +62,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     reminders: true,
     reminderLead: 1,
     dailySummary: false,
-    // Follows the device: with the shell's userInterfaceStyle 'automatic' and
-    // the light/dark splash pair, a fresh install opens in the OS's own theme
-    // (dark when the system says nothing). The Dark/Light/System picker in
-    // Settings overrides this the moment the user chooses; saved settings are
-    // never touched by this default.
-    theme: 'system',
+    theme: 'dark',
     compact: false,
     animations: true,
     warningDays: 3,
