@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
-import { Image, StyleSheet, Text, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
+import { useSettings } from '../settings';
 import { PressScale } from './Press';
 
 // The brand wordmark: the user's own logo artwork, cut pixel-exact from
@@ -347,6 +348,129 @@ type BottomNavProps = {
 export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
+// Slot layout inside the nav pill: [home, lists, SCAN, reminders, settings] —
+// the scan button owns slot 2, so the four tabs live at 0, 1, 3 and 4. The
+// tab-to-tab TRAVEL of the selected chip is measured in these slots.
+const SLOT: Record<TabId, number> = { home: 0, items: 1, reminders: 3, settings: 4 };
+const SLOT_COUNT = 5;
+// The nav pill's horizontal padding (s.nav) — the slot width is derived from
+// the measured nav width minus this.
+const NAV_PAD = 6;
+
+// One bottom-nav tab. The reference's active treatment — the icon + label
+// on a solid lime chip with the deep selected ink — TRAVELS now instead of a
+// hard swap: on a switch the newly selected tab's chip slides in from where
+// the old one sat while the old chip slides out toward the new tab and
+// dissolves, so the highlight reads as one continuous movement across the
+// bar. The icon also pops up to ~1.08 and settles back. Inactive tabs stay
+// exactly as they were: plain, stable, muted. Everything collapses to an
+// instant swap when motion is off (the Animations setting or the OS Reduce
+// Motion flag), and the press feedback, dimensions, icons, labels and order
+// are untouched.
+function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[number]; selected: boolean; narrow: boolean; travel: number; onTab: (id: TabId) => void }) {
+  const c = useTheme();
+  const s = useStyles();
+  const { motion } = useSettings();
+  // Motion/travel as refs so animation timings never retrigger a running animation.
+  const motionRef = useRef(motion);
+  motionRef.current = motion;
+  const travelRef = useRef(travel);
+  travelRef.current = travel;
+  // 0 = the chip is fully gone, 1 = fully there. Drives its opacity, its scale
+  // (a touch smaller while dissolving, so it never reads as a jump) and, with
+  // pillX below, the glide between tab positions.
+  const chip = useRef(new Animated.Value(selected ? 1 : 0)).current;
+  const pillX = useRef(new Animated.Value(0)).current;
+  const iconScale = useRef(new Animated.Value(1)).current;
+  const anim = useRef<Animated.CompositeAnimation | null>(null);
+  const first = useRef(true);
+
+  useEffect(() => {
+    // The tab bar's initial state is already correct: nothing animates on load.
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    // Rapid switching: stop whatever was running so animations never overlap.
+    anim.current?.stop();
+    const t = travelRef.current;
+    if (!selected) {
+      if (motionRef.current && t !== 0) {
+        // The chip leaves: it slides toward the newly selected tab and
+        // dissolves as the new one arrives from the opposite side.
+        chip.setValue(1);
+        pillX.setValue(0);
+        anim.current = Animated.parallel([
+          Animated.timing(chip, { toValue: 0, duration: 170, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(pillX, { toValue: -t, duration: 190, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        ]);
+        anim.current.start();
+      } else {
+        chip.setValue(0);
+        pillX.setValue(0);
+      }
+      iconScale.setValue(1);
+      return;
+    }
+    if (!motionRef.current) {
+      chip.setValue(1);
+      pillX.setValue(0);
+      iconScale.setValue(1);
+      return;
+    }
+    // The chip arrives: it starts where the old tab's chip sat (offset by the
+    // travel distance) and glides into place while the icon pops.
+    chip.setValue(0);
+    pillX.setValue(t);
+    iconScale.setValue(1);
+    anim.current = Animated.parallel([
+      Animated.timing(chip, { toValue: 1, duration: 190, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(pillX, { toValue: 0, duration: 190, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      // The icon pops up to ~1.08 and settles back to 1 — one short breath,
+      // never a bounce.
+      Animated.sequence([
+        Animated.timing(iconScale, { toValue: 1.08, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(iconScale, { toValue: 1, duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]),
+    ]);
+    anim.current.start();
+    return () => {
+      anim.current?.stop();
+    };
+  }, [selected, chip, pillX, iconScale]);
+
+  const chipScale = chip.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] });
+  return (
+    <PressScale
+      key={tab.id}
+      onPress={() => onTab(tab.id)}
+      style={s.tab}
+      scaleTo={0.97}
+      accessibilityRole="tab"
+      aria-selected={selected}
+      accessibilityLabel={tab.label}
+    >
+      <View style={s.tabChip}>
+        {/* The selected chip's lime pill, drawn as an absolute layer BEHIND the
+            icon and label so it can glide in and out on its own without ever
+            touching the tab's layout. */}
+        <Animated.View style={[s.tabChipPill, { opacity: chip, transform: [{ translateX: pillX }, { scale: chipScale }] }]} />
+        <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+          <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
+        </Animated.View>
+        <Text
+          style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.scanInk : c.textMuted }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.85}
+        >
+          {tab.label}
+        </Text>
+      </View>
+    </PressScale>
+  );
+}
+
 // The bottom navigation is PERMANENT: it never hides, fades, moves or changes
 // with scrolling in any way (only the top header auto-hides - see
 // navAutohide.tsx). Because it is an absolute overlay that never participates
@@ -359,37 +483,23 @@ export function BottomNav({ active, insets, maxWidth = 560, onTab, onScan }: Bot
   // Narrow phones give the four tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
-  const renderTab = (tab: (typeof tabs)[number]) => {
-    const selected = tab.id === active;
-    return (
-      <PressScale
-        key={tab.id}
-        onPress={() => onTab(tab.id)}
-        style={s.tab}
-        scaleTo={0.97}
-        accessibilityRole="tab"
-        aria-selected={selected}
-        accessibilityLabel={tab.label}
-      >
-        {/* The reference's active state: the icon + label sit on a solid
-            lime rounded chip with the deep selected ink; inactive tabs read
-            as plain muted icons. */}
-        <View style={[s.tabChip, selected && s.tabChipOn]}>
-          <View>
-            <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
-          </View>
-          <Text
-            style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.scanInk : c.textMuted }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.85}
-          >
-            {tab.label}
-          </Text>
-        </View>
-      </PressScale>
-    );
-  };
+  const { motion } = useSettings();
+  const motionRef = useRef(motion);
+  motionRef.current = motion;
+  // The nav pill's measured width: the slot width (and so the chip's travel
+  // distance between tabs) is derived from it.
+  const [navW, setNavW] = useState(0);
+  // The tab that was active on the previous render: a switch computes the
+  // signed slot distance the chip travels (0 = first render or same tab).
+  const prevTab = useRef<TabId | null>(null);
+  const travel =
+    prevTab.current && prevTab.current !== active && navW > 0 && motionRef.current
+      ? (SLOT[prevTab.current] - SLOT[active]) * ((navW - NAV_PAD * 2) / SLOT_COUNT)
+      : 0;
+  prevTab.current = active;
+  const renderTab = (tab: (typeof tabs)[number]) => (
+    <NavTab key={tab.id} tab={tab} selected={tab.id === active} narrow={narrow} travel={travel} onTab={onTab} />
+  );
 
   return (
     <View
@@ -397,7 +507,7 @@ export function BottomNav({ active, insets, maxWidth = 560, onTab, onScan }: Bot
       style={[s.navWrap, { bottom: navOffset(insets.bottom), left: sideMargin + insets.left, right: sideMargin + insets.right }]}
     >
       <View style={[s.navShadow, { maxWidth }]}>
-        <View style={[s.nav, s.navFallback]}>
+        <View style={[s.nav, s.navFallback]} onLayout={(e) => setNavW(e.nativeEvent.layout.width)}>
           {/* Four tabs with the scan button dead-centre: the Shopping List
               lives inside the Lists tab (its segmented control), so the bar
               stays symmetric — home · lists · SCAN · reminders · settings. */}
@@ -550,11 +660,13 @@ const useStyles = makeStyles((c) => ({
   // backdropFilter only applies on web; native gets the translucent fill.
   navFallback: { backgroundColor: c.navBg, borderColor: c.navBorder, backdropFilter: 'blur(22px) saturate(1.4)' } as ViewStyle,
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 68 },
-  // The reference's active-tab treatment: a solid lime rounded chip (the
-  // selected-tab green) behind the active icon + label, deep ink on top,
-  // present in both themes.
-  tabChip: { alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, paddingHorizontal: 11, borderRadius: 14 },
-  tabChipOn: { backgroundColor: c.selBg },
+  // The tab's chip: the layout container for the icon + label (the lime pill
+  // below fills it). Always transparent itself - selection is the pill's job.
+  tabChip: { alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, paddingHorizontal: 11 },
+  // The selected chip's lime pill (the reference's active-tab green, the
+  // theme's own selected surface): an absolute layer behind the icon + label,
+  // so it can glide between tab positions without ever touching the layout.
+  tabChipPill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 14, backgroundColor: c.selBg },
   tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
   scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },

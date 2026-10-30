@@ -23,6 +23,7 @@ import {
 } from '../preferences';
 import { isoToday } from '../scanner/dateParser';
 import { Brandmark, GlassIconButton, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
+import { TAB_MS, TAB_SLIDE, tabEnterDirection } from '../components/TabTransition';
 import { CategoryManager } from '../components/CategoryManager';
 import { FadeIn, PressScale } from '../components/Press';
 import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
@@ -84,11 +85,17 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const motionRef = useRef(motion);
   motionRef.current = motion;
 
-  // Gentle one-time fade-in of the settings content.
+  // Gentle one-time fade-in of the settings content, joined with the shared
+  // tab-switch slide (same 200 ms / 14 px vocabulary as every other screen —
+  // resolved once at mount from which tab the user came; 0 = no slide).
   const appear = useRef(new Animated.Value(motion ? 0 : 1)).current;
+  const enterX = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(appear, { toValue: 1, duration: motionRef.current ? 240 : 0, useNativeDriver: true }).start();
-  }, [appear]);
+    const dir = tabEnterDirection('settings');
+    if (dir !== 0 && motionRef.current) enterX.setValue(dir * TAB_SLIDE);
+    Animated.timing(enterX, { toValue: 0, duration: motionRef.current ? TAB_MS : 0, useNativeDriver: true }).start();
+    Animated.timing(appear, { toValue: 1, duration: motionRef.current ? TAB_MS : 0, useNativeDriver: true }).start();
+  }, [appear, enterX]);
 
   // The detail page slides in from the right edge with a soft fade, and the
   // root list drifts a little left for depth. Everything is transform/opacity
@@ -239,7 +246,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
 
   return (
     <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }] }}>
+      <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }, { translateX: enterX }] }}>
         <View style={[s.frame, s.rootFrame]}>
           <View style={s.header}>
             {/* The compact 38pt glass back circle: the header's title row

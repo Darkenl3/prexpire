@@ -11,6 +11,7 @@ import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
 import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
 import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
+import { TabTransition } from '../components/TabTransition';
 import { ItemRow } from '../components/ItemRow';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
@@ -266,31 +267,36 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           never resizes the scroller, so the content never jumps and the
           scroll direction never oscillates while it slides. */}
       <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={layout.maxContentWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
-      <ScrollView
-        style={[c.scroll, NO_RUBBER_BAND]}
-        onScroll={onScroll}
-        contentContainerStyle={[c.scrollContent, { paddingTop: HEADER_HEIGHT, paddingBottom: bottomClearance }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[c.frame, frame]}>
-          <AlertSpacer />
-          {split ? (
-            <View style={[c.columns, { columnGap }]}>
-              <View style={{ width: leftWidth }}>
+      {/* The tab-switch transition wraps ONLY the scrolling body - the glass
+          header above it is identical on every tab, so it stays outside the
+          fade and the persistent chrome never flickers on a switch. */}
+      <TabTransition tab="home">
+        <ScrollView
+          style={[c.scroll, NO_RUBBER_BAND]}
+          onScroll={onScroll}
+          contentContainerStyle={[c.scrollContent, { paddingTop: HEADER_HEIGHT, paddingBottom: bottomClearance }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[c.frame, frame]}>
+            <AlertSpacer />
+            {split ? (
+              <View style={[c.columns, { columnGap }]}>
+                <View style={{ width: leftWidth }}>
+                  {summary}
+                  {categorySection}
+                </View>
+                <View style={c.rightColumn}>{upcomingSection(true)}</View>
+              </View>
+            ) : (
+              <>
                 {summary}
                 {categorySection}
-              </View>
-              <View style={c.rightColumn}>{upcomingSection(true)}</View>
-            </View>
-          ) : (
-            <>
-              {summary}
-              {categorySection}
-              {upcomingSection(false)}
-            </>
-          )}
-        </View>
-      </ScrollView>
+                {upcomingSection(false)}
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </TabTransition>
       {notice && <Toast key={notice} text={notice} bottom={bottomClearance} motion={motion} onDone={onNoticeDone} />}
     </View>
   );

@@ -84,6 +84,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   return (
     <>
       <Page
+        tab="items"
         title={shopping ? 'Shopping List' : 'Items'}
         subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
         badge={badge}

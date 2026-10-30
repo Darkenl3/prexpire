@@ -3,11 +3,15 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles } from '../theme';
 import { useLayout } from '../layout';
-import { NAV_HEIGHT, navOffset } from './HomeComponents';
+import { NAV_HEIGHT, navOffset, type TabId } from './HomeComponents';
 import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
+import { TabTransition } from './TabTransition';
 import { AlertSpacer } from './ExpiryAlert';
 
 type Props = {
+  // Which tab this screen is - drives the shared enter transition (a gentle
+  // fade plus a very small slide in from the side the user came from).
+  tab: TabId;
   title: string;
   subtitle?: string;
   badge: number;
@@ -26,7 +30,7 @@ type Props = {
 
 // The frame shared by the Items, Reminders and Settings tabs: the same brand header as Home,
 // a page title, and a scrolling body that leaves room for the floating bottom nav.
-export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, dense = false, onNavigate, children }: Props) {
+export function Page({ tab, title, subtitle, badge, maxWidth = 720, headerAction, dense = false, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const c = useStyles();
@@ -46,28 +50,33 @@ export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, den
         onMenu={() => onNavigate('tab:settings')}
         onBell={() => onNavigate('tab:reminders')}
       />
-      <ScrollView
-        style={[c.scroll, NO_RUBBER_BAND]}
-        onScroll={onScroll}
-        contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[c.frame, frame]}>
-          <AlertSpacer />
-          <View style={[c.titleBlock, dense && c.titleBlockDense]}>
-            <View style={c.titleRow}>
-              <View style={c.titleText}>
-                <Text style={c.title} accessibilityRole="header">
-                  {title}
-                </Text>
-                {!!subtitle && <Text style={c.subtitle}>{subtitle}</Text>}
+      {/* The tab-switch transition wraps ONLY the scrolling body - the glass
+          header above it is identical on every tab, so keeping it outside the
+          fade means the persistent chrome never flickers on a switch. */}
+      <TabTransition tab={tab}>
+        <ScrollView
+          style={[c.scroll, NO_RUBBER_BAND]}
+          onScroll={onScroll}
+          contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[c.frame, frame]}>
+            <AlertSpacer />
+            <View style={[c.titleBlock, dense && c.titleBlockDense]}>
+              <View style={c.titleRow}>
+                <View style={c.titleText}>
+                  <Text style={c.title} accessibilityRole="header">
+                    {title}
+                  </Text>
+                  {!!subtitle && <Text style={c.subtitle}>{subtitle}</Text>}
+                </View>
+                {headerAction}
               </View>
-              {headerAction}
             </View>
+            {children}
           </View>
-          {children}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </TabTransition>
     </View>
   );
 }

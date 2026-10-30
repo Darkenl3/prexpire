@@ -98,7 +98,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
 
   if (!settings.reminders) {
     return (
-      <Page title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
+      <Page tab="reminders" title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
         <View style={s.off}>
           <View style={s.offIcon}>
             <Ionicons name="notifications-off-outline" size={26} color={t.textMuted} />
@@ -112,7 +112,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
   }
 
   return (
-    <Page title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
+    <Page tab="reminders" title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
       {/* The information banner: what this page shows and what notifications
           actually are here (in-app alerts while open, nothing in the
           background) — the same accurate message as before, in the
