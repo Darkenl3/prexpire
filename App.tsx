@@ -51,16 +51,22 @@ function writeHash(route: Route) {
   }
 }
 
-// Keyboard focus rings for the web build (react-native-web leaves them to the browser).
+// Keyboard focus rings for the web build (react-native-web leaves them to the
+// browser). The ring follows the active theme: the bright lime on the dark
+// page, the deep readable green on the light one.
 function useFocusStyles() {
+  const t = useTheme();
   useEffect(() => {
     if (!WEB || typeof document === 'undefined') return;
+    const ring = t === LIGHT ? t.green : t.mint;
     const style = document.createElement('style');
     style.textContent =
-      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible,input:focus-visible{outline:2px solid #8FD957;outline-offset:2px;border-radius:10px}';
+      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible,input:focus-visible{outline:2px solid ' +
+      ring +
+      ';outline-offset:2px;border-radius:10px}';
     document.head.appendChild(style);
     return () => style.remove();
-  }, []);
+  }, [t]);
 }
 
 function Shell() {
