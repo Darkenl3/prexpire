@@ -5,13 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
 import { PressScale } from './Press';
 
-// The brand wordmark: dark ink on light backgrounds, light ink on dark ones.
-// Both were cut from the same artwork (white background un-blended into
-// alpha), so they share geometry and the green X stays green in both.
-const wordmarkDarkInk = require('../../assets/wordmark-light.png');
-const wordmarkLightInk = require('../../assets/wordmark.png');
-// Cropped artwork size: 1228 x 294.
-const WORDMARK_ASPECT = 1228 / 294;
+// The brand wordmark, cut from the user's own logo artwork (transparent
+// PNGs, the black background un-blended into alpha): near-white ink for the
+// dark page, deep forest-green ink for the light page — the green X stays
+// green in both.
+const brandWhiteInk = require('../../assets/brand-white.png');
+const brandDarkInk = require('../../assets/brand-ink.png');
+// Artwork size: 1000 x 257.
+const BRAND_ASPECT = 1000 / 257;
 
 // Liquid-glass treatment for the round chrome buttons: the same visual
 // language as the shell's glass tab bar AND its scanner-screen glass circles
@@ -34,30 +35,23 @@ export const GLASS_STRIP_FX = {
   WebkitBackdropFilter: 'blur(20px) saturate(160%)',
 };
 
-// The shared liquid-glass circle: 46pt with a hairline rim, matching the
-// scanner screen's native GlassCircle controls one for one, behind the
-// header's menu and bell buttons, Settings' back buttons and the
-// New-category page's back button, so every round control in the app shares
-// the exact same glass, dimensions, shadow and press feedback. The border
-// colour is theme-set at render time (see GlassIconButton) because the
-// hairline reads differently on light and dark pages.
+// The shared liquid-glass circle: 46pt, matching the scanner screen's native
+// GlassCircle controls one for one, behind the header's menu and bell buttons,
+// Settings' back buttons and the New-category page's back button, so every
+// round control in the app shares the exact same glass, dimensions, shadow and
+// press feedback. Borderless - the frosted fill alone reads as glass.
 export const GLASS_BUTTON: ViewStyle = {
   width: 46,
   height: 46,
   borderRadius: 23,
   alignItems: 'center',
   justifyContent: 'center',
-  borderWidth: StyleSheet.hairlineWidth,
   // A faint cool shadow keeps the glass readable on the light page.
   shadowColor: '#64748B',
   shadowOpacity: 0.08,
   shadowRadius: 6,
   shadowOffset: { width: 0, height: 2 },
 };
-
-// The hairline rim for the glass circles: bright-on-dark like the scanner's
-// native glass circles, a soft ink line on the light page.
-export const glassRim = (light: boolean) => (light ? 'rgba(16,29,27,0.14)' : 'rgba(255,255,255,0.14)');
 
 export function GlassIconButton({
   icon,
@@ -91,7 +85,7 @@ export function GlassIconButton({
       style={[
         GLASS_BUTTON,
         size !== 46 && { width: size, height: size, borderRadius: size / 2 },
-        { backgroundColor: c.glassBg, borderColor: glassRim(c === LIGHT) },
+        { backgroundColor: c.glassBg },
         GLASS_FX as ViewStyle,
         style,
       ]}
@@ -107,12 +101,12 @@ export function GlassIconButton({
 const hatchFx = (line: string): ViewStyle =>
   ({ backgroundImage: `repeating-linear-gradient(45deg, ${line} 0px, ${line} 2px, transparent 2px, transparent 9px)` } as ViewStyle);
 
-// The brand wordmark: the real logo in every theme - dark forest-green
-// letters with the green X on light, near-white letters on dark.
+// The brand wordmark: the user's own logo in every theme - deep green ink
+// on the light page, near-white ink on the dark one, green X in both.
 export function Brandmark({ height }: { height: number }) {
   const c = useTheme();
-  const source = c === LIGHT ? wordmarkDarkInk : wordmarkLightInk;
-  const width = Math.round(height * WORDMARK_ASPECT);
+  const source = c === LIGHT ? brandDarkInk : brandWhiteInk;
+  const width = Math.round(height * BRAND_ASPECT);
   return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
 }
 
@@ -135,14 +129,28 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
   );
 }
 
-export function AttentionCard({ title, subtitle, onPress }: { title: string; subtitle: string[]; onPress: () => void }) {
+export function AttentionCard({
+  title,
+  subtitle,
+  onPress,
+  tone = 'red',
+}: {
+  title: string;
+  subtitle: string[];
+  onPress: () => void;
+  // 'red' is the urgency card; 'green' is its calm counterpart for when
+  // nothing needs attention ("All caught up").
+  tone?: 'red' | 'green';
+}) {
   const c = useTheme();
   const s = useStyles();
+  const ok = tone === 'green';
   return (
-    <PressScale onPress={onPress} accessibilityRole="button" style={s.alert} scaleTo={0.985}>
-      <View style={[s.alertIcon, { backgroundColor: c.alertIconBg }]}>
-        {/* Red in both themes: urgency reads the same whatever the theme. */}
-        <Ionicons name="warning" size={24} color={c.red} />
+    <PressScale onPress={onPress} accessibilityRole="button" style={[s.alert, ok && s.alertOk]} scaleTo={0.985}>
+      <View style={[s.alertIcon, { backgroundColor: ok ? c.okIconBg : c.alertIconBg }]}>
+        {/* Red in both themes: urgency reads the same whatever the theme.
+            The green twin speaks in the mint family instead. */}
+        <Ionicons name={ok ? 'checkmark-circle' : 'warning'} size={24} color={ok ? c.mint : c.red} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
@@ -364,27 +372,31 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
         aria-selected={selected}
         accessibilityLabel={tab.label}
       >
-        <View>
-          <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.mint : c.textMuted} />
-          {tab.id === 'reminders' && badge > 0 && (
-            <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.red, borderColor: c.navBg }]}>
-              <Text style={s.badgeText}>{badge}</Text>
-            </View>
-          )}
-          {tab.id === 'items' && shopBadge > 0 && (
-            <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.mint, borderColor: c.navBg }]}>
-              <Text style={s.shopBadgeText}>{shopBadge}</Text>
-            </View>
-          )}
+        {/* The reference's active state: the icon + label sit on a subtle
+            pale-green rounded chip; inactive tabs read as plain muted icons. */}
+        <View style={[s.tabChip, selected && s.tabChipOn]}>
+          <View>
+            <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.mint : c.textMuted} />
+            {tab.id === 'reminders' && badge > 0 && (
+              <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.red, borderColor: c.navBg }]}>
+                <Text style={s.badgeText}>{badge}</Text>
+              </View>
+            )}
+            {tab.id === 'items' && shopBadge > 0 && (
+              <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.mint, borderColor: c.navBg }]}>
+                <Text style={s.shopBadgeText}>{shopBadge}</Text>
+              </View>
+            )}
+          </View>
+          <Text
+            style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.mint : c.textMuted }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
+            {tab.label}
+          </Text>
         </View>
-        <Text
-          style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.mint : c.textMuted }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-        >
-          {tab.label}
-        </Text>
       </PressScale>
     );
   };
@@ -452,6 +464,8 @@ const useStyles = makeStyles((c) => ({
     ...(c === LIGHT ? CARD_SHADOW : null),
   },
   alertIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  // The calm green twin of the attention card.
+  alertOk: { borderColor: c.okBorder, backgroundColor: c.okBg },
   alertTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
   alertSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', marginTop: 2 },
   section: {
@@ -504,9 +518,9 @@ const useStyles = makeStyles((c) => ({
     paddingRight: 8,
     gap: 11,
     backgroundColor: c.surface,
-    // Light: borderless white cards floating on soft shadows; dark keeps
-    // its hairline, which is what separates surfaces there.
-    borderWidth: c === LIGHT ? 0 : 1,
+    // A fine hairline on BOTH themes now: the light page's white cards need
+    // the #E4ECEF edge to stay visible on the near-white page.
+    borderWidth: 1,
     borderColor: c.surfaceBorder,
     ...(c === LIGHT ? CARD_SHADOW : null),
   },
@@ -521,7 +535,17 @@ const useStyles = makeStyles((c) => ({
   pillCompact: { height: 26, paddingHorizontal: 9 },
   pillTextCompact: { fontSize: 13 },
   navWrap: { position: 'absolute', alignItems: 'center' },
-  navShadow: { width: '100%', borderRadius: 34, shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
+  navShadow: {
+    width: '100%',
+    borderRadius: 34,
+    shadowColor: '#000',
+    // The white nav pill floats on a soft airy shadow on the light page;
+    // the dark glass pill keeps its deeper anchor.
+    shadowOpacity: c === LIGHT ? 0.13 : 0.45,
+    shadowRadius: c === LIGHT ? 14 : 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+  },
   nav: {
     height: 68,
     borderRadius: 34,
@@ -533,7 +557,11 @@ const useStyles = makeStyles((c) => ({
   },
   // backdropFilter only applies on web; native gets the translucent fill.
   navFallback: { backgroundColor: c.navBg, borderColor: c.navBorder, backdropFilter: 'blur(22px) saturate(1.4)' } as ViewStyle,
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, height: 68 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 68 },
+  // The reference's active-tab treatment: a subtle pale-green rounded chip
+  // behind the active icon + label, present in both themes.
+  tabChip: { alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, paddingHorizontal: 11, borderRadius: 14 },
+  tabChipOn: { backgroundColor: c.chipOnBg },
   tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
   scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },

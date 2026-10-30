@@ -136,10 +136,6 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
             {WEB ? 'Saved in this browser' : 'Saved on this device'} — no account needed
           </Text>
         </View>
-        <View style={s.profileStat}>
-          <Text style={s.profileCount}>{saved.length}</Text>
-          <Text style={s.profileCountLabel}>{saved.length === 1 ? 'item added' : 'items added'}</Text>
-        </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
       </PressScale>
 
@@ -895,9 +891,6 @@ const useStyles = makeStyles((t) => ({
   avatar: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', backgroundColor: '#D9FBF0' },
   profileTitle: { color: t.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
   profileSub: { color: t.textSub, fontSize: 13.5, marginTop: 2 },
-  profileStat: { alignItems: 'flex-end' },
-  profileCount: { color: t.text, fontSize: 20, fontWeight: '700' },
-  profileCountLabel: { color: t.textMuted, fontSize: 12 },
   heroCard: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 16, marginBottom: 24, borderRadius: 20, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, ...(t === LIGHT ? CARD_SHADOW_LIFTED : null) },
   heroAvatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: '#D9FBF0', marginBottom: 12 },
   heroTitle: { color: t.text, fontSize: 21, fontWeight: '700', letterSpacing: -0.3 },

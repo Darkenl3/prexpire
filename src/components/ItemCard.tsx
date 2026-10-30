@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, useTheme, LIGHT, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
+import { makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
 import { useCategories } from '../categories';
 import { useItems, type Item } from '../items';
 import { expiryStatus } from '../preferences';
@@ -13,11 +13,10 @@ import { categoryArt } from './ResultSheet';
 import { FadeIn, PressScale } from './Press';
 import { SmallButton } from './SettingsRows';
 
-// The redesigned item card for the Lists tab (the reference screenshot's
-// layout): a wide rounded glass card per tracked product — a tinted rounded
-// square carrying the category's art on the left, the name / category / expiry
-// date meta rows and a horizontal expiry progress bar in the middle, and on
-// the right the three-dot action menu above the days-left pill. Every value is
+// The redesigned item card for the Lists tab (the reference's compact white
+// card): a rounded pale-green art square carrying the category's art on the
+// left, the name / category / expiry-date meta rows in the middle, and on the
+// right the three-dot action menu above the days-left pill. Every value is
 // real data (the item's own fields); nothing is sampled or invented.
 
 // The built-ins' chip/row glyphs (custom categories carry their own icon).
@@ -72,16 +71,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
   const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day left' : `${days} days left`;
 
-  // The progress bar: how much of the item's TRACKED window remains — from the
-  // day it was added to its expiry date. A product added yesterday with 60 days
-  // left sits near full; the same product weeks later has visibly run down; an
-  // expired one is empty. (Scanned and manual items alike always carry addedAt.)
-  const total = daysUntil(item.expiresOn, new Date(item.addedAt));
-  const progress = total > 0 ? Math.min(Math.max(days / total, 0), 1) : days > 0 ? 1 : 0;
-  const barColor = status === 'expired' ? t.red : status === 'soon' ? t.amber : t.mint;
-
   const known = custom.find((cat) => cat.id === item.category);
-  const tint = categoryTint(item.category, known?.tint);
   const icon = categoryIcon(item.category, known?.icon);
 
   const closeMenu = () => {
@@ -112,15 +102,15 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   };
 
   return (
-    <View style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW_LIFTED] : [])]}>
-      {/* Left: the product's art in a rounded square tinted by its category —
-          the image slot of the reference card, carrying real category data. */}
-      <View style={[s.thumb, compact && s.thumbCompact, { backgroundColor: t.tints[tint].top, borderColor: t.tints[tint].border }]}>
+    <View style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW] : [CARD_SHADOW_DARK])]}>
+      {/* Left: the product's art in a rounded pale-green square — the image
+          slot of the reference card, carrying real category data. */}
+      <View style={[s.thumb, compact && s.thumbCompact]}>
         {categoryArt(item.category, compact ? 26 : 32)}
       </View>
-      {/* Middle: name, category, expiry date, and the expiry progress bar.
-          The name wraps to a second line before it ever cuts to an ellipsis,
-          so long product names stay readable. */}
+      {/* Middle: name, category and expiry date. The name wraps to a second
+          line before it ever cuts to an ellipsis, so long product names stay
+          readable. */}
       <View style={s.body}>
         <Text style={[s.name, compact && s.nameCompact]} numberOfLines={2}>
           {item.name}
@@ -136,13 +126,6 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           <Text style={s.metaText} numberOfLines={1}>
             {formatDate(item.expiresOn, item.datePrecision)}
           </Text>
-        </View>
-        <View
-          style={s.barTrack}
-          accessibilityRole="progressbar"
-          accessibilityLabel={`${Math.round(progress * 100)} percent of its tracked time left`}
-        >
-          <View style={[s.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: barColor }]} />
         </View>
       </View>
       {/* Right: the three-dot action menu above the days-left pill. */}
@@ -200,31 +183,32 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
 }
 
 const useStyles = makeStyles((t) => ({
-  // The wide glass card: dark translucent surface with a hairline on dark,
-  // a borderless floating white card on light. Sized to the reference's
-  // proportions — a bigger art square and real breathing room between the
-  // name, meta rows, progress bar and side column, so the subtexts read
-  // clearly instead of crowding.
+  // The compact white product card (the reference's layout): a rounded
+  // pale-green art square on the left, the name / category / expiry-date meta
+  // rows in the middle, and the three-dot menu above the days-left pill on
+  // the right. White with a fine hairline on the light page, the dark theme's
+  // translucent glass — every value is real data (the item's own fields).
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 18,
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
     backgroundColor: t.surface,
-    borderWidth: t === LIGHT ? 0 : 1,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
   },
-  cardCompact: { paddingVertical: 11, paddingHorizontal: 12, gap: 11 },
-  // The art square (the reference's product-image slot).
+  cardCompact: { paddingVertical: 9, paddingHorizontal: 10, gap: 10 },
+  // The art square: the reference's pale-green image tile, in both themes
+  // (the dark page gets the same soft green so the category art pops).
   thumb: {
-    width: 68,
-    height: 68,
-    borderRadius: 16,
-    borderWidth: 1,
+    width: 64,
+    height: 64,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: t.iconTile,
   },
   thumbCompact: { width: 52, height: 52, borderRadius: 13 },
   body: { flex: 1, minWidth: 0, gap: 4 },
@@ -236,9 +220,6 @@ const useStyles = makeStyles((t) => ({
   // Subtexts breathe a little cyan (theme.textSub) and grow a size, so the
   // category and date read at a glance like the reference's metadata rows.
   metaText: { color: t.textSub, fontSize: 13.5, flexShrink: 1 },
-  // The expiry progress bar: a hairline track with the status-coloured fill.
-  barTrack: { height: 7, borderRadius: 4, backgroundColor: t.separator, marginTop: 6, overflow: 'hidden' },
-  barFill: { height: 7, borderRadius: 4 },
   // Slimmed so the name column keeps the width it needs for long products;
   // the pill shrinks its own font before it ever overflows.
   side: { alignItems: 'flex-end', gap: 9, maxWidth: 106 },

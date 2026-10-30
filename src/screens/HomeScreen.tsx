@@ -159,7 +159,16 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         ]}
         onPress={() => go('tab:reminders')}
       />
-    ) : null;
+    ) : (
+      // Nothing urgent: the same card in its calm green register, so the
+      // slot always tells the user where they stand.
+      <AttentionCard
+        tone="green"
+        title="All caught up!"
+        subtitle={[items.length === 0 ? 'Nothing to watch yet' : 'Nothing needs attention']}
+        onPress={() => go('tab:reminders')}
+      />
+    );
 
   const categorySection = (
     <>

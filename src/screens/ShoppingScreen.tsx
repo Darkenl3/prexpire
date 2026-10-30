@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Modal, Pressable, StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { makeStyles, useTheme, accents, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED } from '../theme';
+import { makeStyles, useTheme, accents, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED } from '../theme';
 import { useCategories } from '../categories';
 import { useItems, type CategoryId } from '../items';
 import { useSettings } from '../settings';
@@ -506,11 +506,14 @@ const useStyles = makeStyles((t) => ({
     minHeight: 62,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: t.surface,
-    borderWidth: t === LIGHT ? 0 : 1,
+    // The item cards' language: a fine hairline on both themes so the white
+    // rows stay visible on the near-white page, plus the soft light shadow
+    // (and a soft black anchor on the dark page).
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
-    ...(t === LIGHT ? CARD_SHADOW : null),
+    ...(t === LIGHT ? CARD_SHADOW : CARD_SHADOW_DARK),
   },
   check: {
     width: 26,

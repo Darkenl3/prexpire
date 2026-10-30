@@ -43,6 +43,11 @@ export type Palette = {
   alertBg: string;
   alertBorder: string;
   alertIconBg: string;
+  // The attention card's GREEN counterpart ("All caught up"): the same card
+  // language in the mint family, for when nothing needs attention.
+  okBg: string;
+  okBorder: string;
+  okIconBg: string;
   dangerBg: string;
   dangerBorder: string;
   dialogBg: string;
@@ -93,6 +98,9 @@ export const DARK: Palette = {
   alertBg: '#2A1216',
   alertBorder: '#5A2530',
   alertIconBg: '#461B22',
+  okBg: '#0C2A21',
+  okBorder: '#1E5040',
+  okIconBg: '#123D2F',
   dangerBg: '#140F12',
   dangerBorder: '#4A2328',
   dialogBg: '#0E1A1E',
@@ -139,35 +147,36 @@ export const DARK: Palette = {
 };
 
 export const LIGHT: Palette = {
-  // The reference's airy light theme: a cool blue-white page where white
-  // cards float on very soft shadows, separated by contrast and fine
-  // #E5EDF3 hairlines rather than heavy borders.
-  bg: '#F9FCFE',
+  // The light reference's airy palette: a very light cool-gray page where
+  // white cards float on soft shadows and fine #E4ECEF hairlines, deep
+  // green ink, a mint/emerald accent, pale-green image tiles and muted
+  // blue-gray secondary text.
+  bg: '#F5F8FA',
   surface: '#FFFFFF',
-  surfaceBorder: '#E5EDF3',
-  text: '#111827',
-  textMuted: '#64748B',
-  textSub: '#527A85',
+  surfaceBorder: '#E4ECEF',
+  text: '#17352F',
+  textMuted: '#82929F',
+  textSub: '#5E7E8E',
   // The accent takes its hue from the wordmark's green X: a light, fresh
   // green (links, active tab, selected states).
-  mint: '#1BC491',
-  scan: '#12C894',
-  scanInk: '#04241B',
+  mint: '#16C58B',
+  scan: '#16C58B',
+  scanInk: '#FFFFFF',
   // Expiring-soon accents: strong enough to read clearly on pastel fills
   // (never washed-out).
   amber: '#DFA42E',
   amberText: '#966E12',
   green: '#10A374',
   red: '#D92B3E',
-  navBg: 'rgba(250,253,252,0.82)',
-  navBorder: 'rgba(16,29,27,0.10)',
-  // Every product row's icon square: the SAME light cool-gray for all
-  // items, like the reference's Coming up next list.
-  iconTile: '#EAF1F7',
-  cardAlt: '#F4F8FB',
-  separator: '#E5EDF3',
-  chipOnBg: 'rgba(18,192,140,0.12)',
-  chipOnBorder: 'rgba(18,192,140,0.5)',
+  navBg: 'rgba(255,255,255,0.94)',
+  navBorder: '#E4ECEF',
+  // Every product row's icon square: the reference's pale green image tile —
+  // the same #E1F7EC the product cards' art squares use.
+  iconTile: '#E1F7EC',
+  cardAlt: '#F0F4F7',
+  separator: '#E4ECEF',
+  chipOnBg: 'rgba(22,197,139,0.15)',
+  chipOnBorder: 'rgba(22,197,139,0.5)',
   btnMintBg: 'rgba(0,168,107,0.10)',
   btnMintBorder: 'rgba(0,168,107,0.4)',
   btnDangerBg: 'rgba(217,43,62,0.08)',
@@ -175,6 +184,9 @@ export const LIGHT: Palette = {
   alertBg: '#FDEFEF',
   alertBorder: '#F1CBCF',
   alertIconBg: '#F8DBDF',
+  okBg: '#E8F7EF',
+  okBorder: '#C6EBD9',
+  okIconBg: '#D5F1E2',
   dangerBg: '#FDF1F2',
   dangerBorder: '#F5C9CD',
   dialogBg: '#FFFFFF',
@@ -184,15 +196,14 @@ export const LIGHT: Palette = {
   statusOkBg: 'rgba(0,168,107,0.08)',
   statusWarnBorder: '#E3C77E',
   statusWarnBg: '#F8EFD8',
-  // The header's liquid-glass circles keep one translucent treatment in both
-  // themes - but mirrored: a whisper of light on the dark page, a whisper of
-  // dark on the light page, so the glass is always visible, never invisible.
-  glassBg: 'rgba(15,23,42,0.08)',
+  // The header's liquid-glass circles: a whisper of light on the dark page,
+  // bright white glass on the light page — always visible, never gray.
+  glassBg: 'rgba(255,255,255,0.65)',
   glassBorder: 'rgba(15,23,42,0.10)',
   // The light page's glass header strip: the airy blue-white bg at 72% over
   // a blur — light glass stays brighter and more opaque than dark glass (the
   // 0.72 keeps dark text readable while content still frosts through).
-  glassHeaderBg: 'rgba(249,252,254,0.72)',
+  glassHeaderBg: 'rgba(245,248,250,0.78)',
   // Soft pastel tiles: mint, sky, lilac, blush and cream plus the extended
   // palette - the category cards read as gentle colour cards with no borders,
   // like the reference.
@@ -218,11 +229,11 @@ export const LIGHT: Palette = {
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance.
-    amber: { bg: '#F9E7B8', text: '#8A600C' },
-    green: { bg: '#C6EDD8', text: '#0A7A55' },
-    red: { bg: '#F9DCDF', text: '#B3233B' },
+    amber: { bg: '#FCF1D8', text: '#8A600C' },
+    green: { bg: '#DFF6EA', text: '#0E8A5F' },
+    red: { bg: '#FDE9EC', text: '#C62839' },
   },
-  switchColors: { track: '#CBD5E1', trackOn: '#12BE8A', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
+  switchColors: { track: '#D8E1E8', trackOn: '#16C58B', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
 export type Tint =
@@ -266,6 +277,17 @@ export const CARD_SHADOW_LIFTED: ViewStyle = {
   shadowOpacity: 0.09,
   shadowRadius: 16,
   elevation: 4,
+};
+
+// The dark theme's depth cue: on the near-black page a hairline alone leaves
+// the glass cards reading flat, so they float on a soft black shadow instead -
+// the dark register of the light theme's airy blue-gray shadows.
+export const CARD_SHADOW_DARK: ViewStyle = {
+  shadowColor: '#000000',
+  shadowOffset: { width: 0, height: 5 },
+  shadowOpacity: 0.45,
+  shadowRadius: 12,
+  elevation: 8,
 };
 
 export const space = { gutter: 14, gridGap: 9 };

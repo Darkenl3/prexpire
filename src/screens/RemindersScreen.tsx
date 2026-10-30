@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tone } from '../theme';
+import { makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, type Tone } from '../theme';
 import { useItems, type Item } from '../items';
 import { useCategories } from '../categories';
 import { useSettings } from '../settings';
@@ -10,7 +10,6 @@ import { daysUntil } from '../scanner/dateParser';
 import { Page } from '../components/Page';
 import { PressScale } from '../components/Press';
 import { categoryArt } from '../components/ResultSheet';
-import { categoryTint } from '../components/ItemCard';
 import { SmallButton } from '../components/SettingsRows';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
@@ -38,22 +37,20 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
   const t = useTheme();
   const s = useStyles();
   const { settings, formatDate } = useSettings();
-  const { nameOf, custom } = useCategories();
+  const { nameOf } = useCategories();
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
   const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Due today' : days === 1 ? '1 day' : `${days} days`;
-  const known = custom.find((cat) => cat.id === item.category);
-  const tint = categoryTint(item.category, known?.tint);
   return (
     <PressScale
       onPress={onPress}
       scaleTo={0.985}
       accessibilityRole="button"
       accessibilityLabel={`${item.name}, ${pill}`}
-      style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW] : [])]}
+      style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW] : [CARD_SHADOW_DARK])]}
     >
-      <View style={[s.thumb, compact && s.thumbCompact, { backgroundColor: t.tints[tint].top, borderColor: t.tints[tint].border }]}>
+      <View style={[s.thumb, compact && s.thumbCompact]}>
         {categoryArt(item.category, compact ? 26 : 30)}
       </View>
       <View style={s.body}>
@@ -193,7 +190,7 @@ const useStyles = makeStyles((t) => ({
     padding: 14,
     borderRadius: 16,
     backgroundColor: t.surface,
-    borderWidth: t === LIGHT ? 0 : 1,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
     marginBottom: 18,
     ...(t === LIGHT ? CARD_SHADOW : null),
@@ -230,9 +227,10 @@ const useStyles = makeStyles((t) => ({
   list: { gap: 10 },
   listCompact: { gap: 8 },
 
-  // One reminder card: the item cards' glass language (hairline on dark,
-  // floating white on light), sized to the reference's proportions — with the
-  // same breathing room the Lists tab's bigger cards now carry.
+  // One reminder card: the item cards' language — white with a fine
+  // #E4ECEF hairline and a soft shadow on the light page (so it stays
+  // clearly visible against the near-white page), translucent glass with a
+  // hairline on dark.
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -241,17 +239,18 @@ const useStyles = makeStyles((t) => ({
     paddingHorizontal: 14,
     borderRadius: 17,
     backgroundColor: t.surface,
-    borderWidth: t === LIGHT ? 0 : 1,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
   },
   cardCompact: { paddingVertical: 10, paddingHorizontal: 11, gap: 11 },
+  // The art square: the same pale-green tile the item cards use.
   thumb: {
     width: 60,
     height: 60,
     borderRadius: 15,
-    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: t.iconTile,
   },
   thumbCompact: { width: 50, height: 50, borderRadius: 13 },
   body: { flex: 1, minWidth: 0 },
@@ -260,17 +259,18 @@ const useStyles = makeStyles((t) => ({
   pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontSize: 13, fontWeight: '700' },
 
-  // The "All caught up!" empty card: a quieter surface than the content
-  // cards, with the calendar medallion and its mint check badge.
+  // The "All caught up!" empty card: a quiet but clearly-visible card on
+  // the light page too — hairline plus the soft shadow.
   caughtUp: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
     padding: 18,
     borderRadius: 16,
-    backgroundColor: t.cardAlt,
-    borderWidth: t === LIGHT ? 0 : 1,
+    backgroundColor: t.surface,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
+    ...(t === LIGHT ? CARD_SHADOW : null),
   },
   caughtUpIcon: {
     width: 52,

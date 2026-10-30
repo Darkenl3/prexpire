@@ -17,13 +17,16 @@ type Props = {
   // screen's "Add item" capsule). Vertically centered on the title +
   // subtitle pair, like the reference's prominent mint action button.
   headerAction?: ReactNode;
+  // Tighter title spacing so the Lists tab fits more products above the
+  // fold (the reference's compact header rhythm).
+  dense?: boolean;
   onNavigate: (route: string) => void;
   children: ReactNode;
 };
 
 // The frame shared by the Items, Reminders and Settings tabs: the same brand header as Home,
 // a page title, and a scrolling body that leaves room for the floating bottom nav.
-export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, onNavigate, children }: Props) {
+export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, dense = false, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const c = useStyles();
@@ -51,7 +54,7 @@ export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, onN
       >
         <View style={[c.frame, frame]}>
           <AlertSpacer />
-          <View style={c.titleBlock}>
+          <View style={[c.titleBlock, dense && c.titleBlockDense]}>
             <View style={c.titleRow}>
               <View style={c.titleText}>
                 <Text style={c.title} accessibilityRole="header">
@@ -74,6 +77,8 @@ const useStyles = makeStyles((c) => ({
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   titleBlock: { marginTop: 6, marginBottom: 18 },
+  // The Lists tab's tighter rhythm: more products above the fold.
+  titleBlockDense: { marginTop: 2, marginBottom: 10 },
   // The title and its optional right-side action ("Add item") share one row;
   // the text column shrinks first so the action never wraps or clips.
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },

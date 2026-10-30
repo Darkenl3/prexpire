@@ -17,21 +17,19 @@ import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
 
 type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
 
-// The search field appears once there is enough to look through; below this the
-// list is still glanceable at full length (and the field never eats that space).
-const SEARCH_FROM = 8;
-
 // Labels for the sort picker, in the reference's dropdown wording; the Settings
 // page spells the same values out in full, and both always agree because they
 // edit the same preference.
 const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recent', name: 'A–Z' };
 
-// The Lists tab, redesigned to the reference screenshot: the prominent mint
-// "Add item" capsule beside the title, the Items / Shopping list segmented
-// switch, icon category chips, the count + sort-by toolbar, wide glass item
-// cards (art square, meta rows, expiry progress bar, actions menu, days-left
-// pill) and the waste-reduction summary card under the list. Everything reads
-// the same real data as before — no sample products, no new dependencies.
+// The Lists tab, redesigned to the light reference: the compact title block
+// with the prominent mint "Add item" capsule, the white rounded Items /
+// Shopping list segmented control with small integrated count badges, the
+// scrollable category chips, the search field beside the sort picker, the
+// live count with real expired/valid status badges, and compact white
+// product cards (pale-green art square, meta rows, thin expiry bar, days
+// pill). Everything reads the same real data as before — no sample products,
+// no new dependencies.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { items } = useItems();
   const { settings, update } = useSettings();
@@ -60,12 +58,16 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
     () => sortItems(settings.showExpired ? searched : searched.filter((i) => expiryStatus(i.expiresOn, settings.warningDays) !== 'expired'), settings.sort),
     [searched, settings.showExpired, settings.sort, settings.warningDays],
   );
-  // The amber half of the toolbar's count: tracked products inside the warning
-  // window (the same status the cards' day pills already colour amber).
-  const soon = useMemo(() => searched.filter((i) => expiryStatus(i.expiresOn, settings.warningDays) === 'soon').length, [searched, settings.warningDays]);
+  // The toolbar's status badges, both computed from the real filtered items:
+  // what has already expired, and what is still valid.
+  const valid = searched.length - expired.length;
 
-  const showSearch = items.length >= SEARCH_FROM || needle.length > 0;
-  const pills: PillColors = { offBg: c.cardAlt, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: c.scanInk };
+  const pills: PillColors =
+    c === LIGHT
+      ? // The reference's chips: white inactive capsules with a fine gray
+        // border, solid mint selected with white ink.
+        { offBg: c.surface, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: '#FFFFFF' }
+      : { offBg: c.cardAlt, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: c.scanInk };
   // Arriving from a Home category tile: scroll the pill row so that tile's
   // pill (solid green) is on screen instead of far to the right.
   const { scrollRef: pillsScroll, note: notePill } = useScrollSelectedIntoView(filter);
@@ -93,6 +95,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
         subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
         badge={badge}
         maxWidth={shopping ? 640 : undefined}
+        dense
         headerAction={headerAction}
         onNavigate={onNavigate}
       >
@@ -140,11 +143,6 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
           <ShoppingListBody addOpen={shopAddOpen} setAddOpen={setShopAddOpen} onToast={setShopToast} />
         ) : (
           <>
-            {showSearch && (
-              <View style={s.searchWrap}>
-                <SearchField value={query} onChange={setQuery} />
-              </View>
-            )}
             <ScrollView
               ref={pillsScroll}
               horizontal
@@ -170,30 +168,43 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 </View>
               ))}
             </ScrollView>
-            {/* The toolbar: the visible count (with the amber "expiring soon"
-                half) on the left, "Sort by" with its pills aligned right. */}
-            <View style={s.toolbar}>
-              <View style={s.toolbarMeta}>
-                <Text style={s.metaText}>{shown.length === 1 ? '1 item' : `${shown.length} items`}</Text>
-                {soon > 0 && <Text style={s.soonText}>{soon === 1 ? '1 expiring soon' : `${soon} expiring soon`}</Text>}
+            {/* Search beside the sort picker (the reference's row below the
+                chips): the field filters real products by name; the picker opens
+                the same shared sort sheet as before. */}
+            <View style={s.searchSortRow}>
+              <View style={s.searchWrap}>
+                <SearchField value={query} onChange={setQuery} />
               </View>
-              <View style={s.sortRow}>
-                <Text style={s.sortLabel}>Sort by</Text>
-                {/* One picker pill for the whole sort control: the current
-                    order with a dropdown chevron, opening the iOS-style sheet —
-                    the three side-by-side pills took too much of the row. */}
-                <PressScale
-                  onPress={() => setSortOpen(true)}
-                  scaleTo={0.96}
-                  style={s.sortBtn}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Sort by ${SORT_SHORT[settings.sort]}. Change sort order.`}
-                >
-                  <Text style={s.sortBtnText} numberOfLines={1}>
-                    {SORT_SHORT[settings.sort]}
+              <PressScale
+                onPress={() => setSortOpen(true)}
+                scaleTo={0.96}
+                style={s.sortBtn}
+                accessibilityRole="button"
+                accessibilityLabel={`Sort by ${SORT_SHORT[settings.sort]}. Change sort order.`}
+              >
+                <Ionicons name="swap-vertical" size={15} color={c.textMuted} />
+                <Text style={s.sortBtnText} numberOfLines={1}>
+                  {SORT_SHORT[settings.sort]}
+                </Text>
+                <Ionicons name="chevron-down" size={14} color={c.textMuted} />
+              </PressScale>
+            </View>
+            {/* The count row: the live total on the left, real expired/valid
+                status badges on the right — every number is computed from the
+                actual filtered items, never hardcoded. */}
+            <View style={s.toolbar}>
+              <Text style={s.metaText}>{searched.length === 1 ? '1 item' : `${searched.length} items`}</Text>
+              <View style={s.badgeRow}>
+                <View style={[s.countBadge, { backgroundColor: c.pills.red.bg }]}>
+                  <Ionicons name="alert-circle-outline" size={12} color={c.pills.red.text} />
+                  <Text style={[s.countBadgeText, { color: c.pills.red.text }]}>
+                    {expired.length} expired
                   </Text>
-                  <Ionicons name="chevron-down" size={14} color={c.textMuted} />
-                </PressScale>
+                </View>
+                <View style={[s.countBadge, { backgroundColor: c.pills.green.bg }]}>
+                  <Ionicons name="checkmark-circle-outline" size={12} color={c.pills.green.text} />
+                  <Text style={[s.countBadgeText, { color: c.pills.green.text }]}>{valid} valid</Text>
+                </View>
               </View>
             </View>
             {!settings.showExpired && expired.length > 0 && (
@@ -275,15 +286,16 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 999,
     backgroundColor: t.mint,
     ...(t === LIGHT
-      ? { shadowColor: '#12C894', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 3 }
+      ? { shadowColor: '#16C58B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 3 }
       : { shadowColor: '#0B3B2E', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6 }),
   },
   addBtnText: { color: t.scanInk, fontSize: 15, fontWeight: '700' },
 
-  // The Items / Shopping list segmented control (the tab's two views): a
-  // full-width rounded track with two 44pt segments, the selected side filled
-  // mint with the count chip — the clearest possible "expiring vs to buy"
-  // separation, and it still fits the narrowest iPhones.
+  // The Items / Shopping list segmented control (the tab's two views), in
+  // the reference's language: a white rounded container, the selected side
+  // filled emerald with white ink and a small pale-green count badge, the
+  // inactive side quiet gray with a soft gray badge — small integrated
+  // badges, never oversized bubbles.
   viewSwitch: {
     flexDirection: 'row',
     gap: 4,
@@ -291,8 +303,8 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: t.surfaceBorder,
-    backgroundColor: t.cardAlt,
-    marginBottom: 16,
+    backgroundColor: t === LIGHT ? t.surface : t.cardAlt,
+    marginBottom: 12,
   },
   seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
   segOn: { backgroundColor: t.mint },
@@ -305,42 +317,43 @@ const useStyles = makeStyles((t) => ({
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: t === LIGHT ? 'rgba(16,29,27,0.08)' : 'rgba(255,255,255,0.10)',
+    // Inactive badges carry enough fill to read at a glance on the white
+    // container (the old near-invisible tint is gone).
+    backgroundColor: t === LIGHT ? 'rgba(130,146,159,0.22)' : 'rgba(255,255,255,0.12)',
   },
-  segCountOn: { backgroundColor: 'rgba(4,36,27,0.16)' },
-  segCountText: { color: t.textMuted, fontSize: 11.5, fontWeight: '700' },
-  segCountTextOn: { color: t.scanInk },
-  searchWrap: { marginBottom: 12 },
+  // The selected side's badge: the reference's small pale-green chip.
+  segCountOn: { backgroundColor: t === LIGHT ? '#DFF6EA' : 'rgba(4,36,27,0.30)' },
+  segCountText: { color: t === LIGHT ? '#5C6B77' : '#C5D0D5', fontSize: 11.5, fontWeight: '700' },
+  segCountTextOn: { color: t === LIGHT ? '#0E8A5F' : '#04241B' },
   pillRow: { gap: 8, paddingVertical: 2 },
-  // The toolbar row: the count (with its amber "expiring soon" half) on the
-  // left and "Sort by" with its pills on the right, wrapped when narrow.
-  // Its bottom margin is the breathing room the reference shows between the
-  // sort row and the first item card — without it the cards crowd the pills.
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginTop: 12, marginBottom: 16 },
-  toolbarMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  metaText: { color: t.textMuted, fontSize: 13.5 },
-  soonText: { color: t.amberText, fontSize: 13.5, fontWeight: '600' },
-  sortRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sortLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600', marginRight: 2 },
-  // The single sort picker pill (the reference's "Expiry date ⌄"): the same
-  // quiet capsule language as the Reminders tab's sort control.
+  // Search beside the sort picker (the reference's row under the chips).
+  searchSortRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 12 },
+  searchWrap: { flex: 1, minWidth: 0 },
+  // The sort picker capsule: the same height and rounding as the search
+  // field, so the row reads as one control strip.
   sortBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 999,
+    height: 46,
+    paddingHorizontal: 14,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: t.surfaceBorder,
-    backgroundColor: t.cardAlt,
+    backgroundColor: t === LIGHT ? t.surface : t.cardAlt,
   },
-  sortBtnText: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
+  sortBtnText: { color: t.textMuted, fontSize: 13, fontWeight: '600' },
+  // The count row: the live total left, real expired/valid badges right.
+  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 12 },
+  metaText: { color: t.text, fontSize: 13.5, fontWeight: '700' },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+  countBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 10, borderRadius: 999 },
+  countBadgeText: { fontSize: 12, fontWeight: '700' },
   hidden: { marginBottom: 10 },
   list: { gap: 12 },
   listCompact: { gap: 9 },
-  // The waste-reduction summary card: the same wide glass card as the item
-  // cards, with the leaf medallion on a soft mint disc.
+  // The waste-reduction summary card: the same wide card language as the
+  // item cards, with the leaf medallion on a soft mint disc.
   waste: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,7 +361,7 @@ const useStyles = makeStyles((t) => ({
     padding: 14,
     borderRadius: 16,
     backgroundColor: t.surface,
-    borderWidth: t === LIGHT ? 0 : 1,
+    borderWidth: 1,
     borderColor: t.surfaceBorder,
     marginTop: 12,
     ...(t === LIGHT ? CARD_SHADOW : null),
