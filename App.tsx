@@ -14,7 +14,7 @@ import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } fro
 import { SettingsProvider, useSettings } from './src/settings';
 import { ShoppingProvider, useShopping } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
-import { remindersDue } from './src/preferences';
+import { remindersDue, dayOrderForFormat } from './src/preferences';
 import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
@@ -85,6 +85,11 @@ function Shell() {
   // scan a label with its own native camera + OCR (Apple Vision / ML Kit - far stronger
   // than the in-browser reader) and hand us the text lines. We parse them with the same
   // date parser the camera path uses and open the save sheet pre-filled.
+  //
+  // The parser's preferred day/month order comes from the user's Date format
+  // setting (dayOrderForFormat), so a shell scan reads ambiguous dates exactly
+  // like the in-app scanner does. The listener re-subscribes when the setting
+  // changes, so it never parses with a stale format.
   useEffect(() => {
     if (!WEB || typeof window === 'undefined') return;
     const onNativeScan = (event: Event) => {
@@ -92,14 +97,14 @@ function Shell() {
       const lines = Array.isArray(detail?.lines) ? detail.lines.filter((l): l is string => typeof l === 'string') : [];
       if (!lines.length) return;
       const region = typeof navigator !== 'undefined' ? navigator.language.split('-')[1] : undefined;
-      const result = parseExpiry(lines, { today: new Date(), preferredOrder: dayOrderForRegion(region) });
+      const result = parseExpiry(lines, { today: new Date(), preferredOrder: dayOrderForFormat(settings.dateFormat, dayOrderForRegion(region)) });
       if (result.kind !== 'found') return;
       setNativeScan(result);
       setRoute({ tab: 'scan' });
     };
     window.addEventListener('prexpire:native-scan', onNativeScan);
     return () => window.removeEventListener('prexpire:native-scan', onNativeScan);
-  }, []);
+  }, [settings.dateFormat]);
 
   // The live category list, reported to the native shell so its scanner result
   // panel shows the same folders this app uses (the built-ins the user keeps,
@@ -118,6 +123,21 @@ function Shell() {
       // The shell went away; the next change reports again.
     }
   }, [inShell, shellCategories]);
+
+  // The Date format setting, reported so the shell's scanner reads ambiguous
+  // numeric dates (03/04/2026) in the order the user chose — and its result
+  // panel preselects that reading instead of asking which day/month order it
+  // is. Sent on mount (as soon as settings load) and on every change.
+  useEffect(() => {
+    if (!inShell || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    try {
+      shell.postMessage(JSON.stringify({ type: 'date-format', format: settings.dateFormat }));
+    } catch {
+      // The shell went away; the next change reports again.
+    }
+  }, [inShell, settings.dateFormat]);
 
   // Native bridge, save path: the shell's scanner result panel saves directly
   // through this app's real pipeline (docs/native-shell.md). The shell

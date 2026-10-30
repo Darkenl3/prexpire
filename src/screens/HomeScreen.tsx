@@ -14,14 +14,15 @@ import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from '.
 import { ItemRow } from '../components/ItemRow';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
-import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
+import { AddArt, CapsuleArt, ForkKnifeArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
 import { SmallButton } from '../components/SettingsRows';
 import { FadeIn } from '../components/Press';
 
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
     case 'apple':
-      return <AppleArt size={size} />;
+      // Food's tile art is the reference's fork-and-knife cutlery.
+      return <ForkKnifeArt size={size} />;
     case 'capsule':
       return <CapsuleArt size={size} />;
     case 'house':

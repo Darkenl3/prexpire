@@ -60,7 +60,10 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
         <Text style={s.name} numberOfLines={1}>
           {item.name}
         </Text>
-        <Text style={s.meta} numberOfLines={1}>
+        {/* The meta wraps to a second line instead of cutting the expiry date
+            off: the date is the point of a reminder, so it is always fully
+            visible — long category names simply flow onto line two. */}
+        <Text style={s.meta} numberOfLines={2}>
           {nameOf(item.category)}  •  Expires on {formatDate(item.expiresOn, item.datePrecision)}
         </Text>
       </View>
@@ -175,24 +178,6 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
       ) : (
         <Text style={s.noneText}>No upcoming reminders.</Text>
       )}
-
-      {/* The reference's right-aligned Add item action: a translucent green
-          capsule with the bright mint plus medallion, opening the app's
-          existing manual add flow (the same one the Lists tab's button opens). */}
-      <View style={s.addRow}>
-        <PressScale
-          onPress={() => onNavigate('manual')}
-          scaleTo={0.96}
-          style={s.addBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Add an item"
-        >
-          <View style={s.addPlus}>
-            <Ionicons name="add" size={19} color={t.scanInk} />
-          </View>
-          <Text style={s.addText}>Add item</Text>
-        </PressScale>
-      </View>
     </Page>
   );
 }
@@ -244,33 +229,34 @@ const useStyles = makeStyles((t) => ({
   listCompact: { gap: 8 },
 
   // One reminder card: the item cards' glass language (hairline on dark,
-  // floating white on light), sized to the reference's proportions.
+  // floating white on light), sized to the reference's proportions — with the
+  // same breathing room the Lists tab's bigger cards now carry.
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    gap: 13,
+    paddingVertical: 13,
+    paddingHorizontal: 14,
+    borderRadius: 17,
     backgroundColor: t.surface,
     borderWidth: t === LIGHT ? 0 : 1,
     borderColor: t.surfaceBorder,
   },
-  cardCompact: { paddingVertical: 9, paddingHorizontal: 10, gap: 10 },
+  cardCompact: { paddingVertical: 10, paddingHorizontal: 11, gap: 11 },
   thumb: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
+    width: 60,
+    height: 60,
+    borderRadius: 15,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbCompact: { width: 48, height: 48, borderRadius: 12 },
+  thumbCompact: { width: 50, height: 50, borderRadius: 13 },
   body: { flex: 1, minWidth: 0 },
-  name: { color: t.text, fontSize: 15.5, fontWeight: '700' },
-  meta: { color: t.textMuted, fontSize: 12.5, marginTop: 3 },
-  pill: { minHeight: 26, paddingHorizontal: 11, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  pillText: { fontSize: 12.5, fontWeight: '700' },
+  name: { color: t.text, fontSize: 16, fontWeight: '700' },
+  meta: { color: t.textSub, fontSize: 13, lineHeight: 18, marginTop: 3 },
+  pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  pillText: { fontSize: 13, fontWeight: '700' },
 
   // The "All caught up!" empty card: a quieter surface than the content
   // cards, with the calendar medallion and its mint check badge.
@@ -309,27 +295,6 @@ const useStyles = makeStyles((t) => ({
   caughtUpTitle: { color: t.text, fontSize: 17, fontWeight: '700' },
   caughtUpSub: { color: t.textMuted, fontSize: 13.5, marginTop: 2 },
   noneText: { color: t.textMuted, fontSize: 14, paddingVertical: 8 },
-
-  // The right-aligned Add item capsule: translucent green with the mint plus
-  // medallion and a soft mint glow.
-  addRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 20 },
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    height: 48,
-    paddingLeft: 8,
-    paddingRight: 18,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: t.btnMintBorder,
-    backgroundColor: t.btnMintBg,
-    ...(t === LIGHT
-      ? { shadowColor: '#12C894', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.22, shadowRadius: 10, elevation: 3 }
-      : { shadowColor: '#2EE8B6', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 14, elevation: 6 }),
-  },
-  addPlus: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: t.mint },
-  addText: { color: t.mint, fontSize: 15, fontWeight: '700' },
 
   // Reminders off: the same quiet card, centred, still one tap from Settings.
   off: {

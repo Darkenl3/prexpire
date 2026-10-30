@@ -3,6 +3,36 @@ import { LIGHT, useTheme } from '../theme';
 
 type ArtProps = { size?: number };
 
+// The Food category's cutlery: a fork and knife side by side in the mint
+// family (the reference's fork-and-knife glyph), with the same soft gleam
+// language as the other category art.
+export function ForkKnifeArt({ size = 56 }: ArtProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 100 100">
+      <Defs>
+        <LinearGradient id="cutlery" x1="0" y1="0" x2="0.6" y2="1">
+          <Stop offset="0" stopColor="#8AF5D2" />
+          <Stop offset="0.5" stopColor="#3FDDAF" />
+          <Stop offset="1" stopColor="#10A882" />
+        </LinearGradient>
+      </Defs>
+      {/* Fork: three rounded tines over a joined neck and round handle */}
+      <G fill="url(#cutlery)">
+        <Rect x="19" y="10" width="6" height="25" rx="3" />
+        <Rect x="28" y="10" width="6" height="25" rx="3" />
+        <Rect x="37" y="10" width="6" height="25" rx="3" />
+        <Path d="M19 31 C19 39 24 41 25 44 H37 C38 41 43 39 43 31 Z" />
+        <Rect x="27" y="43" width="8" height="47" rx="4" />
+      </G>
+      <Rect x="20.5" y="13" width="2.5" height="13" rx="1.25" fill="#FFFFFF" opacity={0.45} />
+      {/* Knife: a rounded blade over a slim handle */}
+      <Path d="M58 10 C70 15 77 26 77 36 L77 47 C77 51 74 54 70 54 L58 54 Z" fill="url(#cutlery)" />
+      <Rect x="62" y="52" width="8" height="38" rx="4" fill="url(#cutlery)" />
+      <Path d="M63 18 C69 22 72 28 72 34" stroke="#FFFFFF" strokeOpacity={0.45} strokeWidth={4} strokeLinecap="round" fill="none" />
+    </Svg>
+  );
+}
+
 export function AppleArt({ size = 56 }: ArtProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">

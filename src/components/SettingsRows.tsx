@@ -428,7 +428,9 @@ const useStyles = makeStyles((c) => ({
   icon: { alignItems: 'center', justifyContent: 'center' },
   rowText: { flex: 1, minWidth: 0 },
   rowTitle: { color: c.text, fontSize: 16.5, fontWeight: '600' },
-  rowDesc: { color: c.textMuted, fontSize: 14, marginTop: 2, lineHeight: 19 },
+  // Subtexts carry a breath of cyan (theme.textSub) instead of pure gray, so
+  // the secondary line reads as part of the app's teal world.
+  rowDesc: { color: c.textSub, fontSize: 14, marginTop: 2, lineHeight: 19 },
   rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8 },
   chevron: { marginLeft: 2, opacity: 0.75 },
   // Gentle press feedback: a whisper of tint behind the row (the scale-down

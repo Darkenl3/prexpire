@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
-import { getLocales } from 'expo-localization';
-import { dayOrderForRegion, parseExpiry, type ScanParseResult } from './dateParser';
+import { parseExpiry, type DayOrder, type ScanParseResult } from './dateParser';
 import type { FrameGeometry, ScannerCameraHandle } from './ScannerCamera.types';
 
 export type Detection = Extract<ScanParseResult, { kind: 'found' }>;
@@ -15,6 +14,11 @@ type Options = {
   geometry: RefObject<FrameGeometry | null>;
   // False while the camera is not ready, the app is in the background, or OCR is unavailable.
   enabled: boolean;
+  // Day/month order for ambiguous numeric dates (03/04/2026). The caller
+  // derives it from the user's Date format setting — see
+  // preferences.dayOrderForFormat — so a scan agrees with how the user writes
+  // and reads dates instead of the device region's habit.
+  preferredOrder: DayOrder;
 };
 
 // Pause between passes. Each pass grabs one frame, crops it to the scanning frame and reads it
@@ -27,7 +31,7 @@ const AGREEMENT_NEEDED = 2;
 // Misses before a hint replaces "Keep the date inside the frame".
 const MISSES_BEFORE_HINT = 3;
 
-export function useExpiryScanner({ camera, geometry, enabled }: Options) {
+export function useExpiryScanner({ camera, geometry, enabled, preferredOrder }: Options) {
   const [state, setState] = useState<ScannerState>({ status: 'scanning', hint: 'aim' });
   const stateRef = useRef(state);
   const history = useRef<(string | null)[]>([]);
@@ -59,7 +63,7 @@ export function useExpiryScanner({ camera, geometry, enabled }: Options) {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const gen = generation.current;
-    const preferredOrder = dayOrderForRegion(getLocales()[0]?.regionCode);
+    const order = preferredOrder;
 
     const pass = async () => {
       const cam = camera.current;
@@ -68,7 +72,7 @@ export function useExpiryScanner({ camera, geometry, enabled }: Options) {
       let failed = false;
       try {
         const lines = await cam.readText(geometry.current);
-        result = parseExpiry(lines, { today: new Date(), preferredOrder });
+        result = parseExpiry(lines, { today: new Date(), preferredOrder: order });
       } catch {
         // Capture can fail while the camera is reconfiguring (rotation, backgrounding).
         failed = true;
@@ -117,7 +121,7 @@ export function useExpiryScanner({ camera, geometry, enabled }: Options) {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [enabled, detected, camera, geometry, publish]);
+  }, [enabled, detected, camera, geometry, publish, preferredOrder]);
 
   return { state, reset };
 }

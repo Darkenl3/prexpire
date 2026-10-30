@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { SCANNER_COLORS as colors, radius } from '../theme';
 import { useCategories } from '../categories';
 import { type CategoryId } from '../items';
-import { formatDate, isoToday, type ConfirmReason, type Interpretation } from '../scanner/dateParser';
+import { formatDate, isoToday, type ConfirmReason, type DayOrder, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
-import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
+import { ForkKnifeArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
 
@@ -25,7 +25,8 @@ const SHEET_PILLS: PillColors = {
 export function categoryArt(id: CategoryId, size: number) {
   switch (id) {
     case 'food':
-      return <AppleArt size={size} />;
+      // The reference's fork-and-knife glyph for Food.
+      return <ForkKnifeArt size={size} />;
     case 'medicine':
       return <CapsuleArt size={size} />;
     case 'household':
@@ -55,6 +56,12 @@ type Props = {
   // True when the category was picked from the label's words (see
   // scanner/categoryGuess.ts) - shown as a gentle hint under the chips.
   categoryGuessed?: boolean;
+  // The day/month order named by the user's Date format setting ('DMY'/'MDY'),
+  // or null when the setting says nothing about it (YMD falls back to the
+  // device region). When set, an ambiguous date is read that way straight
+  // away — preselected and confirmed with a small note — instead of asking
+  // which reading it is. The date stays editable either way.
+  assumedOrder?: DayOrder | null;
   layout: 'bottom' | 'side';
   // Full-screen portrait form (the scanner's save sheet now fills everything
   // below the header bar instead of floating at half height): no drag handle,
@@ -69,7 +76,7 @@ type Props = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function ResultSheet({ detection, initialCategory, categoryGuessed = false, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+export function ResultSheet({ detection, initialCategory, categoryGuessed = false, assumedOrder = null, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
   const { all } = useCategories();
   const [name, setName] = useState('');
   // The name field is a real, visible input box: focus lights its border so it
@@ -80,8 +87,13 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
   const [category, setCategory] = useState<CategoryId>(initialCategory);
   const readings = useMemo(() => (detection ? [detection.primary, ...detection.alternatives] : []), [detection]);
   const ambiguous = readings.length > 1;
-  // For an ambiguous day/month order the user must pick a reading; nothing is preselected.
-  const [picked, setPicked] = useState<number | null>(ambiguous ? null : 0);
+  // The Date format setting resolved the day/month order: the reading that
+  // matches it (the parser puts it first) is preselected, and a small note
+  // says how it was read. Only a format that says nothing about the order
+  // keeps the question below.
+  const autoRead = ambiguous && !!assumedOrder;
+  // For an unresolved day/month order the user must pick a reading; nothing is preselected.
+  const [picked, setPicked] = useState<number | null>(ambiguous && !autoRead ? null : 0);
   const [edited, setEdited] = useState<Interpretation | null>(detection ? null : { iso: isoToday(new Date()), precision: 'day' });
   const [editing, setEditing] = useState(!detection);
   // Dates that are not high confidence need an explicit "this is the expiry date".
@@ -209,7 +221,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           <Ionicons name={editing ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.textMuted} />
         </PressScale>
 
-        {ambiguous && !edited && (
+        {ambiguous && !autoRead && !edited && (
           <View style={s.block}>
             <Text style={s.question}>The day and month could be either way round. Which is it?</Text>
             <View style={s.choiceRow}>
@@ -225,6 +237,17 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
                   <Text style={[s.choiceText, picked === i && s.choiceTextOn]}>{formatDate(r)}</Text>
                 </PressScale>
               ))}
+            </View>
+          </View>
+        )}
+
+        {/* Resolved by the Date format setting: no question, just how the date
+            was read — and the date row above opens the editor to change it. */}
+        {autoRead && !edited && (
+          <View style={s.block}>
+            <View style={s.reason}>
+              <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+              <Text style={s.autoNote}>Read as {assumedOrder === 'DMY' ? 'day/month/year' : 'month/day/year'} — your Date format setting; tap the date to change it</Text>
             </View>
           </View>
         )}
@@ -392,6 +415,7 @@ const s = StyleSheet.create({
   choiceTextOn: { color: colors.scanInk, fontWeight: '700' },
   reason: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   reasonText: { color: colors.amberText, fontSize: 13, flex: 1, lineHeight: 18 },
+  autoNote: { color: colors.textMuted, fontSize: 13, flex: 1, lineHeight: 18 },
   raw: { color: colors.textMuted, fontSize: 12.5 },
   tickRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2, paddingBottom: 10 },
   tickText: { color: colors.text, fontSize: 14.5, fontWeight: '500' },

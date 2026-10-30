@@ -21,8 +21,9 @@ import { SmallButton } from './SettingsRows';
 // real data (the item's own fields); nothing is sampled or invented.
 
 // The built-ins' chip/row glyphs (custom categories carry their own icon).
+// Food is the reference's fork-and-knife glyph.
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  food: 'nutrition-outline',
+  food: 'restaurant-outline',
   medicine: 'medkit-outline',
   household: 'home-outline',
   skincare: 'water-outline',
@@ -123,13 +124,13 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           {item.name}
         </Text>
         <View style={s.metaRow}>
-          <Ionicons name={icon} size={12.5} color={t.textMuted} />
+          <Ionicons name={icon} size={13.5} color={t.textSub} />
           <Text style={s.metaText} numberOfLines={1}>
             {nameOf(item.category)}
           </Text>
         </View>
         <View style={s.metaRow}>
-          <Ionicons name="calendar-outline" size={12.5} color={t.textMuted} />
+          <Ionicons name="calendar-outline" size={13.5} color={t.textSub} />
           <Text style={s.metaText} numberOfLines={1}>
             {formatDate(item.expiresOn, item.datePrecision)}
           </Text>
@@ -198,41 +199,46 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
 
 const useStyles = makeStyles((t) => ({
   // The wide glass card: dark translucent surface with a hairline on dark,
-  // a borderless floating white card on light.
+  // a borderless floating white card on light. Sized to the reference's
+  // proportions — a bigger art square and real breathing room between the
+  // name, meta rows, progress bar and side column, so the subtexts read
+  // clearly instead of crowding.
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    gap: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     backgroundColor: t.surface,
     borderWidth: t === LIGHT ? 0 : 1,
     borderColor: t.surfaceBorder,
   },
-  cardCompact: { paddingVertical: 9, paddingHorizontal: 10, gap: 10 },
+  cardCompact: { paddingVertical: 11, paddingHorizontal: 12, gap: 11 },
   // The art square (the reference's product-image slot).
   thumb: {
-    width: 62,
-    height: 62,
-    borderRadius: 14,
+    width: 68,
+    height: 68,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  thumbCompact: { width: 48, height: 48, borderRadius: 12 },
-  body: { flex: 1, minWidth: 0, gap: 3 },
-  name: { color: t.text, fontSize: 15.5, fontWeight: '700' },
-  nameCompact: { fontSize: 14.5 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0 },
-  metaText: { color: t.textMuted, fontSize: 12.5, flexShrink: 1 },
+  thumbCompact: { width: 52, height: 52, borderRadius: 13 },
+  body: { flex: 1, minWidth: 0, gap: 4 },
+  name: { color: t.text, fontSize: 16.5, fontWeight: '700' },
+  nameCompact: { fontSize: 15 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  // Subtexts breathe a little cyan (theme.textSub) and grow a size, so the
+  // category and date read at a glance like the reference's metadata rows.
+  metaText: { color: t.textSub, fontSize: 13.5, flexShrink: 1 },
   // The expiry progress bar: a hairline track with the status-coloured fill.
-  barTrack: { height: 6, borderRadius: 3, backgroundColor: t.separator, marginTop: 4, overflow: 'hidden' },
-  barFill: { height: 6, borderRadius: 3 },
-  side: { alignItems: 'flex-end', gap: 9, maxWidth: 118 },
+  barTrack: { height: 7, borderRadius: 4, backgroundColor: t.separator, marginTop: 6, overflow: 'hidden' },
+  barFill: { height: 7, borderRadius: 4 },
+  side: { alignItems: 'flex-end', gap: 9, maxWidth: 122 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  pill: { minHeight: 26, paddingHorizontal: 11, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-  pillText: { fontSize: 12.5, fontWeight: '700' },
+  pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  pillText: { fontSize: 13, fontWeight: '700' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   menu: {

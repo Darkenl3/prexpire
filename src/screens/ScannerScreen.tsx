@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCameraPermissions } from 'expo-camera';
+import { getLocales } from 'expo-localization';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SCANNER_COLORS as colors, radius } from '../theme';
@@ -22,6 +23,9 @@ import { ScanFrame } from '../components/ScanFrame';
 import { ResultSheet, type SaveInput } from '../components/ResultSheet';
 import { useItems, type CategoryId, type Item } from '../items';
 import { useCategories } from '../categories';
+import { useSettings } from '../settings';
+import { dayOrderForFormat } from '../preferences';
+import { dayOrderForRegion } from '../scanner/dateParser';
 import { ocrAvailability } from '../scanner/ocr';
 import { guessCategory } from '../scanner/categoryGuess';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
@@ -69,6 +73,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const insets = useSafeAreaInsets();
   const { defaultCategory, addItem } = useItems();
   const { ids: keptCategoryIds } = useCategories();
+  const { settings } = useSettings();
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef<ScannerCameraHandle>(null);
 
@@ -123,11 +128,22 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   geometry.current =
     area && frameInArea && root.width ? { view: root, frame: { ...frameInArea, x: frameInArea.x + area.x, y: frameInArea.y + area.y } } : null;
 
+  // Ambiguous numeric dates (03/04/2026) are read in the order the user's
+  // Date format setting names — the same format every screen displays —
+  // falling back to the device region when the setting says nothing (YMD).
+  // `assumedOrder` tells the save sheet the setting itself resolved the
+  // reading, so it trusts the preselected date instead of asking which
+  // day/month order it is.
+  const region = useMemo(() => getLocales()[0]?.regionCode, []);
+  const preferredOrder = dayOrderForFormat(settings.dateFormat, dayOrderForRegion(region));
+  const assumedOrder = settings.dateFormat === 'DMY' || settings.dateFormat === 'MDY' ? settings.dateFormat : null;
+
   const { state, reset } = useExpiryScanner({
     camera,
     geometry,
     // No analysis while the user types the item by hand.
     enabled: granted && cameraReady && appActive && ocrReady && !manual && !cameraError && !seeded,
+    preferredOrder,
   });
   const detection: Detection | null = seeded ?? (state.status === 'detected' ? state.detection : null);
   const detected = detection !== null;
@@ -357,6 +373,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       detection={detected ? detection : null}
       initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
+      assumedOrder={assumedOrder}
       layout={landscape ? 'side' : 'bottom'}
       // Portrait is a FULL-SCREEN form now: everything below the header bar,
       // not the old half-height sheet (landscape keeps its side layout).

@@ -1,6 +1,7 @@
 // Settings values and the pure logic that uses them (no React Native imports, so it is tested
 // with Node on its own). The provider that loads and saves them lives in src/settings.tsx.
 
+import type { DayOrder } from './scanner/dateParser';
 import type { CategoryId, Item } from './items';
 
 export type ReminderLead = 0 | 1 | 3 | 7;
@@ -41,6 +42,15 @@ export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'system'];
 export const THEME_LABELS: Record<ThemeMode, string> = { dark: 'Dark', light: 'Light', system: 'System' };
 
 export const DATE_FORMAT_LABELS: Record<DateFormat, string> = { DMY: 'DD/MM/YYYY', MDY: 'MM/DD/YYYY', YMD: 'YYYY-MM-DD' };
+
+// The day/month order the scanner should assume for an ambiguous numeric date
+// (03/04/2026). The user's Date format setting decides when it names an order
+// (DD/MM or MM/DD); YMD says nothing about day/month order, so the caller's
+// fallback (usually the device region's habit) wins.
+export function dayOrderForFormat(format: DateFormat, fallback: DayOrder): DayOrder {
+  return format === 'DMY' || format === 'MDY' ? format : fallback;
+}
+
 export const SORT_LABELS: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recently added', name: 'Product name' };
 
 export function reminderLeadLabel(lead: ReminderLead) {

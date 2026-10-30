@@ -13,6 +13,9 @@ export type Palette = {
   surfaceBorder: string;
   text: string;
   textMuted: string;
+  // Settings subtexts: a gray with a cyan breath instead of pure gray, so the
+  // secondary lines sit in the app's teal world rather than neutral slate.
+  textSub: string;
   mint: string;
   scan: string;
   scanInk: string;
@@ -66,6 +69,7 @@ export const DARK: Palette = {
   surfaceBorder: '#1A2A2E',
   text: '#F2F6F7',
   textMuted: '#9AA7AD',
+  textSub: '#93B7BE',
   mint: '#2EE8B6',
   scan: '#41F8C5',
   scanInk: '#04241B',
@@ -143,6 +147,7 @@ export const LIGHT: Palette = {
   surfaceBorder: '#E5EDF3',
   text: '#111827',
   textMuted: '#64748B',
+  textSub: '#527A85',
   // The accent takes its hue from the wordmark's green X: a light, fresh
   // green (links, active tab, selected states).
   mint: '#1BC491',

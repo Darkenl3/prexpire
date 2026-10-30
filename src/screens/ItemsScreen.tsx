@@ -6,10 +6,10 @@ import { useCategories } from '../categories';
 import { useItems, type CategoryId } from '../items';
 import { useSettings } from '../settings';
 import { useShopping } from '../shopping';
-import { expiryStatus, SORT_ORDERS, sortItems, type SortOrder } from '../preferences';
+import { expiryStatus, SORT_LABELS, SORT_ORDERS, sortItems, type SortOrder } from '../preferences';
 import { Page } from '../components/Page';
 import { ItemCard, categoryIcon } from '../components/ItemCard';
-import { Note, SmallButton } from '../components/SettingsRows';
+import { Note, OptionSheet, SmallButton } from '../components/SettingsRows';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from '../components/ChoicePill';
 import { SearchField } from '../components/SearchField';
 import { PressScale } from '../components/Press';
@@ -21,7 +21,7 @@ type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavig
 // list is still glanceable at full length (and the field never eats that space).
 const SEARCH_FROM = 8;
 
-// Labels for the sort pills, in the reference's dropdown wording; the Settings
+// Labels for the sort picker, in the reference's dropdown wording; the Settings
 // page spells the same values out in full, and both always agree because they
 // edit the same preference.
 const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recent', name: 'A–Z' };
@@ -48,6 +48,9 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   // The Shopping List's add dialog, hoisted so the title block's "Add item"
   // capsule can open it too (not only the section header's action).
   const [shopAddOpen, setShopAddOpen] = useState(false);
+  // The sort picker sheet (one control instead of three pills — the reference's
+  // single "Expiry date ⌄" dropdown).
+  const [sortOpen, setSortOpen] = useState(false);
 
   const needle = query.trim().toLowerCase();
   const inCategory = useMemo(() => (filter === 'all' ? items : items.filter((i) => i.category === filter)), [items, filter]);
@@ -174,23 +177,23 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 <Text style={s.metaText}>{shown.length === 1 ? '1 item' : `${shown.length} items`}</Text>
                 {soon > 0 && <Text style={s.soonText}>{soon === 1 ? '1 expiring soon' : `${soon} expiring soon`}</Text>}
               </View>
-              <View style={s.sortRow} accessibilityRole="radiogroup" accessibilityLabel="Sort order">
+              <View style={s.sortRow}>
                 <Text style={s.sortLabel}>Sort by</Text>
-                {SORT_ORDERS.map((order) => (
-                  <ChoicePill
-                    key={order}
-                    label={SORT_SHORT[order]}
-                    selected={settings.sort === order}
-                    onPress={() => update({ sort: order })}
-                    colors={pills}
-                    size="small"
-                    // The primary control carries the dropdown's chevron, like
-                    // the reference's "Expiry date" pill.
-                    icon={order === 'expiry' ? 'chevron-down' : undefined}
-                    iconAfter
-                    accessibilityLabel={`Sort by ${order === 'expiry' ? 'expiry date' : order === 'added' ? 'recently added' : 'product name'}`}
-                  />
-                ))}
+                {/* One picker pill for the whole sort control: the current
+                    order with a dropdown chevron, opening the iOS-style sheet —
+                    the three side-by-side pills took too much of the row. */}
+                <PressScale
+                  onPress={() => setSortOpen(true)}
+                  scaleTo={0.96}
+                  style={s.sortBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sort by ${SORT_SHORT[settings.sort]}. Change sort order.`}
+                >
+                  <Text style={s.sortBtnText} numberOfLines={1}>
+                    {SORT_SHORT[settings.sort]}
+                  </Text>
+                  <Ionicons name="chevron-down" size={14} color={c.textMuted} />
+                </PressScale>
               </View>
             </View>
             {!settings.showExpired && expired.length > 0 && (
@@ -205,6 +208,16 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 <ItemCard key={item.id} item={item} compact={settings.compact} onToast={setShopToast} />
               ))}
             </View>
+            {/* The sort picker sheet: the same iOS-style value picker Settings
+                uses, editing the same shared preference. */}
+            <OptionSheet
+              visible={sortOpen}
+              title="Sort items"
+              value={settings.sort}
+              options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
+              onChange={(v) => update({ sort: v })}
+              onClose={() => setSortOpen(false)}
+            />
             {/* The waste-reduction summary card under the list: the real tracked
                 count and the app's own mission line. It opens Home, where the
                 attention card, "Coming up next" and the category grid live —
@@ -307,11 +320,25 @@ const useStyles = makeStyles((t) => ({
   toolbarMeta: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   metaText: { color: t.textMuted, fontSize: 13.5 },
   soonText: { color: t.amberText, fontSize: 13.5, fontWeight: '600' },
-  sortRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  sortRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sortLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600', marginRight: 2 },
+  // The single sort picker pill (the reference's "Expiry date ⌄"): the same
+  // quiet capsule language as the Reminders tab's sort control.
+  sortBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: t.surfaceBorder,
+    backgroundColor: t.cardAlt,
+  },
+  sortBtnText: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
   hidden: { marginBottom: 10 },
-  list: { gap: 10 },
-  listCompact: { gap: 8 },
+  list: { gap: 12 },
+  listCompact: { gap: 9 },
   // The waste-reduction summary card: the same wide glass card as the item
   // cards, with the leaf medallion on a soft mint disc.
   waste: {
