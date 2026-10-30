@@ -177,7 +177,7 @@ function Shell() {
     if (!WEB || typeof window === 'undefined') return;
     const handled = handledSaves.current;
     const onSave = (event: Event) => {
-      const detail = (event as CustomEvent<{ requestId?: unknown; name?: unknown; category?: unknown; barcode?: unknown; dateIso?: unknown; datePrecision?: unknown }>).detail ?? {};
+      const detail = (event as CustomEvent<{ requestId?: unknown; name?: unknown; category?: unknown; barcode?: unknown; image?: unknown; dateIso?: unknown; datePrecision?: unknown }>).detail ?? {};
       if (typeof detail.requestId !== 'string') return;
       const requestId = detail.requestId;
       const reply = (ok: boolean, error?: string) => {
@@ -194,12 +194,19 @@ function Shell() {
       const dateIso = typeof detail.dateIso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(detail.dateIso) ? detail.dateIso : null;
       const datePrecision = detail.datePrecision === 'month' ? ('month' as const) : ('day' as const);
       const barcode = typeof detail.barcode === 'string' && /^\d{6,14}$/.test(detail.barcode) ? detail.barcode : undefined;
+      // The product photo the shell's scanner retrieved (an https URL from the
+      // barcode databases; a data URI would be fine too). Accepted only in the
+      // forms items.tsx itself trusts, so nothing else can ride in as an image.
+      const image =
+        typeof detail.image === 'string' && detail.image.length <= 300000 && (/^data:image\//.test(detail.image) || /^https:\/\//.test(detail.image))
+          ? detail.image
+          : undefined;
       if (!name) return reply(false, 'The product needs a name.');
       if (!dateIso) return reply(false, 'The expiry date could not be read.');
       const wanted = typeof detail.category === 'string' && detail.category ? (detail.category as CategoryId) : null;
       const category = wanted && categoryIds.includes(wanted) ? wanted : fallbackCategory;
       handled.add(requestId);
-      addItem({ name, category, expiresOn: dateIso, datePrecision, source: 'scan', ...(barcode ? { barcode } : {}) })
+      addItem({ name, category, expiresOn: dateIso, datePrecision, source: 'scan', ...(barcode ? { barcode } : {}), ...(image ? { image } : {}) })
         .then((item) => {
           savedFromShell(item);
           reply(true);
