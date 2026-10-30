@@ -114,7 +114,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           reference's glass card with the mint info medallion. */}
       <View style={s.banner}>
         <View style={s.bannerIcon}>
-          <Ionicons name="information" size={17} color={t.mint} />
+          <Ionicons name="information" size={17} color={t.green} />
         </View>
         <Text style={s.bannerText}>Reminders are listed here. Expiry alerts also appear while the app is open; nothing is sent in the background.</Text>
       </View>
@@ -228,7 +228,7 @@ const useStyles = makeStyles((t) => ({
   listCompact: { gap: 8 },
 
   // One reminder card: the item cards' language — white with a fine
-  // #E4ECEF hairline and a soft shadow on the light page (so it stays
+  // #DFECE5 hairline and a soft shadow on the light page (so it stays
   // clearly visible against the near-white page), translucent glass with a
   // hairline on dark.
   card: {

@@ -2,10 +2,11 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useColorScheme, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native';
 import { useSettings } from './settings';
 
-// The app's design language: a near-black teal dark theme and a soft paper
-// light theme with the same mint accent. Everything visual reads from the
-// active palette through useTheme()/makeStyles, so the whole app (and the
-// status bar) follows the Dark/Light/System setting.
+// The app's design language: a near-black forest dark theme and a soft
+// mint-white light theme, both anchored on the brand's natural leaf green
+// (#8FD957, the wordmark's green X). Everything visual reads from the active
+// palette through useTheme()/makeStyles, so the whole app (and the status
+// bar) follows the Dark/Light/System setting.
 
 export type Palette = {
   bg: string;
@@ -13,15 +14,29 @@ export type Palette = {
   surfaceBorder: string;
   text: string;
   textMuted: string;
-  // Settings subtexts: a gray with a cyan breath instead of pure gray, so the
-  // secondary lines sit in the app's teal world rather than neutral slate.
+  // Settings subtexts and item-card meta rows: a green-gray that sits in the
+  // app's forest world rather than neutral slate — slightly lighter than the
+  // muted secondary on dark, slightly deeper on light (contrast where the
+  // finest type needs it).
   textSub: string;
+  // The brand's natural leaf green: FILLS only (the Add button, the scan
+  // button, progress fills, dots, checkbox fills) — identical in both themes.
   mint: string;
+  // Text- and icon-grade green for anything that must READ on a light or
+  // white surface (links, checkmarks, "All good" status): the same hue,
+  // deepened on the light page so it never washes out.
+  green: string;
+  // The solid selected/active fill of the prominent controls — the category
+  // filter chips and the Items / Shopping List segmented control. A touch
+  // softer than mint on dark, a pale leaf tint on light, with the same deep
+  // forest ink (scanInk) on top in both themes.
+  selBg: string;
+  // The pressed register of the solid green buttons (a hair deeper than mint).
+  mintPressed: string;
   scan: string;
   scanInk: string;
   amber: string;
   amberText: string;
-  green: string;
   red: string;
   navBg: string;
   navBorder: string;
@@ -35,7 +50,7 @@ export type Palette = {
   btnMintBorder: string;
   btnDangerBg: string;
   btnDangerBorder: string;
-  // Category tile colours: rich gradients on dark, soft pastels on light.
+  // Category tile colours: rich forest gradients on dark, soft pastels on light.
   tints: Record<Tint, { top: string; bottom: string; border: string }>;
   // The "Add category" tile: a soft fill crossed by fine diagonal lines,
   // like the reference's empty slot.
@@ -44,7 +59,7 @@ export type Palette = {
   alertBorder: string;
   alertIconBg: string;
   // The attention card's GREEN counterpart ("All caught up"): the same card
-  // language in the mint family, for when nothing needs attention.
+  // language in the leaf-green family, for when nothing needs attention.
   okBg: string;
   okBorder: string;
   okIconBg: string;
@@ -53,14 +68,20 @@ export type Palette = {
   dialogBg: string;
   toastBg: string;
   toastBorder: string;
+  // Text on the toast capsule: the toast is a deep forest pill in BOTH
+  // themes, so its ink is always the light mint-white (never the page ink,
+  // which would vanish on the dark capsule in light mode).
+  toastInk: string;
   statusOkBorder: string;
   statusOkBg: string;
   statusWarnBorder: string;
   statusWarnBg: string;
-  glassBg: string; // the header's liquid-glass circles
+  // The header's round chrome buttons: a quiet circular surface — the dark
+  // page's raised surface, the light page's pale mint — with a hairline rim.
+  glassBg: string;
   glassBorder: string;
   // The item cards' expiry progress track: pale gray-green on light, dark
-  // translucent green on dark (the fill is always the mint accent).
+  // translucent green on dark (the fill is always the leaf-green accent).
   expiryTrack: string;
   // The header STRIP's liquid-glass tint (AutohideHeader): translucent so the
   // frosted backdrop-filter underneath shows page content scrolling past —
@@ -72,180 +93,191 @@ export type Palette = {
 };
 
 export const DARK: Palette = {
-  bg: '#050D10',
-  surface: '#0B161A',
-  surfaceBorder: '#1A2A2E',
-  text: '#F2F6F7',
-  textMuted: '#9AA7AD',
-  textSub: '#93B7BE',
-  mint: '#2EE8B6',
-  scan: '#41F8C5',
-  scanInk: '#04241B',
-  amber: '#FEC22D',
-  amberText: '#F5B83D',
-  green: '#2BD9A0',
-  red: '#FF3B4E',
-  navBg: 'rgba(12,24,27,0.72)',
-  navBorder: 'rgba(255,255,255,0.10)',
-  iconTile: '#1C2C35',
-  cardAlt: '#0F1E22',
-  separator: '#22353A',
-  chipOnBg: 'rgba(46,232,182,0.10)',
-  chipOnBorder: 'rgba(46,232,182,0.55)',
-  btnMintBg: 'rgba(46,232,182,0.08)',
-  btnMintBorder: 'rgba(46,232,182,0.45)',
-  btnDangerBg: 'rgba(248,113,113,0.08)',
-  btnDangerBorder: 'rgba(248,113,113,0.45)',
+  bg: '#080B0A',
+  surface: '#111A16',
+  surfaceBorder: '#26352C',
+  text: '#F2F5F2',
+  textMuted: '#9AA79E',
+  textSub: '#A9B6AC',
+  mint: '#8FD957',
+  green: '#8FD957',
+  selBg: '#A3E66B',
+  mintPressed: '#7CC849',
+  scan: '#8FD957',
+  scanInk: '#102719',
+  amber: '#FFB454',
+  amberText: '#FFB454',
+  red: '#FF6B6B',
+  navBg: 'rgba(17,26,22,0.78)',
+  navBorder: 'rgba(255,255,255,0.09)',
+  iconTile: '#19241E',
+  cardAlt: '#19241E',
+  separator: '#26352C',
+  chipOnBg: 'rgba(143,217,87,0.16)',
+  chipOnBorder: 'rgba(143,217,87,0.45)',
+  btnMintBg: 'rgba(143,217,87,0.14)',
+  btnMintBorder: 'rgba(143,217,87,0.45)',
+  btnDangerBg: 'rgba(255,107,107,0.10)',
+  btnDangerBorder: 'rgba(255,107,107,0.45)',
   // The "items need attention" card is RED in both themes - urgency reads
   // the same in light and dark, like a warning triangle on any dashboard.
-  alertBg: '#2A1216',
-  alertBorder: '#5A2530',
-  alertIconBg: '#461B22',
-  okBg: '#0C2A21',
-  okBorder: '#1E5040',
-  okIconBg: '#123D2F',
-  dangerBg: '#140F12',
-  dangerBorder: '#4A2328',
-  dialogBg: '#0E1A1E',
-  toastBg: '#0D2E28',
-  toastBorder: 'rgba(46,232,182,0.45)',
-  statusOkBorder: 'rgba(46,232,182,0.45)',
-  statusOkBg: 'rgba(46,232,182,0.08)',
-  statusWarnBorder: '#7A5A12',
-  statusWarnBg: '#3D2B0E',
-  glassBg: 'rgba(255,255,255,0.10)',
-  glassBorder: 'rgba(255,255,255,0.18)',
+  alertBg: '#2A1512',
+  alertBorder: '#59282A',
+  alertIconBg: '#43201C',
+  okBg: '#132818',
+  okBorder: '#26492C',
+  okIconBg: '#1A3A22',
+  dangerBg: '#1A1210',
+  dangerBorder: '#4A2A24',
+  dialogBg: '#152019',
+  toastBg: '#12281A',
+  toastBorder: 'rgba(143,217,87,0.45)',
+  toastInk: '#EAF6E0',
+  statusOkBorder: 'rgba(143,217,87,0.45)',
+  statusOkBg: 'rgba(143,217,87,0.10)',
+  statusWarnBorder: '#7A5A26',
+  statusWarnBg: '#3A2C14',
+  // The round chrome buttons on the dark page: the raised surface as a
+  // quiet circular plateau with its hairline edge — a subtle disc that
+  // never competes with the wordmark between the two.
+  glassBg: '#19241E',
+  glassBorder: '#26352C',
   // The dark page's expiry bar track: a dark translucent green, so the thin
-  // mint fill reads against the glass card without a hard edge.
-  expiryTrack: 'rgba(46,232,182,0.16)',
+  // leaf-green fill reads against the card without a hard edge.
+  expiryTrack: 'rgba(143,217,87,0.16)',
   // The dark page's glass header strip: the page bg at 60% over a blur, so
-  // content flowing under the bar frosts through and the glass circles on
-  // top have something real to refract (like the scanner's chrome over the
-  // camera) instead of sitting on a flat opaque bar.
-  glassHeaderBg: 'rgba(5,13,16,0.60)',
+  // content flowing under the bar frosts through and the round buttons on
+  // top have something real behind them instead of a flat opaque bar.
+  glassHeaderBg: 'rgba(8,11,10,0.60)',
   tints: {
-    food: { top: '#0E5734', bottom: '#081C17', border: '#1C5A3C' },
-    medicine: { top: '#074164', bottom: '#051C2A', border: '#145273' },
-    household: { top: '#382663', bottom: '#121729', border: '#46327A' },
-    skincare: { top: '#5F2646', bottom: '#161419', border: '#6C2D51' },
-    pantry: { top: '#4D3617', bottom: '#1B1A11', border: '#5E4420' },
+    food: { top: '#1B5E34', bottom: '#0A1F15', border: '#2A6E42' },
+    medicine: { top: '#0E4A5C', bottom: '#06181E', border: '#1B5F73' },
+    household: { top: '#3E2E63', bottom: '#151A2A', border: '#4E3B78' },
+    skincare: { top: '#5C2A4A', bottom: '#1A141B', border: '#6E3558' },
+    pantry: { top: '#5A4322', bottom: '#1D1A10', border: '#6C532C' },
     // The extended palette: rich gradients in the same depth language.
-    forest: { top: '#0B4A28', bottom: '#07160F', border: '#15623A' },
-    ocean: { top: '#0A3A5C', bottom: '#061A2C', border: '#175B85' },
-    teal: { top: '#0C4A4E', bottom: '#06181C', border: '#177078' },
-    lavender: { top: '#46357A', bottom: '#171425', border: '#554492' },
-    rose: { top: '#6B2440', bottom: '#1B1218', border: '#7D2F4E' },
-    coral: { top: '#69301D', bottom: '#1D1410', border: '#7D3B24' },
-    sand: { top: '#57472B', bottom: '#191610', border: '#6B573A' },
-    slate: { top: '#2E3A44', bottom: '#11181D', border: '#3D4C58' },
-    add: { top: '#222E46', bottom: '#0F1A25', border: '#2C3B57' },
+    forest: { top: '#155C33', bottom: '#08190F', border: '#227040' },
+    ocean: { top: '#0F4460', bottom: '#07202E', border: '#1D5A7A' },
+    teal: { top: '#115257', bottom: '#07191D', border: '#1E6A70' },
+    lavender: { top: '#453574', bottom: '#171526', border: '#554492' },
+    rose: { top: '#62263F', bottom: '#1D1318', border: '#743250' },
+    coral: { top: '#643323', bottom: '#1E1511', border: '#78402C' },
+    sand: { top: '#52412A', bottom: '#191610', border: '#665238' },
+    slate: { top: '#2C3830', bottom: '#121814', border: '#3B4A40' },
+    add: { top: '#223028', bottom: '#101813', border: '#2E4034' },
   },
   addTile: { bg: 'rgba(255,255,255,0.03)', line: 'rgba(255,255,255,0.09)' },
   // Pills carry no border: a soft filled capsule, lighter than the text it
   // sits next to ("1 day", "3 days"…).
   pills: {
-    amber: { bg: '#3D2B0E', text: '#F5B83D' },
-    green: { bg: '#0A382C', text: '#3FE0AC' },
+    amber: { bg: '#3A2C14', text: '#FFB454' },
+    green: { bg: '#17331F', text: '#A3E66B' },
     // Expired items: the red family of the attention card, as a day pill.
-    red: { bg: '#2A1216', text: '#FF6B77' },
+    red: { bg: '#331613', text: '#FF8A8A' },
   },
-  switchColors: { track: '#2A3A40', trackOn: '#1E8A6C', thumb: '#C9D3D6', thumbOn: '#E9FFF8' },
+  switchColors: { track: '#2A382F', trackOn: '#7CC849', thumb: '#A9B6AC', thumbOn: '#FFFFFF' },
 };
 
 export const LIGHT: Palette = {
-  // The light reference's airy palette: a very light cool-gray page where
-  // white cards float on soft shadows and fine #E4ECEF hairlines, deep
-  // green ink, a mint/emerald accent, pale-green image tiles and muted
-  // blue-gray secondary text.
-  bg: '#F5F8FA',
+  // The light reference's airy palette: a mint-white page where white cards
+  // float on soft shadows and fine #DFECE5 hairlines, deep forest ink, the
+  // brand's leaf-green accent, pale-mint image tiles and muted green-gray
+  // secondary text.
+  bg: '#F7FAF8',
   surface: '#FFFFFF',
-  surfaceBorder: '#E4ECEF',
-  text: '#17352F',
-  textMuted: '#82929F',
-  textSub: '#5E7E8E',
-  // The accent takes its hue from the wordmark's green X: a light, fresh
-  // green (links, active tab, selected states).
-  mint: '#16C58B',
-  scan: '#16C58B',
-  scanInk: '#FFFFFF',
+  surfaceBorder: '#DFECE5',
+  text: '#123326',
+  textMuted: '#66877D',
+  textSub: '#4C6B5F',
+  // The accent is the wordmark's leaf green: light and fresh for FILLS (the
+  // Add button, the scan button, progress bars, dots).
+  mint: '#8FD957',
+  // …deepened for green TEXT and ICONS on the white page, so links and
+  // checkmarks always read clearly (never a washed-out lime on white).
+  green: '#4E8F2B',
+  // The selected chips and the segmented control's active side: a pale leaf
+  // tint with the deep forest ink, exactly like the light reference's soft
+  // green active segment.
+  selBg: '#C8F2A8',
+  mintPressed: '#7CC849',
+  scan: '#8FD957',
+  scanInk: '#102719',
   // Expiring-soon accents: strong enough to read clearly on pastel fills
   // (never washed-out).
-  amber: '#DFA42E',
-  amberText: '#966E12',
-  green: '#10A374',
-  red: '#D92B3E',
+  amber: '#FFB454',
+  amberText: '#8F6217',
+  red: '#FF6B6B',
   navBg: 'rgba(255,255,255,0.94)',
-  navBorder: '#E4ECEF',
-  // Every product row's icon square: the reference's pale green image tile —
-  // the same #E1F7EC the product cards' art squares use.
-  iconTile: '#E1F7EC',
-  cardAlt: '#F0F4F7',
-  separator: '#E4ECEF',
-  chipOnBg: 'rgba(22,197,139,0.15)',
-  chipOnBorder: 'rgba(22,197,139,0.5)',
-  btnMintBg: 'rgba(0,168,107,0.10)',
-  btnMintBorder: 'rgba(0,168,107,0.4)',
-  btnDangerBg: 'rgba(217,43,62,0.08)',
-  btnDangerBorder: 'rgba(217,43,62,0.45)',
-  alertBg: '#FDEFEF',
-  alertBorder: '#F1CBCF',
-  alertIconBg: '#F8DBDF',
-  okBg: '#E8F7EF',
-  okBorder: '#C6EBD9',
-  okIconBg: '#D5F1E2',
-  dangerBg: '#FDF1F2',
-  dangerBorder: '#F5C9CD',
+  navBorder: '#DFECE5',
+  // Every product row's icon square: the reference's pale mint image tile.
+  iconTile: '#EEF6F1',
+  cardAlt: '#EEF6F1',
+  separator: '#DFECE5',
+  chipOnBg: 'rgba(143,217,87,0.20)',
+  chipOnBorder: 'rgba(124,200,73,0.5)',
+  btnMintBg: 'rgba(143,217,87,0.16)',
+  btnMintBorder: 'rgba(124,200,73,0.45)',
+  btnDangerBg: 'rgba(255,107,107,0.08)',
+  btnDangerBorder: 'rgba(214,69,69,0.45)',
+  alertBg: '#FDECEC',
+  alertBorder: '#F2CDCB',
+  alertIconBg: '#F8DAD6',
+  okBg: '#EAF6E2',
+  okBorder: '#CBEAB4',
+  okIconBg: '#D8F2C4',
+  dangerBg: '#FDF0EF',
+  dangerBorder: '#F5CBCA',
   dialogBg: '#FFFFFF',
-  toastBg: '#0D3B31',
-  toastBorder: 'rgba(15,166,124,0.5)',
-  statusOkBorder: 'rgba(0,168,107,0.45)',
-  statusOkBg: 'rgba(0,168,107,0.08)',
-  statusWarnBorder: '#E3C77E',
-  statusWarnBg: '#F8EFD8',
-  // The header's liquid-glass circles on the light page: a translucent
-  // cool-gray glass (never solid white on the near-white page) with a thin
-  // delicate hairline rim and the specular inner highlight (see glassRim in
-  // HomeComponents) — dark enough to read clearly against the airy frosted
-  // strip while the blur keeps it reading as glass, never a flat gray disc.
-  glassBg: 'rgba(148,163,184,0.35)',
-  glassBorder: 'rgba(15,23,42,0.28)',
+  // The toast is the deep forest capsule in both themes — light mint ink.
+  toastBg: '#12331F',
+  toastBorder: 'rgba(124,200,73,0.5)',
+  toastInk: '#EAF6E0',
+  statusOkBorder: 'rgba(91,143,56,0.45)',
+  statusOkBg: 'rgba(143,217,87,0.15)',
+  statusWarnBorder: '#E8CD8E',
+  statusWarnBg: '#FBF2DC',
+  // The round chrome buttons on the light page: the pale mint surface as a
+  // quiet ghost circle with its delicate hairline — dark enough to read
+  // clearly against the airy page while staying soft, never a flat gray disc.
+  glassBg: '#EEF6F1',
+  glassBorder: '#DFECE5',
   // The light page's expiry bar track: a subtle pale gray-green, like the
-  // reference's muted track under the mint fill.
-  expiryTrack: '#D9E9E1',
-  // The light page's glass header strip: the airy blue-white bg at 72% over
+  // reference's muted track under the leaf-green fill.
+  expiryTrack: '#DCEBDD',
+  // The light page's glass header strip: the airy mint-white bg at 78% over
   // a blur — light glass stays brighter and more opaque than dark glass (the
-  // 0.72 keeps dark text readable while content still frosts through).
-  glassHeaderBg: 'rgba(245,248,250,0.78)',
+  // 0.78 keeps dark text readable while content still frosts through).
+  glassHeaderBg: 'rgba(247,250,248,0.78)',
   // Soft pastel tiles: mint, sky, lilac, blush and cream plus the extended
   // palette - the category cards read as gentle colour cards with no borders,
   // like the reference.
   tints: {
-    food: { top: '#E7F8EF', bottom: '#D3F0E0', border: '#BCE7CD' },
-    medicine: { top: '#E9F2FC', bottom: '#D6E8FA', border: '#BBD9F3' },
-    household: { top: '#F0EDFB', bottom: '#E3DDF6', border: '#D2C8EE' },
-    skincare: { top: '#FCEAF2', bottom: '#F8DBE9', border: '#F1C6D9' },
-    pantry: { top: '#FCF2DC', bottom: '#F9E8C3', border: '#EFD9A2' },
+    food: { top: '#E4F6E7', bottom: '#CDEFD3', border: '#B5E3BC' },
+    medicine: { top: '#E6F1F8', bottom: '#CCE3F0', border: '#B0D2E4' },
+    household: { top: '#EFEAF9', bottom: '#DED6F1', border: '#CFC4E9' },
+    skincare: { top: '#FAE9F0', bottom: '#F3D3E0', border: '#EBBED1' },
+    pantry: { top: '#FBF1DC', bottom: '#F5E5C2', border: '#EAD69F' },
     // The extended palette: the same soft-pastel treatment, one family each.
-    forest: { top: '#E3F4E8', bottom: '#CFE9D8', border: '#B7DEC4' },
-    ocean: { top: '#DCEBFA', bottom: '#C4DCF4', border: '#AACFEC' },
-    teal: { top: '#E2F4F4', bottom: '#CCEAEA', border: '#B3DEDE' },
-    lavender: { top: '#EAEAFB', bottom: '#D8D8F4', border: '#C2C3EA' },
-    rose: { top: '#F9E4EC', bottom: '#F2CFDD', border: '#E8B8CC' },
-    coral: { top: '#FDEDE4', bottom: '#FADDCB', border: '#F3CBB0' },
-    sand: { top: '#F8F1E3', bottom: '#F1E7CF', border: '#E5D6B4' },
-    slate: { top: '#ECF1F5', bottom: '#DFE7ED', border: '#CBD8E2' },
-    add: { top: '#F7FAF8', bottom: '#F3F7F4', border: '#D7E2DC' },
+    forest: { top: '#E1F3E6', bottom: '#C8E7D1', border: '#AFDABC' },
+    ocean: { top: '#DFEBF8', bottom: '#C3D9EE', border: '#A9C9E2' },
+    teal: { top: '#E0F2F2', bottom: '#C6E7E7', border: '#AADDDD' },
+    lavender: { top: '#EAE8FA', bottom: '#D5D3F2', border: '#C0BEE8' },
+    rose: { top: '#F8E2EB', bottom: '#EFCCDC', border: '#E4B4CA' },
+    coral: { top: '#FCEBE2', bottom: '#F7D9C8', border: '#EFC7AD' },
+    sand: { top: '#F7F0E2', bottom: '#EFE4CB', border: '#E1D2B0' },
+    slate: { top: '#EAF0EA', bottom: '#D9E4DA', border: '#C4D4C6' },
+    add: { top: '#F4F9F4', bottom: '#EDF4ED', border: '#D5E4D6' },
   },
   // The Add-category tile: a borderless soft card with fine diagonal lines.
-  addTile: { bg: '#F4F8FB', line: 'rgba(100,116,139,0.16)' },
+  addTile: { bg: '#F2F7F2', line: 'rgba(102,135,125,0.16)' },
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance.
-    amber: { bg: '#FCF1D8', text: '#8A600C' },
-    green: { bg: '#DFF6EA', text: '#0E8A5F' },
-    red: { bg: '#FDE9EC', text: '#C62839' },
+    amber: { bg: '#FCF0D6', text: '#8F6217' },
+    green: { bg: '#DFF3C6', text: '#43781F' },
+    red: { bg: '#FBE5E3', text: '#C03A34' },
   },
-  switchColors: { track: '#D8E1E8', trackOn: '#16C58B', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
+  switchColors: { track: '#D7E2D9', trackOn: '#8FD957', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
 export type Tint =
@@ -268,14 +300,14 @@ export type Tone = 'amber' | 'green' | 'red';
 
 export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
 
-// The reference's airy depth: soft, diffuse blue-gray shadows that let white
-// cards float gently above the cool-white page. Applied on the LIGHT theme
+// The reference's airy depth: soft, diffuse green-gray shadows that let white
+// cards float gently above the mint-white page. Applied on the LIGHT theme
 // only - the dark theme separates surfaces with hairlines instead.
 // The shadow lives on an OUTER wrapper that never sets overflow: 'hidden'
 // (iOS clips a view's own shadow as soon as it masks its bounds), with the
 // white background and rounded clipping on an inner container.
 export const CARD_SHADOW: ViewStyle = {
-  shadowColor: '#64748B',
+  shadowColor: '#6B8073',
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.08,
   shadowRadius: 12,
@@ -284,7 +316,7 @@ export const CARD_SHADOW: ViewStyle = {
 
 // Slightly more presence for the profile card and dialogs.
 export const CARD_SHADOW_LIFTED: ViewStyle = {
-  shadowColor: '#64748B',
+  shadowColor: '#6B8073',
   shadowOffset: { width: 0, height: 5 },
   shadowOpacity: 0.09,
   shadowRadius: 16,
@@ -292,8 +324,8 @@ export const CARD_SHADOW_LIFTED: ViewStyle = {
 };
 
 // The dark theme's depth cue: on the near-black page a hairline alone leaves
-// the glass cards reading flat, so they float on a soft black shadow instead -
-// the dark register of the light theme's airy blue-gray shadows.
+// the cards reading flat, so they float on a soft black shadow instead -
+// the dark register of the light theme's airy green-gray shadows.
 export const CARD_SHADOW_DARK: ViewStyle = {
   shadowColor: '#000000',
   shadowOffset: { width: 0, height: 5 },
@@ -317,15 +349,15 @@ export const type = {
 } as const;
 
 // Icon accents used by Settings rows; mid-tone so they read on both themes.
-// The green follows the reference's primary green.
+// The green follows the brand's leaf green, deepened to sit on pastel tiles.
 export const accents = {
-  amber: '#D99B2B',
+  amber: '#DE9A2B',
   purple: '#8B5CF6',
-  mint: '#00A86B',
+  mint: '#4E9B2E',
   blue: '#3B82F6',
-  teal: '#3FA8AE',
+  teal: '#3FA89E',
   pink: '#E255A0',
-  red: '#FF334F',
+  red: '#F0524A',
 } as const;
 
 export type Accent = keyof typeof accents;

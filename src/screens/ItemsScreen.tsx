@@ -5,7 +5,6 @@ import { makeStyles, useTheme, LIGHT, CARD_SHADOW } from '../theme';
 import { useCategories } from '../categories';
 import { useItems, type CategoryId } from '../items';
 import { useSettings } from '../settings';
-import { useShopping } from '../shopping';
 import { expiryStatus, SORT_LABELS, SORT_ORDERS, sortItems, type SortOrder } from '../preferences';
 import { Page } from '../components/Page';
 import { ItemCard, categoryIcon } from '../components/ItemCard';
@@ -22,19 +21,17 @@ type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavig
 // edit the same preference.
 const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recent', name: 'A–Z' };
 
-// The Lists tab, redesigned to the light reference: the compact title block
-// with the prominent mint "Add item" capsule, the white rounded Items /
-// Shopping list segmented control with small integrated count badges, the
-// scrollable category chips, the search field beside the sort picker, the
-// live count with real expired/valid status badges, and compact white
-// product cards (pale-green art square, meta rows, thin expiry bar, days
-// pill). Everything reads the same real data as before — no sample products,
-// no new dependencies.
+// The Lists tab, redesigned to the reference: the compact title block with the
+// prominent mint "Add item" capsule, the rounded Items / Shopping list
+// segmented control — icon and label only, no counters — the scrollable
+// category chips, the search field beside the sort picker, the live count with
+// real expired/valid status badges, and compact product cards (pale-green art
+// square, meta rows, thin expiry bar, days pill). Everything reads the same
+// real data as before — no sample products, no new dependencies.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { items } = useItems();
   const { settings, update } = useSettings();
   const { all, custom } = useCategories();
-  const { toBuyCount } = useShopping();
   const c = useTheme();
   const s = useStyles();
   const [filter, setFilter] = useState<'all' | CategoryId>(category ?? 'all');
@@ -62,12 +59,18 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   // what has already expired, and what is still valid.
   const valid = searched.length - expired.length;
 
-  const pills: PillColors =
-    c === LIGHT
-      ? // The reference's chips: white inactive capsules with a fine gray
-        // border, solid mint selected with white ink.
-        { offBg: c.surface, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: '#FFFFFF' }
-      : { offBg: c.cardAlt, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: c.scanInk };
+  const pills: PillColors = {
+    // The reference's chips: quiet inactive capsules (white on light, the
+    // raised surface on dark) with a fine hairline, and the solid
+    // selected-green fill with deep forest ink — the same "selected" look
+    // as the segmented control above.
+    offBg: c === LIGHT ? c.surface : c.cardAlt,
+    offBorder: c.surfaceBorder,
+    offText: c.textMuted,
+    onBg: c.selBg,
+    onBorder: c.selBg,
+    onText: c.scanInk,
+  };
   // Arriving from a Home category tile: scroll the pill row so that tile's
   // pill (solid green) is on screen instead of far to the right.
   const { scrollRef: pillsScroll, note: notePill } = useScrollSelectedIntoView(filter);
@@ -80,6 +83,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
       onPress={() => (shopping ? setShopAddOpen(true) : onNavigate('manual'))}
       scaleTo={0.96}
       style={s.addBtn}
+      pressedStyle={s.addBtnPressed}
       accessibilityRole="button"
       accessibilityLabel={shopping ? 'Add an item to your Shopping List' : 'Add an item'}
     >
@@ -101,7 +105,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
       >
         {/* The Lists tab's two views, as one full-width segmented control:
             what is EXPIRING (Items) is always visually separated from what is
-            TO BUY (Shopping list), each side carrying its live count. Tapping
+            TO BUY (Shopping list) — icon and label only, no counters. Tapping
             either navigates (tab:items / tab:shop), so the address bar, the
             back button and the shell's glass bar all follow the switch like
             any other route. */}
@@ -118,9 +122,6 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             <Text style={[s.segText, !shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               Items
             </Text>
-            <View style={[s.segCount, !shopping && s.segCountOn]}>
-              <Text style={[s.segCountText, !shopping && s.segCountTextOn]}>{items.length > 99 ? '99+' : items.length}</Text>
-            </View>
           </PressScale>
           <PressScale
             onPress={() => onNavigate('tab:shop')}
@@ -134,9 +135,6 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             <Text style={[s.segText, shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               Shopping list
             </Text>
-            <View style={[s.segCount, !!shopping && s.segCountOn]}>
-              <Text style={[s.segCountText, shopping && s.segCountTextOn]}>{toBuyCount > 99 ? '99+' : toBuyCount}</Text>
-            </View>
           </PressScale>
         </View>
         {shopping ? (
@@ -236,7 +234,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             {items.length > 0 && (
               <PressScale onPress={() => onNavigate('tab:home')} scaleTo={0.985} style={s.waste} accessibilityRole="button" accessibilityLabel="Your waste reduction summary">
                 <View style={s.wasteIcon}>
-                  <Ionicons name="leaf" size={22} color={c.mint} />
+                  <Ionicons name="leaf" size={22} color={c.green} />
                 </View>
                 <View style={s.wasteText}>
                   <Text style={s.wasteTitle}>{items.length === 1 ? '1 item tracked' : `${items.length} items tracked`}</Text>
@@ -275,8 +273,9 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
 }
 
 const useStyles = makeStyles((t) => ({
-  // The prominent mint action capsule beside the title (the reference's
-  // "＋ Add item"): solid mint with dark ink, soft lift on the light page.
+  // The prominent leaf-green action capsule beside the title (the reference's
+  // "＋ Add item"): solid green with deep forest ink, soft lift on the light
+  // page, and the pressed register (a hair deeper green) while touched.
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,16 +285,17 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 999,
     backgroundColor: t.mint,
     ...(t === LIGHT
-      ? { shadowColor: '#16C58B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 3 }
-      : { shadowColor: '#0B3B2E', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 6 }),
+      ? { shadowColor: '#5FAF3C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }
+      : { shadowColor: '#0F2E18', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 }),
   },
+  addBtnPressed: { backgroundColor: t.mintPressed },
   addBtnText: { color: t.scanInk, fontSize: 15, fontWeight: '700' },
 
   // The Items / Shopping list segmented control (the tab's two views), in
-  // the reference's language: a white rounded container, the selected side
-  // filled emerald with white ink and a small pale-green count badge, the
-  // inactive side quiet gray with a soft gray badge — small integrated
-  // badges, never oversized bubbles. The category chips sit one tight gap
+  // the reference's language: a rounded container (white on light, the
+  // raised surface on dark), the selected side filled with the soft
+  // selected-green and deep forest ink, the inactive side quiet gray — icon
+  // and label only, no count badges. The category chips sit one tight gap
   // below it, so the two read as related controls of the same section, while
   // the title block above keeps its clear breathing room.
   viewSwitch: {
@@ -308,27 +308,12 @@ const useStyles = makeStyles((t) => ({
     backgroundColor: t === LIGHT ? t.surface : t.cardAlt,
     marginBottom: 8,
   },
-  // Compact internal spacing: icon, label and count stay vertically centred
-  // with a tight gap, never cramped (44pt keeps the touch target).
-  seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6 },
-  segOn: { backgroundColor: t.mint },
+  // Compact internal spacing: icon and label stay vertically centred with a
+  // tight gap, never cramped (44pt keeps the touch target).
+  seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
+  segOn: { backgroundColor: t.selBg },
   segText: { color: t.textMuted, fontSize: 14.5, fontWeight: '600' },
   segTextOn: { color: t.scanInk, fontWeight: '700' },
-  segCount: {
-    minWidth: 22,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Inactive badges carry enough fill to read at a glance on the white
-    // container (the old near-invisible tint is gone).
-    backgroundColor: t === LIGHT ? 'rgba(130,146,159,0.22)' : 'rgba(255,255,255,0.12)',
-  },
-  // The selected side's badge: the reference's small pale-green chip.
-  segCountOn: { backgroundColor: t === LIGHT ? '#DFF6EA' : 'rgba(4,36,27,0.30)' },
-  segCountText: { color: t === LIGHT ? '#5C6B77' : '#C5D0D5', fontSize: 11.5, fontWeight: '700' },
-  segCountTextOn: { color: t === LIGHT ? '#0E8A5F' : '#04241B' },
   pillRow: { gap: 8, paddingVertical: 0 },
   // Search beside the sort picker (the reference's row under the chips).
   searchSortRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 12 },
@@ -376,7 +361,7 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: t === LIGHT ? '#D9FBF0' : 'rgba(46,232,182,0.10)',
+    backgroundColor: t.pills.green.bg,
   },
   wasteText: { flex: 1, minWidth: 0 },
   wasteTitle: { color: t.text, fontSize: 15.5, fontWeight: '700' },

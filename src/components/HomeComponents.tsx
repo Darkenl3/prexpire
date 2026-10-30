@@ -35,13 +35,14 @@ export const GLASS_STRIP_FX = {
   WebkitBackdropFilter: 'blur(20px) saturate(160%)',
 };
 
-// The shared liquid-glass circle: 46pt, matching the scanner screen's native
+// The shared round chrome button: 46pt, matching the scanner screen's native
 // GlassCircle controls one for one, behind the header's menu and bell buttons,
 // Settings' back buttons and the New-category page's back button, so every
-// round control in the app shares the exact same glass, dimensions and press
-// feedback. No shadow at all — the liquid-glass read comes from the frosted
-// translucent surface plus a thin, low-contrast hairline rim (the theme's
-// glassBorder), like a floating piece of glass, not a lifted solid button.
+// round control in the app shares the exact same dimensions and press
+// feedback. Its surface is the theme's quiet circular plateau - the dark
+// page's raised surface, the light page's pale mint - with nothing but a
+// hairline rim: flat and calm like the reference's ghost circles, never a
+// lifted solid button.
 export const GLASS_BUTTON: ViewStyle = {
   width: 46,
   height: 46,
@@ -49,21 +50,6 @@ export const GLASS_BUTTON: ViewStyle = {
   alignItems: 'center',
   justifyContent: 'center',
 };
-
-// The circles' liquid-glass rim: the specular inner highlight real glass
-// has — a 1px light edge along the TOP of the fill (where light catches it)
-// plus a whisper of shade along the bottom — layered INSIDE the translucent
-// surface, on top of the hairline border. This is what makes a small circle
-// read as a floating piece of glass rather than a flat colored disc: the
-// highlight reads instantly even when the backdrop blur has nothing to
-// refract (the top of the page, behind the frosted strip). Slightly stronger
-// on the dark page (light on dark glass), softer on the light one.
-// react-native-web passes boxShadow straight to the DOM (RN 0.76+ style).
-const glassRim = (light: boolean): ViewStyle => ({
-  boxShadow: light
-    ? 'inset 0 1px 0 rgba(255,255,255,0.60), inset 0 -1px 0 rgba(15,23,42,0.05)'
-    : 'inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.22)',
-});
 
 export function GlassIconButton({
   icon,
@@ -98,7 +84,6 @@ export function GlassIconButton({
         GLASS_BUTTON,
         size !== 46 && { width: size, height: size, borderRadius: size / 2 },
         { backgroundColor: c.glassBg, borderWidth: 1, borderColor: c.glassBorder },
-        glassRim(c === LIGHT),
         GLASS_FX as ViewStyle,
         style,
       ]}
@@ -161,8 +146,8 @@ export function AttentionCard({
     <PressScale onPress={onPress} accessibilityRole="button" style={[s.alert, ok && s.alertOk]} scaleTo={0.985}>
       <View style={[s.alertIcon, { backgroundColor: ok ? c.okIconBg : c.alertIconBg }]}>
         {/* Red in both themes: urgency reads the same whatever the theme.
-            The green twin speaks in the mint family instead. */}
-        <Ionicons name={ok ? 'checkmark-circle' : 'warning'} size={24} color={ok ? c.mint : c.red} />
+            The green twin speaks in the leaf-green family instead. */}
+        <Ionicons name={ok ? 'checkmark-circle' : 'warning'} size={24} color={ok ? c.green : c.red} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
@@ -199,8 +184,8 @@ export function SectionHeader({ title, action, first = false, actionLabel, onAct
           accessibilityRole="button"
           accessibilityLabel={actionLabel ?? action}
         >
-          <Text style={[s.sectionLink, { color: c.mint }]}>{action}</Text>
-          <Ionicons name="chevron-forward" size={17} color={c.mint} />
+          <Text style={[s.sectionLink, { color: c.green }]}>{action}</Text>
+          <Ionicons name="chevron-forward" size={17} color={c.green} />
         </PressScale>
       )}
     </View>
@@ -462,7 +447,7 @@ const useStyles = makeStyles((c) => ({
   bellDot: { position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: 4.5, backgroundColor: c.mint },
   // The Lists tab's shopping count uses the accent colour rather than red: it
   // is information, not urgency (the Shopping List is a view of that tab).
-  shopBadgeText: { color: '#04241B', fontSize: 11, fontWeight: '700' },
+  shopBadgeText: { color: c.scanInk, fontSize: 11, fontWeight: '700' },
   alert: {
     marginTop: 4,
     minHeight: 58,
@@ -535,7 +520,7 @@ const useStyles = makeStyles((c) => ({
     gap: 11,
     backgroundColor: c.surface,
     // A fine hairline on BOTH themes now: the light page's white cards need
-    // the #E4ECEF edge to stay visible on the near-white page.
+    // the #DFECE5 edge to stay visible on the near-white page.
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     ...(c === LIGHT ? CARD_SHADOW : null),

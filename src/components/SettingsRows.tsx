@@ -17,13 +17,13 @@ type IconName = keyof typeof Ionicons.glyphMap;
 // Each accent's soft pastel tile (light theme). Dark keeps a whisper of the
 // accent colour on its own surfaces.
 const TILE_BG: Record<Accent, string> = {
-  amber: '#FEF3D9',
+  amber: '#FCF0D6',
   purple: '#EFEAFB',
-  mint: '#D9FBF0',
+  mint: '#E2F5D2',
   blue: '#E3EEFB',
   teal: '#E0F5F4',
   pink: '#FDEAF3',
-  red: '#FDE8EA',
+  red: '#FBE7E5',
 };
 
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
@@ -165,7 +165,7 @@ export function StatusBadge({ label, tone = 'muted', check = false }: { label: s
       accessibilityRole="text"
       accessibilityLabel={label}
     >
-      {check && tone === 'green' && <Ionicons name="checkmark" size={13} color="#00A86B" />}
+      {check && tone === 'green' && <Ionicons name="checkmark" size={13} color="#4E9B2E" />}
       <Text style={[s.badgeText, tone === 'green' && s.badgeTextGreen, tone === 'amber' && s.badgeTextAmber]}>{label}</Text>
     </FadeIn>
   );
@@ -194,7 +194,7 @@ export function Options<T extends string | number>({ label, options, value, onCh
           >
             {on && (
               <FadeIn>
-                <Ionicons name="checkmark" size={14} color={c.mint} />
+                <Ionicons name="checkmark" size={14} color={c.green} />
               </FadeIn>
             )}
             <Text style={[s.chipText, on && s.chipTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
@@ -229,7 +229,7 @@ export function OptionList<T extends string | number>({ label, options, value, o
             <Text style={[s.optionText, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
             {on && (
               <FadeIn>
-                <Ionicons name="checkmark" size={19} color={c.mint} />
+                <Ionicons name="checkmark" size={19} color={c.green} />
               </FadeIn>
             )}
           </PressScale>
@@ -313,7 +313,7 @@ export function OptionSheet<T extends string | number>({
                   <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
                   {on && (
                     <FadeIn>
-                      <Ionicons name="checkmark" size={19} color={c.mint} />
+                      <Ionicons name="checkmark" size={19} color={c.green} />
                     </FadeIn>
                   )}
                 </PressScale>
@@ -367,7 +367,7 @@ export function PickerRow<T extends string | number>({
 export function Note({ children, tone = 'muted' }: { children: ReactNode; tone?: 'muted' | 'ok' | 'warn' }) {
   const c = useTheme();
   const s = useStyles();
-  const color = tone === 'ok' ? c.mint : tone === 'warn' ? c.amberText : c.textMuted;
+  const color = tone === 'ok' ? c.green : tone === 'warn' ? c.amberText : c.textMuted;
   const icon: IconName = tone === 'ok' ? 'checkmark-circle' : tone === 'warn' ? 'alert-circle' : 'information-circle-outline';
   return (
     <View style={s.note}>
@@ -435,7 +435,7 @@ const useStyles = makeStyles((c) => ({
   chevron: { marginLeft: 2, opacity: 0.75 },
   // Gentle press feedback: a whisper of tint behind the row (the scale-down
   // and opacity settle come from PressScale, timed like the rest).
-  rowPressed: { backgroundColor: c === LIGHT ? 'rgba(100,116,139,0.07)' : 'rgba(255,255,255,0.05)' },
+  rowPressed: { backgroundColor: c === LIGHT ? 'rgba(102,135,125,0.10)' : 'rgba(255,255,255,0.05)' },
   below: { marginTop: 12, marginLeft: 66, gap: 10 },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
@@ -457,7 +457,7 @@ const useStyles = makeStyles((c) => ({
   optionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 16, gap: 12 },
   optionText: { color: c.text, fontSize: 15.5, fontWeight: '500', flex: 1 },
   // The picker sheet: a floating card anchored to the bottom of the screen.
-  sheetWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,23,42,0.45)' },
+  sheetWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(8,14,11,0.45)' },
   sheet: {
     width: '100%',
     maxWidth: 480,
@@ -473,7 +473,7 @@ const useStyles = makeStyles((c) => ({
   sheetOptions: { borderRadius: 14, overflow: 'hidden' },
   sheetOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 54, paddingHorizontal: 16, gap: 12 },
   sheetOptionText: { color: c.text, fontSize: 16.5, fontWeight: '500', flex: 1 },
-  sheetOptionTextOn: { color: c.mint, fontWeight: '600' },
+  sheetOptionTextOn: { color: c.green, fontWeight: '600' },
   sheetCancel: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -484,11 +484,11 @@ const useStyles = makeStyles((c) => ({
   },
   sheetCancelText: { color: c.textMuted, fontSize: 16, fontWeight: '600' },
   badge: { paddingHorizontal: 11, height: 27, borderRadius: 999, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.cardAlt, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  badgeGreen: { borderColor: 'rgba(0,168,107,0.35)', backgroundColor: '#D9FBF0' },
-  badgeAmber: { borderColor: 'rgba(217,155,43,0.4)', backgroundColor: '#FEF3D9' },
+  badgeGreen: { borderColor: 'rgba(78,155,46,0.4)', backgroundColor: '#E2F5D2' },
+  badgeAmber: { borderColor: 'rgba(222,154,43,0.4)', backgroundColor: '#FCF0D6' },
   badgeText: { color: c.textMuted, fontSize: 12.5, fontWeight: '700' },
-  badgeTextGreen: { color: '#00A86B' },
-  badgeTextAmber: { color: '#966E12' },
+  badgeTextGreen: { color: '#478A26' },
+  badgeTextAmber: { color: '#8F6217' },
   note: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
   noteText: { flex: 1, fontSize: 13, lineHeight: 18 },
   button: {
@@ -501,7 +501,7 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.surface,
-    ...(c === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null),
+    ...(c === LIGHT ? { shadowColor: '#6B8073', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null),
   },
   buttonText: { fontSize: 14, fontWeight: '600' },
 }));

@@ -161,7 +161,7 @@ function ExpiryAlertCard({ alert, onNavigate, onHeight }: { alert: { key: string
         <View style={s.actions}>
           {added ? (
             <FadeIn style={s.added}>
-              <Ionicons name="checkmark-circle" size={17} color={c.mint} />
+              <Ionicons name="checkmark-circle" size={17} color={c.green} />
               <Text style={s.addedText}>Added to your Shopping List</Text>
             </FadeIn>
           ) : inList ? (
@@ -184,7 +184,7 @@ function ExpiryAlertCard({ alert, onNavigate, onHeight }: { alert: { key: string
 function AlertButton({ label, icon, tone = 'neutral', onPress }: { label: string; icon?: keyof typeof Ionicons.glyphMap; tone?: 'neutral' | 'mint'; onPress: () => void }) {
   const c = useTheme();
   const s = useStyles();
-  const color = tone === 'mint' ? c.mint : c.textMuted;
+  const color = tone === 'mint' ? c.green : c.textMuted;
   return (
     <PressScale
       onPress={onPress}
@@ -236,5 +236,5 @@ const useStyles = makeStyles((c) => ({
   },
   buttonText: { fontSize: 14, fontWeight: '600' },
   added: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 38, paddingHorizontal: 4 },
-  addedText: { color: c.mint, fontSize: 14, fontWeight: '600' },
+  addedText: { color: c.green, fontSize: 14, fontWeight: '600' },
 }));

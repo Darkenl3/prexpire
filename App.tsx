@@ -57,7 +57,7 @@ function useFocusStyles() {
     if (!WEB || typeof document === 'undefined') return;
     const style = document.createElement('style');
     style.textContent =
-      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible,input:focus-visible{outline:2px solid #2EE8B6;outline-offset:2px;border-radius:10px}';
+      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible,input:focus-visible{outline:2px solid #8FD957;outline-offset:2px;border-radius:10px}';
     document.head.appendChild(style);
     return () => style.remove();
   }, []);

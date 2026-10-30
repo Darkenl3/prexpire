@@ -22,7 +22,7 @@ export function SearchField({ value, onChange, placeholder = 'Search items…', 
   const [focused, setFocused] = useState(false);
   return (
     <View style={[s.field, focused && { borderColor: c.chipOnBorder }]} accessibilityRole="search">
-      <Ionicons name="search" size={17} color={focused ? c.mint : c.textMuted} />
+      <Ionicons name="search" size={17} color={focused ? c.green : c.textMuted} />
       <TextInput
         style={s.input}
         value={value}

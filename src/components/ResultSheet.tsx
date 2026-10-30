@@ -17,8 +17,8 @@ const SHEET_PILLS: PillColors = {
   offBg: 'rgba(255,255,255,0.05)',
   offBorder: colors.surfaceBorder,
   offText: colors.textMuted,
-  onBg: colors.mint,
-  onBorder: colors.mint,
+  onBg: colors.selBg,
+  onBorder: colors.selBg,
   onText: colors.scanInk,
 };
 
@@ -363,13 +363,13 @@ function Stepper({ label, value, onDown, onUp }: { label: string; value: string;
 }
 
 const s = StyleSheet.create({
-  sheet: { backgroundColor: '#081316', borderColor: colors.surfaceBorder, paddingHorizontal: 18, paddingTop: 10 },
+  sheet: { backgroundColor: '#0E1712', borderColor: colors.surfaceBorder, paddingHorizontal: 18, paddingTop: 10 },
   sheetBottom: { borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: StyleSheet.hairlineWidth },
   sheetSide: { borderTopLeftRadius: 24, borderBottomLeftRadius: 24, borderLeftWidth: StyleSheet.hairlineWidth, paddingTop: 18 },
   // The full-screen portrait form: no handle (there is nothing to drag it
   // over), and comfortable top padding where the handle used to be.
   sheetFull: { paddingTop: 18 },
-  handle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#3A4A50', marginBottom: 12 },
+  handle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#2E3D34', marginBottom: 12 },
   scroll: { flexGrow: 0, flexShrink: 1 },
   // Full-screen mode: the body GROWS to eat the sheet's extra height, so the
   // tick/actions always sit pinned at the bottom of the screen and the form
@@ -392,7 +392,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     paddingHorizontal: 12,
   },
-  nameFieldFocus: { borderColor: 'rgba(46,232,182,0.65)', backgroundColor: 'rgba(46,232,182,0.05)' },
+  nameFieldFocus: { borderColor: 'rgba(143,217,87,0.55)', backgroundColor: 'rgba(143,217,87,0.06)' },
   nameFieldWarn: { borderColor: 'rgba(245,184,61,0.65)' },
   nameArt: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
   nameInput: { flex: 1, color: colors.text, fontSize: 17.5, fontWeight: '600', paddingVertical: 0, paddingRight: 4 },
@@ -401,8 +401,8 @@ const s = StyleSheet.create({
   guessed: { color: colors.textMuted, fontSize: 12, paddingTop: 8 },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.surfaceBorder, marginTop: 14 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12 },
-  calendar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#0D2E28', alignItems: 'center', justifyContent: 'center' },
-  calendarWarn: { backgroundColor: '#3D2B0E' },
+  calendar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#17331F', alignItems: 'center', justifyContent: 'center' },
+  calendarWarn: { backgroundColor: '#3A2C14' },
   dateLabel: { color: colors.textMuted, fontSize: 13.5 },
   dateValue: { color: colors.text, fontSize: 21, fontWeight: '700', letterSpacing: -0.3, marginTop: 2 },
   block: { gap: 8, paddingBottom: 10 },
@@ -429,7 +429,7 @@ const s = StyleSheet.create({
   primaryText: { color: colors.scanInk, fontSize: 16.5, fontWeight: '700' },
   savedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   disabled: { opacity: 0.45 },
-  secondary: { height: 50, borderRadius: radius.pill, borderWidth: 1, borderColor: '#2C3B40', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  secondary: { height: 50, borderRadius: radius.pill, borderWidth: 1, borderColor: '#26352C', alignItems: 'center', justifyContent: 'center', marginTop: 10 },
   secondaryText: { color: colors.text, fontSize: 15.5, fontWeight: '500' },
   pressed: { opacity: 0.8 },
 });

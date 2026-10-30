@@ -73,6 +73,6 @@ const s = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
   },
-  successFill: { backgroundColor: 'rgba(46,232,182,0.08)', borderRadius: CORNER_RADIUS },
-  successOutline: { borderRadius: CORNER_RADIUS, borderWidth: 1.5, borderColor: 'rgba(46,232,182,0.55)' },
+  successFill: { backgroundColor: 'rgba(143,217,87,0.08)', borderRadius: CORNER_RADIUS },
+  successOutline: { borderRadius: CORNER_RADIUS, borderWidth: 1.5, borderColor: 'rgba(143,217,87,0.55)' },
 });

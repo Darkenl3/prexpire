@@ -144,7 +144,7 @@ export function ShoppingListBody({
               {toBuy.length === 0 && purchased.length > 0 && (
                 <FadeIn>
                   <View style={c.allDone}>
-                    <Ionicons name="checkmark-done-circle-outline" size={22} color={t.mint} />
+                    <Ionicons name="checkmark-done-circle-outline" size={22} color={t.green} />
                     <Text style={c.allDoneText}>Everything on your list is bought.</Text>
                   </View>
                 </FadeIn>
@@ -462,7 +462,7 @@ export function ShoppingToast({ text, onDone }: { text: string; onDone: () => vo
     <Animated.View pointerEvents="none" style={[c.toastWrap, { opacity }]} accessibilityLiveRegion="polite">
       <View style={[c.toast, { backgroundColor: t.toastBg, borderColor: t.toastBorder }]}>
         <Ionicons name="checkmark-circle" size={18} color={t.mint} />
-        <Text style={[c.toastText, { color: t.text }]} numberOfLines={2}>
+        <Text style={[c.toastText, { color: t.toastInk }]} numberOfLines={2}>
           {text}
         </Text>
       </View>
@@ -491,7 +491,7 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: t === LIGHT ? '#D9FBF0' : 'rgba(46,232,182,0.10)',
+    backgroundColor: t.pills.green.bg,
     marginBottom: 4,
   },
   emptyTitle: { color: t.text, fontSize: 17.5, fontWeight: '700' },
@@ -520,7 +520,7 @@ const useStyles = makeStyles((t) => ({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: t === LIGHT ? '#B6C4D2' : '#3A4E55',
+    borderColor: t === LIGHT ? '#B9CFC0' : '#3A4A3E',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -542,7 +542,7 @@ const useStyles = makeStyles((t) => ({
   qty: { minWidth: 20, textAlign: 'center', color: t.text, fontSize: 13.5, fontWeight: '600' },
   remove: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(8,14,11,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {
     width: '100%',
     maxWidth: 420,

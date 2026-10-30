@@ -319,7 +319,7 @@ function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number;
     <Animated.View pointerEvents="none" style={[c.toastWrap, { bottom, opacity }]} accessibilityLiveRegion="polite">
       <View style={[c.toast, { backgroundColor: t.toastBg, borderColor: t.toastBorder }]}>
         <Ionicons name="checkmark-circle" size={18} color={t.mint} />
-        <Text style={[c.toastText, { color: t.text }]} numberOfLines={2}>
+        <Text style={[c.toastText, { color: t.toastInk }]} numberOfLines={2}>
           {text}
         </Text>
       </View>

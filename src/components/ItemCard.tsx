@@ -191,7 +191,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 {item.name}
               </Text>
               <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Add ${item.name} to your Shopping List`}>
-                <Ionicons name="cart-outline" size={19} color={t.mint} />
+                <Ionicons name="cart-outline" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Add to Shopping List</Text>
               </PressScale>
               <PressScale onPress={() => void removePressed()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`}>
@@ -262,7 +262,7 @@ const useStyles = makeStyles((t) => ({
   pillTextCompact: { fontSize: 12 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(8,14,11,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   menu: {
     width: '100%',
     maxWidth: 360,
