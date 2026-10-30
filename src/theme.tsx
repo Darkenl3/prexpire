@@ -3,18 +3,23 @@ import { useColorScheme, type ImageStyle, type TextStyle, type ViewStyle } from 
 import { useSettings } from './settings';
 
 // The app's design language: a near-black teal dark theme and an airy
-// mint-white light theme, both anchored on the brand's bright lime green
-// (the wordmark's solid leaf green). Everything visual reads from the active
+// mint-white light theme, both anchored on ONE green — the "All caught up"
+// green. The primary-action FILL (the Add item button, the scan button, the
+// selected/active chips and tabs) and the green that READS (the "All good"
+// status, the attention card's calm checkmark, links) are the very same
+// green in each theme, so every green on screen agrees: fills take it at
+// full strength, soft tints derive from it, and the ink on top of it is the
+// deep selected ink (scanInk). Everything visual reads from the active
 // palette through useTheme()/makeStyles, so the whole app (and the status
 // bar) follows the Dark/Light/System setting.
 //
 // The two themes are versions of the same app: dark keeps the page and its
-// cards very dark (#030709 / #091314) with the bright lime reserved for
-// primary actions, selected controls and important highlights; light is
-// bright, clean and airy (white cards on #F8FCFB) with dark teal text,
-// pale mint details and the same lime accents. Status colours (expired red,
+// cards very dark (#030709 / #091314) with the green reserved for primary
+// actions, selected controls and important highlights; light is bright,
+// clean and airy (white cards on #F8FCFB) with dark teal text, pale mint
+// details and the deepened green accents. Status colours (expired red,
 // expiring-soon amber, valid green) stay clearly distinguishable from the
-// lime accent in both themes.
+// accent green in both themes.
 
 export type Palette = {
   bg: string;
@@ -27,18 +32,18 @@ export type Palette = {
   // muted secondary on dark, slightly deeper on light (contrast where the
   // finest type needs it).
   textSub: string;
-  // The bright lime FILL (the Add button, the scan button, dots, checkbox
-  // fills) — the primary-action green, identical in hue in both themes.
+  // THE green: the "All caught up" / "All good" green. It is BOTH the
+  // primary-action FILL (the Add item button, the scan button, the active
+  // chips and tabs — via mint/selBg, which equal it) and the green that
+  // READS as text and icons ("All good", checkmarks, links).
   mint: string;
-  // Text- and icon-grade green for anything that must READ on a light or
-  // white surface (links, checkmarks, "All good" status): the subtle accent,
-  // deepened on the light page so it never washes out.
+  // Same green — kept as its own token because the roles differ conceptually
+  // (fill vs reading); they hold the identical value so they can never drift.
   green: string;
   // The solid selected/active fill of the segmented control / tabs — the
-  // bright lime on dark, the softer selected-lime on light — with the deep
-  // selected ink (scanInk) on top in both themes.
+  // same green, with the deep selected ink (scanInk) on top in both themes.
   selBg: string;
-  // The pressed register of the solid lime buttons (a hair deeper).
+  // The pressed register of the solid green buttons (a hair deeper).
   mintPressed: string;
   scan: string;
   scanInk: string;
@@ -99,18 +104,19 @@ export type Palette = {
 
 export const DARK: Palette = {
   // The dark page: near-black teal base, very dark cards a hair above it,
-  // and the bright lime kept for actions and selected controls only.
+  // and the one green (the "All caught up" green, #70B85B) shared by the
+  // primary actions, the selected controls and every green that reads.
   bg: '#030709',
   surface: '#091314',
   surfaceBorder: '#1B3032',
   text: '#F3F6F5',
   textMuted: '#91A6A8',
   textSub: '#9FB3B5',
-  mint: '#A6DF6B',
+  mint: '#70B85B',
   green: '#70B85B',
-  selBg: '#A6DF6B',
-  mintPressed: '#91CC59',
-  scan: '#A6DF6B',
+  selBg: '#70B85B',
+  mintPressed: '#61A64D',
+  scan: '#70B85B',
   scanInk: '#07110B',
   amber: '#FFB454',
   amberText: '#FFB454',
@@ -120,10 +126,10 @@ export const DARK: Palette = {
   iconTile: '#0D1B1D',
   cardAlt: '#0D1B1D',
   separator: '#1B3032',
-  chipOnBg: '#96EB74',
-  chipOnBorder: '#96EB74',
-  btnMintBg: 'rgba(166,223,107,0.14)',
-  btnMintBorder: 'rgba(166,223,107,0.45)',
+  chipOnBg: '#70B85B',
+  chipOnBorder: '#70B85B',
+  btnMintBg: 'rgba(112,184,91,0.16)',
+  btnMintBorder: 'rgba(112,184,91,0.5)',
   btnDangerBg: 'rgba(255,107,107,0.10)',
   btnDangerBorder: 'rgba(255,107,107,0.45)',
   // The "items need attention" card is RED in both themes - urgency reads
@@ -138,10 +144,10 @@ export const DARK: Palette = {
   dangerBorder: '#48251F',
   dialogBg: '#15282A',
   toastBg: '#0B2C1E',
-  toastBorder: 'rgba(166,223,107,0.45)',
+  toastBorder: 'rgba(112,184,91,0.45)',
   toastInk: '#EAF6E3',
-  statusOkBorder: 'rgba(112,184,117,0.45)',
-  statusOkBg: 'rgba(112,184,117,0.12)',
+  statusOkBorder: 'rgba(112,184,91,0.5)',
+  statusOkBg: 'rgba(112,184,91,0.14)',
   statusWarnBorder: '#7A5A26',
   statusWarnBg: '#3A2C14',
   // The round chrome buttons on the dark page: the raised surface as a
@@ -177,37 +183,42 @@ export const DARK: Palette = {
   // badge: a deep green capsule with bright lime-green text.
   pills: {
     amber: { bg: '#3A2C14', text: '#FFB454' },
-    green: { bg: '#093426', text: '#A6E878' },
+    // The green days-left badge: a deep green capsule carrying the same
+    // green ("All good"'s green) as its text.
+    green: { bg: '#093426', text: '#70B85B' },
     // Expired items: the red family of the attention card, as a day pill.
     red: { bg: '#331613', text: '#FF8A8A' },
   },
-  switchColors: { track: '#1B3032', trackOn: '#91CC59', thumb: '#9FB3B5', thumbOn: '#FFFFFF' },
+  switchColors: { track: '#1B3032', trackOn: '#70B85B', thumb: '#9FB3B5', thumbOn: '#FFFFFF' },
 };
 
 export const LIGHT: Palette = {
   // The light reference's airy palette: a mint-white page where white cards
-  // float on soft shadows and fine hairlines, dark teal ink, the bright lime
-  // accent for fills, pale-mint image tiles and muted teal-gray secondary
-  // text — bright, clean and fresh.
+  // float on soft shadows and fine hairlines, dark teal ink, and the one
+  // deepened green ("All caught up"'s green, #4E8F2B) shared by the primary
+  // actions, the selected controls and every green that reads — carried
+  // with a light ink on the solid fills so it never washes out on the airy
+  // page.
   bg: '#F8FCFB',
   surface: '#FFFFFF',
   surfaceBorder: '#E1EFEC',
   text: '#123B36',
   textMuted: '#6C8989',
   textSub: '#547373',
-  // The accent: the primary-action lime for FILLS (the Add button, the scan
-  // button, dots)…
-  mint: '#A5E86B',
-  // …and the subtle accent deepened for green TEXT and ICONS on the white
-  // page, so links and checkmarks always read clearly (never a washed-out
-  // lime on white).
+  // THE green: primary-action FILLS (the Add item button, the scan button,
+  // active chips and tabs) and the green that READS ("All good", links,
+  // checkmarks) are the same deepened green on the light page.
+  mint: '#4E8F2B',
   green: '#4E8F2B',
-  // The selected side of the segmented control / tabs: the soft selected
-  // lime with the deep selected ink.
-  selBg: '#B5EF8A',
-  mintPressed: '#91D65C',
-  scan: '#A5E86B',
-  scanInk: '#103A20',
+  // The selected side of the segmented control / tabs: the same solid green
+  // with the light selected ink (scanInk).
+  selBg: '#4E8F2B',
+  mintPressed: '#43801F',
+  scan: '#4E8F2B',
+  // Light ink on the solid green fills (the deep #103A20 ink of the old
+  // pale-lime era would sink into a fill this deep): a mint-white that
+  // keeps labels and icons crisp on the green.
+  scanInk: '#F2FAEE',
   // Expiring-soon accents: strong enough to read clearly on pastel fills
   // (never washed-out).
   amber: '#FFB454',
@@ -219,10 +230,10 @@ export const LIGHT: Palette = {
   iconTile: '#E5F5EE',
   cardAlt: '#EAF6F2',
   separator: '#E1EFEC',
-  chipOnBg: '#A5E86B',
-  chipOnBorder: '#A5E86B',
-  btnMintBg: 'rgba(165,232,107,0.18)',
-  btnMintBorder: 'rgba(121,185,106,0.5)',
+  chipOnBg: '#4E8F2B',
+  chipOnBorder: '#4E8F2B',
+  btnMintBg: 'rgba(78,143,43,0.12)',
+  btnMintBorder: 'rgba(78,143,43,0.5)',
   btnDangerBg: 'rgba(255,107,107,0.08)',
   btnDangerBorder: 'rgba(214,69,69,0.45)',
   alertBg: '#FDECEC',
@@ -236,10 +247,10 @@ export const LIGHT: Palette = {
   dialogBg: '#FFFFFF',
   // The toast is the deep green capsule in both themes — light mint ink.
   toastBg: '#0F3A28',
-  toastBorder: 'rgba(121,185,106,0.5)',
+  toastBorder: 'rgba(78,143,43,0.5)',
   toastInk: '#EAF6E3',
-  statusOkBorder: 'rgba(121,185,106,0.5)',
-  statusOkBg: 'rgba(121,185,106,0.15)',
+  statusOkBorder: 'rgba(78,143,43,0.5)',
+  statusOkBg: 'rgba(78,143,43,0.12)',
   statusWarnBorder: '#E8CD8E',
   statusWarnBg: '#FBF2DC',
   // The round chrome buttons on the light page: the pale mint surface as a
@@ -276,12 +287,12 @@ export const LIGHT: Palette = {
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance. The green pill is the
-    // days-left badge: pale lime with deep green text.
+    // days-left badge: a pale capsule of the one green with its deep ink.
     amber: { bg: '#FCF0D6', text: '#8F6217' },
     green: { bg: '#C9F3A7', text: '#174B28' },
     red: { bg: '#FBE5E3', text: '#C03A34' },
   },
-  switchColors: { track: '#DFEAE6', trackOn: '#A5E86B', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
+  switchColors: { track: '#DFEAE6', trackOn: '#4E8F2B', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
 
 export type Tint =
@@ -353,11 +364,11 @@ export const type = {
 } as const;
 
 // Icon accents used by Settings rows; mid-tone so they read on both themes.
-// The green follows the brand's leaf green, deepened to sit on pastel tiles.
+// The green IS the app's one green (the light page's reading grade of it).
 export const accents = {
   amber: '#DE9A2B',
   purple: '#8B5CF6',
-  mint: '#4E9B2E',
+  mint: '#4E8F2B',
   blue: '#3B82F6',
   teal: '#3FA89E',
   pink: '#E255A0',

@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { daysUntil } from './scanner/dateParser';
 import { useSettings } from './settings';
 
 // Items the user tracks. Every item is real: items added in the app are saved
@@ -140,21 +139,4 @@ export function useItems() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useItems must be used inside ItemsProvider');
   return ctx;
-}
-
-// "Expires in 5 days", "Expires tomorrow", "Expired 2 days ago".
-export function expiryPhrase(iso: string, today = new Date()) {
-  const days = daysUntil(iso, today);
-  if (days < -1) return `Expired ${-days} days ago`;
-  if (days === -1) return 'Expired yesterday';
-  if (days === 0) return 'Expires today';
-  if (days === 1) return 'Expires tomorrow';
-  return `Expires in ${days} days`;
-}
-
-export function expiryPill(iso: string, today = new Date()) {
-  const days = daysUntil(iso, today);
-  if (days < 0) return { pill: 'Expired', tone: 'amber' as const };
-  if (days === 0) return { pill: 'Today', tone: 'amber' as const };
-  return { pill: days === 1 ? '1 day' : `${days} days`, tone: days <= 1 ? ('amber' as const) : ('green' as const) };
 }

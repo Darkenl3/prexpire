@@ -500,7 +500,7 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.14)',
     maxWidth: 460,
   },
-  hintSuccess: { borderColor: 'rgba(166,223,107,0.55)' },
+  hintSuccess: { borderColor: 'rgba(112,184,91,0.55)' },
   hintText: { color: colors.text, fontSize: 14, fontWeight: '500', flexShrink: 1 },
   unavailable: { alignItems: 'center', maxWidth: 420, backgroundColor: 'rgba(5,12,14,0.85)', borderRadius: 16, padding: 14, gap: 6 },
   unavailableText: { color: colors.text, fontSize: 13.5, textAlign: 'center', lineHeight: 19 },

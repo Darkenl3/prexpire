@@ -392,7 +392,7 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     paddingHorizontal: 12,
   },
-  nameFieldFocus: { borderColor: 'rgba(166,223,107,0.55)', backgroundColor: 'rgba(166,223,107,0.06)' },
+  nameFieldFocus: { borderColor: 'rgba(112,184,91,0.55)', backgroundColor: 'rgba(112,184,91,0.06)' },
   nameFieldWarn: { borderColor: 'rgba(245,184,61,0.65)' },
   nameArt: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
   nameInput: { flex: 1, color: colors.text, fontSize: 17.5, fontWeight: '600', paddingVertical: 0, paddingRight: 4 },

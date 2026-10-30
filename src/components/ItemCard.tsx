@@ -71,7 +71,9 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
-  const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day left' : `${days} days left`;
+  // The same days-left wording every list uses ("Today", "1 day", "5 days") —
+  // the card's own date row says the exact day.
+  const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
 
   const known = custom.find((cat) => cat.id === item.category);
   const icon = categoryIcon(item.category, known?.icon);

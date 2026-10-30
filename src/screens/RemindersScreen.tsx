@@ -24,11 +24,13 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Soonest first', added: 
 // information banner under the title, "Due now" with its live status and the
 // big "All caught up!" empty card, "Upcoming (N)" with the soonest-first sort
 // control, and horizontal reminder cards — the category's art in a tinted
-// rounded square, the name over "Category • Expires on {date}", and the
-// remaining-days pill with a chevron. Everything is derived from the same
-// real data as before (remindersDue + the shared sort preference): grouping,
-// expiry maths, navigation and notification behaviour are untouched, and the
-// reminders-off state still routes to Settings.
+// rounded square, the name over the category, and the remaining-days pill
+// with a chevron. The pill is the only expiry countdown on the card (the
+// exact date lives on the Lists tab's item cards), so the row stays clean.
+// Everything is derived from the same real data as before (remindersDue +
+// the shared sort preference): grouping, expiry maths, navigation and
+// notification behaviour are untouched, and the reminders-off state still
+// routes to Settings.
 
 // One reminder card (the reference's horizontal list card). The days pill
 // carries the expiry maths: green for upcoming, amber inside the warning
@@ -36,7 +38,7 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Soonest first', added: 
 function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?: boolean; onPress: () => void }) {
   const t = useTheme();
   const s = useStyles();
-  const { settings, formatDate } = useSettings();
+  const { settings } = useSettings();
   const { nameOf } = useCategories();
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
@@ -59,11 +61,10 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
         <Text style={s.name} numberOfLines={2}>
           {item.name}
         </Text>
-        {/* The meta wraps to a second line instead of cutting the expiry date
-            off: the date is the point of a reminder, so it is always fully
-            visible — long category names simply flow onto line two. */}
-        <Text style={s.meta} numberOfLines={2}>
-          {nameOf(item.category)}  •  Expires on {formatDate(item.expiresOn, item.datePrecision)}
+        {/* Clean meta: just the category. The pill is the countdown; the
+            exact date stays on the Lists tab's item cards. */}
+        <Text style={s.meta} numberOfLines={1}>
+          {nameOf(item.category)}
         </Text>
       </View>
       <View style={[s.pill, { backgroundColor: t.pills[tone].bg }]}>

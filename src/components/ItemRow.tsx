@@ -1,4 +1,4 @@
-import { expiryPhrase, type Item } from '../items';
+import { type Item } from '../items';
 import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
 import { expiryStatus } from '../preferences';
@@ -25,17 +25,19 @@ type Props = {
   item: Item;
   // Adds the formatted expiry date to the subtitle.
   showDate?: boolean;
-  // Replaces the expiry phrase, e.g. "Reminder on 03/11/2026".
+  // Replaces the category subtitle, e.g. "Reminder on 03/11/2026".
   note?: string;
   onPress?: () => void;
 };
 
 // An item in a list, styled by the Settings preferences (compact rows, warning period, date format).
+// The days-left pill already says how long is left, so the subtitle carries
+// ONLY the category — never a repeated "Expires in N days" phrase.
 export function ItemRow({ item, showDate = false, note, onPress }: Props) {
   const { settings, formatDate } = useSettings();
   const { nameOf } = useCategories();
   const { pill, tone } = itemPill(item, settings.warningDays);
-  const sub = [nameOf(item.category), note ?? expiryPhrase(item.expiresOn)];
+  const sub = note ? [note] : [nameOf(item.category)];
   if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (
     <ExpiryRow
