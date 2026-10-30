@@ -38,20 +38,32 @@ export const GLASS_STRIP_FX = {
 // The shared liquid-glass circle: 46pt, matching the scanner screen's native
 // GlassCircle controls one for one, behind the header's menu and bell buttons,
 // Settings' back buttons and the New-category page's back button, so every
-// round control in the app shares the exact same glass, dimensions, shadow and
-// press feedback. Borderless - the frosted fill alone reads as glass.
+// round control in the app shares the exact same glass, dimensions and press
+// feedback. No shadow at all — the liquid-glass read comes from the frosted
+// translucent surface plus a thin, low-contrast hairline rim (the theme's
+// glassBorder), like a floating piece of glass, not a lifted solid button.
 export const GLASS_BUTTON: ViewStyle = {
   width: 46,
   height: 46,
   borderRadius: 23,
   alignItems: 'center',
   justifyContent: 'center',
-  // A faint cool shadow keeps the glass readable on the light page.
-  shadowColor: '#64748B',
-  shadowOpacity: 0.08,
-  shadowRadius: 6,
-  shadowOffset: { width: 0, height: 2 },
 };
+
+// The circles' liquid-glass rim: the specular inner highlight real glass
+// has — a 1px light edge along the TOP of the fill (where light catches it)
+// plus a whisper of shade along the bottom — layered INSIDE the translucent
+// surface, on top of the hairline border. This is what makes a small circle
+// read as a floating piece of glass rather than a flat colored disc: the
+// highlight reads instantly even when the backdrop blur has nothing to
+// refract (the top of the page, behind the frosted strip). Slightly stronger
+// on the dark page (light on dark glass), softer on the light one.
+// react-native-web passes boxShadow straight to the DOM (RN 0.76+ style).
+const glassRim = (light: boolean): ViewStyle => ({
+  boxShadow: light
+    ? 'inset 0 1px 0 rgba(255,255,255,0.60), inset 0 -1px 0 rgba(15,23,42,0.05)'
+    : 'inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(0,0,0,0.22)',
+});
 
 export function GlassIconButton({
   icon,
@@ -85,7 +97,8 @@ export function GlassIconButton({
       style={[
         GLASS_BUTTON,
         size !== 46 && { width: size, height: size, borderRadius: size / 2 },
-        { backgroundColor: c.glassBg },
+        { backgroundColor: c.glassBg, borderWidth: 1, borderColor: c.glassBorder },
+        glassRim(c === LIGHT),
         GLASS_FX as ViewStyle,
         style,
       ]}
@@ -119,11 +132,10 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
       <Brandmark height={33} />
       <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
         <Ionicons name="notifications-outline" size={22} color={c.text} />
-        {badge > 0 && (
-          <View style={[s.badge, { backgroundColor: c.red, borderColor: c.bg }]}>
-            <Text style={s.badgeText}>{badge}</Text>
-          </View>
-        )}
+        {/* The small green unread indicator (the reference's mint dot on the
+            bell's top-right): present whenever reminders are due — the exact
+            count lives on the Reminders tab's own badge. */}
+        {badge > 0 && <View style={s.bellDot} />}
       </GlassIconButton>
     </View>
   );
@@ -444,6 +456,10 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 1.5,
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
+  // The header bell's small green unread indicator: a mint dot pinned to the
+  // glass circle's top-right, exactly like the reference — present (never
+  // numbered); the count rides the bell's accessibility label instead.
+  bellDot: { position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: 4.5, backgroundColor: c.mint },
   // The Lists tab's shopping count uses the accent colour rather than red: it
   // is information, not urgency (the Shopping List is a view of that tab).
   shopBadgeText: { color: '#04241B', fontSize: 11, fontWeight: '700' },

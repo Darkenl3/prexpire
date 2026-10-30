@@ -295,7 +295,9 @@ const useStyles = makeStyles((t) => ({
   // the reference's language: a white rounded container, the selected side
   // filled emerald with white ink and a small pale-green count badge, the
   // inactive side quiet gray with a soft gray badge — small integrated
-  // badges, never oversized bubbles.
+  // badges, never oversized bubbles. The category chips sit one tight gap
+  // below it, so the two read as related controls of the same section, while
+  // the title block above keeps its clear breathing room.
   viewSwitch: {
     flexDirection: 'row',
     gap: 4,
@@ -304,9 +306,11 @@ const useStyles = makeStyles((t) => ({
     borderWidth: 1,
     borderColor: t.surfaceBorder,
     backgroundColor: t === LIGHT ? t.surface : t.cardAlt,
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
+  // Compact internal spacing: icon, label and count stay vertically centred
+  // with a tight gap, never cramped (44pt keeps the touch target).
+  seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6 },
   segOn: { backgroundColor: t.mint },
   segText: { color: t.textMuted, fontSize: 14.5, fontWeight: '600' },
   segTextOn: { color: t.scanInk, fontWeight: '700' },
@@ -325,7 +329,7 @@ const useStyles = makeStyles((t) => ({
   segCountOn: { backgroundColor: t === LIGHT ? '#DFF6EA' : 'rgba(4,36,27,0.30)' },
   segCountText: { color: t === LIGHT ? '#5C6B77' : '#C5D0D5', fontSize: 11.5, fontWeight: '700' },
   segCountTextOn: { color: t === LIGHT ? '#0E8A5F' : '#04241B' },
-  pillRow: { gap: 8, paddingVertical: 2 },
+  pillRow: { gap: 8, paddingVertical: 0 },
   // Search beside the sort picker (the reference's row under the chips).
   searchSortRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10, marginBottom: 12 },
   searchWrap: { flex: 1, minWidth: 0 },

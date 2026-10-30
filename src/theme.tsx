@@ -59,6 +59,9 @@ export type Palette = {
   statusWarnBg: string;
   glassBg: string; // the header's liquid-glass circles
   glassBorder: string;
+  // The item cards' expiry progress track: pale gray-green on light, dark
+  // translucent green on dark (the fill is always the mint accent).
+  expiryTrack: string;
   // The header STRIP's liquid-glass tint (AutohideHeader): translucent so the
   // frosted backdrop-filter underneath shows page content scrolling past —
   // the same material language as the scanner's top chrome and the bottom
@@ -111,7 +114,10 @@ export const DARK: Palette = {
   statusWarnBorder: '#7A5A12',
   statusWarnBg: '#3D2B0E',
   glassBg: 'rgba(255,255,255,0.10)',
-  glassBorder: 'rgba(255,255,255,0.14)',
+  glassBorder: 'rgba(255,255,255,0.18)',
+  // The dark page's expiry bar track: a dark translucent green, so the thin
+  // mint fill reads against the glass card without a hard edge.
+  expiryTrack: 'rgba(46,232,182,0.16)',
   // The dark page's glass header strip: the page bg at 60% over a blur, so
   // content flowing under the bar frosts through and the glass circles on
   // top have something real to refract (like the scanner's chrome over the
@@ -196,10 +202,16 @@ export const LIGHT: Palette = {
   statusOkBg: 'rgba(0,168,107,0.08)',
   statusWarnBorder: '#E3C77E',
   statusWarnBg: '#F8EFD8',
-  // The header's liquid-glass circles: a whisper of light on the dark page,
-  // bright white glass on the light page — always visible, never gray.
-  glassBg: 'rgba(255,255,255,0.65)',
-  glassBorder: 'rgba(15,23,42,0.10)',
+  // The header's liquid-glass circles on the light page: a translucent
+  // cool-gray glass (never solid white on the near-white page) with a thin
+  // delicate hairline rim and the specular inner highlight (see glassRim in
+  // HomeComponents) — dark enough to read clearly against the airy frosted
+  // strip while the blur keeps it reading as glass, never a flat gray disc.
+  glassBg: 'rgba(148,163,184,0.35)',
+  glassBorder: 'rgba(15,23,42,0.28)',
+  // The light page's expiry bar track: a subtle pale gray-green, like the
+  // reference's muted track under the mint fill.
+  expiryTrack: '#D9E9E1',
   // The light page's glass header strip: the airy blue-white bg at 72% over
   // a blur — light glass stays brighter and more opaque than dark glass (the
   // 0.72 keeps dark text readable while content still frosts through).

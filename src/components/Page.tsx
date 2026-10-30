@@ -77,12 +77,17 @@ const useStyles = makeStyles((c) => ({
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   titleBlock: { marginTop: 6, marginBottom: 18 },
-  // The Lists tab's tighter rhythm: more products above the fold.
-  titleBlockDense: { marginTop: 2, marginBottom: 10 },
+  // The Lists tab's tighter rhythm: the heading and subtitle sit close
+  // together as ONE visual group, with clear breathing room before the next
+  // section (the Items / Shopping List segmented control) — the reference's
+  // compact header beat.
+  titleBlockDense: { marginTop: 2, marginBottom: 20 },
   // The title and its optional right-side action ("Add item") share one row;
   // the text column shrinks first so the action never wraps or clips.
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   titleText: { flex: 1, minWidth: 0 },
   title: { color: c.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
-  subtitle: { color: c.textMuted, fontSize: 15, marginTop: 4 },
+  // The subtitle hugs the heading (one visual group), so the pair reads as a
+  // single block before the gap that separates it from the content below.
+  subtitle: { color: c.textMuted, fontSize: 15, marginTop: 2 },
 }));
