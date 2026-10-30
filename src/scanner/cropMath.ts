@@ -7,9 +7,11 @@
 export type Size = { width: number; height: number };
 export type Rect = { x: number; y: number; width: number; height: number };
 
-// `pad` grows the crop by that fraction of the frame on each side, so text that pokes
-// slightly outside the brackets (or a small preview/photo mismatch) is still read.
-export function cropForFrame(view: Size, frame: Rect, photo: Size, pad = 0.12): Rect | null {
+// The visible frame IS the recognition region: the crop matches the frame's
+// exact coordinates, so nothing outside the brackets is ever read. `pad` stays
+// available for callers that deliberately want breathing room (and for tests),
+// but the scanner passes 0.
+export function cropForFrame(view: Size, frame: Rect, photo: Size, pad = 0): Rect | null {
   if (view.width <= 0 || view.height <= 0 || photo.width <= 0 || photo.height <= 0) return null;
   // A photo in the other orientation means rotation was not applied; the caller reads the whole photo.
   if (view.width > view.height !== photo.width > photo.height && Math.abs(view.width - view.height) > 1) return null;

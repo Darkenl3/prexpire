@@ -18,7 +18,7 @@ import { useCameraPermissions } from 'expo-camera';
 import { getLocales } from 'expo-localization';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { SCANNER_COLORS as colors, radius } from '../theme';
+import { SCANNER_COLORS as colors, useTheme, withAlpha, radius } from '../theme';
 import { ScanFrame } from '../components/ScanFrame';
 import { ResultSheet, type SaveInput } from '../components/ResultSheet';
 import { useItems, type CategoryId, type Item } from '../items';
@@ -28,6 +28,8 @@ import { dayOrderForFormat } from '../preferences';
 import { dayOrderForRegion } from '../scanner/dateParser';
 import { ocrAvailability } from '../scanner/ocr';
 import { guessCategory } from '../scanner/categoryGuess';
+import { lookupBarcode, type BarcodeOutcome } from '../scanner/productLookup';
+import { fetchProductImage } from '../scanner/productImage';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import { PressScale } from '../components/Press';
 import { GLASS_FX } from '../components/HomeComponents';
@@ -49,6 +51,30 @@ type Props = {
   initialManual?: boolean;
 };
 
+// The staged scan: the product first, then its expiry date.
+//   1. 'product' — the user positions the product (its barcode) inside the
+//      frame; a code read INSIDE the frame is looked up across the public
+//      barcode databases and the recognized name (and photo) are kept.
+//   2. 'date'    — the recognized product is shown ("Product recognized: …")
+//      while the expiry date is read inside the frame.
+//   3. The save sheet shows the product name, its retrieved image and the
+//      detected date for confirmation before the item is added.
+type Stage = 'product' | 'date';
+
+// What the barcode lookup established about the product being scanned.
+type ProductStatus = 'idle' | 'checking' | 'found' | 'not-found' | 'unreachable';
+
+// The recognized product carried from the product stage into the sheet.
+type ProductContext = {
+  barcode: string;
+  name: string;
+  // The product's real photo: a data URI shrunk from the database's image.
+  image?: string;
+  // The category the lookup's words suggest (already keyword-scored).
+  categoryHint: CategoryId | null;
+  sourceLabel: string;
+};
+
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
   aim: { icon: 'scan-outline', text: 'Keep the date inside the frame' },
   'text-found': { icon: 'text-outline', text: 'Text found. Looking for the expiry date…' },
@@ -62,15 +88,21 @@ const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: stri
 
 function frameSize(area: Size, hintSpace: number) {
   const width = Math.max(220, Math.min(area.width - 40, 560));
-  // A wide, short frame: expiry dates are one or two lines of text.
-  let height = Math.min(Math.max(width * 0.42, 110), 230);
+  // A taller frame: the product (barcode area and name) and its expiry date
+  // both fit comfortably inside the brackets at once.
+  let height = Math.min(Math.max(width * 0.52, 128), 280);
   const room = area.height - hintSpace - 24;
-  if (height > room) height = Math.max(80, room);
+  if (height > room) height = Math.max(90, room);
   return { width, height };
 }
 
 export function ScannerScreen({ onClose, onSaved, category, initialDetection, initialManual }: Props) {
   const insets = useSafeAreaInsets();
+  const t = useTheme();
+  // The scanner's accents come from the ACTIVE theme's lime (the same accent
+  // as the app's buttons) while its camera chrome stays dark, like every
+  // camera UI.
+  const lime = t.mint;
   const { defaultCategory, addItem } = useItems();
   const { ids: keptCategoryIds } = useCategories();
   const { settings } = useSettings();
@@ -82,6 +114,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<{ kind: CameraErrorKind; message: string } | null>(null);
   const [torchSupported, setTorchSupported] = useState(false);
+  // Whether this device can decode product barcodes at all (native: always;
+  // web: yes, the app ships its own decoder).
+  const [barcodesSupported, setBarcodesSupported] = useState(true);
   // Bumped by "Try again" so a camera that failed to start is mounted afresh.
   const [cameraKey, setCameraKey] = useState(0);
   const [torch, setTorch] = useState(false);
@@ -90,8 +125,20 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const [askedPermission, setAskedPermission] = useState(false);
   // Seeded by a native shell scan; set back to null by "Scan again"/closing.
   const [seeded, setSeeded] = useState<Detection | null>(initialDetection ?? null);
+  // The staged scan: product first, then the expiry date.
+  const [stage, setStage] = useState<Stage>('product');
+  const [product, setProduct] = useState<ProductContext | null>(null);
+  const [productStatus, setProductStatus] = useState<ProductStatus>('idle');
   // The phone keyboard's footprint on the web (0 everywhere else).
   const webKeyboard = useWebKeyboardInset();
+
+  // Barcode lookups already answered this session (and their fetched images),
+  // so re-aiming at the same product answers instantly and offline.
+  const lookupCache = useRef(new Map<string, BarcodeOutcome>());
+  const imageCache = useRef(new Map<string, string | null>());
+  // Bumped by "Scan again": a lookup that resolves afterwards belongs to the
+  // item the user just left behind, not the next one.
+  const lookupGen = useRef(0);
 
   const landscape = root.width > root.height && root.height > 0;
   const granted = !!permission?.granted;
@@ -116,7 +163,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   }, [onClose]);
 
   // Geometry for cropping, kept in a ref so the scan loop reads it without re-rendering.
-  const hintSpace = 56;
+  // The hint stack below the frame is taller now (the recognized-product banner
+  // plus the live guidance), so the frame reserves more room for it.
+  const hintSpace = 120;
   const frame = useMemo(() => (area ? frameSize(area, hintSpace) : null), [area]);
   const frameInArea = useMemo(() => {
     if (!area || !frame) return null;
@@ -127,6 +176,13 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const geometry = useRef<FrameGeometry | null>(null);
   geometry.current =
     area && frameInArea && root.width ? { view: root, frame: { ...frameInArea, x: frameInArea.x + area.x, y: frameInArea.y + area.y } } : null;
+  // The frame in ROOT coordinates — the camera fills the root, so this is also
+  // the frame in the camera view's coordinates (what bounds-checked barcode
+  // events are compared against).
+  const frameForBarcodes = useMemo(
+    () => (area && frameInArea ? { x: frameInArea.x + area.x, y: frameInArea.y + area.y, width: frameInArea.width, height: frameInArea.height } : null),
+    [area, frameInArea],
+  );
 
   // Ambiguous numeric dates (03/04/2026) are read in the order the user's
   // Date format setting names — the same format every screen displays —
@@ -138,11 +194,60 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const preferredOrder = dayOrderForFormat(settings.dateFormat, dayOrderForRegion(region));
   const assumedOrder = settings.dateFormat === 'DMY' || settings.dateFormat === 'MDY' ? settings.dateFormat : null;
 
+  // A product barcode was read inside the frame (the web loop reads it from
+  // the cropped frame; the native camera reports bounds-checked events).
+  // The databases are asked, and the recognized product (name, image,
+  // category) is carried into the date stage.
+  const onBarcodeInFrame = useCallback(
+    (code: string) => {
+      const gen = ++lookupGen.current;
+      const cached = lookupCache.current.get(code);
+      const identify = async (outcome: BarcodeOutcome) => {
+        lookupCache.current.set(code, outcome);
+        if (outcome.kind === 'hit') {
+          let image: string | undefined;
+          const hitImage = outcome.hit.image;
+          if (hitImage) {
+            if (imageCache.current.has(code)) {
+              const cachedImage = imageCache.current.get(code);
+              if (cachedImage) image = cachedImage;
+            } else {
+              const fetched = await fetchProductImage(hitImage);
+              imageCache.current.set(code, fetched);
+              if (fetched) image = fetched;
+            }
+          }
+          if (gen !== lookupGen.current) return; // scan again / re-aimed meanwhile
+          setProduct({ barcode: code, name: outcome.hit.name, image, categoryHint: outcome.hit.categoryHint, sourceLabel: outcome.hit.sourceLabel });
+          setProductStatus('found');
+          setStage('date');
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          return;
+        }
+        if (gen !== lookupGen.current) return;
+        setProduct(null);
+        setProductStatus(outcome.kind === 'miss' ? 'not-found' : 'unreachable');
+        // Still guide the user to the expiry date: the name can be typed in
+        // the save sheet when no database knows the product.
+        setStage('date');
+      };
+      setProductStatus('checking');
+      if (cached) void identify(cached);
+      else void lookupBarcode(code).then(identify);
+    },
+    [],
+  );
+
   const { state, reset } = useExpiryScanner({
     camera,
     geometry,
-    // No analysis while the user types the item by hand.
-    enabled: granted && cameraReady && appActive && ocrReady && !manual && !cameraError && !seeded,
+    // No analysis while the user types the item by hand; the loop reads the
+    // product stage's barcodes and the date stage's text, always inside the
+    // frame. While a barcode is being identified the loop is paused.
+    enabled:
+      granted && cameraReady && appActive && !manual && !cameraError && !seeded && productStatus !== 'checking' && (stage === 'product' || ocrReady),
+    mode: stage === 'date' ? 'text' : 'barcode',
+    onBarcode: onBarcodeInFrame,
     preferredOrder,
   });
   const detection: Detection | null = seeded ?? (state.status === 'detected' ? state.detection : null);
@@ -152,11 +257,17 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   // was never mounted this visit, so the sheet's secondary action closes the
   // screen instead of offering "Scan again".
   const manualOnly = manual && !!initialManual && !detected;
-  // Auto-category: the words around the date usually name the product, so the
-  // save sheet opens with the folder the item most likely belongs in. A guess
-  // (or default) that names a category the user removed is ignored: they chose
-  // not to track that folder, so the first category they keep wins instead.
-  const guessedRaw = useMemo(() => (detection ? guessCategory(detection.text) : null), [detection]);
+  // Auto-category: a barcode hit carries the database's keyword-scored
+  // category; otherwise the words around the date usually name the product, so
+  // the save sheet opens with the folder the item most likely belongs in. A
+  // guess (or default) that names a category the user removed is ignored: they
+  // chose not to track that folder, so the first category they keep wins.
+  const guessedRaw = useMemo(() => {
+    if (!detection) return null;
+    const fromProduct = product?.categoryHint;
+    if (fromProduct && keptCategoryIds.includes(fromProduct)) return fromProduct;
+    return guessCategory(`${product?.name ?? ''} ${detection.text}`);
+  }, [detection, product, keptCategoryIds]);
   const guessed = guessedRaw && keptCategoryIds.includes(guessedRaw) ? guessedRaw : null;
   const fallbackCategory = keptCategoryIds.includes(defaultCategory) ? defaultCategory : keptCategoryIds[0] ?? defaultCategory;
 
@@ -164,10 +275,16 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     if (detected) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   }, [detected]);
 
-  const onCameraReady = useCallback(({ torch: hasTorch }: { torch: boolean }) => {
+  const onCameraReady = useCallback(({ torch: hasTorch, barcodes }: { torch: boolean; barcodes: boolean }) => {
     setCameraReady(true);
     setTorchSupported(hasTorch);
+    setBarcodesSupported(barcodes);
   }, []);
+  // A device that cannot decode barcodes skips the product stage: the scan
+  // starts straight at the expiry date (the previous single-stage flow).
+  useEffect(() => {
+    if (cameraReady && !barcodesSupported) setStage('date');
+  }, [cameraReady, barcodesSupported]);
   const onCameraError = useCallback((kind: CameraErrorKind, message: string) => {
     setCameraReady(false);
     setCameraError({ kind, message });
@@ -179,24 +296,33 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   }, []);
 
   const onAdd = useCallback(
-    async ({ name, category: cat, date }: SaveInput) => {
+    async ({ name, category: cat, date, image }: SaveInput) => {
       const item = await addItem({
         name,
         category: cat,
         expiresOn: date.iso,
         datePrecision: date.precision,
         source: manual ? 'manual' : 'scan',
+        ...(manual ? {} : product?.barcode ? { barcode: product.barcode } : {}),
+        ...(manual ? {} : image ? { image } : {}),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       // Leave the "Added" state on screen for a moment before returning home.
       setTimeout(() => onSaved(item), 650);
     },
-    [addItem, manual, onSaved],
+    [addItem, manual, onSaved, product],
   );
 
+  // "Scan again" starts a FRESH staged scan: the next product goes back to the
+  // product stage, and any lookup still resolving for the previous item is
+  // retired.
   const scanAgain = useCallback(() => {
     setManual(false);
     setSeeded(null);
+    setStage('product');
+    setProduct(null);
+    setProductStatus('idle');
+    lookupGen.current += 1;
     reset();
   }, [reset]);
 
@@ -217,6 +343,13 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     onClose();
   }, [onClose]);
 
+  // Skipping the product stage: the user scans just the expiry date (the
+  // sheet's name field asks for the product).
+  const skipToDateStage = useCallback(() => {
+    Haptics.selectionAsync().catch(() => {});
+    setStage('date');
+  }, []);
+
   const onAreaLayout = (e: LayoutChangeEvent) => {
     const l = e.nativeEvent.layout;
     setArea((prev) => (prev && prev.x === l.x && prev.y === l.y && prev.width === l.width && prev.height === l.height ? prev : l));
@@ -234,19 +367,27 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           {manual ? 'Add item' : 'Live Scan'}
         </Text>
         <PressScale
-          onPress={() => setTorch((t) => !t)}
+          onPress={() => setTorch((v) => !v)}
           disabled={!torchAvailable}
           hitSlop={8}
           scaleTo={0.94}
-          style={[s.roundBtn, GLASS_FX as ViewStyle, torch && s.roundBtnOn, !torchAvailable && s.disabled]}
+          style={[s.roundBtn, GLASS_FX as ViewStyle, torch && { backgroundColor: lime }, !torchAvailable && s.disabled]}
           accessibilityRole="switch"
           accessibilityLabel={torchAvailable ? 'Flashlight' : 'Flashlight unavailable'}
           accessibilityState={{ checked: torch, disabled: !torchAvailable }}
         >
-          <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? colors.scanInk : colors.text} />
+          <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? t.scanInk : colors.text} />
         </PressScale>
       </View>
-      <Text style={s.instruction}>{manual ? 'Type the product details.' : 'Point at an expiry date.'}</Text>
+      <Text style={s.instruction}>
+        {manual
+          ? 'Type the product details.'
+          : stage === 'product'
+            ? 'Position the product inside the frame.'
+            : product
+              ? 'Now scan its expiry date.'
+              : 'Point at an expiry date.'}
+      </Text>
     </View>
   );
 
@@ -298,21 +439,32 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   } else if (frame && frameInArea) {
     const f = frameInArea;
     const hint = state.status === 'scanning' ? HINTS[state.hint] : null;
+    // The date stage's live hint state (null once detected), kept separate so
+    // the JSX below narrows cleanly.
+    const liveHint = state.status === 'scanning' ? state.hint : null;
+    // The date stage shows the recognized product above the live guidance;
+    // the product stage shows its own aiming pill.
+    const showLiveHint = stage === 'date' && (!!product ? liveHint !== 'aim' : true);
     body = (
       <>
-        {/* Darken everything except the frame so the date stands out. */}
+        {/* Darken everything except the frame so the scanned content stands out. */}
         <View pointerEvents="none" style={[s.dim, { left: 0, right: 0, top: 0, height: f.y }]} />
         <View pointerEvents="none" style={[s.dim, { left: 0, right: 0, top: f.y + f.height, bottom: 0 }]} />
         <View pointerEvents="none" style={[s.dim, { left: 0, width: f.x, top: f.y, height: f.height }]} />
         <View pointerEvents="none" style={[s.dim, { right: 0, width: f.x, top: f.y, height: f.height }]} />
         <View pointerEvents="none" style={{ position: 'absolute', left: f.x, top: f.y }}>
-          <ScanFrame width={f.width} height={f.height} scanning={ocrReady && cameraReady && !sheetOpen && appActive} success={detected} />
+          <ScanFrame width={f.width} height={f.height} scanning={cameraReady && !sheetOpen && appActive} success={detected} />
         </View>
         <View style={[s.hintWrap, { top: f.y + f.height + 14 }]}>
           {detected ? (
-            <View style={[s.hint, s.hintSuccess]} accessibilityLiveRegion="polite">
-              <Ionicons name="checkmark-circle" size={18} color={colors.mint} />
-              <Text style={[s.hintText, { color: colors.mint }]}>Date detected</Text>
+            <View style={[s.hint, { borderColor: withAlpha(lime, 0.55) }]} accessibilityLiveRegion="polite">
+              <Ionicons name="checkmark-circle" size={18} color={lime} />
+              <Text style={[s.hintText, { color: lime }]}>Date detected</Text>
+            </View>
+          ) : !cameraReady ? (
+            <View style={s.hint} accessibilityLiveRegion="polite">
+              <ActivityIndicator size="small" color={lime} />
+              <Text style={s.hintText}>Starting the scanner…</Text>
             </View>
           ) : !ocrReady ? (
             manual ? null : (
@@ -321,32 +473,85 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                   Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.
                 </Text>
                 <PressScale onPress={() => setManual(true)} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
-                  <Text style={s.linkText}>Enter date manually</Text>
+                  <Text style={[s.linkText, { color: lime }]}>Enter date manually</Text>
                 </PressScale>
               </View>
             )
-          ) : !cameraReady ? (
-            <View style={s.hint} accessibilityLiveRegion="polite">
-              <ActivityIndicator size="small" color={colors.scan} />
-              <Text style={s.hintText}>Starting the scanner…</Text>
-            </View>
-          ) : (
-            hint && (
+          ) : stage === 'product' ? (
+            productStatus === 'checking' ? (
               <View style={s.hint} accessibilityLiveRegion="polite">
-                {state.status === 'scanning' && state.hint === 'hold-steady' ? (
-                  // Text was found and is being read: a small spinner, the camera stays visible.
-                  <ActivityIndicator size="small" color={colors.scan} />
-                ) : (
-                  <Ionicons name={hint.icon} size={17} color={state.status === 'scanning' && state.hint !== 'aim' ? colors.amberText : colors.scan} />
-                )}
+                <ActivityIndicator size="small" color={lime} />
+                <Text style={s.hintText}>Checking the product…</Text>
+              </View>
+            ) : (
+              <View style={s.hint} accessibilityLiveRegion="polite">
+                <Ionicons name="barcode-outline" size={18} color={lime} />
                 <Text style={s.hintText} numberOfLines={2}>
-                  {hint.text}
+                  Position the product's barcode inside the frame
                 </Text>
               </View>
             )
+          ) : (
+            <>
+              {product && productStatus === 'found' && (
+                <View style={[s.hint, { borderColor: withAlpha(lime, 0.55) }]} accessibilityLiveRegion="polite">
+                  <Ionicons name="checkmark-circle" size={18} color={lime} />
+                  <View style={s.hintTextCol}>
+                    <Text style={[s.hintText, { color: lime, fontWeight: '700' }]} numberOfLines={1}>
+                      Product recognized: {product.name}
+                    </Text>
+                    <Text style={s.hintSub}>Now position the expiry date inside the frame.</Text>
+                  </View>
+                </View>
+              )}
+              {productStatus === 'not-found' && (
+                <View style={s.hint} accessibilityLiveRegion="polite">
+                  <Ionicons name="help-circle-outline" size={18} color={colors.amberText} />
+                  <Text style={s.hintText} numberOfLines={2}>
+                    No product match for that barcode. Position the expiry date inside the frame.
+                  </Text>
+                </View>
+              )}
+              {productStatus === 'unreachable' && (
+                <View style={s.hint} accessibilityLiveRegion="polite">
+                  <Ionicons name="cloud-offline-outline" size={18} color={colors.amberText} />
+                  <Text style={s.hintText} numberOfLines={2}>
+                    Couldn't check the product online. Position the expiry date inside the frame.
+                  </Text>
+                </View>
+              )}
+              {showLiveHint &&
+                hint &&
+                (liveHint === 'hold-steady' ? (
+                  // Text was found and is being read: a small spinner, the camera stays visible.
+                  <View style={s.hint} accessibilityLiveRegion="polite">
+                    <ActivityIndicator size="small" color={lime} />
+                    <Text style={s.hintText}>{hint.text}</Text>
+                  </View>
+                ) : (
+                  <View style={s.hint} accessibilityLiveRegion="polite">
+                    <Ionicons name={hint.icon} size={17} color={liveHint !== 'aim' ? colors.amberText : lime} />
+                    <Text style={s.hintText} numberOfLines={2}>
+                      {hint.text}
+                    </Text>
+                  </View>
+                ))}
+            </>
           )}
-          {/* Manual entry lives alongside scanning: one tap swaps the camera
-              for the typing form, without leaving this screen. */}
+          {/* Stage escape hatches live alongside the live guidance. In the
+              product stage a product without a readable barcode can jump
+              straight to the date; "Add manually" always offers the form. */}
+          {stage === 'product' && !detected && !manual && cameraReady && !cameraError && productStatus !== 'checking' && (
+            <PressScale
+              onPress={skipToDateStage}
+              scaleTo={0.97}
+              style={s.stageLink}
+              accessibilityRole="button"
+              accessibilityLabel="Skip the product and scan the expiry date instead"
+            >
+              <Text style={[s.linkText, { color: lime }]}>Scan the date instead</Text>
+            </PressScale>
+          )}
           {!detected && !manual && ocrReady && granted && !cameraError && cameraReady && (
             <PressScale
               onPress={() => {
@@ -358,7 +563,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
               accessibilityRole="button"
               accessibilityLabel="Add product manually instead of scanning"
             >
-              <Text style={s.linkText}>Add manually</Text>
+              <Text style={[s.linkText, { color: lime }]}>Add manually</Text>
             </PressScale>
           )}
         </View>
@@ -369,8 +574,12 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const sheet = sheetOpen ? (
     <ResultSheet
       // A new detection gets a fresh sheet; "Scan again" then a new read starts clean.
-      key={detected ? detection.key : 'manual'}
+      key={detected ? `${detection.key}:${product?.barcode ?? 'none'}` : 'manual'}
       detection={detected ? detection : null}
+      // The recognized product flows into the form: its name is pre-filled and
+      // its retrieved image rides along into the saved item.
+      initialName={detected ? (product?.name ?? '') : ''}
+      productImage={detected ? (product?.image ?? null) : null}
       initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
       assumedOrder={assumedOrder}
@@ -393,13 +602,18 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   return (
     <View style={s.root} onLayout={(e) => setRoot({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
       {/* The camera only mounts for an actual scanning session - never for
-          manual entry, where it would idle behind the form. */}
+          manual entry, where it would idle behind the form. While the product
+          stage is live the camera's own barcode scanner runs and reports only
+          codes whose bounds sit inside the frame. */}
       {granted && !cameraError && !seeded && !manual && (
         <ScannerCamera
           key={cameraKey}
           ref={camera}
           active={appActive && !manual}
           torch={torch && appActive}
+          scanBarcodes={stage === 'product' && productStatus !== 'checking' && !detected && cameraReady && appActive}
+          barcodeFrame={frameForBarcodes}
+          onBarcodeInFrame={onBarcodeInFrame}
           onReady={onCameraReady}
           onError={onCameraError}
         />
@@ -434,22 +648,23 @@ type NoticeProps = {
 };
 
 function Notice({ icon, title, text, action, onAction, secondary, onSecondary, hidden }: NoticeProps) {
+  const t = useTheme();
   if (hidden) return null;
   return (
     <View style={s.noticeWrap}>
       <View style={s.notice}>
         <View style={s.noticeIcon}>
-          <Ionicons name={icon} size={28} color={colors.mint} />
+          <Ionicons name={icon} size={28} color={t.mint} />
         </View>
         <Text style={s.noticeTitle}>{title}</Text>
         <Text style={s.noticeText}>{text}</Text>
         {action && onAction && (
-          <PressScale onPress={onAction} scaleTo={0.98} style={s.noticeBtn} accessibilityRole="button">
-            <Text style={s.noticeBtnText}>{action}</Text>
+          <PressScale onPress={onAction} scaleTo={0.98} style={[s.noticeBtn, { backgroundColor: t.mint }]} accessibilityRole="button">
+            <Text style={[s.noticeBtnText, { color: t.scanInk }]}>{action}</Text>
           </PressScale>
         )}
         <PressScale onPress={onSecondary} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
-          <Text style={s.linkText}>{secondary}</Text>
+          <Text style={[s.linkText, { color: t.mint }]}>{secondary}</Text>
         </PressScale>
       </View>
     </View>
@@ -467,7 +682,7 @@ const s = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52 },
   // The scanner's glass circles: the same 46pt + hairline treatment the app's
   // other screens now use for their header buttons (GlassIconButton), pinned
-  // to the scanner's fixed dark palette. Torch "on" fills with the scan colour.
+  // to the scanner's fixed dark palette. Torch "on" fills with the theme green.
   roundBtn: {
     width: 46,
     height: 46,
@@ -478,15 +693,15 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  roundBtnOn: { backgroundColor: colors.scan },
   disabled: { opacity: 0.35 },
   title: { color: colors.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3 },
   instruction: { color: colors.textMuted, fontSize: 14.5, textAlign: 'center', marginTop: 6 },
   area: { flex: 1, overflow: 'hidden' },
   dim: { position: 'absolute', backgroundColor: 'rgba(2,5,7,0.5)' },
   hintWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
-  // The "Add manually" escape hatch sits under the live hint pill.
-  manualLink: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 14 },
+  // The stage escape hatch and "Add manually" sit under the live hint pills.
+  stageLink: { marginTop: 8, paddingVertical: 6, paddingHorizontal: 14 },
+  manualLink: { marginTop: 6, paddingVertical: 8, paddingHorizontal: 14 },
   hint: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -500,17 +715,19 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.14)',
     maxWidth: 460,
   },
-  hintSuccess: { borderColor: 'rgba(112,184,91,0.55)' },
+  // The recognized-product banner stacks its two lines inside the pill.
+  hintTextCol: { flexShrink: 1, gap: 1 },
   hintText: { color: colors.text, fontSize: 14, fontWeight: '500', flexShrink: 1 },
+  hintSub: { color: colors.textMuted, fontSize: 12.5, flexShrink: 1 },
   unavailable: { alignItems: 'center', maxWidth: 420, backgroundColor: 'rgba(5,12,14,0.85)', borderRadius: 16, padding: 14, gap: 6 },
   unavailableText: { color: colors.text, fontSize: 13.5, textAlign: 'center', lineHeight: 19 },
   linkBtn: { paddingVertical: 8, paddingHorizontal: 12 },
-  linkText: { color: colors.mint, fontSize: 15, fontWeight: '600' },
+  linkText: { fontSize: 15, fontWeight: '600' },
   noticeWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   notice: { maxWidth: 420, width: '100%', alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.surfaceBorder, borderWidth: 1, borderRadius: 20, padding: 22 },
   noticeIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#093426', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   noticeTitle: { color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
   noticeText: { color: colors.textMuted, fontSize: 14.5, lineHeight: 21, textAlign: 'center', marginBottom: 16 },
-  noticeBtn: { height: 50, alignSelf: 'stretch', borderRadius: radius.pill, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  noticeBtnText: { color: colors.scanInk, fontSize: 16, fontWeight: '700' },
+  noticeBtn: { height: 50, alignSelf: 'stretch', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  noticeBtnText: { fontSize: 16, fontWeight: '700' },
 });

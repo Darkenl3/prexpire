@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ItemsScreen } from './src/screens/ItemsScreen';
@@ -381,6 +382,30 @@ function Shell() {
 function ThemedApp() {
   const c = useTheme();
   const light = c === LIGHT;
+  // The shell AROUND the app follows the theme too: on native, the root view
+  // behind the app (what shows at launch and behind translucent areas) is
+  // re-tinted through expo-system-ui, so Light mode never flashes dark and
+  // Dark mode never flashes light; on the web, the page body and the browser's
+  // theme-color bar wear the active page colour. Both themes' backgrounds are
+  // covered: #030709 on dark, #F8FCFB on light.
+  useEffect(() => {
+    if (WEB) {
+      if (typeof document === 'undefined') return;
+      document.body.style.backgroundColor = c.bg;
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', c.bg);
+      return;
+    }
+    SystemUI.setBackgroundColorAsync(c.bg).catch(() => {
+      // Not every device supports root background changes; the app still sets
+      // its own View background below.
+    });
+  }, [c]);
   // Native bridge: report the resolved theme (the Dark/Light/System setting,
   // with 'system' already resolved by ThemeProvider) to the Expo shell. Inside
   // the shell's WebView the <StatusBar> below renders nothing — the shell owns

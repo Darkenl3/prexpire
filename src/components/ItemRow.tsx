@@ -1,3 +1,4 @@
+import { Image } from 'react-native';
 import { type Item } from '../items';
 import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
@@ -7,9 +8,29 @@ import { ExpiryRow } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
 // Every tracked item's row art is its category's illustration; the category
-// tile art is shared so a row always matches the tile it came from.
+// tile art is shared so a row always matches the tile it came from. A scanned
+// product with a retrieved photo shows the photo instead, so the real product
+// is what the user sees wherever the item appears.
 export function itemArt(item: Item, size = 30) {
   return categoryArt(item.category, size);
+}
+
+// The row's art node: the product's own photo when it has one, otherwise the
+// category illustration. `wide`/`tall`/`round` match the row icon tile so the
+// photo fills it exactly (compact and regular rows have different tiles).
+export function itemRowArt(item: Item, compact: boolean) {
+  if (item.image) {
+    return (
+      <Image
+        source={{ uri: item.image }}
+        style={compact ? { width: 36, height: 32, borderRadius: 10 } : { width: 44, height: 42, borderRadius: 12 }}
+        resizeMode="cover"
+        accessibilityLabel={`${item.name} product photo`}
+        accessibilityRole="image"
+      />
+    );
+  }
+  return categoryArt(item.category, compact ? 24 : 30);
 }
 
 // Amber from today through the warning period chosen in Settings, green after that.
@@ -41,7 +62,7 @@ export function ItemRow({ item, showDate = false, note, onPress }: Props) {
   if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (
     <ExpiryRow
-      art={itemArt(item, settings.compact ? 24 : 30)}
+      art={itemRowArt(item, settings.compact)}
       title={item.name}
       sub={sub}
       pill={pill}

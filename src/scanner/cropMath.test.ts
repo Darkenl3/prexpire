@@ -20,6 +20,6 @@ test('padding is clamped to the photo', () => {
   assert.deepEqual(r, { x: 0, y: 0, width: 1000, height: 1000 });
 });
 
-test('mismatched orientation returns null so the whole photo is read', () => {
+test('mismatched orientation returns null so the pass is skipped', () => {
   assert.equal(cropForFrame({ width: 390, height: 844 }, { x: 0, y: 0, width: 100, height: 50 }, { width: 4032, height: 3024 }), null);
 });

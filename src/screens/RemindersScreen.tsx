@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, type Tone } from '../theme';
 import { useItems, type Item } from '../items';
@@ -53,7 +53,11 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
       style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW] : [CARD_SHADOW_DARK])]}
     >
       <View style={[s.thumb, compact && s.thumbCompact]}>
-        {categoryArt(item.category, compact ? 26 : 30)}
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={`${item.name} product photo`} accessibilityRole="image" />
+        ) : (
+          categoryArt(item.category, compact ? 26 : 30)
+        )}
       </View>
       <View style={s.body}>
         {/* The name wraps to a second line instead of cutting to an ellipsis,
@@ -252,8 +256,11 @@ const useStyles = makeStyles((t) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: t.iconTile,
+    overflow: 'hidden',
   },
   thumbCompact: { width: 50, height: 50, borderRadius: 13 },
+  // The scanned product's retrieved photo fills the art tile.
+  thumbImage: { width: '100%', height: '100%' },
   body: { flex: 1, minWidth: 0 },
   name: { color: t.text, fontSize: 16, fontWeight: '700', lineHeight: 20 },
   meta: { color: t.textSub, fontSize: 13, lineHeight: 18, marginTop: 3 },

@@ -284,9 +284,9 @@ const useStyles = makeStyles((t) => ({
     paddingHorizontal: 18,
     borderRadius: 999,
     backgroundColor: t.mint,
-    // The lift speaks the same green as the fill itself.
+    // The lift speaks the same lime as the fill itself.
     ...(t === LIGHT
-      ? { shadowColor: '#4E8F2B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 3 }
+      ? { shadowColor: '#7BC84A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }
       : { shadowColor: '#0A2A16', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 }),
   },
   addBtnPressed: { backgroundColor: t.mintPressed },

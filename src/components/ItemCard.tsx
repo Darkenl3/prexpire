@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
@@ -107,10 +107,15 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
 
   return (
     <View style={[s.card, compact && s.cardCompact, ...(t === LIGHT ? [CARD_SHADOW] : [CARD_SHADOW_DARK])]}>
-      {/* Left: the product's art in a rounded pale-green square — the image
-          slot of the reference card, carrying real category data. */}
+      {/* Left: the product's real photo when a scan retrieved one, otherwise
+          the category's art in a rounded pale-green square — the image slot of
+          the reference card, carrying real data. */}
       <View style={[s.thumb, compact && s.thumbCompact]}>
-        {categoryArt(item.category, compact ? 26 : 32)}
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={`${item.name} product photo`} accessibilityRole="image" />
+        ) : (
+          categoryArt(item.category, compact ? 26 : 32)
+        )}
       </View>
       {/* Middle: name, category and expiry date. The name stays on ONE line
           and ellipsizes (`Dolce Gusto Espresso Roma…`) so long products can
@@ -225,8 +230,11 @@ const useStyles = makeStyles((t) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: t.iconTile,
+    overflow: 'hidden',
   },
   thumbCompact: { width: 52, height: 52, borderRadius: 13 },
+  // The scanned product's retrieved photo fills the art tile.
+  thumbImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   body: { flex: 1, minWidth: 0, gap: 4 },
   // One-line names: the text ellipsizes when it cannot fit, so a long product
   // never grows its card or nudges the date / pill / menu out of place.

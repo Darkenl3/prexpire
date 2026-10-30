@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SCANNER_COLORS as colors, radius } from '../theme';
+import { SCANNER_COLORS as colors, useTheme, withAlpha, radius } from '../theme';
 import { useCategories } from '../categories';
 import { type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type DayOrder, type Interpretation } from '../scanner/dateParser';
@@ -10,17 +10,19 @@ import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
 
-// The sheet's category pills: the same solid-green "selected" language as the
-// Items filters and sort row, rendered in the scanner's fixed dark palette -
-// green fill, no checkmark, soft crossfade when picked.
-const SHEET_PILLS: PillColors = {
-  offBg: 'rgba(255,255,255,0.05)',
-  offBorder: colors.surfaceBorder,
-  offText: colors.textMuted,
-  onBg: colors.selBg,
-  onBorder: colors.selBg,
-  onText: colors.scanInk,
-};
+// The sheet's category pills: the same solid "selected" language as the
+// Items filters and sort row — the ACTIVE theme's lime fill with its ink on
+// top (built per render, since the scanner's accent follows the app theme).
+function sheetPills(t: ReturnType<typeof useTheme>): PillColors {
+  return {
+    offBg: 'rgba(255,255,255,0.05)',
+    offBorder: colors.surfaceBorder,
+    offText: colors.textMuted,
+    onBg: t.mint,
+    onBorder: t.mint,
+    onText: t.scanInk,
+  };
+}
 
 export function categoryArt(id: CategoryId, size: number) {
   switch (id) {
@@ -46,11 +48,18 @@ const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {
   'no-year': 'No year is printed, so the next time this date comes round was used. Check the year.',
 };
 
-export type SaveInput = { name: string; category: CategoryId; date: Interpretation };
+export type SaveInput = { name: string; category: CategoryId; date: Interpretation; image?: string };
 
 type Props = {
   // A scanned detection, or null when the user enters the date by hand.
   detection: Detection | null;
+  // The recognized product's name (from the barcode databases), pre-filled
+  // into the name field so the user confirms rather than types it.
+  initialName?: string;
+  // The recognized product's retrieved photo. Shown inside the name field's
+  // art slot (the category art stands in when there is none) and saved onto
+  // the item, so the card carries the REAL product image.
+  productImage?: string | null;
   initialCategory: CategoryId;
   // True when the category was picked from the label's words (see
   // scanner/categoryGuess.ts) - shown as a gentle hint under the chips.
@@ -75,9 +84,11 @@ type Props = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function ResultSheet({ detection, initialCategory, categoryGuessed = false, assumedOrder = null, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+export function ResultSheet({ detection, initialName = '', productImage = null, initialCategory, categoryGuessed = false, assumedOrder = null, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+  const t = useTheme();
+  const sheetPillColors = useMemo(() => sheetPills(t), [t]);
   const { all } = useCategories();
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName);
   // The name field is a real, visible input box: focus lights its border so it
   // reads unmistakably as somewhere to type (especially in manual entry, where
   // the product name is the whole point of the screen).
@@ -128,7 +139,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
     busy.current = true;
     setSave('saving');
     try {
-      await onAdd({ name: name.trim(), category, date });
+      await onAdd({ name: name.trim(), category, date, ...(productImage ? { image: productImage } : {}) });
       if (mounted.current) setSave('saved');
     } catch {
       busy.current = false;
@@ -162,8 +173,14 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
       >
         <View style={s.nameBlock}>
           <Text style={s.nameLabel}>Product name</Text>
-          <View style={[s.nameField, nameFocused && !nameError && s.nameFieldFocus, nameError && s.nameFieldWarn]}>
-            <View style={s.nameArt}>{categoryArt(category, 28)}</View>
+          <View style={[s.nameField, nameFocused && !nameError && { borderColor: withAlpha(t.mint, 0.55), backgroundColor: withAlpha(t.mint, 0.06) }, nameError && s.nameFieldWarn]}>
+            <View style={s.nameArt}>
+              {productImage ? (
+                <Image source={{ uri: productImage }} style={s.nameArtImage} accessibilityLabel={name || 'Product photo'} accessibilityRole="image" />
+              ) : (
+                categoryArt(category, 28)
+              )}
+            </View>
             <TextInput
               ref={nameRef}
               value={name}
@@ -193,7 +210,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
                 label={cat.name}
                 selected={cat.id === category}
                 onPress={() => setCategory(cat.id)}
-                colors={SHEET_PILLS}
+                colors={sheetPillColors}
                 accessibilityLabel={`Category ${cat.name}`}
               />
             </View>
@@ -211,7 +228,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           accessibilityLabel={`${dateTitle}: ${date ? formatDate(date) : 'not chosen'}. Edit date`}
         >
           <View style={[s.calendar, !confirmed && s.calendarWarn]}>
-            <Ionicons name="calendar" size={22} color={confirmed ? colors.mint : colors.amber} />
+            <Ionicons name="calendar" size={22} color={confirmed ? t.mint : colors.amber} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[s.dateLabel, !confirmed && { color: colors.amberText }]}>{dateTitle}</Text>
@@ -229,11 +246,11 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
                   key={r.iso}
                   onPress={() => setPicked(i)}
                   scaleTo={0.97}
-                  style={[s.choice, picked === i && s.choiceOn]}
+                  style={[s.choice, picked === i && { borderColor: t.mint, backgroundColor: t.mint }]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: picked === i }}
                 >
-                  <Text style={[s.choiceText, picked === i && s.choiceTextOn]}>{formatDate(r)}</Text>
+                  <Text style={[s.choiceText, picked === i && { color: t.scanInk, fontWeight: '700' }]}>{formatDate(r)}</Text>
                 </PressScale>
               ))}
             </View>
@@ -246,7 +263,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           <View style={s.block}>
             <View style={s.reason}>
               <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
-              <Text style={s.autoNote}>Read as {assumedOrder === 'DMY' ? 'day/month/year' : 'month/day/year'} — your Date format setting; tap the date to change it</Text>
+              <Text style={s.autoNote}>Read as {assumedOrder === 'DMY' ? 'day/month/year' : 'month/day/year'} (your Date format setting). Tap the date to change it</Text>
             </View>
           </View>
         )}
@@ -279,7 +296,7 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
           accessibilityRole="checkbox"
           accessibilityState={{ checked: ticked }}
         >
-          <Ionicons name={ticked ? 'checkbox' : 'square-outline'} size={22} color={ticked ? colors.mint : colors.textMuted} />
+          <Ionicons name={ticked ? 'checkbox' : 'square-outline'} size={22} color={ticked ? t.mint : colors.textMuted} />
           <Text style={s.tickText}>Yes, this is the expiry date</Text>
         </PressScale>
       )}
@@ -289,20 +306,20 @@ export function ResultSheet({ detection, initialCategory, categoryGuessed = fals
         onPress={submit}
         disabled={!canSave}
         scaleTo={0.98}
-        style={[s.primary, !canSave && save !== 'saved' && s.disabled]}
+        style={[s.primary, { backgroundColor: t.mint }, !canSave && save !== 'saved' && s.disabled]}
         accessibilityRole="button"
         accessibilityState={{ disabled: !canSave, busy: save === 'saving' }}
         accessibilityLabel={save === 'saved' ? 'Item added' : 'Add item'}
       >
         {save === 'saving' ? (
-          <ActivityIndicator color={colors.scanInk} />
+          <ActivityIndicator color={t.scanInk} />
         ) : save === 'saved' ? (
           <View style={s.savedRow}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.scanInk} />
-            <Text style={s.primaryText}>Added</Text>
+            <Ionicons name="checkmark-circle" size={20} color={t.scanInk} />
+            <Text style={[s.primaryText, { color: t.scanInk }]}>Added</Text>
           </View>
         ) : (
-          <Text style={s.primaryText}>Add item</Text>
+          <Text style={[s.primaryText, { color: t.scanInk }]}>Add item</Text>
         )}
       </PressScale>
       <PressScale
@@ -392,9 +409,10 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     paddingHorizontal: 12,
   },
-  nameFieldFocus: { borderColor: 'rgba(112,184,91,0.55)', backgroundColor: 'rgba(112,184,91,0.06)' },
   nameFieldWarn: { borderColor: 'rgba(245,184,61,0.65)' },
-  nameArt: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center' },
+  nameArt: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.iconTile, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  // The recognized product's retrieved photo inside the name field's art slot.
+  nameArtImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   nameInput: { flex: 1, color: colors.text, fontSize: 17.5, fontWeight: '600', paddingVertical: 0, paddingRight: 4 },
   nameError: { color: colors.amberText, fontSize: 12.5 },
   chips: { gap: 8, paddingTop: 14 },
@@ -409,9 +427,7 @@ const s = StyleSheet.create({
   question: { color: colors.text, fontSize: 14, fontWeight: '500' },
   choiceRow: { flexDirection: 'row', gap: 10 },
   choice: { flex: 1, height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.surfaceBorder, alignItems: 'center', justifyContent: 'center' },
-  choiceOn: { borderColor: colors.mint, backgroundColor: colors.mint },
   choiceText: { color: colors.text, fontSize: 15, fontWeight: '500' },
-  choiceTextOn: { color: colors.scanInk, fontWeight: '700' },
   reason: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   reasonText: { color: colors.amberText, fontSize: 13, flex: 1, lineHeight: 18 },
   autoNote: { color: colors.textMuted, fontSize: 13, flex: 1, lineHeight: 18 },
@@ -425,8 +441,8 @@ const s = StyleSheet.create({
   stepLabel: { color: colors.textMuted, fontSize: 11 },
   stepText: { color: colors.text, fontSize: 15.5, fontWeight: '600' },
   error: { color: colors.red, fontSize: 13, textAlign: 'center', marginBottom: 6 },
-  primary: { height: 52, borderRadius: radius.pill, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  primaryText: { color: colors.scanInk, fontSize: 16.5, fontWeight: '700' },
+  primary: { height: 52, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  primaryText: { fontSize: 16.5, fontWeight: '700' },
   savedRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   disabled: { opacity: 0.45 },
   secondary: { height: 50, borderRadius: radius.pill, borderWidth: 1, borderColor: '#26352C', alignItems: 'center', justifyContent: 'center', marginTop: 10 },

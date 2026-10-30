@@ -165,7 +165,7 @@ export function StatusBadge({ label, tone = 'muted', check = false }: { label: s
       accessibilityRole="text"
       accessibilityLabel={label}
     >
-      {check && tone === 'green' && <Ionicons name="checkmark" size={13} color="#4E8F2B" />}
+      {check && tone === 'green' && <Ionicons name="checkmark" size={13} color="#4E9B2E" />}
       <Text style={[s.badgeText, tone === 'green' && s.badgeTextGreen, tone === 'amber' && s.badgeTextAmber]}>{label}</Text>
     </FadeIn>
   );
@@ -380,9 +380,9 @@ export function Note({ children, tone = 'muted' }: { children: ReactNode; tone?:
 export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled = false, accessibilityLabel }: { label: string; onPress: () => void; icon?: IconName; tone?: 'neutral' | 'mint' | 'danger'; disabled?: boolean; accessibilityLabel?: string }) {
   const c = useTheme();
   const s = useStyles();
-  // The mint tone speaks the app's ONE green (the "All caught up" green),
-  // theme-aware so it reads on both pages.
-  const color = tone === 'mint' ? c.green : tone === 'danger' ? c.red : c.text;
+  // The mint tone speaks the app's green accent at its mid, readable grade
+  // (accents.mint), like the lime era's quiet green buttons.
+  const color = tone === 'mint' ? accents.mint : tone === 'danger' ? c.red : c.text;
   return (
     <PressScale
       onPress={onPress}
@@ -488,10 +488,10 @@ const useStyles = makeStyles((c) => ({
   },
   sheetCancelText: { color: c.textMuted, fontSize: 16, fontWeight: '600' },
   badge: { paddingHorizontal: 11, height: 27, borderRadius: 999, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.cardAlt, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
-  badgeGreen: { borderColor: 'rgba(78,143,43,0.4)', backgroundColor: '#E6F4DC' },
+  badgeGreen: { borderColor: 'rgba(78,155,46,0.4)', backgroundColor: '#E2F5D2' },
   badgeAmber: { borderColor: 'rgba(222,154,43,0.4)', backgroundColor: '#FCF0D6' },
   badgeText: { color: c.textMuted, fontSize: 12.5, fontWeight: '700' },
-  badgeTextGreen: { color: '#4E8F2B' },
+  badgeTextGreen: { color: '#478A26' },
   badgeTextAmber: { color: '#8F6217' },
   note: { flexDirection: 'row', gap: 6, alignItems: 'flex-start' },
   noteText: { flex: 1, fontSize: 13, lineHeight: 18 },

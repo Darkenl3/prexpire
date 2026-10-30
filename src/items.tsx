@@ -34,6 +34,10 @@ export type Item = {
   // The EAN/UPC code a native shell scanner decoded for this item, when one
   // was in view (optional: only the shell's save bridge sends it today).
   barcode?: string;
+  // The scanned product's retrieved photo (a small data URI, or the database's
+  // https URL): the item card's real product image. Absent when no reliable
+  // image could be retrieved, in which case the neutral category art stands in.
+  image?: string;
 };
 
 const STORAGE_KEY = 'prexpire.items.v1';
@@ -42,8 +46,20 @@ const LAST_CATEGORY_KEY = 'prexpire.lastCategory.v1';
 function isItem(x: unknown): x is Item {
   const i = x as Item;
   // The category may be a built-in or a custom id; deleted custom ids simply
-  // display as "Other" rather than rejecting the stored item.
-  return !!i && typeof i.id === 'string' && typeof i.name === 'string' && typeof i.category === 'string' && i.category.length > 0 && i.category.length <= 40 && /^\d{4}-\d{2}-\d{2}$/.test(i.expiresOn);
+  // display as "Other" rather than rejecting the stored item. The optional
+  // image is validated as a data URI or https URL (anything else is dropped
+  // rather than trusted as an image source).
+  const imageOk = (u: unknown) => typeof u !== 'string' || /^data:image\//.test(u) || /^https:\/\//.test(u);
+  return (
+    !!i &&
+    typeof i.id === 'string' &&
+    typeof i.name === 'string' &&
+    typeof i.category === 'string' &&
+    i.category.length > 0 &&
+    i.category.length <= 40 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(i.expiresOn) &&
+    imageOk(i.image)
+  );
 }
 
 export type NewItem = Omit<Item, 'id' | 'addedAt'>;
