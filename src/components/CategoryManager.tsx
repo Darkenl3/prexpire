@@ -244,7 +244,7 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
                     accessibilityLabel={`Icon ${ic}`}
                     style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
                   >
-                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.mint : c.textMuted} />
+                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.scanInk : c.textMuted} />
                   </PressScale>
                 );
               })}

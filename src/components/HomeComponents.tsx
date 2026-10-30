@@ -5,14 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
 import { PressScale } from './Press';
 
-// The brand wordmark, cut from the user's own logo artwork (transparent
-// PNGs, the black background un-blended into alpha): near-white ink for the
-// dark page, deep forest-green ink for the light page — the green X stays
-// green in both.
+// The brand wordmark: the user's own logo artwork, cut pixel-exact from
+// their file (transparent PNGs): the solid filled four-leaf lime icon stays
+// lime in both themes, with near-white ink for the dark page and deep
+// forest-green ink for the light page.
 const brandWhiteInk = require('../../assets/brand-white.png');
 const brandDarkInk = require('../../assets/brand-ink.png');
-// Artwork size: 1000 x 257.
-const BRAND_ASPECT = 1000 / 257;
+// Artwork size: 1619 x 399.
+const BRAND_ASPECT = 1619 / 399;
 
 // Liquid-glass treatment for the round chrome buttons: the same visual
 // language as the shell's glass tab bar AND its scanner-screen glass circles
@@ -99,8 +99,8 @@ export function GlassIconButton({
 const hatchFx = (line: string): ViewStyle =>
   ({ backgroundImage: `repeating-linear-gradient(45deg, ${line} 0px, ${line} 2px, transparent 2px, transparent 9px)` } as ViewStyle);
 
-// The brand wordmark: the user's own logo in every theme - deep green ink
-// on the light page, near-white ink on the dark one, green X in both.
+// The brand wordmark: the user's own exact logo in every theme - deep green
+// ink on the light page, near-white ink on the dark one, lime leaves in both.
 export function Brandmark({ height }: { height: number }) {
   const c = useTheme();
   const source = c === LIGHT ? brandDarkInk : brandWhiteInk;
@@ -293,7 +293,9 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
     <>
       <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
       <View style={{ flex: 1 }}>
-        <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={2}>
+        {/* One-line titles: the text ellipsizes with "…" when it cannot fit,
+            so a long product never grows its row or squeezes the pill. */}
+        <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1} ellipsizeMode="tail">
           {title}
         </Text>
         <Text style={[s.rowSub, { color: c.textMuted }]} numberOfLines={compact ? 1 : 2}>
@@ -369,11 +371,12 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
         aria-selected={selected}
         accessibilityLabel={tab.label}
       >
-        {/* The reference's active state: the icon + label sit on a subtle
-            pale-green rounded chip; inactive tabs read as plain muted icons. */}
+        {/* The reference's active state: the icon + label sit on a solid
+            lime rounded chip with the deep selected ink; inactive tabs read
+            as plain muted icons. */}
         <View style={[s.tabChip, selected && s.tabChipOn]}>
           <View>
-            <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.mint : c.textMuted} />
+            <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
             {tab.id === 'reminders' && badge > 0 && (
               <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.red, borderColor: c.navBg }]}>
                 <Text style={s.badgeText}>{badge}</Text>
@@ -386,7 +389,7 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
             )}
           </View>
           <Text
-            style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.mint : c.textMuted }]}
+            style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.scanInk : c.textMuted }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.85}
@@ -559,10 +562,11 @@ const useStyles = makeStyles((c) => ({
   // backdropFilter only applies on web; native gets the translucent fill.
   navFallback: { backgroundColor: c.navBg, borderColor: c.navBorder, backdropFilter: 'blur(22px) saturate(1.4)' } as ViewStyle,
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', height: 68 },
-  // The reference's active-tab treatment: a subtle pale-green rounded chip
-  // behind the active icon + label, present in both themes.
+  // The reference's active-tab treatment: a solid lime rounded chip (the
+  // selected-tab green) behind the active icon + label, deep ink on top,
+  // present in both themes.
   tabChip: { alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 6, paddingHorizontal: 11, borderRadius: 14 },
-  tabChipOn: { backgroundColor: c.chipOnBg },
+  tabChipOn: { backgroundColor: c.selBg },
   tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
   scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },

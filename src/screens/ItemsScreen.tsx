@@ -22,11 +22,11 @@ type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavig
 const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recent', name: 'A–Z' };
 
 // The Lists tab, redesigned to the reference: the compact title block with the
-// prominent mint "Add item" capsule, the rounded Items / Shopping list
+// prominent lime "Add item" capsule, the rounded Items / Shopping list
 // segmented control — icon and label only, no counters — the scrollable
 // category chips, the search field beside the sort picker, the live count with
 // real expired/valid status badges, and compact product cards (pale-green art
-// square, meta rows, thin expiry bar, days pill). Everything reads the same
+// square, meta rows, days pill). Everything reads the same
 // real data as before — no sample products, no new dependencies.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { items } = useItems();
@@ -61,23 +61,23 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
 
   const pills: PillColors = {
     // The reference's chips: quiet inactive capsules (white on light, the
-    // raised surface on dark) with a fine hairline, and the solid
-    // selected-green fill with deep forest ink — the same "selected" look
-    // as the segmented control above.
+    // unselected control surface on dark) with a fine hairline, and the solid
+    // selected-category green fill with the deep selected ink — the category
+    // filter's own "selected" look, a touch apart from the segmented control.
     offBg: c === LIGHT ? c.surface : c.cardAlt,
     offBorder: c.surfaceBorder,
     offText: c.textMuted,
-    onBg: c.selBg,
-    onBorder: c.selBg,
+    onBg: c.chipOnBg,
+    onBorder: c.chipOnBorder,
     onText: c.scanInk,
   };
   // Arriving from a Home category tile: scroll the pill row so that tile's
   // pill (solid green) is on screen instead of far to the right.
   const { scrollRef: pillsScroll, note: notePill } = useScrollSelectedIntoView(filter);
 
-  // The prominent mint capsule beside the title: on the Items view it opens
-  // the manual add flow; on the Shopping List view it opens the list's own
-  // add dialog (the same one its section header's action opens).
+  // The prominent lime action capsule beside the title: on the Items view it
+  // opens the manual add flow; on the Shopping List view it opens the list's
+  // own add dialog (the same one its section header's action opens).
   const headerAction = (
     <PressScale
       onPress={() => (shopping ? setShopAddOpen(true) : onNavigate('manual'))}
@@ -273,9 +273,9 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
 }
 
 const useStyles = makeStyles((t) => ({
-  // The prominent leaf-green action capsule beside the title (the reference's
-  // "＋ Add item"): solid green with deep forest ink, soft lift on the light
-  // page, and the pressed register (a hair deeper green) while touched.
+  // The prominent lime action capsule beside the title (the reference's
+  // "＋ Add item"): solid primary green with deep ink, a soft lift on the
+  // light page, and the pressed register (a hair deeper green) while touched.
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -285,16 +285,16 @@ const useStyles = makeStyles((t) => ({
     borderRadius: 999,
     backgroundColor: t.mint,
     ...(t === LIGHT
-      ? { shadowColor: '#5FAF3C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }
-      : { shadowColor: '#0F2E18', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 }),
+      ? { shadowColor: '#7BC84A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 3 }
+      : { shadowColor: '#0A2A16', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 }),
   },
   addBtnPressed: { backgroundColor: t.mintPressed },
   addBtnText: { color: t.scanInk, fontSize: 15, fontWeight: '700' },
 
   // The Items / Shopping list segmented control (the tab's two views), in
   // the reference's language: a rounded container (white on light, the
-  // raised surface on dark), the selected side filled with the soft
-  // selected-green and deep forest ink, the inactive side quiet gray — icon
+  // unselected control surface on dark), the selected side filled with the
+  // selected-tab green and deep ink, the inactive side quiet gray — icon
   // and label only, no count badges. The category chips sit one tight gap
   // below it, so the two read as related controls of the same section, while
   // the title block above keeps its clear breathing room.

@@ -194,7 +194,7 @@ export function Options<T extends string | number>({ label, options, value, onCh
           >
             {on && (
               <FadeIn>
-                <Ionicons name="checkmark" size={14} color={c.green} />
+                <Ionicons name="checkmark" size={14} color={c.scanInk} />
               </FadeIn>
             )}
             <Text style={[s.chipText, on && s.chipTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
@@ -451,13 +451,15 @@ const useStyles = makeStyles((c) => ({
   },
   chipDisabled: { opacity: 0.45 },
   chipText: { color: c.textMuted, fontSize: 13.5, fontWeight: '500' },
-  chipTextOn: { color: c.text, fontWeight: '600' },
+  // The selected chip is the solid selected-category lime, so its text (and
+  // checkmark) carry the deep selected ink.
+  chipTextOn: { color: c.scanInk, fontWeight: '600' },
   chipTextDisabled: { color: c.textMuted },
   optionList: { borderRadius: 14, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.surface, overflow: 'hidden' },
   optionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 16, gap: 12 },
   optionText: { color: c.text, fontSize: 15.5, fontWeight: '500', flex: 1 },
   // The picker sheet: a floating card anchored to the bottom of the screen.
-  sheetWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(8,14,11,0.45)' },
+  sheetWrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,7,9,0.5)' },
   sheet: {
     width: '100%',
     maxWidth: 480,

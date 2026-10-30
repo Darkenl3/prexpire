@@ -128,18 +128,18 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         scaleTo={0.99}
       >
         <View style={s.avatar}>
-          <Ionicons name="person" size={30} color={accents.mint} />
+          <Ionicons name="person" size={30} color={t.pills.green.text} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.profileTitle}>Preferences</Text>
           <Text style={s.profileSub} numberOfLines={1}>
-            {WEB ? 'Saved in this browser' : 'Saved on this device'} — no account needed
+            {WEB ? 'Saved in this browser' : 'Saved on this device'}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
       </PressScale>
 
-      <SettingsSection title="Account">
+      <SettingsSection title="General">
         <SettingsCard>
           <SettingRow icon="person-outline" accent="mint" title="Profile" description="Your library and storage" onPress={() => open('profile')} />
           <SettingRow icon="shield-checkmark-outline" accent="blue" title="Privacy & Security" description="Camera access and stored data" onPress={() => open('privacy')} />
@@ -385,7 +385,7 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
           <ScrollView style={s.searchScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={s.searchContent}>
               {q === '' ? (
-                <Text style={s.searchHint}>Type to find a setting — by name or what it does</Text>
+                <Text style={s.searchHint}>Type to find a setting by name or what it does</Text>
               ) : results.length === 0 ? (
                 <Text style={s.searchHint}>No settings match “{query.trim()}”</Text>
               ) : (
@@ -455,6 +455,7 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void) {
 }
 
 function ProfileDetail() {
+  const t = useTheme();
   const s = useStyles();
   const { saved } = useItems();
   const { all } = useCategories();
@@ -463,10 +464,10 @@ function ProfileDetail() {
     <>
       <View style={s.heroCard}>
         <View style={s.heroAvatar}>
-          <Ionicons name="person" size={34} color={accents.mint} />
+          <Ionicons name="person" size={34} color={t.pills.green.text} />
         </View>
         <Text style={s.heroTitle}>Preferences</Text>
-        <Text style={s.heroSub}>{WEB ? 'Saved in this browser' : 'Saved on this device'} — no account, no sign-in</Text>
+        <Text style={s.heroSub}>{WEB ? 'Saved in this browser' : 'Saved on this device'}</Text>
       </View>
       <SettingsSection title="Library">
         <SettingsCard>
@@ -901,7 +902,7 @@ const useStyles = makeStyles((t) => ({
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   banner: { borderRadius: 14, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: t.bg, zIndex: 10, elevation: 6 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(8,14,11,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {
     width: '100%',
     maxWidth: 420,

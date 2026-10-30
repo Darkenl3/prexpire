@@ -520,7 +520,7 @@ const useStyles = makeStyles((t) => ({
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: t === LIGHT ? '#B9CFC0' : '#3A4A3E',
+    borderColor: t === LIGHT ? '#B4CFC9' : '#3E565A',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -542,7 +542,7 @@ const useStyles = makeStyles((t) => ({
   qty: { minWidth: 20, textAlign: 'center', color: t.text, fontSize: 13.5, fontWeight: '600' },
   remove: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 
-  backdrop: { flex: 1, backgroundColor: 'rgba(8,14,11,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {
     width: '100%',
     maxWidth: 420,
