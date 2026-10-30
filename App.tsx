@@ -13,7 +13,7 @@ import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
-import { ShoppingProvider, useShopping } from './src/shopping';
+import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue, dayOrderForFormat } from './src/preferences';
 import { useLayout } from './src/layout';
@@ -76,7 +76,6 @@ function Shell() {
   const { items, defaultCategory, addItem } = useItems();
   const { settings, formatDate } = useSettings();
   const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
-  const { toBuyCount } = useShopping();
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
   const [notice, setNotice] = useState<string | null>(null);
@@ -226,8 +225,6 @@ function Shell() {
     () => (settings.reminders ? remindersDue(items, settings.reminderLead).length : 0),
     [items, settings.reminders, settings.reminderLead],
   );
-  // Open Shopping List entries, shown on the Shopping tab (information, not urgency).
-  const shopBadge = useMemo(() => Math.min(toBuyCount, 99), [toBuyCount]);
 
   const onNavigate = useCallback(
     (to: string) => {
@@ -316,20 +313,22 @@ function Shell() {
     return () => window.removeEventListener('prexpire:navigate', onShellNavigate);
   }, [onNavigate]);
 
-  // Keep the shell's tab bar in sync: report the active tab and the badges
-  // whenever either changes, so the shell can highlight its active tab and show
-  // the badges. The shell hides its bar only while the scanner screen is open
+  // Keep the shell's tab bar in sync: report the active tab whenever it
+  // changes, so the shell can highlight its active tab. Counts are
+  // deliberately NOT reported — the shell's bar shows no badges; the reminder
+  // counter lives on the website's own header bell (visible in the WebView).
+  // The shell hides its bar only while the scanner screen is open
   // (tab === 'scan'); scrolling never affects it, matching the web bottom nav.
   useEffect(() => {
     if (!WEB || typeof window === 'undefined') return;
     const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
     if (!shell?.postMessage) return;
     try {
-      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab, badge, shopBadge }));
+      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab }));
     } catch {
       // The shell went away; navigation still works locally.
     }
-  }, [route, badge, shopBadge]);
+  }, [route]);
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
   // is only mounted, and only running, while the user is scanning. The manual
@@ -373,8 +372,6 @@ function Shell() {
       {!inShell && (
         <BottomNav
           active={route.tab}
-          badge={badge}
-          shopBadge={shopBadge}
           insets={insets}
           maxWidth={layout.mode === 'phone' ? 560 : 520}
           onTab={(id) => onNavigate(`tab:${id}`)}

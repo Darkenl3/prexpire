@@ -117,10 +117,14 @@ export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; 
       <Brandmark height={33} />
       <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
         <Ionicons name="notifications-outline" size={22} color={c.text} />
-        {/* The small green unread indicator (the reference's mint dot on the
-            bell's top-right): present whenever reminders are due — the exact
-            count lives on the Reminders tab's own badge. */}
-        {badge > 0 && <View style={s.bellDot} />}
+        {/* The reminder counter lives HERE and only here: a small red numbered
+            badge on the header bell. The bottom navigation carries no counts of
+            any kind — neither the reminder count nor the shopping count. */}
+        {badge > 0 && (
+          <View style={[s.bellBadge, { borderColor: c.bg }]}>
+            <Text style={s.bellBadgeText}>{badge > 99 ? '99+' : badge}</Text>
+          </View>
+        )}
       </GlassIconButton>
     </View>
   );
@@ -333,10 +337,6 @@ const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; ic
 
 type BottomNavProps = {
   active: TabId;
-  badge: number;
-  // Open Shopping List entries, shown on the Lists tab (the Shopping List is
-  // a view of it, reached through the segmented control on that page).
-  shopBadge?: number;
   insets: { bottom: number; left: number; right: number };
   maxWidth?: number;
   onTab: (id: TabId) => void;
@@ -353,7 +353,7 @@ export const NAV_HEIGHT = 68;
 // in layout, showing or hiding the header cannot move it or resize the
 // scroller, and every screen pads its content bottom so the last item stays
 // reachable above the bar.
-export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560, onTab, onScan }: BottomNavProps) {
+export function BottomNav({ active, insets, maxWidth = 560, onTab, onScan }: BottomNavProps) {
   const c = useTheme();
   const s = useStyles();
   // Narrow phones give the four tabs a little more room so labels are not clipped.
@@ -377,16 +377,6 @@ export function BottomNav({ active, badge, shopBadge = 0, insets, maxWidth = 560
         <View style={[s.tabChip, selected && s.tabChipOn]}>
           <View>
             <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
-            {tab.id === 'reminders' && badge > 0 && (
-              <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.red, borderColor: c.navBg }]}>
-                <Text style={s.badgeText}>{badge}</Text>
-              </View>
-            )}
-            {tab.id === 'items' && shopBadge > 0 && (
-              <View style={[s.badge, { top: -5, right: -9, backgroundColor: c.mint, borderColor: c.navBg }]}>
-                <Text style={s.shopBadgeText}>{shopBadge}</Text>
-              </View>
-            )}
           </View>
           <Text
             style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.scanInk : c.textMuted }]}
@@ -431,26 +421,24 @@ const useStyles = makeStyles((c) => ({
   // A taller top bar gives the wordmark room to breathe (brand-forward,
   // like the reference) - keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: {
+  // The header bell's reminder counter — the one numbered badge in the app.
+  // Red for urgency (the same red the expiry cards speak), edged with a
+  // hairline of the page background so it reads as cut out of the glass
+  // circle. Capped at 99+ so three digits can never burst the little pill.
+  bellBadge: {
     position: 'absolute',
-    top: 2,
-    right: 0,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
+    top: 3,
+    right: 3,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 8.5,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
+    backgroundColor: c.red,
   },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  // The header bell's small green unread indicator: a mint dot pinned to the
-  // glass circle's top-right, exactly like the reference — present (never
-  // numbered); the count rides the bell's accessibility label instead.
-  bellDot: { position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: 4.5, backgroundColor: c.mint },
-  // The Lists tab's shopping count uses the accent colour rather than red: it
-  // is information, not urgency (the Shopping List is a view of that tab).
-  shopBadgeText: { color: c.scanInk, fontSize: 11, fontWeight: '700' },
+  bellBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   alert: {
     marginTop: 4,
     minHeight: 58,
