@@ -110,10 +110,10 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
       <View style={[s.thumb, compact && s.thumbCompact]}>
         {categoryArt(item.category, compact ? 26 : 32)}
       </View>
-      {/* Middle: name, category and expiry date, then the days-left pill. The
-          name stays on ONE line and ellipsizes (`Dolce Gusto Espresso Roma…`)
-          so long products can never push the date, the pill or the menu out of
-          position — every card keeps the same height, on every screen width. */}
+      {/* Middle: name, category and expiry date. The name stays on ONE line
+          and ellipsizes (`Dolce Gusto Espresso Roma…`) so long products can
+          never push the date, the pill or the menu out of position — every
+          card keeps the same height, on every screen width. */}
       <View style={s.body}>
         <Text style={[s.name, compact && s.nameCompact]} numberOfLines={1} ellipsizeMode="tail">
           {item.name}
@@ -130,30 +130,34 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
             {formatDate(item.expiresOn, item.datePrecision)}
           </Text>
         </View>
-        {/* The days-left pill closes the meta block: the real expiry maths as
-            a single quiet badge, never a counting bar. */}
-        <View style={[s.pill, compact && s.pillCompact, { backgroundColor: t.pills[tone].bg }]}>
-          <Text
-            style={[s.pillText, compact && s.pillTextCompact, { color: t.pills[tone].text }]}
-            numberOfLines={1}
-            minimumFontScale={0.7}
-            adjustsFontSizeToFit
-          >
-            {pill}
-          </Text>
+      </View>
+      {/* Right: the reference's right-hand stack — the three-dot menu
+          anchored at the top (aligned with the name), and the days-left
+          pill on the right edge below it, centred in the remaining space. */}
+      <View style={s.side}>
+        <PressScale
+          onPress={openMenu}
+          hitSlop={8}
+          scaleTo={0.88}
+          style={s.dots}
+          accessibilityRole="button"
+          accessibilityLabel={`Actions for ${item.name}`}
+        >
+          <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
+        </PressScale>
+        <View style={s.pillAnchor}>
+          <View style={[s.pill, compact && s.pillCompact, { backgroundColor: t.pills[tone].bg }]}>
+            <Text
+              style={[s.pillText, compact && s.pillTextCompact, { color: t.pills[tone].text }]}
+              numberOfLines={1}
+              minimumFontScale={0.7}
+              adjustsFontSizeToFit
+            >
+              {pill}
+            </Text>
+          </View>
         </View>
       </View>
-      {/* Right: the three-dot action menu, vertically centred on the card. */}
-      <PressScale
-        onPress={openMenu}
-        hitSlop={8}
-        scaleTo={0.88}
-        style={s.dots}
-        accessibilityRole="button"
-        accessibilityLabel={`Actions for ${item.name}`}
-      >
-        <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
-      </PressScale>
 
       {/* The actions menu: a compact centered dialog (the app's own dialog
           language — see the Shopping List's add dialog), so it works on every
@@ -192,12 +196,12 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
 
 const useStyles = makeStyles((t) => ({
   // The compact product card (the reference's layout): a rounded pale-green
-  // art square on the left, the name / category / expiry-date meta rows and
-  // the days-left pill in the middle, the three-dot menu on the right. White
-  // with a fine hairline on the light page, the dark theme's deep card with
-  // its own hairline — every value is real data (the item's own fields). The
-  // name is one line (ellipsized), so EVERY card is the same height however
-  // long the product.
+  // art square on the left, the name / category / expiry-date meta rows in
+  // the middle, and the right-hand stack — three-dot menu at the top, days
+  // pill at the right edge below it. White with a fine hairline on the light
+  // page, the dark theme's deep card with its own hairline — every value is
+  // real data (the item's own fields). The name is one line (ellipsized), so
+  // EVERY card is the same height however long the product.
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -230,9 +234,12 @@ const useStyles = makeStyles((t) => ({
   // Subtexts breathe a little teal (theme.textSub) and grow a size, so the
   // category and date read at a glance like the reference's metadata rows.
   metaText: { color: t.textSub, fontSize: 13.5, flexShrink: 1 },
-  // The days-left pill closes the meta block with a touch of the row's own
-  // rhythm — no counting bar, just the real remaining time as a badge.
-  pill: { height: 24, paddingHorizontal: 11, borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 5, alignSelf: 'flex-start' },
+  // The days-left pill: the real expiry maths as a single quiet badge on the
+  // card's right edge — never a counting bar. It centres in the space below
+  // the three-dot menu, like the reference's right-hand stack.
+  side: { alignSelf: 'stretch', alignItems: 'flex-end' },
+  pillAnchor: { flex: 1, alignItems: 'flex-end', justifyContent: 'center' },
+  pill: { height: 24, paddingHorizontal: 11, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillCompact: { height: 22, paddingHorizontal: 9 },
   pillText: { fontSize: 12.5, fontWeight: '700' },
   pillTextCompact: { fontSize: 12 },
