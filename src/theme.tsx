@@ -128,6 +128,8 @@ export const DARK: Palette = {
   pills: {
     amber: { bg: '#3D2B0E', text: '#F5B83D' },
     green: { bg: '#0A382C', text: '#3FE0AC' },
+    // Expired items: the red family of the attention card, as a day pill.
+    red: { bg: '#2A1216', text: '#FF6B77' },
   },
   switchColors: { track: '#2A3A40', trackOn: '#1E8A6C', thumb: '#C9D3D6', thumbOn: '#E9FFF8' },
 };
@@ -213,6 +215,7 @@ export const LIGHT: Palette = {
     // ink, so "1 day" / "3 days" read at a glance.
     amber: { bg: '#F9E7B8', text: '#8A600C' },
     green: { bg: '#C6EDD8', text: '#0A7A55' },
+    red: { bg: '#F9DCDF', text: '#B3233B' },
   },
   switchColors: { track: '#CBD5E1', trackOn: '#12BE8A', thumb: '#FFFFFF', thumbOn: '#FFFFFF' },
 };
@@ -233,7 +236,7 @@ export type Tint =
   | 'slate'
   | 'add';
 
-export type Tone = 'amber' | 'green';
+export type Tone = 'amber' | 'green' | 'red';
 
 export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
 

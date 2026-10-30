@@ -13,6 +13,7 @@ import { daysUntil } from '../scanner/dateParser';
 import { SectionHeader } from '../components/HomeComponents';
 import { FadeIn, PressScale } from '../components/Press';
 import { Note, Options, SmallButton } from '../components/SettingsRows';
+import { categoryIcon } from '../components/ItemCard';
 import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 
 // The Shopping List, now a view of the Lists tab (ItemsScreen renders this
@@ -22,13 +23,22 @@ import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 // guide the first steps; nothing here is ever pre-filled with sample content.
 // The toast is hoisted to the parent (outside the scrolling Page) so it floats
 // at the screen bottom like Home's notice; the add dialog is a Modal and
-// escapes the scroll view on its own.
+// escapes the scroll view on its own. The dialog's OPEN STATE is owned by the
+// parent too, so the title block's "Add item" capsule opens the same dialog.
 
-export function ShoppingListBody({ onToast }: { onToast: (text: string) => void }) {
+export function ShoppingListBody({
+  addOpen,
+  setAddOpen,
+  onToast,
+}: {
+  addOpen: boolean;
+  setAddOpen: (open: boolean) => void;
+  onToast: (text: string) => void;
+}) {
   const c = useStyles();
   const t = useTheme();
   const { items, ready, saveError, setPurchased, remove, clearPurchased } = useShopping();
-  const [addOpen, setAddOpen] = useState(false);
+  const { custom } = useCategories();
   const { toBuy, purchased } = useMemo(() => groupShopping(items), [items]);
 
   // Rows animate out (collapse) before they are actually moved or removed.
@@ -128,6 +138,7 @@ export function ShoppingListBody({ onToast }: { onToast: (text: string) => void 
                   onLeaveDone={finishLeave}
                   onToggle={togglePurchased}
                   onRemove={removeEntry}
+                  categoryIconName={categoryIcon(entry.category, custom.find((x) => x.id === entry.category)?.icon)}
                 />
               ))}
               {toBuy.length === 0 && purchased.length > 0 && (
@@ -153,6 +164,7 @@ export function ShoppingListBody({ onToast }: { onToast: (text: string) => void 
                       onLeaveDone={finishLeave}
                       onToggle={togglePurchased}
                       onRemove={removeEntry}
+                      categoryIconName={categoryIcon(entry.category, custom.find((x) => x.id === entry.category)?.icon)}
                     />
                   ))}
                 </View>
@@ -174,12 +186,15 @@ type RowProps = {
   entry: ListEntry;
   purchased: boolean;
   leaving: boolean;
+  // The entry's category glyph (the item cards' meta-row icon), shown on the
+  // to-buy rows' category line.
+  categoryIconName: keyof typeof Ionicons.glyphMap;
   onLeaveDone: () => void;
   onToggle: (entry: ListEntry) => void;
   onRemove: (entry: ListEntry) => void;
 };
 
-function ShoppingRow({ entry, purchased, leaving, onLeaveDone, onToggle, onRemove }: RowProps) {
+function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone, onToggle, onRemove }: RowProps) {
   const c = useStyles();
   const t = useTheme();
   const { nameOf } = useCategories();
@@ -227,9 +242,18 @@ function ShoppingRow({ entry, purchased, leaving, onLeaveDone, onToggle, onRemov
             {entry.name}
             {entry.quantity > 1 ? <Text style={c.qtyInline}>{`  ×${entry.quantity}`}</Text> : null}
           </Text>
-          <Text style={c.rowSub} numberOfLines={1}>
-            {sub}
-          </Text>
+          {!purchased ? (
+            <View style={c.rowSubRow}>
+              <Ionicons name={categoryIconName} size={11.5} color={t.textMuted} />
+              <Text style={c.rowSub} numberOfLines={1}>
+                {sub}
+              </Text>
+            </View>
+          ) : (
+            <Text style={c.rowSub} numberOfLines={1}>
+              {sub}
+            </Text>
+          )}
         </View>
         {!purchased && pill ? (
           <View style={[c.pill, amber && c.pillAmber]}>
@@ -477,10 +501,10 @@ const useStyles = makeStyles((t) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    minHeight: 58,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 13,
+    minHeight: 62,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     backgroundColor: t.surface,
     borderWidth: t === LIGHT ? 0 : 1,
     borderColor: t.surfaceBorder,
@@ -499,7 +523,9 @@ const useStyles = makeStyles((t) => ({
   rowTitle: { color: t.text, fontSize: 15.5, fontWeight: '600' },
   rowTitleDone: { color: t.textMuted, textDecorationLine: 'line-through' },
   qtyInline: { color: t.textMuted, fontSize: 13.5, fontWeight: '500' },
-  rowSub: { color: t.textMuted, fontSize: 12.5, marginTop: 1 },
+  // The category line, with the same small glyph the item cards' meta rows use.
+  rowSubRow: { flexDirection: 'row', alignItems: 'center', gap: 5, minWidth: 0, marginTop: 1 },
+  rowSub: { color: t.textMuted, fontSize: 12.5, flexShrink: 1 },
   pill: { height: 25, paddingHorizontal: 10, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: t.pills.green.bg },
   pillAmber: { backgroundColor: t.pills.amber.bg },
   pillText: { fontSize: 12.5, fontWeight: '600', color: t.pills.green.text },

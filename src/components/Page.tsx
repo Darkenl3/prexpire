@@ -13,13 +13,17 @@ type Props = {
   badge: number;
   // Narrower than Home: lists and settings read better at a limited width.
   maxWidth?: number;
+  // An optional control at the right edge of the title block (the Lists
+  // screen's "Add item" capsule). Vertically centered on the title +
+  // subtitle pair, like the reference's prominent mint action button.
+  headerAction?: ReactNode;
   onNavigate: (route: string) => void;
   children: ReactNode;
 };
 
 // The frame shared by the Items, Reminders and Settings tabs: the same brand header as Home,
 // a page title, and a scrolling body that leaves room for the floating bottom nav.
-export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, children }: Props) {
+export function Page({ title, subtitle, badge, maxWidth = 720, headerAction, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const c = useStyles();
@@ -48,10 +52,15 @@ export function Page({ title, subtitle, badge, maxWidth = 720, onNavigate, child
         <View style={[c.frame, frame]}>
           <AlertSpacer />
           <View style={c.titleBlock}>
-            <Text style={c.title} accessibilityRole="header">
-              {title}
-            </Text>
-            {!!subtitle && <Text style={c.subtitle}>{subtitle}</Text>}
+            <View style={c.titleRow}>
+              <View style={c.titleText}>
+                <Text style={c.title} accessibilityRole="header">
+                  {title}
+                </Text>
+                {!!subtitle && <Text style={c.subtitle}>{subtitle}</Text>}
+              </View>
+              {headerAction}
+            </View>
           </View>
           {children}
         </View>
@@ -65,6 +74,10 @@ const useStyles = makeStyles((c) => ({
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   titleBlock: { marginTop: 6, marginBottom: 18 },
+  // The title and its optional right-side action ("Add item") share one row;
+  // the text column shrinks first so the action never wraps or clips.
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  titleText: { flex: 1, minWidth: 0 },
   title: { color: c.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.5 },
   subtitle: { color: c.textMuted, fontSize: 15, marginTop: 4 },
 }));

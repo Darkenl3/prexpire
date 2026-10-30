@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Animated, Easing, ScrollView, StyleSheet, type LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { PressScale } from './Press';
 import { useSettings } from '../settings';
 
@@ -31,9 +32,14 @@ type Props = {
   // "small" is the compact variant used for the sort row.
   size?: 'regular' | 'small';
   accessibilityLabel?: string;
+  // A small glyph carried INSIDE the capsule (the category chips' icons, the
+  // sort dropdown's chevron). It follows the pill's selected text colour.
+  icon?: keyof typeof Ionicons.glyphMap;
+  // Draws the icon AFTER the label instead of before it (dropdown chevrons).
+  iconAfter?: boolean;
 };
 
-export function ChoicePill({ label, selected, onPress, colors, size = 'regular', accessibilityLabel }: Props) {
+export function ChoicePill({ label, selected, onPress, colors, size = 'regular', accessibilityLabel, icon, iconAfter }: Props) {
   const { motion } = useSettings();
   // Motion as a ref so animation timings never retrigger a running animation.
   const motionRef = useRef(motion);
@@ -56,11 +62,16 @@ export function ChoicePill({ label, selected, onPress, colors, size = 'regular',
       {/* The painted layer carries the animated fill and border; PressScale's
           transform sits above it, so the whole capsule squishes together. */}
       <Animated.View style={[StyleSheet.absoluteFill, { borderRadius: 999, borderWidth: 1, backgroundColor: bg, borderColor: border }]} />
-      <Animated.Text style={{ color: text, fontSize: size === 'small' ? 12.5 : 13.5, fontWeight: '600' }}>{label}</Animated.Text>
+      <View style={content} pointerEvents="none">
+        {!!icon && !iconAfter && <Ionicons name={icon} size={size === 'small' ? 12 : 13} color={selected ? colors.onText : colors.offText} />}
+        <Animated.Text style={{ color: text, fontSize: size === 'small' ? 12.5 : 13.5, fontWeight: '600' }}>{label}</Animated.Text>
+        {!!icon && iconAfter && <Ionicons name={icon} size={size === 'small' ? 12 : 13} color={selected ? colors.onText : colors.offText} />}
+      </View>
     </PressScale>
   );
 }
 
+const content = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 5 };
 const regular = { justifyContent: 'center' as const, alignItems: 'center' as const, height: 34, paddingHorizontal: 15, borderRadius: 999 };
 const small = { justifyContent: 'center' as const, alignItems: 'center' as const, height: 30, paddingHorizontal: 12, borderRadius: 999 };
 

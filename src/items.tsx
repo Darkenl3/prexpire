@@ -57,6 +57,10 @@ type ItemsContext = {
   // The category new items start in: the one chosen in Settings, or the last one used.
   defaultCategory: CategoryId;
   addItem: (item: NewItem) => Promise<Item>;
+  // Deletes one tracked item (the item card's "Remove item" action). The
+  // remembered category is untouched: removing a product never changes where
+  // the NEXT one starts.
+  removeItem: (id: string) => Promise<void>;
   // Deletes every saved item and the remembered category from storage.
   clearSaved: () => Promise<void>;
 };
@@ -107,6 +111,16 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     return item;
   }, []);
 
+  const removeItem = useCallback(async (id: string) => {
+    const next = savedRef.current.filter((i) => i.id !== id);
+    if (next.length === savedRef.current.length) return; // unknown id: nothing to do
+    // Persist first, exactly like addItem: if the write fails the list on
+    // screen keeps the item rather than silently losing it.
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    savedRef.current = next;
+    setSaved(next);
+  }, []);
+
   const clearSaved = useCallback(async () => {
     await AsyncStorage.multiRemove([STORAGE_KEY, LAST_CATEGORY_KEY]);
     savedRef.current = [];
@@ -116,8 +130,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const defaultCategory = settings.defaultCategory === 'last' ? lastCategory : settings.defaultCategory;
   const value = useMemo(
-    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, clearSaved }),
-    [saved, ready, lastCategory, defaultCategory, addItem, clearSaved],
+    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, removeItem, clearSaved }),
+    [saved, ready, lastCategory, defaultCategory, addItem, removeItem, clearSaved],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
