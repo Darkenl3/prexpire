@@ -21,7 +21,7 @@ import { SmallButton } from './SettingsRows';
 // real data (the item's own fields); nothing is sampled or invented.
 
 // The built-ins' chip/row glyphs (custom categories carry their own icon).
-// Food is the reference's fork-and-knife glyph.
+// Food reads as cutlery in these small text rows; its tile art stays the apple.
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   food: 'restaurant-outline',
   medicine: 'medkit-outline',
@@ -118,9 +118,11 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
       <View style={[s.thumb, compact && s.thumbCompact, { backgroundColor: t.tints[tint].top, borderColor: t.tints[tint].border }]}>
         {categoryArt(item.category, compact ? 26 : 32)}
       </View>
-      {/* Middle: name, category, expiry date, and the expiry progress bar. */}
+      {/* Middle: name, category, expiry date, and the expiry progress bar.
+          The name wraps to a second line before it ever cuts to an ellipsis,
+          so long product names stay readable. */}
       <View style={s.body}>
-        <Text style={[s.name, compact && s.nameCompact]} numberOfLines={1}>
+        <Text style={[s.name, compact && s.nameCompact]} numberOfLines={2}>
           {item.name}
         </Text>
         <View style={s.metaRow}>
@@ -156,7 +158,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
         </PressScale>
         <View style={[s.pill, { backgroundColor: t.pills[tone].bg }]}>
-          <Text style={[s.pillText, { color: t.pills[tone].text }]} numberOfLines={1} minimumFontScale={0.8} adjustsFontSizeToFit>
+          <Text style={[s.pillText, { color: t.pills[tone].text }]} numberOfLines={1} minimumFontScale={0.7} adjustsFontSizeToFit>
             {pill}
           </Text>
         </View>
@@ -175,7 +177,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               accessibilityLabel={`Actions for ${item.name}`}
               {...({ 'aria-modal': true } as object)}
             >
-              <Text style={s.menuName} numberOfLines={1}>
+              <Text style={s.menuName} numberOfLines={2}>
                 {item.name}
               </Text>
               <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Add ${item.name} to your Shopping List`}>
@@ -226,8 +228,10 @@ const useStyles = makeStyles((t) => ({
   },
   thumbCompact: { width: 52, height: 52, borderRadius: 13 },
   body: { flex: 1, minWidth: 0, gap: 4 },
-  name: { color: t.text, fontSize: 16.5, fontWeight: '700' },
-  nameCompact: { fontSize: 15 },
+  // Two-line names: only a genuinely long product grows the card; short ones
+  // sit on one line exactly as before.
+  name: { color: t.text, fontSize: 16.5, fontWeight: '700', lineHeight: 21 },
+  nameCompact: { fontSize: 15, lineHeight: 19 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
   // Subtexts breathe a little cyan (theme.textSub) and grow a size, so the
   // category and date read at a glance like the reference's metadata rows.
@@ -235,7 +239,9 @@ const useStyles = makeStyles((t) => ({
   // The expiry progress bar: a hairline track with the status-coloured fill.
   barTrack: { height: 7, borderRadius: 4, backgroundColor: t.separator, marginTop: 6, overflow: 'hidden' },
   barFill: { height: 7, borderRadius: 4 },
-  side: { alignItems: 'flex-end', gap: 9, maxWidth: 122 },
+  // Slimmed so the name column keeps the width it needs for long products;
+  // the pill shrinks its own font before it ever overflows.
+  side: { alignItems: 'flex-end', gap: 9, maxWidth: 106 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontSize: 13, fontWeight: '700' },
@@ -250,7 +256,7 @@ const useStyles = makeStyles((t) => ({
     gap: 8,
     ...(t === LIGHT ? CARD_SHADOW_LIFTED : null),
   },
-  menuName: { color: t.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 4, paddingHorizontal: 2 },
+  menuName: { color: t.textMuted, fontSize: 13, fontWeight: '600', lineHeight: 16, marginBottom: 4, paddingHorizontal: 2 },
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',

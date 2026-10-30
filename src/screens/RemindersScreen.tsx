@@ -57,7 +57,9 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
         {categoryArt(item.category, compact ? 26 : 30)}
       </View>
       <View style={s.body}>
-        <Text style={s.name} numberOfLines={1}>
+        {/* The name wraps to a second line instead of cutting to an ellipsis,
+            matching the item cards on the Lists tab. */}
+        <Text style={s.name} numberOfLines={2}>
           {item.name}
         </Text>
         {/* The meta wraps to a second line instead of cutting the expiry date
@@ -253,7 +255,7 @@ const useStyles = makeStyles((t) => ({
   },
   thumbCompact: { width: 50, height: 50, borderRadius: 13 },
   body: { flex: 1, minWidth: 0 },
-  name: { color: t.text, fontSize: 16, fontWeight: '700' },
+  name: { color: t.text, fontSize: 16, fontWeight: '700', lineHeight: 20 },
   meta: { color: t.textSub, fontSize: 13, lineHeight: 18, marginTop: 3 },
   pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontSize: 13, fontWeight: '700' },

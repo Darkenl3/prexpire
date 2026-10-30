@@ -288,7 +288,7 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
     <>
       <View style={[s.rowIcon, compact && s.rowIconCompact, { backgroundColor: c.iconTile }]}>{art}</View>
       <View style={{ flex: 1 }}>
-        <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1}>
+        <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={2}>
           {title}
         </Text>
         <Text style={[s.rowSub, { color: c.textMuted }]} numberOfLines={compact ? 1 : 2}>
@@ -513,8 +513,8 @@ const useStyles = makeStyles((c) => ({
   rowIcon: { width: 44, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowCompact: { minHeight: 48, paddingVertical: 5, gap: 9 },
   rowIconCompact: { width: 36, height: 32, borderRadius: 10 },
-  rowTitle: { color: c.text, fontSize: 15.5, fontWeight: '600' },
-  rowTitleCompact: { fontSize: 14.5 },
+  rowTitle: { color: c.text, fontSize: 15.5, fontWeight: '600', lineHeight: 20 },
+  rowTitleCompact: { fontSize: 14.5, lineHeight: 18 },
   rowSub: { color: c.textMuted, fontSize: 12.5, fontWeight: '400', marginTop: 1 },
   pill: { height: 30, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   pillText: { fontSize: 14, fontWeight: '600' },

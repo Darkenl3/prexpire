@@ -6,7 +6,7 @@ import { useCategories } from '../categories';
 import { type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type DayOrder, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
-import { ForkKnifeArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
+import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
 
@@ -25,8 +25,7 @@ const SHEET_PILLS: PillColors = {
 export function categoryArt(id: CategoryId, size: number) {
   switch (id) {
     case 'food':
-      // The reference's fork-and-knife glyph for Food.
-      return <ForkKnifeArt size={size} />;
+      return <AppleArt size={size} />;
     case 'medicine':
       return <CapsuleArt size={size} />;
     case 'household':

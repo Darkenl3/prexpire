@@ -238,7 +238,9 @@ function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone,
       <View style={c.row} onLayout={onLayout}>
         <CheckButton checked={purchased} label={`${purchased ? 'Bought' : 'Mark bought'}: ${entry.name}`} onPress={() => onToggle(entry)} />
         <View style={c.rowText}>
-          <Text style={[c.rowTitle, purchased && c.rowTitleDone]} numberOfLines={1}>
+          {/* The name wraps to a second line before it ever cuts to an
+              ellipsis, matching the item cards on the Items view. */}
+          <Text style={[c.rowTitle, purchased && c.rowTitleDone]} numberOfLines={2}>
             {entry.name}
             {entry.quantity > 1 ? <Text style={c.qtyInline}>{`  ×${entry.quantity}`}</Text> : null}
           </Text>
@@ -520,7 +522,7 @@ const useStyles = makeStyles((t) => ({
     justifyContent: 'center',
   },
   rowText: { flex: 1, minWidth: 0 },
-  rowTitle: { color: t.text, fontSize: 15.5, fontWeight: '600' },
+  rowTitle: { color: t.text, fontSize: 15.5, fontWeight: '600', lineHeight: 20 },
   rowTitleDone: { color: t.textMuted, textDecorationLine: 'line-through' },
   qtyInline: { color: t.textMuted, fontSize: 13.5, fontWeight: '500' },
   // The category line, with the same small glyph the item cards' meta rows use.
