@@ -79,6 +79,32 @@ export function titleCase(text: string): string {
     .join(' ');
 }
 
+// Search-page and lookup furniture that must NEVER become a product name:
+// result titles like "Lookup & ISBN Search", "ISBN Search", "UPC Item
+// Database" or "Barcode Lookup" are pages ABOUT codes, not products, and
+// leaked into the pipeline as names more than once. A name made ENTIRELY of
+// these words (plus connectors and site tails) is furniture; any real word
+// ("Nestlé", "Oats") makes it a product name again. Exported so every
+// identification path (the databases, the web-search miner and the shell's
+// saved-catalog loader) filters names through the SAME rule.
+const TECHNICAL_TITLE_WORDS = new Set([
+  'lookup', 'lookups', 'search', 'searches', 'searching', 'isbn', 'upc', 'upca', 'ean',
+  'gtin', 'barcode', 'barcodes', 'code', 'codes', 'item', 'items', 'product', 'products',
+  'find', 'finder', 'database', 'databases', 'directory', 'index', 'results', 'result',
+  'api', 'upcitemdb', 'com', 'net', 'org', 'www', 'online', 'free', 'number', 'numbers',
+]);
+const TITLE_CONNECTORS = new Set(['&', 'and', 'or', 'for', 'in', 'of', 'with', 'to', 'by', 'the', 'a', 'an', 'at', 'on']);
+
+export function looksLikeTechnicalTitle(name: string): boolean {
+  const words = name
+    .toLowerCase()
+    .replace(/[^a-z0-9&\s/.-]/g, ' ')
+    .split(/[\s/.-]+/)
+    .filter(Boolean);
+  if (!words.length) return true;
+  return words.every((w) => TECHNICAL_TITLE_WORDS.has(w) || TITLE_CONNECTORS.has(w));
+}
+
 export function guessProduct(lines: string[]): ProductGuess {
   const clean = lines.flatMap((l) => l.split(/\r?\n/)).map((l) => l.trim()).filter(Boolean);
   const scored: Scored[] = [];

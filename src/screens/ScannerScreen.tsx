@@ -76,15 +76,26 @@ type ProductContext = {
 };
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
-  aim: { icon: 'scan-outline', text: 'Keep the date inside the frame' },
-  'text-found': { icon: 'text-outline', text: 'Text found. Looking for the expiry date…' },
-  'hold-steady': { icon: 'hourglass-outline', text: 'Reading the date… hold steady' },
-  'low-light': { icon: 'sunny-outline', text: 'Move closer or improve the lighting' },
-  closer: { icon: 'resize-outline', text: 'Move closer so the date fills the frame' },
-  manufacture: { icon: 'alert-circle-outline', text: 'That looks like a production date. Look for EXP or BEST BEFORE' },
-  unclear: { icon: 'eye-outline', text: "Couldn't read that date clearly. Hold steady" },
-  'ocr-error': { icon: 'refresh-outline', text: 'Having trouble reading. Hold the camera steady' },
+  aim: { icon: 'scan-outline', text: 'Scanning product...' },
+  'text-found': { icon: 'text-outline', text: 'Processing scan...' },
+  'hold-steady': { icon: 'hourglass-outline', text: 'Date found. Checking...' },
+  'low-light': { icon: 'sunny-outline', text: 'Too dark. Try better light.' },
+  closer: { icon: 'resize-outline', text: 'Move closer to the date.' },
+  manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
+  unclear: { icon: 'eye-outline', text: 'Date unclear. Try again or enter it manually.' },
+  'ocr-error': { icon: 'refresh-outline', text: 'Hard to read. Hold the camera steady.' },
 };
+
+// A product name for the status banner: shortened to fit one line WITHOUT
+// ellipsis dots, cutting at a word boundary (mirrors the shell scanner's
+// pillName so both UIs read identically).
+function pillName(name: string, max = 34): string {
+  const n = name.trim();
+  if (n.length <= max) return n;
+  const cut = n.slice(0, max);
+  const sp = cut.lastIndexOf(' ');
+  return (sp > 14 ? cut.slice(0, sp) : cut).trim();
+}
 
 function frameSize(area: Size, hintSpace: number) {
   const width = Math.max(220, Math.min(area.width - 40, 560));
@@ -459,12 +470,12 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           {detected ? (
             <View style={[s.hint, { borderColor: withAlpha(lime, 0.55) }]} accessibilityLiveRegion="polite">
               <Ionicons name="checkmark-circle" size={18} color={lime} />
-              <Text style={[s.hintText, { color: lime }]}>Date detected</Text>
+              <Text style={[s.hintText, { color: lime }]}>Expiry date confirmed.</Text>
             </View>
           ) : !cameraReady ? (
             <View style={s.hint} accessibilityLiveRegion="polite">
               <ActivityIndicator size="small" color={lime} />
-              <Text style={s.hintText}>Starting the scanner…</Text>
+              <Text style={s.hintText}>Starting the scanner...</Text>
             </View>
           ) : !ocrReady ? (
             manual ? null : (
@@ -481,7 +492,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
             productStatus === 'checking' ? (
               <View style={s.hint} accessibilityLiveRegion="polite">
                 <ActivityIndicator size="small" color={lime} />
-                <Text style={s.hintText}>Checking the product…</Text>
+                <Text style={s.hintText}>Checking the product...</Text>
               </View>
             ) : (
               <View style={s.hint} accessibilityLiveRegion="polite">
@@ -498,9 +509,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                   <Ionicons name="checkmark-circle" size={18} color={lime} />
                   <View style={s.hintTextCol}>
                     <Text style={[s.hintText, { color: lime, fontWeight: '700' }]} numberOfLines={1}>
-                      Product recognized: {product.name}
+                      Product found: {pillName(product.name)}
                     </Text>
-                    <Text style={s.hintSub}>Now position the expiry date inside the frame.</Text>
+                    <Text style={s.hintSub}>Now scan the expiry date.</Text>
                   </View>
                 </View>
               )}

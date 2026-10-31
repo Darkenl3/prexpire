@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { guessCategory } from './categoryGuess';
-import { PRODUCT_RE, titleCase } from './productGuess';
+import { PRODUCT_RE, looksLikeTechnicalTitle, titleCase } from './productGuess';
 
 // Barcode → product lookup across the free, keyless PUBLIC barcode databases —
 // no API keys, no accounts, no AI, just plain HTTPS GETs. One decoded barcode is
@@ -119,7 +119,7 @@ async function openFactsOne(domain: string, code: string): Promise<SourceAnswer>
   const productName = rawName.split(',')[0].trim();
   const brand = str(p.brands).split(',')[0].trim();
   const name = composeName(brand, productName);
-  if (!name) return 'miss'; // a record with no usable name is no evidence
+  if (!name || looksLikeTechnicalTitle(name)) return 'miss'; // no usable name (or page furniture, not a product) is no evidence
   const image = httpsOnly(p.image_front_small_url);
   // Category tags ("en:sweet-spreads") read better as plain words for the
   // keyword-based category guess ("sweet spreads").
@@ -166,7 +166,9 @@ async function upcItemDbLookup(code: string): Promise<SourceAnswer> {
   // Titles read "Brand Full Product Name  12 oz": the size rides behind a run
   // of spaces, so the first segment names the product cleanly.
   const title = str(item.title).split(/\s{2,}/)[0].trim().slice(0, 80);
-  if (!title) return 'miss';
+  // A title that is lookup-page furniture ("Lookup & ISBN Search") is not a
+  // product name, no matter which database served it.
+  if (!title || looksLikeTechnicalTitle(title)) return 'miss';
   const brand = str(item.brand);
   const category = str(item.category).replace(/>/g, ' ');
   const images = Array.isArray(item.images) ? item.images : [];
@@ -341,6 +343,9 @@ export function cleanWebCandidate(raw: string, code: string): string | null {
   if (!solid || letters / solid < 0.5) return null;
   // Pure numbers, prices and sizes are not names either.
   if (words.every((w) => /^[\d.,$€£₴%+x]+$/i.test(w))) return null;
+  // Search-page furniture ("Lookup & ISBN Search") masquerading as a short
+  // name: a title made entirely of lookup jargon never names a product.
+  if (looksLikeTechnicalTitle(t)) return null;
   return t.slice(0, 80);
 }
 
@@ -395,6 +400,7 @@ export function mineProductName(results: WebResult[], code: string): string | nu
     if (!best || score > best.score) best = { text: c.text, score };
   }
   if (!best || best.score < 3) return null; // a lone short title with zero agreement is not evidence
+  if (looksLikeTechnicalTitle(best.text)) return null; // never let page furniture win the vote
   return titleCase(best.text).slice(0, 80);
 }
 

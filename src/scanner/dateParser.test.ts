@@ -210,3 +210,73 @@ test('several dates: the labelled expiry wins over the earlier ones', () => {
   assert.equal(r.label, 'expiry');
   assert.equal(r.primary.iso.slice(0, 4), '2027');
 });
+
+// --- Printed-label photo regressions (the four reference photos) ---
+// Photo 1/2: bett'r oats, date 06.03.2027 printed beside a lot prefix, an
+// organic code, a version tag and the EAN digits. Photo 3: Nestlé cornflakes,
+// month/year "05 2027" beside a lot number "L 61210968" and a production
+// time "05:10 5 P4". Photo 4: barcode-only frame, no date at all.
+test('photo: 06.03.2027 with lot prefix and barcode noise reads as 6 March 2027', () => {
+  const a = found(['BG-BIO-22', 'EU AGRICULTURE', 'LDPE', '06.03.2027', 'NLAND', 'V4.2', '3 800233 686905']);
+  assert.equal(a.primary.iso, '2027-03-06');
+  assert.equal(a.primary.precision, 'day');
+  assert.ok(a.reasons.includes('no-label'));
+
+  // The lot prefix glued to the date through a slash (photo 2's line).
+  const b = found(['26065/06.03.2027', 'FINLAND']);
+  assert.equal(b.primary.iso, '2027-03-06');
+
+  // Same line as one OCR read: still only the date, never the barcode.
+  const c = found(['LDPE 06.03.2027 NLAND V4.2 3 800233 686905']);
+  assert.equal(c.primary.iso, '2027-03-06');
+});
+
+test('photo: 05 2027 on cornflakes reads as May 2027, not the lot or time', () => {
+  const r = found(['05 2027', 'L 61210968', '05:10 5 P4']);
+  assert.equal(r.primary.iso, '2027-05-31');
+  assert.equal(r.primary.precision, 'month');
+  assert.ok(r.reasons.includes('month-only'));
+
+  // Lot number and date on one OCR line: the date still reads.
+  assert.equal(found(['L 61210968 05 2027']).primary.iso, '2027-05-31');
+
+  // The Balkan expiry phrase above it upgrades the read to a labelled expiry.
+  const labelled = found(['NAJBOLJE UPOTRJEBITI DO', '05 2027']);
+  assert.equal(labelled.primary.iso, '2027-05-31');
+  assert.equal(labelled.label, 'expiry');
+  assert.equal(labelled.confidence, 'high');
+});
+
+test('photo: barcode-only frame finds no date', () => {
+  assert.deepEqual(parseExpiry(['9 010437 034685'], uk), { kind: 'none', hint: 'no-date' });
+  assert.equal(parseExpiry(['3 800233 686905'], uk).kind, 'none');
+});
+
+test('space-separated full dates: 06 03 2027', () => {
+  assert.equal(found(['06 03 2027']).primary.iso, '2027-03-06');
+  assert.equal(found(['06 03 2027'], us).primary.iso, '2027-06-03');
+  assert.ok(found(['06 03 2027']).reasons.includes('ambiguous-order'));
+  assert.equal(found(['BEST BEFORE', '06 03 2027']).label, 'expiry');
+  assert.equal(found(['BEST BEFORE 06 03 2027']).primary.iso, '2027-03-06');
+});
+
+test('European label phrases in their languages', () => {
+  assert.equal(found(['MINDESTENS HALTBAR BIS', '06.03.2027']).label, 'expiry');
+  assert.equal(found(['A CONSOMMER AVANT LE', '06/03/2027']).label, 'expiry');
+  assert.equal(found(['TEN MINSTE HOUD*BAAR TOT', '06 03 2027']).label, 'expiry');
+  assert.equal(found(['SPOTRBUJTE DO', '2027-10-27']).label, 'expiry');
+  assert.equal(found(['CONSUMIR PREFERENTEMENTE ANTES DEL', '10/2027']).label, 'expiry');
+  assert.equal(found(['FELHASZNALHATO DO:', '2027.10.27.']).label, 'expiry');
+});
+
+test('versions, weights and decimals before a year do not become dates', () => {
+  // "V4.2" then a month/year pair: the 2 must not be read as a DAY (which
+  // would turn the version into "2 May 2027"); the pair itself still reads.
+  const v = found(['V4.2 05 2027']);
+  assert.equal(v.primary.iso, '2027-05-31');
+  assert.equal(v.primary.precision, 'month');
+  // Quantities and counts are not dates.
+  assert.equal(parseExpiry(['300 GE 14.9 G 6 X 90'], uk).kind, 'none');
+  assert.equal(parseExpiry(['05:10 5 P4'], uk).kind, 'none');
+  assert.equal(parseExpiry(['L 61210968'], uk).kind, 'none');
+});

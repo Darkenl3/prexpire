@@ -104,6 +104,23 @@ const MONTH_ALT = Object.keys(MONTHS)
 const LABELS: { kind: LabelKind; pattern: string }[] = [
   { kind: 'expiry', pattern: 'BEST\\s*BEFORE\\s*END|BEST\\s*BEFORE|BEST\\s*BY|BEST\\s*IF\\s*USED\\s*BY|USE\\s*BEFORE|USE\\s*BY' },
   { kind: 'expiry', pattern: 'EXPIRY\\s*DATE|EXPIRATION\\s*DATE|EXP\\.?\\s*DATE|EXP\\.?\\s*DT|EXPIRY|EXPIRATION|EXPIRES|EXPIRE|EXPD|EXP|BBE|B\\s*/\\s*B|BB|E\\s*/\\s*D' },
+  // The standard expiry phrases of the other EU packaging languages, as they
+  // read after accent stripping (diacritics are removed in normalizeLine, so
+  // these patterns stay plain ASCII). Imported goods carry these next to the
+  // very dates this scanner is for, and their presence upgrades a bare number
+  // to a labelled expiry. Multi-word phrases only: "DO" alone would collide.
+  {
+    kind: 'expiry',
+    pattern:
+      'MINDESTENS\\s*HALTBAR(?:\\s*(?:BIS|END))?|HALTBAR\\s*BIS|MIN\\.?\\s*HALTBAR' +
+      '|A\\s*CONSOMMER(?:\\s*DE\\s*PREFERENCE)?\\s*AVANT(?:\\s*LE)?|CONSOMMER(?:\\s*DE\\s*PREFERENCE)?\\s*AVANT' +
+      '|HOUDBAAR(?:HEID)?\\s*TOT|TE\\s*GEBRUIKEN\\s*(?:TOT|VOR)|TEN\\s*MINSTE\\s*HOUD\\*BAAR' +
+      '|NAJBOLJE\\s*UPOTR[IJ]EBITI(?:\\s*DO)?|UPOTR[IJ]EBA(?:\\s*DO)?|ROK\\s*(?:POUZITOSTI|UPOTREBE|TRAJANJA)' +
+      '|SPOTRBUJTE\\s*DO|DO\\s*SPOTREBY|MINIMALNA\\s*TRVANLIVOST' +
+      '|NAJLEPIEJ\\s*SPOZYT\\s*PRZED|PRZYDATNOSC\\s*DO\\s*SPOZYCIA' +
+      '|CONSUMIR(?:\\s*PREFERENTEMENTE)?\\s*ANTES\\s*DEL?|CADUCA(?:\\s*EL)?|CONSUMIR\\s*ANTES\\s*DE' +
+      '|DA\\s*CONSUMARSI(?:\\s*ENTRO)?|CONSUMARE\\s*ENTRO|FELHASZNALHATO(?:\\s*DO)?|MINOSSEGMEGORZES(?:\\s*VEG)?',
+  },
   { kind: 'manufacture', pattern: 'DATE\\s*OF\\s*MANUFACTURE|DATE\\s*OF\\s*MFG|MANUFACTURED(?:\\s*ON)?|MANUFACTURE|MANUF|MFG\\.?\\s*DATE|MFG|MFD(?:\\s*ON)?|MFR|PRODUCTION\\s*DATE|PRODUCED(?:\\s*ON)?|PROD\\.?\\s*DATE|PROD|PACKED(?:\\s*ON)?|PACK\\s*DATE|PKD|MADE\\s*ON|DOM|P\\s*/\\s*D|PD' },
   { kind: 'lot', pattern: 'LOT\\s*NO|LOT|BATCH\\s*NO|BATCH|B\\.?\\s*NO|L\\.?\\s*NO' },
   { kind: 'sell', pattern: 'SELL\\s*BY|DISPLAY\\s*UNTIL' },
@@ -204,6 +221,33 @@ const PATTERNS: Pattern[] = [
       if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
     },
+  },
+  // 06 03 2027 - the no-separator European print (spaces instead of dots or
+  // slashes). The same day/month disambiguation as the separator form above.
+  // Guards: the first number must not follow a digit OR a decimal point
+  // (otherwise "V4.2 05 2027" would read its trailing 2 as a day), and the
+  // year is four digits starting with 20 - expiry dates on live packaging are
+  // 20xx, while barcode fragments, lot numbers and weights never form
+  // "NN NN 20NN" through spaces (the digit guards fail them first).
+  {
+    re: new RegExp(`(?<![0-9.])(\\d{1,2})\\s+(\\d{1,2})\\s+(20\\d{2})(?![0-9])`, 'g'),
+    read: (m, opts) => {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const year = Number(m[3]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+    },
+  },
+  // 05 2027 - month and year with no separator and no day: May 2027, the
+  // standard "best before month" print. A first number above 12 simply fails
+  // month validation (and counts as an invalid read, not a false date). The
+  // same decimal-point guard keeps "V4.2 2027" style fragments out.
+  {
+    re: new RegExp(`(?<![0-9.])(\\d{1,2})\\s+(20\\d{2})(?![0-9])`, 'g'),
+    read: (m) => [toMonth(Number(m[2]), Number(m[1]))].filter(Boolean) as Interpretation[],
   },
   // OCT 2026, OCT/26
   {
