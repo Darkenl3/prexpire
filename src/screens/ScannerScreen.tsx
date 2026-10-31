@@ -32,6 +32,7 @@ import { lookupBarcode, type BarcodeOutcome } from '../scanner/productLookup';
 import { fetchProductImage } from '../scanner/productImage';
 import { useExpiryScanner, type Detection, type ScanHint } from '../scanner/useExpiryScanner';
 import { PressScale } from '../components/Press';
+import { OfflineNotice } from '../components/OfflineNotice';
 import { GLASS_FX } from '../components/HomeComponents';
 import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 import type { Size } from '../scanner/cropMath';
@@ -635,6 +636,10 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       >
         <View style={s.column}>
           {header}
+          {/* The offline note sits under the header on the scanner screens
+              (the only place the network matters): while the device is offline
+              it reassures that saved items and manual entry still work. */}
+          <OfflineNotice />
           <View style={[s.area, { marginLeft: insets.left, marginRight: landscape && sheetOpen ? 0 : insets.right }]} onLayout={onAreaLayout}>
             {body}
           </View>
