@@ -101,6 +101,33 @@ if (!inlined.some((n) => n.startsWith('Ionicons.'))) {
 // shell reads this marker to validate downloads and compare versions.
 const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${createHash('sha1').update(rawJs).digest('hex').slice(0, 10)}`;
 
+// The BOOT CANVAS: the page's background from the first parsed head bytes, so
+// the WebView's surface wears the app's page tone BEFORE and WHILE the ~2 MB
+// inline bundle boots — cold starts open in the user's theme, never a white
+// flash. The static rule paints the dark page (the app's default); the tiny
+// sniff script right after it reads the SAVED theme (the shell re-hydrates the
+// settings key into localStorage at document start, before page scripts run,
+// and browsers keep it across sessions) and flips the canvas to the light page
+// when the saved settings ask for light. Only html gets a background — the
+// canvas background propagates from the root element, and leaving body
+// unstyled lets the inline flip work cleanly. Both colours are the app's own
+// theme backgrounds (theme.tsx DARK.bg / LIGHT.bg).
+const BOOT_CANVAS = `
+    <style id="prexpire-boot-canvas">
+      html { background-color: #030709; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var t = 'dark';
+          var raw = localStorage.getItem('prexpire.settings.v1');
+          if (raw) { var s = JSON.parse(raw); if (s && typeof s.theme === 'string') t = s.theme; }
+          var light = t === 'light' || (t === 'system' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+          if (light) document.documentElement.style.backgroundColor = '#F8FCFB';
+        } catch (e) { /* unreadable storage: the dark default stays */ }
+      })();
+    </script>`;
+
 // Assemble the single file. Function replacers everywhere: the bundle text
 // must never flow through replacement patterns ($& and friends would corrupt
 // it). The inlined script drops `defer` — it only ever mattered for external
@@ -108,7 +135,7 @@ const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${c
 const html =
   indexHtml
     .replace(tag[0], () => `<script>\n${js}\n</script>`)
-    .replace('<head>', () => `<head>\n    <meta name="prexpire-offline" content="${version}">`) + '\n';
+    .replace('<head>', () => `<head>\n    <meta name="prexpire-offline" content="${version}">` + BOOT_CANVAS) + '\n';
 
 // Sanity: the assembled file must be self-contained for the assets we inline.
 for (const url of assetUrls) {
