@@ -6,10 +6,13 @@ import type { TabId } from './HomeComponents';
 // The tab-switch transition, shared by every main screen: a gentle fade
 // combined with a very small horizontal slide (180-220 ms, ease-out,
 // transform/opacity only, so nothing re-lays out and the scroller never
-// resizes). The persistent brand header stays OUTSIDE it - the chrome never
-// flickers - and the camera screens never pass through it at all (the scanner
-// mounts through its own early-return branch, so nothing animates around the
-// camera: no delayed mount, no black frames, no extra permission asks).
+// resizes). The header strip rides INSIDE it, together with the body: the
+// strip carries the section's title (Home's wordmark, every other section's
+// name), so the title and the content enter as ONE screen - the same unified
+// feel Settings' own fade has always had, now on every section. The camera
+// screens never pass through it at all (the scanner mounts through its own
+// early-return branch, so nothing animates around the camera: no delayed
+// mount, no black frames, no extra permission asks).
 //
 // Like every animation in the app (Press.tsx, the Toast, Settings' own pages)
 // it collapses to nothing when motion is off: the app's Animations setting

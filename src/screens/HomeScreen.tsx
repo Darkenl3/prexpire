@@ -263,14 +263,14 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
 
   return (
     <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
-      {/* The header overlays the content (see navAutohide.tsx): hiding it
+      {/* The tab-switch transition wraps the header AND the scrolling body:
+          Home's title IS the wordmark, so the header and the content enter as
+          ONE screen - the same unified fade Settings has always had. The
+          header still overlays the content (see navAutohide.tsx): hiding it
           never resizes the scroller, so the content never jumps and the
           scroll direction never oscillates while it slides. */}
-      <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={layout.maxContentWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
-      {/* The tab-switch transition wraps ONLY the scrolling body - the glass
-          header above it is identical on every tab, so it stays outside the
-          fade and the persistent chrome never flickers on a switch. */}
       <TabTransition tab="home">
+        <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={layout.maxContentWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
         <ScrollView
           style={[c.scroll, NO_RUBBER_BAND]}
           onScroll={onScroll}

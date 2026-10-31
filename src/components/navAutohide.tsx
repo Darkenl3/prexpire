@@ -196,7 +196,7 @@ export function useNavAutohide() {
   return { hidden, onScroll };
 }
 
-// The brand header that slides up and collapses away when the page scrolls
+// The top header strip that slides up and collapses away when the page scrolls
 // down. It is an OVERLAY, not a layout row: it floats above the scrolling
 // content (which pads its top by HEADER_HEIGHT instead), so hiding it never
 // resizes the scroller. That is the difference between YouTube's feel and
@@ -205,9 +205,16 @@ export function useNavAutohide() {
 // clamped positions oscillated the direction back and forth (the bars
 // flickering in and out while the user held the scroll). Only this header
 // ever hides - the bottom navigation stays on screen the whole time.
+//
+// On Home the strip carries the wordmark; on every other section it carries
+// that section's title (the Settings structure: the title lives in the
+// header). The strip rides the tab transition WITH the screen's body, so the
+// title and the content always enter as one screen - never a header that
+// lags behind or a title that swaps separately from the body.
 export function AutohideHeader({
   hidden,
   badge,
+  title,
   gutter = 0,
   maxWidth,
   onMenu,
@@ -215,8 +222,11 @@ export function AutohideHeader({
 }: {
   hidden: boolean;
   badge: number;
+  // The section's name, shown in the strip. Omitted on Home, where the
+  // wordmark is the intentional title.
+  title?: string;
+  // Matches the page's content column so the title lines up with it.
   gutter?: number;
-  // Matches the page's content column so the wordmark lines up with it.
   maxWidth?: number;
   onMenu: () => void;
   onBell: () => void;
@@ -257,7 +267,7 @@ export function AutohideHeader({
       }}
     >
       <View style={{ alignSelf: 'center', width: '100%', maxWidth, paddingHorizontal: gutter }}>
-        <Header badge={badge} gutter={0} onMenu={onMenu} onBell={onBell} />
+        <Header badge={badge} title={title} gutter={0} onMenu={onMenu} onBell={onBell} />
       </View>
     </Animated.View>
   );

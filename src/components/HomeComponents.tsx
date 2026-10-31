@@ -109,13 +109,26 @@ export function Brandmark({ height }: { height: number }) {
   return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
 }
 
-export function Header({ badge, gutter = 14, onMenu, onBell }: { badge: number; gutter?: number; onMenu: () => void; onBell: () => void }) {
+export function Header({ badge, gutter = 14, title, onMenu, onBell }: { badge: number; gutter?: number; title?: string; onMenu: () => void; onBell: () => void }) {
   const c = useTheme();
   const s = useStyles();
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
       <GlassIconButton icon="menu" iconSize={24} label="Menu" onPress={onMenu} />
-      <Brandmark height={33} />
+      {/* The section's title lives in the header strip - the Settings
+          structure: Home keeps the wordmark (its intentional title), every
+          other section shows its name here in the exact typography Settings'
+          own header title uses. The strip's height, glass, buttons and badge
+          are untouched - only the centre swaps - and because the strip rides
+          the tab transition WITH the content, the title and the body enter as
+          one screen. */}
+      {title ? (
+        <Text style={s.headerTitle} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+          {title}
+        </Text>
+      ) : (
+        <Brandmark height={33} />
+      )}
       <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
         <Ionicons name="notifications-outline" size={22} color={c.text} />
         {/* The reminder counter lives HERE and only here: a small red numbered
@@ -453,8 +466,15 @@ function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[n
       <View style={s.tabChip}>
         {/* The selected chip's lime pill, drawn as an absolute layer BEHIND the
             icon and label so it can glide in and out on its own without ever
-            touching the tab's layout. */}
-        <Animated.View style={[s.tabChipPill, { opacity: chip, transform: [{ translateX: pillX }, { scale: chipScale }] }]} />
+            touching the tab's layout. pointerEvents none because it is purely
+            decorative: after a switch the departed chip rests INVISIBLE
+            (opacity 0) over a neighbouring tab's button, and browsers still
+            hit-test opacity-0 elements - without this the ghost pill would
+            swallow that tab's clicks (and bubble them to the WRONG tab). */}
+        <Animated.View
+          pointerEvents="none"
+          style={[s.tabChipPill, { opacity: chip, transform: [{ translateX: pillX }, { scale: chipScale }] }]}
+        />
         <Animated.View style={{ transform: [{ scale: iconScale }] }}>
           <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
         </Animated.View>
@@ -531,6 +551,13 @@ const useStyles = makeStyles((c) => ({
   // A taller top bar gives the wordmark room to breathe (brand-forward,
   // like the reference) - keep HEADER_HEIGHT in navAutohide.tsx in sync.
   header: { height: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  // A section title in the strip, in the exact typography Settings' own
+  // header title uses (30 / 800 / -0.6): flex 1 seats it right after the
+  // menu button the way Settings' title sits after its back button, and the
+  // horizontal margins keep it clear of both glass circles without touching
+  // the wordmark's centred layout on Home (the margins only exist when a
+  // title is shown). Shrinks gracefully on the narrowest phones.
+  headerTitle: { flex: 1, marginHorizontal: 12, color: c.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 },
   // The header bell's reminder counter — the one numbered badge in the app.
   // Red for urgency (the same red the expiry cards speak), edged with a
   // hairline of the page background so it reads as cut out of the glass
