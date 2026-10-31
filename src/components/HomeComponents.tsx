@@ -407,16 +407,18 @@ const NAV_PAD = 6;
 // dissolves, so the highlight reads as one continuous movement across the
 // bar. The icon also pops up to ~1.08 and settles back. Inactive tabs stay
 // exactly as they were: plain, stable, muted. Everything collapses to an
-// instant swap when motion is off (the Animations setting or the OS Reduce
-// Motion flag), and the press feedback, dimensions, icons, labels and order
-// are untouched.
+// instant swap only when the app's own Animations setting is off — the OS
+// Reduce Motion flag no longer erases the switch (same rule as the shell's
+// native glass bar and the screen transition): these are 190 ms transforms,
+// nothing the flag needs to suppress. The press feedback, dimensions,
+// icons, labels and order are untouched.
 function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[number]; selected: boolean; narrow: boolean; travel: number; onTab: (id: TabId) => void }) {
   const c = useTheme();
   const s = useStyles();
-  const { motion } = useSettings();
-  // Motion/travel as refs so animation timings never retrigger a running animation.
-  const motionRef = useRef(motion);
-  motionRef.current = motion;
+  const { settings } = useSettings();
+  // The Animations setting as a ref so animation timings never retrigger a running animation.
+  const animRef = useRef(settings.animations);
+  animRef.current = settings.animations;
   const travelRef = useRef(travel);
   travelRef.current = travel;
   // 0 = the chip is fully gone, 1 = fully there. Drives its opacity, its scale
@@ -438,7 +440,7 @@ function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[n
     anim.current?.stop();
     const t = travelRef.current;
     if (!selected) {
-      if (motionRef.current && t !== 0) {
+      if (animRef.current && t !== 0) {
         // The chip leaves: it slides toward the newly selected tab and
         // dissolves as the new one arrives from the opposite side.
         chip.setValue(1);
@@ -455,7 +457,7 @@ function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[n
       iconScale.setValue(1);
       return;
     }
-    if (!motionRef.current) {
+    if (!animRef.current) {
       chip.setValue(1);
       pillX.setValue(0);
       iconScale.setValue(1);
@@ -533,17 +535,20 @@ export function BottomNav({ active, insets, maxWidth = 560, onTab, onScan }: Bot
   // Narrow phones give the four tabs a little more room so labels are not clipped.
   const narrow = useWindowDimensions().width < 360;
   const sideMargin = narrow ? 8 : 16;
-  const { motion } = useSettings();
-  const motionRef = useRef(motion);
-  motionRef.current = motion;
+  const { settings } = useSettings();
+  const animRef = useRef(settings.animations);
+  animRef.current = settings.animations;
   // The nav pill's measured width: the slot width (and so the chip's travel
   // distance between tabs) is derived from it.
   const [navW, setNavW] = useState(0);
   // The tab that was active on the previous render: a switch computes the
   // signed slot distance the chip travels (0 = first render or same tab).
+  // Gated on the app's own Animations setting only — with it on, the chip
+  // glides whatever the OS says about reduced motion (the same rule the
+  // screen transition and the shell's glass bar follow).
   const prevTab = useRef<TabId | null>(null);
   const travel =
-    prevTab.current && prevTab.current !== active && navW > 0 && motionRef.current
+    prevTab.current && prevTab.current !== active && navW > 0 && animRef.current
       ? (SLOT[prevTab.current] - SLOT[active]) * ((navW - NAV_PAD * 2) / SLOT_COUNT)
       : 0;
   prevTab.current = active;

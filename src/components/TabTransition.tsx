@@ -14,19 +14,18 @@ import type { TabId } from './HomeComponents';
 // early-return branch, so nothing animates around the camera: no delayed
 // mount, no black frames, no extra permission asks).
 //
-// TWO motion gates, deliberately different (this is the fix for "the tab
-// animation is gone"):
-//   - the app's own Animations setting gates the 200 ms CROSSFADE. A brief
-//     crossfade is exactly the reduce-motion-appropriate form of a screen
-//     change (Apple's own guidance: crossfade instead of sliding), and this
-//     transition is the app's core navigation feedback - so the OS-level
-//     Reduce Motion flag may soften it, never delete it. Before, the flag
-//     erased the whole transition: with iOS Reduce Motion on (common), every
-//     tab switch on the device appeared as an abrupt, unanimated jump.
-//   - the OS flag (through useSettings().motion = animations && !reduce)
-//     still gates the small SLIDE - under Reduce Motion the screen change
-//     becomes a pure crossfade, which is the accessible form of the same
-//     motion, not the absence of it.
+// TWO motion gates were deliberately different here for one batch (the
+// crossfade on the app's Animations setting, the slide additionally on the
+// OS Reduce Motion flag). In practice that half-fix read as "the animation
+// is gone" for exactly the users it was meant to serve: under the OS flag a
+// switch showed only a brief crossfade - no slide, no nav-chip glide, no
+// icon pop - which reads as no animation at all. The tab switch now follows
+// ONE gate, the same rule the shell's native glass bar already uses: the
+// app's own Animations setting (Settings → Appearance). This transition is
+// 200 ms of pure transform/opacity - the gentlest form of motion there is,
+// and the app's core navigation feedback - so the OS flag may never delete
+// it. Large screen-covering motions (the scanner's overlay slide) still
+// honour the OS flag, as they should.
 // Turning Animations OFF in Settings still collapses everything to nothing,
 // exactly as before: that is the user's explicit choice.
 
@@ -55,24 +54,24 @@ export const TAB_MS = 200;
 export const TAB_SLIDE = 14;
 
 export function TabTransition({ tab, children }: { tab: TabId; children: ReactNode }) {
-  // The two gates (see the header comment): the crossfade follows the app's
-  // own Animations setting; the slide additionally waits for the OS flag.
-  const { settings, motion } = useSettings();
+  // The one gate (see the header comment): the app's own Animations setting.
+  // The OS-level Reduce Motion flag no longer erases any part of the switch -
+  // same rule as the shell's native glass bar.
+  const { settings } = useSettings();
   // The direction is resolved exactly once, during the first render (a plain
   // useRef initialiser would re-evaluate its argument on every render and
   // corrupt the module-level history - so it is a lazy null check instead).
   const dirRef = useRef<number | null>(null);
   if (dirRef.current === null) dirRef.current = tabEnterDirection(tab);
   // Whether THIS mount plays the enter transition: a real tab change with
-  // the app's Animations setting on (the OS flag no longer erases the cross-
-  // fade - only the slide). Resolved once at first render - the same boolean
-  // decides the values' initial state below and the effect's animation, so
-  // they can never disagree (the settings flipping between the two would
-  // otherwise leave a screen stuck invisible at its entry pose).
+  // the app's Animations setting on. Resolved once at first render - the
+  // same boolean decides the values' initial state below and the effect's
+  // animation, so they can never disagree (the setting flipping between the
+  // two would otherwise leave a screen stuck invisible at its entry pose).
   const animate = (dirRef.current ?? 0) !== 0 && settings.animations;
-  // The slide's own gate: the full motion flag (Animations AND no OS-level
-  // Reduce Motion). Under Reduce Motion the enter is a pure crossfade.
-  const slide = animate && motion;
+  // The slide rides the same gate: one switch, one rule, in both themes and
+  // with or without the OS Reduce Motion flag.
+  const slide = animate;
 
   // The entry pose is the INITIAL state of the animated values - set during
   // the first render, NOT in the effect. The effect runs after the first

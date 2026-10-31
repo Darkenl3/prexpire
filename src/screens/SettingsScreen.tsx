@@ -84,11 +84,12 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   // Motion as a ref so animation timings never retrigger a running animation.
   const motionRef = useRef(motion);
   motionRef.current = motion;
-  // The app's own Animations setting as a ref too - the crossfade's gate. It
-  // deliberately does NOT include the OS reduce-motion flag: a brief
-  // crossfade is the reduce-motion-appropriate form of a screen change, and
-  // this enter is Settings' core navigation feedback (the same two-gate rule
-  // as TabTransition - see its header comment).
+  // The app's own Animations setting as a ref too. It deliberately does NOT
+  // include the OS reduce-motion flag: this enter is Settings' core
+  // navigation feedback — the tab-switch vocabulary (200 ms / 14 px) the
+  // other screens use — and it follows the same ONE-gate rule as
+  // TabTransition (see its header comment). The OS flag still gates the
+  // larger within-Settings motions (the detail page's full-width slide).
   const animRef = useRef(settings.animations);
   animRef.current = settings.animations;
 
@@ -99,10 +100,11 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const enterX = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const dir = tabEnterDirection('settings');
-    // The slide alone additionally waits for the OS flag: under Reduce Motion
-    // the enter is a pure crossfade, not nothing.
-    if (dir !== 0 && motionRef.current) enterX.setValue(dir * TAB_SLIDE);
-    Animated.timing(enterX, { toValue: 0, duration: motionRef.current ? TAB_MS : 0, useNativeDriver: true }).start();
+    // One gate for the whole enter: with the app's Animations setting on, the
+    // fade and the small slide both play — whatever the OS says about
+    // reduced motion (the same rule every other screen follows).
+    if (dir !== 0 && animRef.current) enterX.setValue(dir * TAB_SLIDE);
+    Animated.timing(enterX, { toValue: 0, duration: animRef.current ? TAB_MS : 0, useNativeDriver: true }).start();
     Animated.timing(appear, { toValue: 1, duration: animRef.current ? TAB_MS : 0, useNativeDriver: true }).start();
   }, [appear, enterX]);
 
