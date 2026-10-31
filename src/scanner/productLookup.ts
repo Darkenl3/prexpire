@@ -273,7 +273,10 @@ function looksBlocked(html: string): boolean {
 }
 
 // Site/retailer tails that ride behind a result title ("… - Walmart.com").
-const SITE_TAIL_RE = /^(?:walmart|instacart|amazon|target|ebay|etsy|heb|kroger|wegmans|safeway|aldiusa|publix|costco|h-e-b|meijer|freshdirect|boxed|jet|seamless|grubhub|doordash|shipt|gopuff|instacart|upcitemdb|barcodelookup|upcsearch|barcodeindex|go-upc|chiptip|worldcoin|alibaba|aliexpress|dhgate|bonanza|rakuten|newegg|wish|shein|temu)(?:\s*[-·|]\s*[a-z0-9 .&]+)?$/i;
+// The UPC/barcode-directory sites are included by name AND as word tails, so
+// "Search Barcodestock", "Go-UPC" and "CheckUpc" style directory brands can
+// never survive as (part of) a product name.
+const SITE_TAIL_RE = /^(?:walmart|instacart|amazon|target|ebay|etsy|heb|kroger|wegmans|safeway|aldiusa|publix|costco|h-e-b|meijer|freshdirect|boxed|jet|seamless|grubhub|doordash|shipt|gopuff|upcitemdb|barcodelookup|barcodestock|upcsearch|barcodeindex|go-upc|chiptip|worldcoin|alibaba|aliexpress|dhgate|bonanza|rakuten|newegg|wish|shein|temu)(?:\s*[-·|]\s*[a-z0-9 .&]+)?$/i;
 const DOMAINISH_RE = /^(?:[a-z0-9-]+\.)+(?:com|net|org|co|io|shop|store|biz|info|us|ca|de|fr|es|it|nl|pl|se|ua|uk)(?:\s*[-·|]\s*[a-z0-9 .&]+)?$/i;
 
 // UPC/barcode jargon that never belongs in a product name.

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
 import { makeStyles, space, useTheme, LIGHT, type Tint } from '../theme';
 import { categories, type ArtKey } from '../data';
 import { safeCategoryIcon, useCategories } from '../categories';
@@ -85,7 +84,6 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   }, [items, warningDays]);
 
   const go = (route: string) => {
-    Haptics.selectionAsync().catch(() => {});
     onNavigate?.(route);
   };
 
@@ -184,7 +182,6 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         onAction={
           overflow
             ? () => {
-                Haptics.selectionAsync().catch(() => {});
                 setGridExpanded((e) => !e);
               }
             : undefined

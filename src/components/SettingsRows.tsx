@@ -1,10 +1,9 @@
-import { Children, Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Children, Fragment, useCallback, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, type Accent } from '../theme';
-import { useSettings } from '../settings';
 import { FadeIn, PressScale } from './Press';
+import { BottomSheet } from './BottomSheet';
 
 // Building blocks of the Settings page, styled after the reference's grouped
 // card design: white cards on a cool-white page, fine #E5EDF3 hairlines, soft
@@ -241,8 +240,11 @@ export function OptionList<T extends string | number>({ label, options, value, o
 
 // The iOS-style value picker: a bottom sheet that slides up with the choices,
 // each as a full-width row with a checkmark on the selected one. Tapping a
-// choice applies it and closes the sheet; the backdrop or Cancel dismiss it.
-// Used instead of always-expanded option lists, so pages stay glanceable.
+// choice applies it and closes the sheet; the backdrop, the Cancel row or a
+// swipe down on the header dismiss it. Used instead of always-expanded
+// option lists, so pages stay glanceable. The frame (safe areas, navigation
+// clearance, max height, scrolling, swipe-to-close, the rise/settle
+// animation) is the shared BottomSheet component.
 export function OptionSheet<T extends string | number>({
   visible,
   title,
@@ -260,72 +262,49 @@ export function OptionSheet<T extends string | number>({
 }) {
   const c = useTheme();
   const s = useStyles();
-  const insets = useSafeAreaInsets();
-  const { motion } = useSettings();
-  // Motion as a ref so animation timings never retrigger a running animation.
-  const motionRef = useRef(motion);
-  motionRef.current = motion;
-  // The sheet rises gently in; on close it settles down before unmounting.
-  const rise = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (visible) {
-      rise.setValue(0);
-      Animated.timing(rise, { toValue: 1, duration: motionRef.current ? 220 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-    }
-  }, [visible, rise]);
-  const close = useCallback(() => {
-    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 190 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onClose());
-  }, [rise, onClose]);
-  const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [64, 0] });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close} {...({ 'aria-modal': true } as object)}>
-      <View style={s.sheetWrap}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close picker" importantForAccessibility="no" />
-        <Animated.View
-          style={[s.sheet, { backgroundColor: c.dialogBg, paddingBottom: Math.max(insets.bottom, 12) + 8, transform: [{ translateY }] }]}
-          accessibilityRole={'dialog' as never}
-          accessibilityLabel={title}
-        >
-          <View style={s.grabber} />
-          <Text style={s.sheetTitle} accessibilityRole="header">
-            {title}
-          </Text>
-          <View style={s.sheetOptions} accessibilityRole="radiogroup" accessibilityLabel={title}>
-            {options.map((o) => {
-              const on = o.value === value;
-              return (
-                <PressScale
-                  key={String(o.value)}
-                  onPress={() => {
-                    if (o.disabled) return;
-                    onChange(o.value);
-                    close();
-                  }}
-                  disabled={o.disabled}
-                  accessibilityRole="radio"
-                  aria-checked={on}
-                  aria-disabled={!!o.disabled}
-                  accessibilityLabel={o.label}
-                  style={[s.sheetOption, o.disabled && s.chipDisabled]}
-                  pressedStyle={s.rowPressed}
-                >
-                  <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
-                  {on && (
-                    <FadeIn>
-                      <Ionicons name="checkmark" size={19} color={c.green} />
-                    </FadeIn>
-                  )}
-                </PressScale>
-              );
-            })}
-          </View>
-          <PressScale onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={s.sheetCancel} pressedStyle={s.rowPressed}>
-            <Text style={s.sheetCancelText}>Cancel</Text>
-          </PressScale>
-        </Animated.View>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      scrollable={options.length > 6}
+      footer={
+        <PressScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel" style={s.sheetCancel} pressedStyle={s.rowPressed}>
+          <Text style={s.sheetCancelText}>Cancel</Text>
+        </PressScale>
+      }
+    >
+      <View style={s.sheetOptions} accessibilityRole="radiogroup" accessibilityLabel={title}>
+        {options.map((o) => {
+          const on = o.value === value;
+          return (
+            <PressScale
+              key={String(o.value)}
+              onPress={() => {
+                if (o.disabled) return;
+                onChange(o.value);
+                onClose();
+              }}
+              disabled={o.disabled}
+              accessibilityRole="radio"
+              aria-checked={on}
+              aria-disabled={!!o.disabled}
+              accessibilityLabel={o.label}
+              style={[s.sheetOption, o.disabled && s.chipDisabled]}
+              pressedStyle={s.rowPressed}
+            >
+              <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
+              {on && (
+                <FadeIn>
+                  <Ionicons name="checkmark" size={19} color={c.green} />
+                </FadeIn>
+              )}
+            </PressScale>
+          );
+        })}
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 

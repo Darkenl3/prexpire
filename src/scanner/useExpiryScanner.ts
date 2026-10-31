@@ -8,20 +8,20 @@ export type ScanHint = 'aim' | 'text-found' | 'low-light' | 'closer' | 'manufact
 
 export type ScannerState = { status: 'scanning'; hint: ScanHint } | { status: 'detected'; detection: Detection };
 
-export type ScannerMode = 'text' | 'barcode';
-
 type Options = {
   camera: RefObject<ScannerCameraHandle | null>;
   // Size of the camera view and the frame inside it, in the same coordinates. Read on each pass.
   geometry: RefObject<FrameGeometry | null>;
   // False while the camera is not ready, the app is in the background, or OCR is unavailable.
   enabled: boolean;
-  // 'text' reads expiry dates inside the frame; 'barcode' watches for a product
-  // barcode inside the frame (the product stage of a scan). The camera only
-  // ever receives the region behind the visible frame.
-  mode: ScannerMode;
-  // A product barcode was read inside the frame. Called once per code; the
-  // caller pauses the loop (enabled=false) while it looks the product up.
+  // ALSO decode product barcodes each pass (the optional product stage). Date
+  // reading NEVER waits on them: a decoded code is reported through onBarcode
+  // and the caller looks the product up in the background while this loop keeps
+  // reading the expiry date, so scanning a date works with no barcode at all.
+  readBarcodes: boolean;
+  // A product barcode was read inside the frame. Called once per code (the
+  // camera deduplicates repeats); the caller's lookup runs in parallel and
+  // must never pause this loop.
   onBarcode?: (code: string) => void;
   // Day/month order for ambiguous numeric dates (03/04/2026). The caller
   // derives it from the user's Date format setting — see
@@ -40,7 +40,7 @@ const AGREEMENT_NEEDED = 2;
 // Misses before a hint replaces "Keep the date inside the frame".
 const MISSES_BEFORE_HINT = 3;
 
-export function useExpiryScanner({ camera, geometry, enabled, mode, onBarcode, preferredOrder }: Options) {
+export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBarcode, preferredOrder }: Options) {
   const [state, setState] = useState<ScannerState>({ status: 'scanning', hint: 'aim' });
   const stateRef = useRef(state);
   const history = useRef<(string | null)[]>([]);
@@ -84,25 +84,20 @@ export function useExpiryScanner({ camera, geometry, enabled, mode, onBarcode, p
       let failed = false;
       try {
         // The frame IS the region of interest: the camera crops to the frame's
-        // exact coordinates, so only content inside the brackets is read.
-        reading = await cam.readFrame(geometry.current, { text: mode === 'text', barcode: mode === 'barcode' });
+        // exact coordinates, so only content inside the brackets is read. Text
+        // (the expiry date) is ALWAYS read; barcodes ride along in the same
+        // pass so the product stage never delays or blocks the date.
+        reading = await cam.readFrame(geometry.current, { text: true, barcode: readBarcodes });
       } catch {
         // Capture can fail while the camera is reconfiguring (rotation, backgrounding).
         failed = true;
       }
       if (cancelled || gen !== generation.current) return;
 
-      if (mode === 'barcode') {
-        // Product stage: a barcode inside the frame hands control to the caller
-        // (which looks the product up and moves to the date stage). No hint
-        // machinery here — the product stage's guidance lives in the screen.
-        const code = reading?.barcode;
-        if (code) {
-          listeners.current.onBarcode?.(code);
-          return; // the caller pauses the loop while it identifies the product
-        }
-        return schedule();
-      }
+      // A decoded barcode is handed to the caller (its own dedupe keeps repeats
+      // quiet) and the loop CONTINUES: the product lookup happens in the
+      // background while date scanning keeps running.
+      if (readBarcodes && reading?.barcode) listeners.current.onBarcode?.(reading.barcode);
 
       const lines = reading?.lines ?? [];
       const result: ScanParseResult | null = reading ? parseExpiry(lines, { today: new Date(), preferredOrder: order }) : null;
@@ -148,7 +143,7 @@ export function useExpiryScanner({ camera, geometry, enabled, mode, onBarcode, p
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [enabled, detected, mode, camera, geometry, publish, preferredOrder]);
+  }, [enabled, detected, readBarcodes, camera, geometry, publish, preferredOrder]);
 
   return { state, reset };
 }

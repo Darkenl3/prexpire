@@ -14,17 +14,22 @@ type Props = { width: number; height: number; scanning: boolean; success: boolea
 // being analysed, and a solid outline once a date has been confirmed. The
 // camera chrome stays dark in both themes, but the green always follows the
 // app's theme so the scanner never disagrees with the rest of Prexpire.
+// The sweep line is purely cosmetic: turning it off (the Scanning Line
+// Animation setting, or animations/reduced motion) leaves a clean static
+// frame — the camera, barcode reading and date OCR are never affected.
 export const ScanFrame = memo(function ScanFrame({ width, height, scanning, success }: Props) {
   const sweep = useRef(new Animated.Value(0)).current;
-  // With animations off (Settings or the system's reduced motion) the line holds still mid-frame.
-  const { motion } = useSettings();
+  // With the scanning line off, or animations off (Settings or the system's
+  // reduced motion), the line is hidden and the frame stays cleanly static.
+  const { motion, settings } = useSettings();
+  const lineOn = settings.scanLineAnimation && motion;
   const t = useTheme();
   const lime = t.mint;
 
   useEffect(() => {
-    if (!motion) {
+    if (!lineOn) {
       sweep.stopAnimation();
-      sweep.setValue(0.5);
+      sweep.setValue(0);
       return;
     }
     if (!scanning) {
@@ -40,7 +45,7 @@ export const ScanFrame = memo(function ScanFrame({ width, height, scanning, succ
     );
     loop.start();
     return () => loop.stop();
-  }, [scanning, sweep, motion]);
+  }, [scanning, sweep, lineOn]);
 
   const translateY = sweep.interpolate({ inputRange: [0, 1], outputRange: [10, Math.max(10, height - 12)] });
 
@@ -52,7 +57,7 @@ export const ScanFrame = memo(function ScanFrame({ width, height, scanning, succ
       accessibilityLabel={success ? 'Date detected' : scanning ? 'Scanning for an expiry date' : 'Scanning frame'}
     >
       {success && <View style={[StyleSheet.absoluteFill, { borderRadius: CORNER_RADIUS, borderWidth: 1.5, borderColor: withAlpha(lime, 0.55) }]} />}
-      {scanning && (
+      {scanning && lineOn && (
         <Animated.View
           style={[
             s.sweep,

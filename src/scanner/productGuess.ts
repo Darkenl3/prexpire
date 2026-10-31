@@ -1,4 +1,3 @@
-import { normalizeLine } from './dateParser';
 
 // Pulls a likely product name out of the lines an OCR read off a package label,
 // for the scanner's product stage - entirely offline, deterministic (no network,
@@ -7,6 +6,30 @@ import { normalizeLine } from './dateParser';
 // line - no dates, no expiry labels, no weights, no ingredients, no addresses.
 // Nothing is invented: a null result means "not identified", the scanner either
 // fills from the barcode databases or asks the user to type the name.
+
+// OCR often reads O as 0, I or L as 1, S as 5 and B as 8 inside numbers. Only
+// standalone tokens that already contain a digit are touched.
+function normalizeDigits(line: string): string {
+  return line.replace(/(?<![A-Z])[0-9OILSB|]+(?![A-Z])/g, (token) => {
+    if (!/[0-9]/.test(token)) return token;
+    return token.replace(/O/g, '0').replace(/[IL|]/g, '1').replace(/S/g, '5').replace(/B/g, '8');
+  });
+}
+
+// Mirror of dateParser's normalizeLine (kept local so this module stays
+// dependency-free and directly runnable under Node's test runner — the two
+// copies must stay in sync).
+function normalizeLine(line: string): string {
+  const upper = line
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    // Dashes and dots that OCR returns as other characters.
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/[\u00b7\u2022]/g, '.')
+    .replace(/\s+/g, ' ');
+  return normalizeDigits(upper).trim();
+}
 
 export type ProductGuess = { name: string } | null;
 
@@ -81,10 +104,11 @@ export function titleCase(text: string): string {
 
 // Search-page and lookup furniture that must NEVER become a product name:
 // result titles like "Lookup & ISBN Search", "ISBN Search", "UPC Item
-// Database" or "Barcode Lookup" are pages ABOUT codes, not products, and
-// leaked into the pipeline as names more than once. A name made ENTIRELY of
-// these words (plus connectors and site tails) is furniture; any real word
-// ("Nestlé", "Oats") makes it a product name again. Exported so every
+// Database", "Barcode Lookup" or "Search Barcodestock" are pages ABOUT codes,
+// not products, and leaked into the pipeline as names more than once. A name
+// made ENTIRELY of these words (plus connectors, site tails and one-word
+// jargon compounds like "barcodestock" or "upcindex") is furniture; any real
+// word ("Nestlé", "Oats") makes it a product name again. Exported so every
 // identification path (the databases, the web-search miner and the shell's
 // saved-catalog loader) filters names through the SAME rule.
 const TECHNICAL_TITLE_WORDS = new Set([
@@ -93,7 +117,18 @@ const TECHNICAL_TITLE_WORDS = new Set([
   'find', 'finder', 'database', 'databases', 'directory', 'index', 'results', 'result',
   'api', 'upcitemdb', 'com', 'net', 'org', 'www', 'online', 'free', 'number', 'numbers',
 ]);
-const TITLE_CONNECTORS = new Set(['&', 'and', 'or', 'for', 'in', 'of', 'with', 'to', 'by', 'the', 'a', 'an', 'at', 'on']);
+const TITLE_CONNECTORS = new Set(['&', 'and', 'or', 'for', 'in', 'of', 'with', 'to', 'by', 'the', 'a', 'an', 'at', 'on', 'go']);
+
+// Jargon roots that build directory-site compound tokens: "barcodestock",
+// "upcindex", "searchupc", "barcodelookup" are one-word site names, not
+// products. A word that starts or ends with one of these roots (and is longer
+// than the root itself) is furniture exactly like the split-word forms.
+const JARGON_ROOTS = ['barcode', 'barcodes', 'upc', 'ean', 'gtin', 'isbn', 'asin', 'sku', 'lookup', 'lookups', 'search', 'searches', 'finder', 'database', 'databases', 'index', 'directory'];
+
+export function isJargonCompound(word: string): boolean {
+  if (word.length < 6) return false;
+  return JARGON_ROOTS.some((r) => (word.startsWith(r) || word.endsWith(r)) && word.length > r.length);
+}
 
 export function looksLikeTechnicalTitle(name: string): boolean {
   const words = name
@@ -102,7 +137,7 @@ export function looksLikeTechnicalTitle(name: string): boolean {
     .split(/[\s/.-]+/)
     .filter(Boolean);
   if (!words.length) return true;
-  return words.every((w) => TECHNICAL_TITLE_WORDS.has(w) || TITLE_CONNECTORS.has(w));
+  return words.every((w) => TECHNICAL_TITLE_WORDS.has(w) || TITLE_CONNECTORS.has(w) || isJargonCompound(w));
 }
 
 export function guessProduct(lines: string[]): ProductGuess {
@@ -129,6 +164,9 @@ export function guessProduct(lines: string[]): ProductGuess {
 
   const name = titleCase(combined);
   if (!name) return null;
+  // Lookup-page furniture never names a product, no matter which path
+  // produced it ("Search Barcodestock" once leaked through exactly here).
+  if (looksLikeTechnicalTitle(name)) return null;
   if (name.length > 48) {
     const words = name.split(' ');
     let out = '';

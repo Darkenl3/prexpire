@@ -145,6 +145,21 @@ function Shell() {
     }
   }, [inShell, settings.dateFormat]);
 
+  // The Scanning Line Animation setting, reported so the shell's native
+  // scanner hides or shows its moving sweep line exactly like the website's
+  // own scanner does. Sent on mount and on every change; cosmetic only — the
+  // shell's camera, barcode reading and date OCR are never affected by it.
+  useEffect(() => {
+    if (!inShell || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    try {
+      shell.postMessage(JSON.stringify({ type: 'scan-line', on: settings.scanLineAnimation !== false }));
+    } catch {
+      // The shell went away; the next change reports again.
+    }
+  }, [inShell, settings.scanLineAnimation]);
+
   // Native bridge, save path: the shell's scanner result panel saves directly
   // through this app's real pipeline (docs/native-shell.md). The shell
   // dispatches a prexpire:save event carrying a structured item plus a

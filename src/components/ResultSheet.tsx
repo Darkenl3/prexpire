@@ -60,6 +60,9 @@ type Props = {
   // art slot (the category art stands in when there is none) and saved onto
   // the item, so the card carries the REAL product image.
   productImage?: string | null;
+  // "Enter product" (the offline manual action) opens the same form with the
+  // cursor straight in the empty name field instead of the date editor.
+  focusName?: boolean;
   initialCategory: CategoryId;
   // True when the category was picked from the label's words (see
   // scanner/categoryGuess.ts) - shown as a gentle hint under the chips.
@@ -84,7 +87,7 @@ type Props = {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
-export function ResultSheet({ detection, initialName = '', productImage = null, initialCategory, categoryGuessed = false, assumedOrder = null, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
+export function ResultSheet({ detection, initialName = '', productImage = null, focusName = false, initialCategory, categoryGuessed = false, assumedOrder = null, layout, full = false, maxHeight, bottomInset, secondaryLabel, onAdd, onSecondary }: Props) {
   const t = useTheme();
   const sheetPillColors = useMemo(() => sheetPills(t), [t]);
   const { all } = useCategories();
@@ -124,6 +127,13 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
     },
     [],
   );
+  // "Enter product": once the sheet has settled, the cursor (and the phone
+  // keyboard) go straight to the empty name field.
+  useEffect(() => {
+    if (!focusName) return;
+    const timer = setTimeout(() => nameRef.current?.focus(), 80);
+    return () => clearTimeout(timer);
+  }, [focusName]);
 
   const date: Interpretation | null = edited ?? (picked !== null ? readings[picked] : null);
   const confirmed = !!date && (!!edited || !needsTick || ticked);

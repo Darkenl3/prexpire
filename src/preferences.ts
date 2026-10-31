@@ -22,6 +22,9 @@ export type Settings = {
   theme: ThemeMode;
   compact: boolean;
   animations: boolean;
+  // The moving scanning line inside the Live Scan frame (cosmetic only: the
+  // camera, barcode reading and date OCR keep running when it is off).
+  scanLineAnimation: boolean;
   // Expiry
   warningDays: WarningDays;
   dateFormat: DateFormat;
@@ -65,6 +68,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     theme: 'dark',
     compact: false,
     animations: true,
+    scanLineAnimation: true,
     warningDays: 3,
     dateFormat: dayOrder,
     sort: 'expiry',
@@ -87,6 +91,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     theme: oneOf('theme', THEME_MODES),
     compact: bool('compact'),
     animations: bool('animations'),
+    scanLineAnimation: bool('scanLineAnimation'),
     warningDays: oneOf('warningDays', WARNING_DAYS),
     dateFormat: oneOf('dateFormat', DATE_FORMATS),
     sort: oneOf('sort', SORT_ORDERS),

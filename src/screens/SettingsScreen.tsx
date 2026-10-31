@@ -353,7 +353,7 @@ function searchIndex(): SearchEntry[] {
     { key: 'appearance', title: 'Appearance', description: 'Theme, density and motion', icon: 'color-palette-outline', accent: 'pink', page: 'appearance' },
     { key: 'theme', title: 'Theme', description: 'Dark, light, or follow your device', icon: 'contrast-outline', accent: 'purple', page: 'appearance' },
     { key: 'compact', title: 'Compact layout', description: 'Shorter rows in item lists', icon: 'reorder-four-outline', accent: 'blue', page: 'appearance' },
-    { key: 'animations', title: 'Animations', description: "Fades, press feedback and the scanner's sweep line", icon: 'sparkles-outline', accent: 'purple', page: 'appearance' },
+    { key: 'animations', title: 'Animations', description: 'Fades, press feedback and the scanning line', icon: 'sparkles-outline', accent: 'purple', page: 'appearance' },
     { key: 'warning-period', title: 'Warning period', description: 'Days before expiry', icon: 'hourglass-outline', accent: 'mint', page: null },
     { key: 'auto-shopping', title: 'Automatic Shopping List', description: 'Adds expiring products', icon: 'cart-outline', accent: 'mint', page: null },
     { key: 'date-format', title: 'Date format', description: 'How dates are displayed', icon: 'calendar-outline', accent: 'teal', page: null },
@@ -696,9 +696,16 @@ function AppearanceDetail() {
           icon="sparkles-outline"
           accent="purple"
           title="Animations"
-          description="Fades, press feedback and the scanner's sweep line"
+          description="Fades and press feedback"
           right={<Toggle label="Animations" value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
           below={systemReduceMotion ? <FadeIn><Note>Your device asks for reduced motion, so animations stay off</Note></FadeIn> : undefined}
+        />
+        <SettingRow
+          icon="scan-outline"
+          accent="mint"
+          title="Scanning Line Animation"
+          description="Show or hide the moving scanning line during product scanning"
+          right={<Toggle label="Scanning Line Animation" value={settings.scanLineAnimation} onChange={(v) => update({ scanLineAnimation: v })} />}
         />
       </SettingsCard>
     </SettingsSection>

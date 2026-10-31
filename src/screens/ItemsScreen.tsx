@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT } from '../theme';
@@ -12,6 +12,7 @@ import { ItemCard, categoryIcon } from '../components/ItemCard';
 import { Note, SmallButton } from '../components/SettingsRows';
 import { SearchField } from '../components/SearchField';
 import { FadeIn, PressScale } from '../components/Press';
+import { BottomSheet } from '../components/BottomSheet';
 import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
 
 type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
@@ -225,6 +226,8 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
 // carrying the category choices (All categories clears the filter) and the
 // sort order. Selecting any option applies it and closes — exactly how every
 // other sheet in the app behaves — and the Cancel row simply dismisses.
+// The frame itself (safe areas, navigation clearance, max height, scrolling,
+// swipe-down-to-close, the rise/settle animation) is the shared BottomSheet.
 function FilterSheet({
   visible,
   filter,
@@ -244,22 +247,7 @@ function FilterSheet({
 }) {
   const c = useTheme();
   const s = useSheetStyles();
-  const insets = useSafeAreaInsets();
-  const { motion } = useSettings();
-  // Motion as a ref so animation timings never retrigger a running animation.
-  const motionRef = useRef(motion);
-  motionRef.current = motion;
-  const rise = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (visible) {
-      rise.setValue(0);
-      Animated.timing(rise, { toValue: 1, duration: motionRef.current ? 220 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
-    }
-  }, [visible, rise]);
-  const close = useCallback(() => {
-    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 190 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onClose());
-  }, [rise, onClose]);
-  const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [64, 0] });
+  const close = useCallback(() => onClose(), [onClose]);
 
   const categoryRow = (value: 'all' | CategoryId, label: string, icon?: keyof typeof Ionicons.glyphMap) => {
     const on = filter === value;
@@ -294,63 +282,51 @@ function FilterSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close} {...({ 'aria-modal': true } as object)}>
-      <View style={s.wrap}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close filter" importantForAccessibility="no" />
-        <Animated.View
-          style={[s.sheet, { backgroundColor: c.dialogBg, paddingBottom: Math.max(insets.bottom, 12) + 8, transform: [{ translateY }] }]}
-          accessibilityRole={'dialog' as never}
-          accessibilityLabel="Filter and sort"
-        >
-          <View style={s.grabber} />
-          <Text style={s.title} accessibilityRole="header">
-            Filter &amp; sort
-          </Text>
-          <View>
-            <Text style={s.section}>Category</Text>
-            <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Category">
-              {categoryRow('all', 'All categories')}
-              {categories.map((cat) => categoryRow(cat.id, cat.name, cat.icon))}
-            </View>
-          </View>
-          <View>
-            <Text style={s.section}>Sort by</Text>
-            <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Sort order">
-              {SORT_ORDERS.map((o) => {
-                const on = sort === o;
-                return (
-                  <PressScale
-                    key={o}
-                    onPress={() => {
-                      onSort(o);
-                      close();
-                    }}
-                    accessibilityRole="radio"
-                    aria-checked={on}
-                    accessibilityLabel={SORT_LABELS[o]}
-                    style={[s.option, on && s.optionOn]}
-                    pressedStyle={s.optionPressed}
-                  >
-                    <Ionicons name={o === 'expiry' ? 'calendar-outline' : o === 'added' ? 'time-outline' : 'text-outline'} size={17} color={on ? c.green : c.textMuted} />
-                    <Text style={[s.optionText, on && s.optionTextOn]} numberOfLines={1}>
-                      {SORT_LABELS[o]}
-                    </Text>
-                    {on && (
-                      <FadeIn>
-                        <Ionicons name="checkmark" size={18} color={c.green} />
-                      </FadeIn>
-                    )}
-                  </PressScale>
-                );
-              })}
-            </View>
-          </View>
-          <PressScale onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={s.cancel} pressedStyle={s.optionPressed}>
-            <Text style={s.cancelText}>Cancel</Text>
-          </PressScale>
-        </Animated.View>
+    <BottomSheet visible={visible} onClose={onClose} title="Filter & sort" accessibilityLabel="Filter and sort" footer={
+      <PressScale onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={s.cancel} pressedStyle={s.optionPressed}>
+        <Text style={s.cancelText}>Cancel</Text>
+      </PressScale>
+    }>
+      <View>
+        <Text style={s.section}>Category</Text>
+        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Category">
+          {categoryRow('all', 'All categories')}
+          {categories.map((cat) => categoryRow(cat.id, cat.name, cat.icon))}
+        </View>
       </View>
-    </Modal>
+      <View>
+        <Text style={s.section}>Sort by</Text>
+        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Sort order">
+          {SORT_ORDERS.map((o) => {
+            const on = sort === o;
+            return (
+              <PressScale
+                key={o}
+                onPress={() => {
+                  onSort(o);
+                  close();
+                }}
+                accessibilityRole="radio"
+                aria-checked={on}
+                accessibilityLabel={SORT_LABELS[o]}
+                style={[s.option, on && s.optionOn]}
+                pressedStyle={s.optionPressed}
+              >
+                <Ionicons name={o === 'expiry' ? 'calendar-outline' : o === 'added' ? 'time-outline' : 'text-outline'} size={17} color={on ? c.green : c.textMuted} />
+                <Text style={[s.optionText, on && s.optionTextOn]} numberOfLines={1}>
+                  {SORT_LABELS[o]}
+                </Text>
+                {on && (
+                  <FadeIn>
+                    <Ionicons name="checkmark" size={18} color={c.green} />
+                  </FadeIn>
+                )}
+              </PressScale>
+            );
+          })}
+        </View>
+      </View>
+    </BottomSheet>
   );
 }
 
