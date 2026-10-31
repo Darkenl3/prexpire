@@ -109,12 +109,38 @@ export function Brandmark({ height }: { height: number }) {
   return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
 }
 
-export function Header({ badge, gutter = 14, title, onMenu, onBell }: { badge: number; gutter?: number; title?: string; onMenu: () => void; onBell: () => void }) {
+const noop = () => {};
+
+export function Header({
+  badge,
+  gutter = 14,
+  title,
+  onMenu,
+  onBell,
+  onBack,
+}: {
+  badge: number;
+  gutter?: number;
+  title?: string;
+  onMenu?: () => void;
+  onBell?: () => void;
+  // The Settings-style back circle: when a section's strip provides it, the
+  // leading menu circle is REPLACED by the compact 38pt back button and the
+  // bell stays off - the quiet back + title pair Settings' own header uses.
+  onBack?: () => void;
+}) {
   const c = useTheme();
   const s = useStyles();
   return (
     <View style={[s.header, { paddingHorizontal: gutter }]}>
-      <GlassIconButton icon="menu" iconSize={24} label="Menu" onPress={onMenu} />
+      {/* The leading control: Home keeps the menu circle that opens Settings;
+          every other section is a destination, not a hub, so its strip leads
+          with the exact compact back circle Settings' header leads with. */}
+      {onBack ? (
+        <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={onBack} />
+      ) : (
+        <GlassIconButton icon="menu" iconSize={24} label="Menu" onPress={onMenu ?? noop} />
+      )}
       {/* The section's title lives in the header strip - the Settings
           structure: Home keeps the wordmark (its intentional title), every
           other section shows its name here in the exact typography Settings'
@@ -129,17 +155,21 @@ export function Header({ badge, gutter = 14, title, onMenu, onBell }: { badge: n
       ) : (
         <Brandmark height={33} />
       )}
-      <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
-        <Ionicons name="notifications-outline" size={22} color={c.text} />
-        {/* The reminder counter lives HERE and only here: a small red numbered
-            badge on the header bell. The bottom navigation carries no counts of
-            any kind — neither the reminder count nor the shopping count. */}
-        {badge > 0 && (
-          <View style={[s.bellBadge, { borderColor: c.bg }]}>
-            <Text style={s.bellBadgeText}>{badge > 99 ? '99+' : badge}</Text>
-          </View>
-        )}
-      </GlassIconButton>
+      {/* The bell - and the reminder counter on it - lives ONLY on Home's
+          strip: a section's header is the quiet back + title pair Settings
+          uses, with no navigation onward on the right. (The bottom navigation
+          still carries no counts of any kind - neither the reminder count nor
+          the shopping count.) */}
+      {onBell && (
+        <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
+          <Ionicons name="notifications-outline" size={22} color={c.text} />
+          {badge > 0 && (
+            <View style={[s.bellBadge, { borderColor: c.bg }]}>
+              <Text style={s.bellBadgeText}>{badge > 99 ? '99+' : badge}</Text>
+            </View>
+          )}
+        </GlassIconButton>
+      )}
     </View>
   );
 }

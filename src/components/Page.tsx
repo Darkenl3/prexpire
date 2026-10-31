@@ -31,11 +31,12 @@ type Props = {
   children: ReactNode;
 };
 
-// The frame shared by the Items and Reminders tabs: the header strip (Home's
-// wordmark or this section's title) rides the tab transition WITH the
-// scrolling body, so the whole screen - title and content together - enters
-// as one, exactly like Settings' own unified fade; below it, the lead-in row
-// and a scrolling body that leaves room for the floating bottom nav.
+// The frame shared by the Items and Reminders tabs: the header strip (the
+// section's title beside the compact back circle - the Settings structure)
+// rides the tab transition WITH the scrolling body, so the whole screen -
+// title and content together - enters as one, exactly like Settings' own
+// unified fade; below it, the lead-in row and a scrolling body that leaves
+// room for the floating bottom nav.
 export function Page({ tab, title, subtitle, badge, maxWidth = 720, headerAction, dense = false, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
@@ -49,7 +50,9 @@ export function Page({ tab, title, subtitle, badge, maxWidth = 720, headerAction
       {/* The tab-switch transition wraps the header AND the body: the strip's
           title IS this section's title, so both enter as ONE screen - the
           same unified fade Settings has always had (its own header rides its
-          fade the same way). The header still overlays the content (see
+          fade the same way). The strip leads with the back circle to Home and
+          carries no menu and no bell - the quiet back + title pair Settings'
+          own header uses. The header still overlays the content (see
           navAutohide.tsx): hiding it on scroll never resizes the scroller, so
           the content never jumps mid-gesture. */}
       <TabTransition tab={tab}>
@@ -59,8 +62,7 @@ export function Page({ tab, title, subtitle, badge, maxWidth = 720, headerAction
           title={title}
           gutter={layout.gutter}
           maxWidth={Math.min(layout.maxContentWidth, maxWidth)}
-          onMenu={() => onNavigate('tab:settings')}
-          onBell={() => onNavigate('tab:reminders')}
+          onBack={() => onNavigate('tab:home')}
         />
         <ScrollView
           style={[c.scroll, NO_RUBBER_BAND]}

@@ -208,9 +208,12 @@ export function useNavAutohide() {
 //
 // On Home the strip carries the wordmark; on every other section it carries
 // that section's title (the Settings structure: the title lives in the
-// header). The strip rides the tab transition WITH the screen's body, so the
-// title and the content always enter as one screen - never a header that
-// lags behind or a title that swaps separately from the body.
+// header). A section's strip also LEADS with the compact back circle to Home
+// instead of Home's menu circle, and carries no bell - the quiet back +
+// title pair Settings' own header uses. The strip rides the tab transition
+// WITH the screen's body, so the title and the content always enter as one
+// screen - never a header that lags behind or a title that swaps separately
+// from the body.
 export function AutohideHeader({
   hidden,
   badge,
@@ -219,6 +222,7 @@ export function AutohideHeader({
   maxWidth,
   onMenu,
   onBell,
+  onBack,
 }: {
   hidden: boolean;
   badge: number;
@@ -228,8 +232,11 @@ export function AutohideHeader({
   // Matches the page's content column so the title lines up with it.
   gutter?: number;
   maxWidth?: number;
-  onMenu: () => void;
-  onBell: () => void;
+  onMenu?: () => void;
+  onBell?: () => void;
+  // The Settings-style back circle for a section strip (Items, Shopping
+  // List, Reminders): replaces the menu circle and leaves the bell off.
+  onBack?: () => void;
 }) {
   const c = useTheme();
   const t = useRef(new Animated.Value(0)).current;
@@ -267,7 +274,7 @@ export function AutohideHeader({
       }}
     >
       <View style={{ alignSelf: 'center', width: '100%', maxWidth, paddingHorizontal: gutter }}>
-        <Header badge={badge} title={title} gutter={0} onMenu={onMenu} onBell={onBell} />
+        <Header badge={badge} title={title} gutter={0} onMenu={onMenu} onBell={onBell} onBack={onBack} />
       </View>
     </Animated.View>
   );
