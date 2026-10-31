@@ -14,10 +14,21 @@ import type { TabId } from './HomeComponents';
 // early-return branch, so nothing animates around the camera: no delayed
 // mount, no black frames, no extra permission asks).
 //
-// Like every animation in the app (Press.tsx, the Toast, Settings' own pages)
-// it collapses to nothing when motion is off: the app's Animations setting
-// AND the OS-level Reduce Motion flag are already wired through
-// useSettings().motion.
+// TWO motion gates, deliberately different (this is the fix for "the tab
+// animation is gone"):
+//   - the app's own Animations setting gates the 200 ms CROSSFADE. A brief
+//     crossfade is exactly the reduce-motion-appropriate form of a screen
+//     change (Apple's own guidance: crossfade instead of sliding), and this
+//     transition is the app's core navigation feedback - so the OS-level
+//     Reduce Motion flag may soften it, never delete it. Before, the flag
+//     erased the whole transition: with iOS Reduce Motion on (common), every
+//     tab switch on the device appeared as an abrupt, unanimated jump.
+//   - the OS flag (through useSettings().motion = animations && !reduce)
+//     still gates the small SLIDE - under Reduce Motion the screen change
+//     becomes a pure crossfade, which is the accessible form of the same
+//     motion, not the absence of it.
+// Turning Animations OFF in Settings still collapses everything to nothing,
+// exactly as before: that is the user's explicit choice.
 
 // The tab bar's reading order (the centre scan button aside): moving right
 // through the bar slides the screen in from the right; moving left slides it
@@ -44,18 +55,24 @@ export const TAB_MS = 200;
 export const TAB_SLIDE = 14;
 
 export function TabTransition({ tab, children }: { tab: TabId; children: ReactNode }) {
-  const { motion } = useSettings();
+  // The two gates (see the header comment): the crossfade follows the app's
+  // own Animations setting; the slide additionally waits for the OS flag.
+  const { settings, motion } = useSettings();
   // The direction is resolved exactly once, during the first render (a plain
   // useRef initialiser would re-evaluate its argument on every render and
   // corrupt the module-level history - so it is a lazy null check instead).
   const dirRef = useRef<number | null>(null);
   if (dirRef.current === null) dirRef.current = tabEnterDirection(tab);
   // Whether THIS mount plays the enter transition: a real tab change with
-  // motion on. Resolved once at first render - the same boolean decides the
-  // values' initial state below and the effect's animation, so they can
-  // never disagree (the motion setting flipping between the two would
+  // the app's Animations setting on (the OS flag no longer erases the cross-
+  // fade - only the slide). Resolved once at first render - the same boolean
+  // decides the values' initial state below and the effect's animation, so
+  // they can never disagree (the settings flipping between the two would
   // otherwise leave a screen stuck invisible at its entry pose).
-  const animate = (dirRef.current ?? 0) !== 0 && motion;
+  const animate = (dirRef.current ?? 0) !== 0 && settings.animations;
+  // The slide's own gate: the full motion flag (Animations AND no OS-level
+  // Reduce Motion). Under Reduce Motion the enter is a pure crossfade.
+  const slide = animate && motion;
 
   // The entry pose is the INITIAL state of the animated values - set during
   // the first render, NOT in the effect. The effect runs after the first
@@ -66,7 +83,7 @@ export function TabTransition({ tab, children }: { tab: TabId; children: ReactNo
   // initialized at 0 the same way: its first frame is already the
   // animation's first frame. Every screen now enters exactly like that.
   const opacity = useRef(new Animated.Value(animate ? 0 : 1)).current;
-  const translateX = useRef(new Animated.Value(animate ? (dirRef.current ?? 0) * TAB_SLIDE : 0)).current;
+  const translateX = useRef(new Animated.Value(slide ? (dirRef.current ?? 0) * TAB_SLIDE : 0)).current;
 
   useEffect(() => {
     // dir 0 = first load, a within-tab remount (category switch, the Items /

@@ -90,11 +90,10 @@ export type Palette = {
   // page's raised surface, the light page's pale mint — with a hairline rim.
   glassBg: string;
   glassBorder: string;
-  // The header STRIP's liquid-glass tint (AutohideHeader): translucent so the
-  // frosted backdrop-filter underneath shows page content scrolling past —
-  // the same material language as the scanner's top chrome and the bottom
-  // nav pill, instead of an opaque bar. The dark strip rides the secondary
-  // background (#050C0E), the light strip the airy page itself.
+  // The header strip's RETIRED liquid-glass tint: the strip now wears the
+  // page's exact `bg` colour (opaque) so the top navigation always matches
+  // the screen in both themes (see AutohideHeader). The tint stays documented
+  // here as part of the glass material family the scanner chrome still uses.
   glassHeaderBg: string;
   pills: Record<Tone, { bg: string; text: string }>;
   switchColors: { track: string; trackOn: string; thumb: string; thumbOn: string };
