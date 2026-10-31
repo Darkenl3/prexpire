@@ -42,25 +42,34 @@ export const TAB_SLIDE = 14;
 
 export function TabTransition({ tab, children }: { tab: TabId; children: ReactNode }) {
   const { motion } = useSettings();
-  // Motion as a ref so flipping the setting never retriggers a running animation.
-  const motionRef = useRef(motion);
-  motionRef.current = motion;
-  const opacity = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
   // The direction is resolved exactly once, during the first render (a plain
   // useRef initialiser would re-evaluate its argument on every render and
   // corrupt the module-level history - so it is a lazy null check instead).
   const dirRef = useRef<number | null>(null);
   if (dirRef.current === null) dirRef.current = tabEnterDirection(tab);
+  // Whether THIS mount plays the enter transition: a real tab change with
+  // motion on. Resolved once at first render - the same boolean decides the
+  // values' initial state below and the effect's animation, so they can
+  // never disagree (the motion setting flipping between the two would
+  // otherwise leave a screen stuck invisible at its entry pose).
+  const animate = (dirRef.current ?? 0) !== 0 && motion;
+
+  // The entry pose is the INITIAL state of the animated values - set during
+  // the first render, NOT in the effect. The effect runs after the first
+  // paint, so initializing at the rest pose (opacity 1 / x 0) let the screen
+  // paint fully visible for a frame and then JUMP to its entry pose the
+  // moment the effect ran - the small left-edge hop at the start of every
+  // transition. Settings never showed it because its own 'appear' value is
+  // initialized at 0 the same way: its first frame is already the
+  // animation's first frame. Every screen now enters exactly like that.
+  const opacity = useRef(new Animated.Value(animate ? 0 : 1)).current;
+  const translateX = useRef(new Animated.Value(animate ? (dirRef.current ?? 0) * TAB_SLIDE : 0)).current;
 
   useEffect(() => {
     // dir 0 = first load, a within-tab remount (category switch, the Items /
     // ShoppingList segmented control) or a return from the scanner: appear in
-    // place, instantly, exactly as before.
-    const dir = dirRef.current ?? 0;
-    if (dir === 0 || !motionRef.current) return;
-    opacity.setValue(0);
-    translateX.setValue(dir * TAB_SLIDE);
+    // place, instantly, exactly as before. Values already start at rest.
+    if (!animate) return;
     const anim = Animated.parallel([
       Animated.timing(opacity, { toValue: 1, duration: TAB_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(translateX, { toValue: 0, duration: TAB_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
