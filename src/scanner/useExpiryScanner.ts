@@ -4,7 +4,7 @@ import type { FrameGeometry, FrameReading, ScannerCameraHandle } from './Scanner
 
 export type Detection = Extract<ScanParseResult, { kind: 'found' }>;
 
-export type ScanHint = 'aim' | 'text-found' | 'low-light' | 'closer' | 'manufacture' | 'unclear' | 'hold-steady' | 'ocr-error';
+export type ScanHint = 'aim' | 'text-found' | 'low-light' | 'closer' | 'manufacture' | 'unclear' | 'hold-steady' | 'ocr-error' | 'manual';
 
 export type ScannerState = { status: 'scanning'; hint: ScanHint } | { status: 'detected'; detection: Detection };
 
@@ -39,21 +39,22 @@ const AGREEMENT_WINDOW = 3;
 const AGREEMENT_NEEDED = 2;
 // Misses before a hint replaces "Keep the date inside the frame".
 const MISSES_BEFORE_HINT = 3;
-// Misses before the loop reports `stuck`: roughly 20 seconds of live scanning
-// with no confirmed date — the point where automatic recognition has had a
-// fair chance and the caller offers manual entry (online as well as offline).
+// Misses before the loop gives its final verdict: roughly 20 seconds of live
+// scanning with no confirmed date. From that point the hint says plainly
+// that recognition did not work and manual entry is the way forward — the
+// manual buttons are on screen from the start, so this only puts the failing
+// recognition into words instead of leaving the user scanning forever.
 const STUCK_MISSES = 14;
 
 export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBarcode, preferredOrder }: Options) {
   const [state, setState] = useState<ScannerState>({ status: 'scanning', hint: 'aim' });
-  // True once the date stage has failed for long enough (STUCK_MISSES passes)
-  // that manual entry should be offered even while online.
-  const [stuck, setStuck] = useState(false);
   const stateRef = useRef(state);
   const history = useRef<(string | null)[]>([]);
   const misses = useRef(0);
-  // stuck as a ref too, so the pass closure and reset() always touch the same
-  // flag without resubscribing the loop.
+  // True once the date stage has failed for long enough (STUCK_MISSES passes)
+  // that the "Date not recognized" verdict should show. Kept as a ref so the
+  // pass closure and reset() always touch the same flag without resubscribing
+  // the loop.
   const stuckRef = useRef(false);
   // Bumped by reset() so a pass that was already running when the user tapped "Scan again"
   // cannot publish a stale detection.
@@ -74,7 +75,6 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     stuckRef.current = false;
     stateRef.current = { status: 'scanning', hint: 'aim' };
     setState(stateRef.current);
-    setStuck(false);
   }, []);
 
   const detected = state.status === 'detected';
@@ -128,12 +128,14 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
         history.current = [...history.current, null].slice(-AGREEMENT_WINDOW);
         misses.current += 1;
         if (misses.current >= STUCK_MISSES) {
-          // Automatic recognition has had its fair chance: the caller offers
-          // manual entry (online too — offline it already did).
-          if (!stuckRef.current) {
-            stuckRef.current = true;
-            setStuck(true);
-          }
+          // Automatic recognition has had its fair chance: the verdict says so
+          // plainly and points at the manual buttons (always on screen). A
+          // re-aim or "Scan again" resets the counter, so the message only
+          // stays while the same hopeless aim is held.
+          if (!stuckRef.current) stuckRef.current = true;
+          publish({ status: 'scanning', hint: 'manual' });
+          schedule();
+          return;
         }
         if (misses.current >= MISSES_BEFORE_HINT) {
           // The IMAGE's own brightness first (measured by the camera layer),
@@ -170,5 +172,5 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     };
   }, [enabled, detected, readBarcodes, camera, geometry, publish, preferredOrder]);
 
-  return { state, reset, stuck };
+  return { state, reset };
 }

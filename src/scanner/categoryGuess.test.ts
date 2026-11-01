@@ -36,3 +36,12 @@ test('household and skincare', () => {
   assert.equal(guessCategory('YAY! Paper Straws Vanilla'), 'household');
   assert.equal(guessCategory('Nivea Soft Cream 200ml'), 'skincare');
 });
+
+test('medicine: Cyrillic pharmaceutical vocabulary', () => {
+  // The Bulgarian cough syrup label (its name honestly unavailable from the
+  // databases): the label's own words still file the item as medicine.
+  assert.equal(guessCategory('Сироп за деца 200 мл'), 'medicine');
+  assert.equal(guessCategory('Бронхо сироп'), 'medicine');
+  assert.equal(guessCategory('Ампицилин таблетки 500 mg'), 'medicine');
+  assert.equal(guessCategory('Витамин C капсули'), 'medicine');
+});

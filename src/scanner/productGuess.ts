@@ -131,6 +131,10 @@ const TECHNICAL_TITLE_WORDS = new Set([
   'api', 'upcitemdb', 'com', 'net', 'org', 'www', 'online', 'free', 'number', 'numbers',
   'report', 'reports', 'reporting', 'listing', 'listings', 'catalog', 'catalogue',
   'million', 'millions', 'billion', 'billions',
+  // "Find ANY BOOK by ISBN" furniture: the service description of
+  // isbn-search sites. A real book product always carries a title word
+  // ("Harry Potter…"), so a name made ENTIRELY of these never names one.
+  'any', 'book', 'books', 'edition', 'editions',
 ]);
 const TITLE_CONNECTORS = new Set(['&', 'and', 'or', 'for', 'in', 'of', 'with', 'to', 'by', 'the', 'a', 'an', 'at', 'on', 'go']);
 

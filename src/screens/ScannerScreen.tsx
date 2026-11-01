@@ -84,11 +84,12 @@ const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: stri
   aim: { icon: 'scan-outline', text: 'Looking for the expiry date...' },
   'text-found': { icon: 'text-outline', text: 'Label text found. Point at the date.' },
   'hold-steady': { icon: 'hourglass-outline', text: 'Hold still. Checking the date...' },
-  'low-light': { icon: 'sunny-outline', text: 'Too dark. Try better light.' },
+  'low-light': { icon: 'sunny-outline', text: 'The date is too dark to read. Try better lighting.' },
   closer: { icon: 'resize-outline', text: 'Move closer to the expiry date.' },
   manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
-  unclear: { icon: 'eye-outline', text: 'Date not clear. Adjust the angle.' },
+  unclear: { icon: 'eye-outline', text: 'Reduce glare by changing the angle.' },
   'ocr-error': { icon: 'refresh-outline', text: 'Hard to read. Hold the camera steady.' },
+  manual: { icon: 'create-outline', text: 'Date not recognized. You can enter it manually.' },
 };
 
 // A product name for the status banner: shortened to fit one line WITHOUT
@@ -283,7 +284,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     [],
   );
 
-  const { state, reset, stuck } = useExpiryScanner({
+  const { state, reset } = useExpiryScanner({
     camera,
     geometry,
     // No analysis while the user types the item by hand; otherwise ONE loop
@@ -542,7 +543,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <Ionicons name="help-circle-outline" size={18} color={colors.amberText} />
                   <Text style={s.hintText} numberOfLines={2}>
-                    We couldn't find this product online. Point at the expiry date.
+                    We couldn't identify this product. You can enter its name manually.
                   </Text>
                 </View>
               )}
@@ -574,13 +575,14 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 ))}
             </>
           )}
-          {/* Manual entry: always while OFFLINE, and — after the scan loop
-              reports `stuck` (roughly 20 seconds of live scanning with no
-              confirmed date) — ONLINE too, so a difficult label never leaves
-              the user without a way forward. Two compact actions, Enter date
-              and Enter product, independent of each other and both leading to
-              the same save form as a scan. */}
-          {(offline || stuck) && !detected && !manual && cameraReady && !cameraError && ocrReady && (
+          {/* Manual entry: on screen from the MOMENT the scanner opens —
+              never gated on a failed scan, a failed lookup or connectivity —
+              so a difficult label always has a way forward and manual entry
+              works fully offline. Two compact actions, Enter date and Enter
+              product, independent of each other and both leading to the same
+              save form as a scan; both keep whatever was already recognized,
+              and both stay usable while the scan continues behind them. */}
+          {!detected && !manual && cameraReady && !cameraError && ocrReady && (
             <View style={s.manualRow}>
               <PressScale
                 onPress={() => openManual('date')}

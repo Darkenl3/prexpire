@@ -44,6 +44,12 @@ const KEYWORDS: CategoryWords[] = [
       'novalgin', 'nurofen', 'panadol', 'eferalgan', 'voltaren', 'diclofenac', 'ketanov',
       'suprastin', 'loratadina', 'omeprazolo', 'amoxicillina', 'augmentin', 'aspirina',
       'paracetamolo', 'ibuprofene',
+      // Cyrillic pharmaceutical vocabulary (Bulgarian/Russian/Ukrainian
+      // packaging: "СИРОП", "ТАБЛЕТКИ", "КАПСУЛИ"). Substring roots cover
+      // the inflections ("таблетк" sees таблетка/таблетки), the same way the
+      // Latin roots above do. Shorter roots (маз/гел) are deliberately left
+      // out: they also live inside non-medicine words ("смазка" = lubricant).
+      'сироп', 'таблетк', 'капсул',
     ],
     ['mg', 'ml', 'mcg', 'iu', 'gtt'],
   ],

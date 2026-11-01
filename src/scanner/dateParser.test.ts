@@ -510,3 +510,81 @@ test('month/year forms with every separator: 03 2027, 03.2027, 03/2027, 03-2027'
   // The 8-digit stamped form from the same clarification (03 06 2027).
   assert.equal(found(['EXP 03062027'], uk).primary.iso, '2027-06-03');
 });
+
+// ─── Regression batch: the four real-device screenshots ──────────────────────
+
+test('photo: 2028/05 beside LOT never flips to a production date', () => {
+  // The Italian medicine bottle: the hourglass-marked "2028/05" and a LOT
+  // code, read in either line order. A FUTURE date can never be a production
+  // date, so whichever way OCR splits the lines the date is offered as an
+  // (unlabelled) expiry — deterministically, frame after frame.
+  for (const lines of [
+    ['LOT 25F0684', '2028/05'],
+    ['2028/05 LOT 25F0684'],
+    ['2028/05', 'LOT 25F0684'],
+    ['LOT', '2028/05'],
+  ]) {
+    const r = found(lines);
+    assert.equal(r.primary.iso, '2028-05-31', JSON.stringify(lines));
+    assert.equal(r.primary.precision, 'month', JSON.stringify(lines));
+    assert.equal(r.label, null, JSON.stringify(lines));
+    assert.ok(r.reasons.includes('no-label'), JSON.stringify(lines));
+  }
+  // A single-line read with the label AFTER the date behaves the same.
+  assert.equal(found(['25F0684 LOT 2028/05']).primary.iso, '2028-05-31');
+});
+
+test('photo: SCAD (Italian scadenza) labels the date as expiry', () => {
+  assert.equal(found(['SCAD. 05/2028']).primary.iso, '2028-05-31');
+  assert.equal(found(['SCAD.: 2028/05']).label, 'expiry');
+  assert.equal(found(['SCADENZA 27 OT 2027']).primary.iso, '2027-10-27');
+  assert.equal(found(['SCAD 03/2027']).confidence, 'high');
+});
+
+test('photo: 20627 dot-matrix stamp reads as 20 June 2027', () => {
+  // The glossy package print with no separators: day, single-digit month,
+  // two-digit year. Day-first preferred; the month-first split survives as
+  // the alternative the save sheet can offer.
+  const r = found(['20627']);
+  assert.equal(r.primary.iso, '2027-06-20');
+  assert.equal(r.alternatives[0]?.iso, '2027-02-06');
+  assert.ok(r.reasons.includes('ambiguous-order'));
+  assert.ok(r.reasons.includes('no-label'));
+  // With an expiry label the same digits read the same way — the label
+  // vouches for the DATE, not the day/month order, so the ambiguity stays a
+  // doubt and the save sheet asks (the "never accept an uncertain date" rule).
+  assert.equal(found(['EXP 20627']).primary.iso, '2027-06-20');
+  assert.equal(found(['BEST BEFORE 20627']).confidence, 'medium');
+  assert.ok(found(['BEST BEFORE 20627']).reasons.includes('ambiguous-order'));
+  assert.equal(found(['BEST BEFORE 20627']).alternatives[0]?.iso, '2027-02-06');
+  // MDY preference flips the primary reading.
+  assert.equal(found(['20627'], us).primary.iso, '2027-02-06');
+});
+
+test('photo: 6-digit no-separator stamp 200627 reads as 20.06.2027', () => {
+  assert.equal(found(['200627']).primary.iso, '2027-06-20');
+  // Only one calendar-valid split of these six digits (month "20" is not a
+  // month), so there is no alternative to offer — unlike the 5-digit stamp.
+  assert.equal(found(['200627']).alternatives.length, 0);
+  assert.equal(found(['EXP 200627']).primary.iso, '2027-06-20');
+});
+
+test('past unlabelled compact stamps stay lot codes, not expiry dates', () => {
+  // 26065 (the Finnish bag's lot): month 0 is not a calendar month.
+  assert.equal(parseExpiry(['26065'], uk).kind, 'none');
+  // 31125 parses day-first as 31 Jan 2025 — in the PAST, so bare it is a lot
+  // code, not an expiry worth saving.
+  assert.equal(parseExpiry(['31125'], uk).kind, 'none');
+  assert.equal(parseExpiry(['200621'], uk).kind, 'none'); // 20.06.2021, past
+  // Labelled past dates still read (flagged for the user to check).
+  const r = found(['EXP 31125']);
+  assert.equal(r.primary.iso, '2025-01-31');
+  assert.ok(r.reasons.includes('in-past'));
+});
+
+test('long digit runs never partially match the compact stamps', () => {
+  // A barcode or an 8-digit date inside one token: no 5/6-digit window reads.
+  assert.equal(parseExpiry(['3800223071163'], uk).kind, 'none');
+  assert.equal(parseExpiry(['20261101'], uk).kind, 'none'); // 8 digits, unlabelled
+  assert.equal(found(['EXP 03062027']).primary.iso, '2027-06-03');
+});

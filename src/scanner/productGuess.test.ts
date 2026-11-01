@@ -69,3 +69,16 @@ test('formatProductName trims dangling marketing tails and duplicate brands', ()
   // A tail trimmed by the length cut is not left dangling either.
   assert.ok(!['for', 'with', 'against', 'per'].includes(cut.split(' ').pop() ?? ''));
 });
+
+test('looksLikeTechnicalTitle rejects ISBN-service furniture ("Isbn Lookup Find Any Book By Isbn")', () => {
+  // The KRKA medicine box's real lookup result: the isbn-search site's own
+  // service description, every word of which is now furniture.
+  assert.equal(looksLikeTechnicalTitle('Isbn Lookup Find Any Book By Isbn'), true);
+  assert.equal(looksLikeTechnicalTitle('ISBN Search'), true);
+  assert.equal(looksLikeTechnicalTitle('Find Any Book'), true);
+  assert.equal(looksLikeTechnicalTitle('Search Barcodestock'), true);
+  assert.equal(looksLikeTechnicalTitle('Lookup & ISBN Search'), true);
+  // A real book keeps its title: genuine words survive.
+  assert.equal(looksLikeTechnicalTitle('Harry Potter and the Prisoner of Azkaban'), false);
+  assert.equal(looksLikeTechnicalTitle('The Little Prince'), false);
+});

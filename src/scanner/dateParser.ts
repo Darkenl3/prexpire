@@ -91,7 +91,7 @@ const MONTHS: Record<string, number> = {
   JUL: 7, JULY: 7, JUIL: 7, LUG: 7, JULI: 7,
   AUG: 8, AUGUST: 8, AOUT: 8, AGO: 8,
   SEP: 9, SEPT: 9, SEPTEMBER: 9, SET: 9,
-  OCT: 10, OCTOBER: 10, OKT: 10, OTT: 10, OKTOBER: 10,
+  OCT: 10, OCTOBER: 10, OKT: 10, OTT: 10, OT: 10, OKTOBER: 10,
   NOV: 11, NOVEMBER: 11,
   DEC: 12, DECEMBER: 12, DEZ: 12, DIC: 12, DEZEMBER: 12,
 };
@@ -158,7 +158,13 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       // "EXP" alone does not match "EXPIRĂ" (the standalone guard), so the
       // stripped form needs its own branch — plus the "use by"/"best before"
       // phrases and "data expirării".
-      '|EXPIRA|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII',
+      '|EXPIRA|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII' +
+      // Italian: "scadenza" (expiry) and its pharma abbreviation "SCAD." —
+      // the label Italian medicine and supplement packaging prints beside
+      // the date (often the only word there; the hourglass-style icons are
+      // product design, not reliable OCR text). SCADENZA is listed first so
+      // the full word wins over the abbreviation at the same position.
+      '|SCADENZA|SCAD\\.?',
   },
   {
     kind: 'manufacture',
@@ -275,6 +281,10 @@ type Pattern = {
   re: RegExp;
   // Only used when an expiry label sits right before the date (too easy to confuse otherwise).
   labelledOnly?: boolean;
+  // Bare compact stamps only count when they stand ALONE in their line: a
+  // line carrying other long digit runs is a barcode or serial number, and
+  // its digit groups are not dates ("9 010437 034685").
+  isolatedOnly?: boolean;
   read: (m: RegExpExecArray, opts: ParseOptions) => Interpretation[];
 };
 
@@ -409,7 +419,62 @@ const PATTERNS: Pattern[] = [
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
     },
   },
+  // EXP 200627 - the 6-digit dot-matrix stamp (no separators at all): day,
+  // month, two-digit year in either order. Only right after an expiry label
+  // does the past also read; see the bare variant below for why.
+  {
+    re: new RegExp(`${NB}(\\d{2})(\\d{2})(\\d{2})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m, opts) => compact6(m[0], opts),
+  },
+  // 200627 with NO label: the same stamp read bare. Only FUTURE dates count
+  // — an unlabelled past 6-digit token is a lot or batch code far more often
+  // than an expiry worth tracking, and a definite expiry the user means to
+  // save is ahead of today virtually always. Both day/month orders survive
+  // (preferred order first) so the save sheet can ask or preselect.
+  {
+    re: new RegExp(`${NB}(\\d{2})(\\d{2})(\\d{2})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => compact6(m[0], opts).filter((i) => i.iso >= isoToday(opts.today)),
+  },
+  // EXP 20627 - the 5-digit stamp: the printer dropped the month's leading
+  // zero, so the token is day, SINGLE-digit month, year ("20627" = 20.6.27
+  // = 20 June 2027). Labelled variant reads any in-range date.
+  {
+    re: new RegExp(`${NB}(\\d{5})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m, opts) => compact5(m[0], opts),
+  },
+  // 20627 bare, future-only (same reasoning as the bare 6-digit form: a past
+  // unlabelled 5-digit token is a lot code, not an expiry). The single-digit
+  // month makes the split genuinely ambiguous (20.6.27 vs 2.06.27), so both
+  // readings survive with the preferred order first and the save sheet asks.
+  {
+    re: new RegExp(`${NB}(\\d{5})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => compact5(m[0], opts).filter((i) => i.iso >= isoToday(opts.today)),
+  },
 ];
+
+// The 6-digit no-separator stamp: DDMMYY or MMDDYY (both two-digit years).
+function compact6(digits: string, opts: ParseOptions): Interpretation[] {
+  const year = makeYear(digits.slice(4));
+  const dmy = toDay(year, Number(digits.slice(2, 4)), Number(digits.slice(0, 2)));
+  const mdy = toDay(year, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)));
+  if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+  return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+}
+
+// The 5-digit no-separator stamp: day, single-digit month, year (DDMYY), or
+// month, day, year when the DAY was the single digit (MDDYY). Exactly one of
+// the two splits has a valid calendar most of the time; both valid keeps both.
+function compact5(digits: string, opts: ParseOptions): Interpretation[] {
+  const year = makeYear(digits.slice(3));
+  const dmy = toDay(year, Number(digits[2]), Number(digits.slice(0, 2)));
+  const mdy = toDay(year, Number(digits[0]), Number(digits.slice(1, 3)));
+  if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+  return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+}
 
 function findLabels(line: string): FoundLabel[] {
   const out: FoundLabel[] = [];
@@ -440,6 +505,13 @@ function findDates(line: string, opts: ParseOptions, expiryLabelEnds: number[]):
         const before = line.slice(0, span.start);
         const labelled = expiryLabelEnds.some((end) => end <= span.start && /^[\s:.\-]*$/.test(before.slice(end)));
         if (!labelled) continue;
+      }
+      if (p.isolatedOnly) {
+        // A bare compact stamp only reads as a date when it stands ALONE:
+        // with other long digit runs in the line, this is a barcode or a
+        // serial number whose groups happen to parse ("9 010437 034685").
+        const rest = line.slice(0, span.start) + ' ' + line.slice(span.end);
+        if (/\d{4,}/.test(rest)) continue;
       }
       const interpretations = p.read(m, opts).filter((i) => inRange(i, opts.today));
       taken.push(span);
@@ -508,7 +580,35 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
       // The nearest label before the date on this line, unless another date sits between them.
       const before = labels.filter((l) => l.end <= d.start && !valid.some((o) => o !== d && o.start >= l.end && o.end <= d.start));
       let label: FoundLabel | undefined = before[before.length - 1];
-      if (!label && carried.length) label = carried.length === valid.length ? carried[i] : carried[carried.length - 1];
+      let carriedLabel = false;
+      if (!label && carried.length) {
+        label = carried.length === valid.length ? carried[i] : carried[carried.length - 1];
+        carriedLabel = true;
+      }
+      // A FUTURE date can never be a production date — nothing is
+      // manufactured ahead of today — and a future LOT pairing is equally
+      // wrong. But only when the label is NOT in its canonical "LABEL
+      // <subject>" position at the START of its line: a manufacture/lot
+      // label that opens its line governs what follows it ("PACKED ON 28
+      // OCT" for same-day packing, "LOT 27/10/2026" for tomorrow's lot
+      // stamp) — those stay production codes and never leak into the expiry
+      // pool. When the label was CARRIED over from another line (OCR line
+      // joins) or sits mid-line behind its own real subject ("25F0684 LOT
+      // 2028/05" — the LOT governs the code printed before it, not the
+      // future date printed after), attaching it to a future date is the
+      // mistake: the candidate falls back to unlabelled — it still reaches
+      // the expiry pool, the save sheet asks the user to check — while the
+      // scanner can never again call a future date "a production date" (the
+      // 2028/05 medicine-bottle case, whose classification used to flip with
+      // every frame's OCR).
+      if (
+        label &&
+        (label.kind === 'manufacture' || label.kind === 'lot') &&
+        (carriedLabel || label.start > 0) &&
+        d.interpretations[0].iso > isoToday(opts.today)
+      ) {
+        label = undefined;
+      }
       candidates.push({
         raw: d.raw,
         line: lineNo,
