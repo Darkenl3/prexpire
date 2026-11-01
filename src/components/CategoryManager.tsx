@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
-import { CATEGORY_ICONS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
+import { CATEGORY_ICONS, CATEGORY_ICON_LABELS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
 import { IconArt } from './IconArt';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
@@ -240,7 +240,7 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
                     scaleTo={0.97}
                     accessibilityRole="radio"
                     aria-checked={on}
-                    accessibilityLabel={`Icon ${ic}`}
+                    accessibilityLabel={`Icon: ${CATEGORY_ICON_LABELS[ic]}`}
                     style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
                   >
                     <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.scanInk : c.textMuted} />

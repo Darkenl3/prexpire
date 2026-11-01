@@ -46,58 +46,71 @@ export const CUSTOM_TINTS: Tint[] = [
   'slate',
 ];
 
-// The icon menu for new categories: a consistent outline set from Ionicons,
-// grouped by what people actually track - groceries and food first, then home
-// and personal care, then tech and everything else. Every name is verified
+// The icon menu for new categories. Every choice stands for a WHOLE group of
+// things people track (Pets, Clothes, Car…), never a single product (an egg,
+// a pizza): a category is a folder, and its picture should say what kind of
+// folder it is. Clean outline glyphs from Ionicons in the picker; the folder's
+// tile shows the matching illustration (components/IconArt.tsx). Grouped as
+// food and drink, home and care, then everything else. Every name is verified
 // against the installed glyph map, so the picker never renders a blank tile.
+// Folders saved with an icon that is no longer offered keep it (and its art).
 export const CATEGORY_ICONS = [
-  // Groceries and food
+  // Food and drink
   'nutrition-outline',
-  'leaf-outline',
-  'egg-outline',
-  'fish-outline',
-  'fast-food-outline',
-  'pizza-outline',
-  'ice-cream-outline',
   'snow-outline',
-  'wine-outline',
-  'cafe-outline',
   'pint-outline',
-  'water-outline',
+  'cafe-outline',
+  'fast-food-outline',
   'basket-outline',
-  'cube-outline',
-  'archive-outline',
   // Home and care
   'home-outline',
   'restaurant-outline',
-  'brush-outline',
-  'color-fill-outline',
   'sparkles-outline',
+  'color-fill-outline',
+  'leaf-outline',
+  'paw-outline',
   'shirt-outline',
   'eyedrop-outline',
-  'flower-outline',
-  'rose-outline',
   'medkit-outline',
-  'bandage-outline',
-  'thermometer-outline',
-  'balloon-outline',
-  'paw-outline',
-  // Tech and everything else
-  'battery-charging-outline',
-  'hardware-chip-outline',
-  'bulb-outline',
-  'tv-outline',
-  'laptop-outline',
-  'headset-outline',
-  'watch-outline',
+  // Everything else
   'car-outline',
-  'key-outline',
+  'battery-charging-outline',
+  'laptop-outline',
   'book-outline',
   'pricetag-outline',
   'gift-outline',
   'globe-outline',
+  'archive-outline',
   'folder-outline',
 ] as const;
+
+// What each choice means, read out by screen readers in the picker.
+export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], string> = {
+  'nutrition-outline': 'Fruit and vegetables',
+  'snow-outline': 'Frozen',
+  'pint-outline': 'Drinks',
+  'cafe-outline': 'Coffee and tea',
+  'fast-food-outline': 'Ready meals',
+  'basket-outline': 'Groceries',
+  'home-outline': 'Home',
+  'restaurant-outline': 'Kitchen',
+  'sparkles-outline': 'Cleaning',
+  'color-fill-outline': 'DIY and paint',
+  'leaf-outline': 'Garden and plants',
+  'paw-outline': 'Pets',
+  'shirt-outline': 'Clothes',
+  'eyedrop-outline': 'Beauty',
+  'medkit-outline': 'First aid',
+  'car-outline': 'Car',
+  'battery-charging-outline': 'Batteries',
+  'laptop-outline': 'Electronics',
+  'book-outline': 'Documents',
+  'pricetag-outline': 'Vouchers and coupons',
+  'gift-outline': 'Gifts',
+  'globe-outline': 'Travel',
+  'archive-outline': 'Storage',
+  'folder-outline': 'Other',
+};
 
 // The default pick for a new category: a neutral folder.
 export const DEFAULT_CATEGORY_ICON = 'folder-outline';
