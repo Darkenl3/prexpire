@@ -17,6 +17,7 @@ import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
 import { IconArt } from '../components/IconArt';
 import { SmallButton } from '../components/SettingsRows';
+import { FadeIn } from '../components/Press';
 
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
@@ -34,6 +35,12 @@ function categoryArt(art: ArtKey, size: number) {
       return <AddArt size={0.82 * size} />;
   }
 }
+
+// How many rows of category tiles Home shows before collapsing: on a phone
+// that is a 3-column, 2-row grid (the last slot of the second row is reserved
+// for the Add-category tile). Beyond it, the folders wait behind the
+// "View all" action beside the section heading.
+const COLLAPSED_ROWS = 2;
 
 // How many items "Coming up next" shows, soonest first.
 const UPCOMING_COUNT = 4;
@@ -95,7 +102,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     if (w !== measuredGrid) setMeasuredGrid(w);
   };
   const gridWidth = measuredGrid || leftWidth;
-  const { tileWidth } = gridFor(gridWidth, gridGap, 100);
+  const { columns, tileWidth } = gridFor(gridWidth, gridGap, 100);
   const compact = tileWidth < 112 || layout.short;
 
   // The grid in order: the built-ins the user keeps, then their own folders,
@@ -103,9 +110,12 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const keptBuiltins = categories.filter((x) => x.tint !== 'add' && !removed.includes(x.id));
   const addTile = categories.find((x) => x.tint === 'add');
 
-  // Every category the user keeps is on Home, always: a folder they add
-  // appears right away (it used to land behind a "View all" once the grid
-  // passed two rows, which on a phone was the very first folder).
+  // A long grid collapses to two full rows; the folders beyond them wait
+  // behind the "View all" action in the section heading. Add always stays
+  // visible (its slot is reserved), so it is reachable and last whatever the
+  // user's folder count. Expanding never reorders or duplicates anything -
+  // the same array is simply shown in full.
+  const [gridExpanded, setGridExpanded] = useState(false);
   const catTiles = [
     ...keptBuiltins.map((t) => ({
       key: t.id,
@@ -128,6 +138,11 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
       onPress: () => go(`category:${cat.id}`),
     })),
   ];
+  // When collapsed, the last visible category slot is reserved for Add, so
+  // the collapsed grid is always exactly COLLAPSED_ROWS full rows.
+  const cap = columns * COLLAPSED_ROWS;
+  const overflow = catTiles.length + 1 > cap;
+  const shownCats = gridExpanded || !overflow ? catTiles : catTiles.slice(0, cap - 1);
 
   const bottomClearance = NAV_HEIGHT + navOffset(insets.bottom) + 16;
 
@@ -155,7 +170,22 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
 
   const categorySection = (
     <>
-      <SectionHeader title="Your categories" />
+      {/* The expansion control lives in the heading itself: "View all" only
+          appears when there are actually more categories than the collapsed
+          grid shows, and becomes "Show less" once expanded. With few enough
+          categories there is no control at all. */}
+      <SectionHeader
+        title="Your categories"
+        action={overflow ? (gridExpanded ? 'Show less' : 'View all') : undefined}
+        actionLabel={overflow ? (gridExpanded ? 'Show fewer categories' : `Show all ${catTiles.length} categories`) : undefined}
+        onAction={
+          overflow
+            ? () => {
+                setGridExpanded((e) => !e);
+              }
+            : undefined
+        }
+      />
       {catTiles.length === 0 ? (
         // Every category removed and none added: a helpful empty state with
         // the action to create the first one (no placeholder tiles).
@@ -166,19 +196,24 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         </View>
       ) : (
         <View style={[c.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
-          {catTiles.map((tile) => (
-            <CategoryTile
-              key={tile.key}
-              tint={tile.tint}
-              width={tileWidth}
-              name={tile.name}
-              sub={tile.sub}
-              status={tile.status}
-              art={tile.art}
-              compact={compact}
-              onPress={tile.onPress}
-            />
-          ))}
+          {shownCats.map((tile, i) => {
+            const el = (
+              <CategoryTile
+                key={tile.key}
+                tint={tile.tint}
+                width={tileWidth}
+                name={tile.name}
+                sub={tile.sub}
+                status={tile.status}
+                art={tile.art}
+                compact={compact}
+                onPress={tile.onPress}
+              />
+            );
+            // Tiles revealed by expanding fade in gently; the always-visible
+            // ones (and a grid that never overflows) render as before.
+            return overflow && gridExpanded && i >= cap - 1 ? <FadeIn key={tile.key}>{el}</FadeIn> : el;
+          })}
           {/* Add category is always the last tile in the order. */}
           {addTile && (
             <CategoryTile
