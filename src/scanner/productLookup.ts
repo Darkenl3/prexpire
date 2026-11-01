@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { guessCategory } from './categoryGuess';
-import { PRODUCT_RE, looksLikeTechnicalTitle, titleCase } from './productGuess';
+import { PRODUCT_RE, formatProductName, looksLikeTechnicalTitle, titleCase } from './productGuess';
 
 // Barcode → product lookup across the free, keyless PUBLIC barcode databases —
 // no API keys, no accounts, no AI, just plain HTTPS GETs. One decoded barcode is
@@ -82,13 +82,15 @@ async function fetchJson(url: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<N
 }
 
 // "Brand Product" without repeating the brand when the name already starts
-// with it (port of the previous inline Open Food Facts logic).
+// with it (port of the previous inline Open Food Facts logic). The composed
+// name goes through the SHARED formatter (dedup, dangling marketing tails,
+// word-boundary cap) so every source produces the same style of name.
 function composeName(brand: string, productName: string): string {
-  return (
+  const composed =
     brand && productName && productName.toLowerCase().startsWith(brand.toLowerCase())
       ? productName
-      : [brand, productName].filter(Boolean).join(' ')
-  ).slice(0, 80);
+      : [brand, productName].filter(Boolean).join(' ');
+  return formatProductName(composed);
 }
 
 // --- The Open*Facts family (Open Food / Beauty / Pet Food / Products Facts) ---
@@ -329,12 +331,13 @@ export function cleanWebCandidate(raw: string, code: string): string | null {
     .trim();
   if (!t) return null;
   // Page furniture that masquerades as a short name on empty result pages
-  // ("no results here", "see more results"): a product name made ENTIRELY of
-  // furniture words never exists.
+  // ("no results here", "see more results", "Report & Lookup 500m+ Products"):
+  // a product name made ENTIRELY of furniture words never exists.
   const FURNITURE = new Set([
     'no', 'not', 'results', 'result', 'found', 'see', 'search', 'next', 'previous',
     'page', 'pages', 'more', 'images', 'videos', 'news', 'shopping', 'here',
     'matches', 'match', 'available', 'web', 'site', 'website', 'all', 'any', 'other',
+    'report', 'reports', 'lookup', 'lookups', 'million', 'millions', 'products',
   ]);
   if (t.split(' ').every((w) => FURNITURE.has(w.toLowerCase()))) return null;
   const words = t.split(' ');
@@ -346,10 +349,11 @@ export function cleanWebCandidate(raw: string, code: string): string | null {
   if (!solid || letters / solid < 0.5) return null;
   // Pure numbers, prices and sizes are not names either.
   if (words.every((w) => /^[\d.,$€£₴%+x]+$/i.test(w))) return null;
-  // Search-page furniture ("Lookup & ISBN Search") masquerading as a short
-  // name: a title made entirely of lookup jargon never names a product.
+  // Search-page furniture ("Lookup & ISBN Search", "Report & Lookup 500m+
+  // Products") masquerading as a short name: a title made entirely of lookup
+  // jargon never names a product.
   if (looksLikeTechnicalTitle(t)) return null;
-  return t.slice(0, 80);
+  return formatProductName(t, 80);
 }
 
 // Normalized form for cross-result agreement: lowercase letters and digits
@@ -404,7 +408,7 @@ export function mineProductName(results: WebResult[], code: string): string | nu
   }
   if (!best || best.score < 3) return null; // a lone short title with zero agreement is not evidence
   if (looksLikeTechnicalTitle(best.text)) return null; // never let page furniture win the vote
-  return titleCase(best.text).slice(0, 80);
+  return formatProductName(titleCase(best.text));
 }
 
 // The whole web stage: search the number, mine the name. Injected fetcher for

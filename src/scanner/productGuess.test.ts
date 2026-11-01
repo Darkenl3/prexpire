@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { looksLikeTechnicalTitle, guessProduct } from './productGuess.ts';
+import { formatProductName, looksLikeTechnicalTitle, guessProduct } from './productGuess.ts';
 
 // Furniture guard for product names: internal lookup/search labels ("Search
 // Barcodestock", "Lookup & ISBN Search") must NEVER become product names on
@@ -43,4 +43,29 @@ test('guessProduct still finds the printed brand line', () => {
   const guess = guessProduct(['BEST BEFORE 06.03.2027', 'bett\u2019r', 'GLUTEN FREE OATS', '800233 686905']);
   assert.ok(guess);
   assert.match(guess.name.toLowerCase(), /oats/);
+});
+
+test('looksLikeTechnicalTitle rejects count-token furniture ("Report & Lookup 500m+ Products")', () => {
+  // The regression from the user's screenshots: a barcode-directory tagline
+  // with a magnitude count ("500m+") slipped past the split-word filter.
+  assert.ok(looksLikeTechnicalTitle('Report & Lookup 500m+ Products'));
+  assert.ok(looksLikeTechnicalTitle('Report and Lookup 300k+ Barcodes'));
+  assert.ok(looksLikeTechnicalTitle('Lookup 2bn Products'));
+  // A dose next to a real word is NOT furniture ("45 Cpr" names a medicine).
+  assert.ok(!looksLikeTechnicalTitle('Aboca Neo Bianacid 45 Cpr'));
+  assert.ok(!looksLikeTechnicalTitle('Nurofen 200mg'));
+});
+
+test('formatProductName trims dangling marketing tails and duplicate brands', () => {
+  // The Aboca regression: a snippet cut mid-clause left "Against" dangling.
+  assert.equal(formatProductName('Aboca Neo Bianacid 45 Cpr Against'), 'Aboca Neo Bianacid 45 Cpr');
+  assert.equal(formatProductName('Neo Bianacid 45 Cpr contro'), 'Neo Bianacid 45 Cpr');
+  // Repeated brand collapses.
+  assert.equal(formatProductName('Alpro Alpro Soya Drink'), 'Alpro Soya Drink');
+  // Long names cap at a word boundary without ellipsis, keeping dosage.
+  const long = 'Aboca Neo Bianacid Compresse Gastroprotezione Compresse Rivestite con Estratti Vegetali per il Bruciore di Stomaco';
+  const cut = formatProductName(long, 64);
+  assert.ok(cut.length <= 64 && !cut.endsWith(' ') && !cut.includes('\u2026'));
+  // A tail trimmed by the length cut is not left dangling either.
+  assert.ok(!['for', 'with', 'against', 'per'].includes(cut.split(' ').pop() ?? ''));
 });

@@ -1,5 +1,6 @@
 import type { Ref } from 'react';
 import type { Rect, Size } from './cropMath';
+import type { DayOrder } from './dateParser';
 
 export type FrameGeometry = { view: Size; frame: Rect };
 
@@ -8,12 +9,27 @@ export type BarcodeBounds = { origin?: { x?: number; y?: number }; size?: { widt
 
 // What one scanning pass read from the area inside the frame: OCR text lines
 // and/or a decoded product barcode. Both come from the frame's exact region,
-// never from the whole camera image.
-export type FrameReading = { lines: string[]; barcode: string | null };
+// never from the whole camera image. `dark` is the IMAGE-based brightness
+// verdict (mean luminance of the crop below the too-dark threshold): it lets
+// the loop say "Too dark. Improve lighting." even while the OCR still reads
+// fragments of text — the no-text case it used to rely on is only a proxy.
+// Optional: the native build measures through its own path and may omit it.
+export type FrameReading = { lines: string[]; barcode: string | null; dark?: boolean };
 
 // What the scan loop needs from the camera: read the area inside the frame once.
 export type ScannerCameraHandle = {
-  readFrame: (geometry: FrameGeometry | null, what: { text: boolean; barcode: boolean }) => Promise<FrameReading>;
+  readFrame: (
+    geometry: FrameGeometry | null,
+    what: {
+      text: boolean;
+      barcode: boolean;
+      // The caller's day/month order for ambiguous numeric dates. On the web it
+      // lets the camera layer stop after its FIRST preprocessing variant
+      // already read a confirmed date (the second variant is only worth its
+      // latency when the first found nothing); the native build ignores it.
+      preferredOrder?: DayOrder;
+    },
+  ) => Promise<FrameReading>;
 };
 
 export type CameraErrorKind = 'denied' | 'unavailable' | 'unsupported' | 'ocr' | 'other';

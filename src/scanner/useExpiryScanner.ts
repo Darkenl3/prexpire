@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { parseExpiry, type DayOrder, type ScanParseResult } from './dateParser';
-import type { FrameGeometry, ScannerCameraHandle } from './ScannerCamera.types';
+import type { FrameGeometry, FrameReading, ScannerCameraHandle } from './ScannerCamera.types';
 
 export type Detection = Extract<ScanParseResult, { kind: 'found' }>;
 
@@ -39,12 +39,22 @@ const AGREEMENT_WINDOW = 3;
 const AGREEMENT_NEEDED = 2;
 // Misses before a hint replaces "Keep the date inside the frame".
 const MISSES_BEFORE_HINT = 3;
+// Misses before the loop reports `stuck`: roughly 20 seconds of live scanning
+// with no confirmed date — the point where automatic recognition has had a
+// fair chance and the caller offers manual entry (online as well as offline).
+const STUCK_MISSES = 14;
 
 export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBarcode, preferredOrder }: Options) {
   const [state, setState] = useState<ScannerState>({ status: 'scanning', hint: 'aim' });
+  // True once the date stage has failed for long enough (STUCK_MISSES passes)
+  // that manual entry should be offered even while online.
+  const [stuck, setStuck] = useState(false);
   const stateRef = useRef(state);
   const history = useRef<(string | null)[]>([]);
   const misses = useRef(0);
+  // stuck as a ref too, so the pass closure and reset() always touch the same
+  // flag without resubscribing the loop.
+  const stuckRef = useRef(false);
   // Bumped by reset() so a pass that was already running when the user tapped "Scan again"
   // cannot publish a stale detection.
   const generation = useRef(0);
@@ -61,8 +71,10 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     generation.current += 1;
     history.current = [];
     misses.current = 0;
+    stuckRef.current = false;
     stateRef.current = { status: 'scanning', hint: 'aim' };
     setState(stateRef.current);
+    setStuck(false);
   }, []);
 
   const detected = state.status === 'detected';
@@ -80,14 +92,16 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     const pass = async () => {
       const cam = camera.current;
       if (!cam) return schedule();
-      let reading: { lines: string[]; barcode: string | null } | null = null;
+      let reading: FrameReading | null = null;
       let failed = false;
       try {
         // The frame IS the region of interest: the camera crops to the frame's
         // exact coordinates, so only content inside the brackets is read. Text
         // (the expiry date) is ALWAYS read; barcodes ride along in the same
-        // pass so the product stage never delays or blocks the date.
-        reading = await cam.readFrame(geometry.current, { text: true, barcode: readBarcodes });
+        // pass so the product stage never delays or blocks the date. The
+        // caller's day/month order rides along so the camera layer can stop
+        // after its first preprocessing variant when that already read a date.
+        reading = await cam.readFrame(geometry.current, { text: true, barcode: readBarcodes, preferredOrder: order });
       } catch {
         // Capture can fail while the camera is reconfiguring (rotation, backgrounding).
         failed = true;
@@ -113,10 +127,21 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
       } else {
         history.current = [...history.current, null].slice(-AGREEMENT_WINDOW);
         misses.current += 1;
+        if (misses.current >= STUCK_MISSES) {
+          // Automatic recognition has had its fair chance: the caller offers
+          // manual entry (online too — offline it already did).
+          if (!stuckRef.current) {
+            stuckRef.current = true;
+            setStuck(true);
+          }
+        }
         if (misses.current >= MISSES_BEFORE_HINT) {
+          // The IMAGE's own brightness first (measured by the camera layer),
+          // then the no-text proxy: a dark frame that still reads fragments
+          // of text needs LIGHT, not a steadier aim.
           const hint: ScanHint = failed
             ? 'ocr-error'
-            : result?.hint === 'no-text'
+            : reading?.dark || result?.hint === 'no-text'
               ? 'low-light'
               : result?.hint === 'manufacture-only'
                 ? 'manufacture'
@@ -145,5 +170,5 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     };
   }, [enabled, detected, readBarcodes, camera, geometry, publish, preferredOrder]);
 
-  return { state, reset };
+  return { state, reset, stuck };
 }

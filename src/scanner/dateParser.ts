@@ -103,7 +103,7 @@ const MONTH_ALT = Object.keys(MONTHS)
 // Labels, longest phrases first so "BEST BEFORE END" wins over "BEST BEFORE".
 const LABELS: { kind: LabelKind; pattern: string }[] = [
   { kind: 'expiry', pattern: 'BEST\\s*BEFORE\\s*END|BEST\\s*BEFORE|BEST\\s*BY|BEST\\s*IF\\s*USED\\s*BY|USE\\s*BEFORE|USE\\s*BY' },
-  { kind: 'expiry', pattern: 'EXPIRY\\s*DATE|EXPIRATION\\s*DATE|EXP\\.?\\s*DATE|EXP\\.?\\s*DT|EXPIRY|EXPIRATION|EXPIRES|EXPIRE|EXPD|EXP|BBE|B\\s*/\\s*B|BB|E\\s*/\\s*D' },
+  { kind: 'expiry', pattern: 'EXPIRY\\s*DATE|EXPIRATION\\s*DATE|EXP\\.?\\s*DATE|EXP\\.?\\s*DT|EXPIRY|EXPIRATION|EXPIRES|EXPIRE|EXPD|EXP|BBE|B\\s*/\\s*B|BB|E\\s*/\\s*D|E\\.?\\s*D' },
   // The standard expiry phrases of the other EU packaging languages, as they
   // read after accent stripping (diacritics are removed in normalizeLine, so
   // these patterns stay plain ASCII). Imported goods carry these next to the
@@ -119,11 +119,85 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       '|SPOTRBUJTE\\s*DO|DO\\s*SPOTREBY|MINIMALNA\\s*TRVANLIVOST' +
       '|NAJLEPIEJ\\s*SPOZYT\\s*PRZED|PRZYDATNOSC\\s*DO\\s*SPOZYCIA' +
       '|CONSUMIR(?:\\s*PREFERENTEMENTE)?\\s*ANTES\\s*DEL?|CADUCA(?:\\s*EL)?|CONSUMIR\\s*ANTES\\s*DE' +
-      '|DA\\s*CONSUMARSI(?:\\s*ENTRO)?|CONSUMARE\\s*ENTRO|FELHASZNALHATO(?:\\s*DO)?|MINOSSEGMEGORZES(?:\\s*VEG)?',
+      '|DA\\s*CONSUMARSI(?:\\s*ENTRO)?|CONSUMARE\\s*ENTRO|FELHASZNALHATO(?:\\s*DO)?|MINOSSEGMEGORZES(?:\\s*VEG)?' +
+      // Turkish: "son kullanma tarihi" (expiry date) and its abbreviations, as
+      // printed next to dates on Turkish goods (SKT on one line, the date on
+      // the next — the label-only line join below already covers that).
+      '|SON\\s*KULLANMA\\s*TARIHI|SON\\s*KUL\\.?\\s*TAR\\.?|SKT' +
+      // Bulgarian/Macedonian: "годен до" (valid until). Cyrillic survives
+      // normalizeLine's accent strip, and OCR engines that read Cyrillic at
+      // all deliver it upper-cased, which the label match already expects.
+      '|ГОДЕН\\s*ДО' +
+      // East-Asian expiry phrases (only reachable when the OCR actually reads
+      // CJK - Apple Vision does with the language packs present; the web OCR
+      // returns such dates in their numeric forms, which the patterns read
+      // without needing the words): Japanese shomikigen / shohikigen,
+      // Chinese baozhiqi / daoqiri, Korean yutonggihan.
+      // Written in POST-mapping form: the 年/月/日 markers inside these words
+      // are consumed as date separators before labels are matched, so the
+      // patterns spell the words without them (到期日→"到期-",
+      // 製造年月日→"製造---", 生产日期→"生产--", 제조일자→"제조-").
+      '|賞味期限|消費期限|保质期|保質期|到期|有效期限|유통기한|품질\\s*유지기한' +
+      // Russian: "срок годности" (the standard shelf-life/expiry label) and
+      // "годен до" (valid until — shared with Bulgarian). Cyrillic survives
+      // normalizeLine untouched and upper-cases correctly.
+      '|СРОК\\s*ГОДНОСТИ|ТЕРМ[ИІ]Н\\s*ГОДНОСТ[ИІ]' +
+      // Ukrainian: "термін придатності" (shelf life/expiry — the Cyrillic І is
+      // Ukraine's own letter, so both it and the Russian-style И are covered)
+      // and "вжити до" / "краще вжити до" (use by / best used by).
+      '|ТЕРМ[ИІ]Н\\s*ПРИДАТНОСТ[ИІ]|ВЖИТИ\\s*ДО|КРАЩЕ\\s*ВЖИТИ\\s*ДО' +
+      // Hebrew: "תאריך תפוגה" (expiry date) and "לשימוש עד" (use by) — the two
+      // labels Israeli packaging prints beside DD/MM/YYYY dates. Only the
+      // native OCR path reads Hebrew; the digits themselves are read by every
+      // engine either way.
+      '|תאריך\\s*תפוגה|לשימוש\\s*עד' +
+      // Arabic: "تاريخ انتهاء الصلاحية" (expiry date), the label of Arabic
+      // packaging across the Middle East.
+      '|تاريخ\\s*انتهاء\\s*الصلاحية' +
+      // Romanian, as it reads AFTER accent stripping (ă→a, ș→s, ț→t, î→i):
+      // "EXP" alone does not match "EXPIRĂ" (the standalone guard), so the
+      // stripped form needs its own branch — plus the "use by"/"best before"
+      // phrases and "data expirării".
+      '|EXPIRA|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII',
   },
-  { kind: 'manufacture', pattern: 'DATE\\s*OF\\s*MANUFACTURE|DATE\\s*OF\\s*MFG|MANUFACTURED(?:\\s*ON)?|MANUFACTURE|MANUF|MFG\\.?\\s*DATE|MFG|MFD(?:\\s*ON)?|MFR|PRODUCTION\\s*DATE|PRODUCED(?:\\s*ON)?|PROD\\.?\\s*DATE|PROD|PACKED(?:\\s*ON)?|PACK\\s*DATE|PKD|MADE\\s*ON|DOM|P\\s*/\\s*D|PD' },
+  {
+    kind: 'manufacture',
+    pattern:
+      'DATE\\s*OF\\s*MANUFACTURE|DATE\\s*OF\\s*MFG|MANUFACTURED(?:\\s*ON)?|MANUFACTURE|MANUF|MFG\\.?\\s*DATE|MFG|MFD(?:\\s*ON)?|MFR|PRODUCTION\\s*DATE|PRODUCED(?:\\s*ON)?|PROD\\.?\\s*DATE|PROD|PACKED(?:\\s*ON)?|PACK\\s*DATE|PKD|MADE\\s*ON|DOM|P\\s*/\\s*D|PD' +
+      // Turkish production date ("üretim tarihi", upper-cased and unaccented
+      // by normalizeLine): the OTHER date on Turkish packaging, which must not
+      // be mistaken for the expiry.
+      '|URETIM\\s*TARIHI|URET[II]M\\s*TAR\\.?' +
+      // East-Asian production dates: Japanese seizo nengappi, Chinese
+      // shengchan riqi, Korean jego ilja - the other date on East-Asian goods.
+      '|製造|生産|生产|제조' +
+      // Russian production date: "дата изготовления" / "изготовлено" (the bare
+      // stem covers every inflection — Cyrillic letters pass the [A-Z] word
+      // guards, and every word grown on this stem still means "manufactured").
+      '|ДАТА\\s*ИЗГОТОВЛЕНИЯ|ИЗГОТОВЛЕН' +
+      // Ukrainian production date: "дата виготовлення" / "виготовлено", and
+      // the synonym "вироблено" (made) — the date that must never become the
+      // expiry on Ukrainian packaging.
+      '|ДАТА\\s*ВИГОТОВЛЕННЯ|ДАТА\\s*ВИРОБЛЕННЯ|ВИГОТОВЛЕН|ВИРОБЛЕН' +
+      // Hebrew production date: "תאריך ייצור" — the other date next to
+      // תאריך תפוגה on Israeli packaging.
+      '|תאריך\\s*ייצור' +
+      // Arabic production date: "تاريخ الإنتاج" and its hamza-less spelling
+      // "تاريخ الانتاج" — both are printed, so both are listed.
+      '|تاريخ\\s*الإنتاج|تاريخ\\s*الانتاج' +
+      // Romanian production date, post-accent-strip: "data fabricației" and
+      // "data de fabricație".
+      '|DATA\\s*FABRICATIEI|DATA\\s*DE\\s*FABRICATIE',
+  },
   { kind: 'lot', pattern: 'LOT\\s*NO|LOT|BATCH\\s*NO|BATCH|B\\.?\\s*NO|L\\.?\\s*NO' },
   { kind: 'sell', pattern: 'SELL\\s*BY|DISPLAY\\s*UNTIL' },
+  {
+    // Dot-matrix seals print the expiry label compressed to initials with
+    // full stops ("B.B.T" / "B.B.E" style, Best Before End in another
+    // spelling); the dotted forms would never match the plain BB above.
+    kind: 'expiry',
+    pattern: 'B\\s*\\.\\s*B\\s*\\.\\s*[ET]',
+  },
 ];
 
 // Label words must stand alone: "EXP" but not "EXPLORE", "BB" but not "BBQ".
@@ -149,8 +223,25 @@ function normalizeDigits(line: string): string {
 
 export function normalizeLine(line: string): string {
   const upper = line
+    // East-Asian date markers become separators FIRST — before the NFD step,
+    // because Korean Hangul syllables (년/월/일) decompose into jamo under NFD
+    // and would stop matching. "2027年3月15日" and "2027년 03월 15일" collapse
+    // into the plain YYYY-MM-DD shape the patterns already read (a trailing
+    // marker leaves a trailing dash, which the digit guards tolerate).
+    .replace(/[年년]/g, '-')
+    .replace(/[月월]/g, '-')
+    .replace(/[日일]/g, '-')
+    // Full-width digits and punctuation (Japanese packaging) become their
+    // ASCII twins.
+    .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/．/g, '.')
+    .replace(/／/g, '/')
+    .replace(/－/g, '-')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
+    // Recompose: the Korean label syllables (유통기한…) come back as single
+    // characters, which the CJK label patterns are written against.
+    .normalize('NFC')
     .toUpperCase()
     // Dashes and dots that OCR returns as other characters.
     .replace(/[‐-―−]/g, '-')
@@ -207,6 +298,15 @@ const PATTERNS: Pattern[] = [
   // 2026-10-27, 2026/10/27
   {
     re: new RegExp(`${NB}(\\d{4})${SEP}(\\d{1,2})${SEP}(\\d{1,2})${NA}`, 'g'),
+    read: (m) => [toDay(Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
+  },
+  // 2027 03 15 - the year-first print with SPACES instead of separators: how
+  // an OCR that cannot read the CJK markers returns "2027年3月15日" (the
+  // markers vanish, the digits stay), and how some dot-matrix printers stamp
+  // East-Asian goods. Unambiguous by position (the 20xx year leads), so no
+  // day/month question ever arises. Guards mirror the day-first space form.
+  {
+    re: new RegExp(`(?<![0-9.])(20\\d{2})\\s+(\\d{1,2})\\s+(\\d{1,2})(?![0-9])`, 'g'),
     read: (m) => [toDay(Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
   },
   // 27/10/2026, 10/27/2026, 27.10.26
@@ -290,6 +390,25 @@ const PATTERNS: Pattern[] = [
     labelledOnly: true,
     read: (m) => [toDay(Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
   },
+  // EXP 03062027 - the 8-digit day/month-first stamp (no separators at all),
+  // only right after an expiry label and listed AFTER the year-first form so
+  // "20261027" is claimed unambiguously first. Day-first vs month-first reads
+  // exactly like the separator form: the user's preferred order wins the
+  // primary slot, the other survives as an alternative, and the save sheet
+  // asks (or preselects per the user's Date format setting) as usual.
+  {
+    re: new RegExp(`${NB}(\\d{2})(\\d{2})(20\\d{2})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m, opts) => {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const year = Number(m[3]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+    },
+  },
 ];
 
 function findLabels(line: string): FoundLabel[] {
@@ -341,6 +460,19 @@ export function isoToday(today: Date) {
   return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 }
 
+// Continental-European expiry phrases (German, French, Dutch, Italian,
+// Spanish, Portuguese, Polish, Czech/Slovak, Hungarian, the Balkans, the
+// Nordic dates): every market that prints them also writes its dates
+// DAY FIRST. Seeing one next to an ambiguous date (03/04/2027) is packaging
+// evidence from the product's own origin - stronger than the user's regional
+// preference - so the day-first reading becomes the primary interpretation.
+// English labels (BEST BEFORE / USE BY / EXP) stay with the user's preference:
+// English appears on packaging in both day-first and month-first markets.
+// The Cyrillic, Hebrew, Arabic and Romanian phrases join them: Russia,
+// Ukraine, Israel and Romania all print DAY-FIRST dates (DD.MM.YYYY).
+const EU_EXPIRY_LABEL_RE =
+  /HALTBAR|CONSOMMER|HOUDBAAR|UPOTR|SPOTRBUJTE|DO SPOTREBY|NAJLEPIEJ|PRZYDATNOSC|CONSUMIR|CADUCA|CONSUMARSI|CONSUMARE|FELHASZNALHATO|MINOSSEGMEGORZES|ГОДЕН|СРОК ГОДНОСТИ|ТЕРМ[ИІ]Н ГОДНОСТ|ПРИДАТНОСТ|ВЖИТИ ДО|תאריך תפוגה|לשימוש עד|تاريخ انتهاء|A SE CONSUMA|DATA EXPIRARII|EXPIRA/;
+
 // Pulls every date out of the OCR lines and attaches the label that governs it.
 export function extractCandidates(lines: string[], opts: ParseOptions): { candidates: DateCandidate[]; invalid: number } {
   const norm = lines.flatMap((l) => l.split(/\r?\n/)).map(normalizeLine).filter(Boolean);
@@ -353,9 +485,14 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
 
   norm.forEach((line, lineNo) => {
     const labels = findLabels(line);
+    // A continental expiry label on THIS line is origin evidence: an ambiguous
+    // date it governs reads day-first. The saved alternative still lets the
+    // save sheet offer the other reading.
+    const euExpiry = labels.some((l) => l.kind === 'expiry' && EU_EXPIRY_LABEL_RE.test(l.text));
+    const lineOpts = euExpiry && opts.preferredOrder !== 'DMY' ? { ...opts, preferredOrder: 'DMY' as const } : opts;
     const dates = findDates(
       line,
-      opts,
+      lineOpts,
       labels.filter((l) => l.kind === 'expiry').map((l) => l.end),
     );
     const valid = dates.filter((d): d is RawDate => !('invalid' in d));

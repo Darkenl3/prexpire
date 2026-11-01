@@ -21,8 +21,20 @@ function normalizeDigits(line: string): string {
 // copies must stay in sync).
 function normalizeLine(line: string): string {
   const upper = line
+    // Mirror of dateParser's normalizeLine (kept local so this module stays
+    // dependency-free and directly runnable under Node's test runner — the two
+    // copies must stay in sync): the East-Asian mappings run BEFORE the NFD
+    // step for the same reason as there.
+    .replace(/[年년]/g, '-')
+    .replace(/[月월]/g, '-')
+    .replace(/[日일]/g, '-')
+    .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/．/g, '.')
+    .replace(/／/g, '/')
+    .replace(/－/g, '-')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFC')
     .toUpperCase()
     // Dashes and dots that OCR returns as other characters.
     .replace(/[\u2010-\u2015\u2212]/g, '-')
@@ -104,18 +116,21 @@ export function titleCase(text: string): string {
 
 // Search-page and lookup furniture that must NEVER become a product name:
 // result titles like "Lookup & ISBN Search", "ISBN Search", "UPC Item
-// Database", "Barcode Lookup" or "Search Barcodestock" are pages ABOUT codes,
-// not products, and leaked into the pipeline as names more than once. A name
-// made ENTIRELY of these words (plus connectors, site tails and one-word
-// jargon compounds like "barcodestock" or "upcindex") is furniture; any real
-// word ("Nestlé", "Oats") makes it a product name again. Exported so every
-// identification path (the databases, the web-search miner and the shell's
-// saved-catalog loader) filters names through the SAME rule.
+// Database", "Barcode Lookup", "Search Barcodestock" or "Report & Lookup
+// 500m+ Products" are pages ABOUT codes, not products, and leaked into the
+// pipeline as names more than once. A name made ENTIRELY of these words (plus
+// connectors, site tails, one-word jargon compounds like "barcodestock" or
+// "upcindex", and bare count tokens like "500m+" or "300k+") is furniture;
+// any real word ("Nestlé", "Oats", "Aboca") makes it a product name again.
+// Exported so every identification path (the databases, the web-search miner
+// and the shell's saved-catalog loader) filters names through the SAME rule.
 const TECHNICAL_TITLE_WORDS = new Set([
   'lookup', 'lookups', 'search', 'searches', 'searching', 'isbn', 'upc', 'upca', 'ean',
   'gtin', 'barcode', 'barcodes', 'code', 'codes', 'item', 'items', 'product', 'products',
   'find', 'finder', 'database', 'databases', 'directory', 'index', 'results', 'result',
   'api', 'upcitemdb', 'com', 'net', 'org', 'www', 'online', 'free', 'number', 'numbers',
+  'report', 'reports', 'reporting', 'listing', 'listings', 'catalog', 'catalogue',
+  'million', 'millions', 'billion', 'billions',
 ]);
 const TITLE_CONNECTORS = new Set(['&', 'and', 'or', 'for', 'in', 'of', 'with', 'to', 'by', 'the', 'a', 'an', 'at', 'on', 'go']);
 
@@ -130,6 +145,13 @@ export function isJargonCompound(word: string): boolean {
   return JARGON_ROOTS.some((r) => (word.startsWith(r) || word.endsWith(r)) && word.length > r.length);
 }
 
+// A bare count with a magnitude tail — "500m+", "300k+", "2bn", "10+" — is
+// database page furniture ("Report & Lookup 500m+ Products"), never part of a
+// product's own name. Plain doses ("45", "500") only ever sit next to real
+// words ("45 Cpr"), and a name made ONLY of numbers is rejected upstream of
+// this check anyway.
+const COUNT_TOKEN_RE = /^\d+(?:[.,]\d+)?\s*(?:m|k|bn|b|mm)?\+?$/i;
+
 export function looksLikeTechnicalTitle(name: string): boolean {
   const words = name
     .toLowerCase()
@@ -137,7 +159,7 @@ export function looksLikeTechnicalTitle(name: string): boolean {
     .split(/[\s/.-]+/)
     .filter(Boolean);
   if (!words.length) return true;
-  return words.every((w) => TECHNICAL_TITLE_WORDS.has(w) || TITLE_CONNECTORS.has(w) || isJargonCompound(w));
+  return words.every((w) => TECHNICAL_TITLE_WORDS.has(w) || TITLE_CONNECTORS.has(w) || isJargonCompound(w) || COUNT_TOKEN_RE.test(w));
 }
 
 export function guessProduct(lines: string[]): ProductGuess {
@@ -162,19 +184,51 @@ export function guessProduct(lines: string[]): ProductGuess {
     }
   }
 
-  const name = titleCase(combined);
+  const name = formatProductName(titleCase(combined), 48);
   if (!name) return null;
   // Lookup-page furniture never names a product, no matter which path
   // produced it ("Search Barcodestock" once leaked through exactly here).
   if (looksLikeTechnicalTitle(name)) return null;
-  if (name.length > 48) {
-    const words = name.split(' ');
-    let out = '';
-    for (const w of words) {
-      if ((out + ' ' + w).trim().length > 45) break;
-      out = (out + ' ' + w).trim();
-    }
-    return out ? { name: `${out}…` } : null;
-  }
   return { name };
+}
+
+// Words that dangle at the end of a marketing phrase a database or search
+// snippet cut mid-clause: "Aboca Neo Bianacid 45 Cpr Against…" (against
+// heartburn), "... für die ganze Familie" cut to "... for". A product name
+// never ends in one of these.
+const DANGLING_TAILS = new Set([
+  'against', 'for', 'with', 'per', 'from', 'by', 'to', 'da', 'di', 'del', 'della', 'der', 'und', 'and', 'et', 'e',
+  'con', 'contro', 'gegen', 'pour', 'sur', 'on', 'in', 'of', 'the', 'a', 'al', 'alla', 'il', 'la', 'le', 'les',
+  'des', 'du', 'zum', 'zur', 'van', 'de', 'en', 'y', 'o', 'plus', 'mit',
+]);
+
+// The ONE product-name formatter every identification path shares (the
+// barcode databases, the web-search miner, the shell's saved catalog and the
+// label guess): collapses immediately repeated brand tokens ("Alpro Alpro
+// Soja"), drops a dangling marketing tail, and caps the length at a word
+// boundary without ellipsis dots. Not an arbitrary truncation — the
+// distinguishing information (brand, type, dosage, strength) sits at the FRONT
+// of every database name, so a cut, when it happens at all, only removes
+// trailing detail.
+export function formatProductName(raw: string, max = 64): string {
+  let words = raw.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+  if (!words.length) return '';
+  const dedup: string[] = [];
+  for (const w of words) {
+    const last = dedup[dedup.length - 1];
+    if (!last || last.toLowerCase() !== w.toLowerCase()) dedup.push(w);
+  }
+  words = dedup;
+  while (words.length > 1 && DANGLING_TAILS.has(words[words.length - 1].toLowerCase())) words.pop();
+  let t = words.join(' ');
+  if (t.length > max) {
+    const cut = t.slice(0, max);
+    const sp = cut.lastIndexOf(' ');
+    t = (sp > 20 ? cut.slice(0, sp) : cut).trim();
+    // The cut may itself have stranded a connector: trim once more.
+    const parts = t.split(' ');
+    while (parts.length > 1 && DANGLING_TAILS.has(parts[parts.length - 1].toLowerCase())) parts.pop();
+    t = parts.join(' ');
+  }
+  return t;
 }

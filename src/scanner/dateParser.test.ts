@@ -280,3 +280,233 @@ test('versions, weights and decimals before a year do not become dates', () => {
   assert.equal(parseExpiry(['05:10 5 P4'], uk).kind, 'none');
   assert.equal(parseExpiry(['L 61210968'], uk).kind, 'none');
 });
+
+test('photo: Turkish PD/ED pair — ED is the expiry, PD the production date', () => {
+  // The Turkish dot-matrix print style: production date, expiry date and lot
+  // on adjacent short lines. ED (and its dotted/spaced forms) is an expiry
+  // label; PD stays a production label, so its earlier date never wins.
+  const r = found(['PD: 08.23', 'ED: 08.26', 'P.NO: 49.2']);
+  assert.equal(r.primary.iso, '2026-08-31');
+  assert.equal(r.primary.precision, 'month');
+  assert.equal(r.label, 'expiry');
+  // The production date alone reads nothing date-like (its MM/YY form is only
+  // matched after an EXPIRY label): honest "no date", never an expiry.
+  assert.deepEqual(parseExpiry(['PD: 08.23'], uk), { kind: 'none', hint: 'no-date' });
+  // A full production date IS a date candidate, just manufacture-labelled:
+  // "manufacture-only", never an expiry.
+  assert.deepEqual(parseExpiry(['URETIM TARIHI 24.03.21'], uk), { kind: 'none', hint: 'manufacture-only' });
+  // The Turkish expiry phrase upgrades a bare date to a labelled expiry.
+  const skt = found(['SON KULLANMA TARIHI', '08.26']);
+  assert.equal(skt.primary.iso, '2026-08-31');
+  assert.equal(skt.label, 'expiry');
+});
+
+test('photo: B.B.T FEB24 dot-matrix seal reads as February 2024', () => {
+  // The compressed dotted label form ("B.B.T"/"B.B.E") plus a month + 2-digit
+  // year, as dot-matrix seals print them.
+  const r = found(['B.B.T', 'FEB24']);
+  assert.equal(r.primary.iso, '2024-02-29');
+  assert.equal(r.primary.precision, 'month');
+  assert.equal(r.label, 'expiry');
+  // Same on one line.
+  assert.equal(found(['B.B.T FEB24']).primary.iso, '2024-02-29');
+});
+
+test('Bulgarian ГОДЕН ДО is an expiry label', () => {
+  const r = found(['ГОДЕН ДО', '05 2027']);
+  assert.equal(r.primary.iso, '2027-05-31');
+  assert.equal(r.label, 'expiry');
+  assert.equal(r.confidence, 'high');
+});
+
+test('ED-style label needs to be standalone, not inside a word', () => {
+  // "RED" is not an expiry label; a date near it stays unlabelled.
+  const r = found(['RED 10/2026']);
+  assert.ok(r.reasons.includes('no-label'));
+});
+
+// ── International formats ──────────────────────────────────────────────────
+// The regression suite for multi-market packaging: CJK marker dates,
+// full-width digits, the 8-digit stamped forms, space-separated year-first
+// dates, and label-language evidence resolving ambiguous day/month order.
+
+test('CJK marker dates: YYYY年MM月DD日 and month-only YYYY年MM月', () => {
+  // Chinese/Japanese full form with the markers; Korean form with spaces.
+  assert.equal(found(['2027年03月15日']).primary.iso, '2027-03-15');
+  assert.equal(found(['2027年3月5日']).primary.iso, '2027-03-05');
+  assert.equal(found(['2027년 03월 15일']).primary.iso, '2027-03-15');
+  // Month-only: the standard Chinese "best before month" print.
+  assert.equal(found(['2027年03月']).primary.iso, '2027-03-31');
+  assert.equal(found(['2027年03月']).primary.precision, 'month');
+  // The expiry label in CJK upgrades the read to a labelled expiry.
+  const labelled = found(['賞味期限', '2027年03月15日']);
+  assert.equal(labelled.primary.iso, '2027-03-15');
+  assert.equal(labelled.label, 'expiry');
+});
+
+test('full-width digits (Japanese print) read as their ASCII twins', () => {
+  assert.equal(found(['２０２７．０３．１５']).primary.iso, '2027-03-15');
+  assert.equal(found(['２０２７／０３／１５']).primary.iso, '2027-03-15');
+});
+
+test('year-first with spaces: the OCR form of CJK dates when markers are unreadable', () => {
+  assert.equal(found(['2027 03 15']).primary.iso, '2027-03-15');
+  assert.equal(found(['2027 3 5']).primary.iso, '2027-03-05');
+  // No ambiguity flag: the position of the year settles the order.
+  assert.ok(!found(['2027 03 15']).reasons.includes('ambiguous-order'));
+});
+
+test('8-digit stamped dates: EXP 03062027 follows the preferred order', () => {
+  // Day-first user: 03 06 2027 = 3 June 2027.
+  assert.equal(found(['EXP 03062027'], uk).primary.iso, '2027-06-03');
+  assert.equal(found(['EXP 03062027'], uk).reasons.includes('ambiguous-order'), true);
+  // Month-first user: March 6 2027.
+  assert.equal(found(['EXP 03062027'], us).primary.iso, '2027-03-06');
+  // The year-first 8-digit stamp stays unambiguous and wins first.
+  assert.equal(found(['EXP 20260315']).primary.iso, '2026-03-15');
+  assert.ok(!found(['EXP 20260315']).reasons.includes('ambiguous-order'));
+  // Unlabelled 8-digit numbers are still not dates (honest no-date).
+  assert.equal(parseExpiry(['03062027'], uk).kind, 'none');
+});
+
+test('EU-language expiry label resolves an ambiguous date day-first', () => {
+  // A month-first USER scanning German packaging: the continental phrase is
+  // origin evidence, so 03/04/2027 reads as 3 April (day-first) regardless.
+  const r = found(['MINDESTENS HALTBAR BIS', '03/04/2027'], us);
+  assert.equal(r.primary.iso, '2027-04-03');
+  assert.equal(r.label, 'expiry');
+  // English labels keep the user's own preference (both markets use them).
+  assert.equal(found(['BEST BEFORE 03/04/2027'], us).primary.iso, '2027-03-04');
+  assert.equal(found(['BEST BEFORE 03/04/2027'], uk).primary.iso, '2027-04-03');
+});
+
+test('CJK production dates are manufacture, never expiry', () => {
+  // Both printed: the 賞味期限 (best before) date wins, the 製造 (production)
+  // date never becomes the expiry.
+  const both = found(['製造年月日 2026.03.15', '賞味期限 2027.03.15'], uk);
+  assert.equal(both.primary.iso, '2027-03-15');
+  assert.equal(both.label, 'expiry');
+  // A lone production date (any of the CJK forms) is honest manufacture-only.
+  assert.deepEqual(parseExpiry(['生産年月日 2026.03.15'], uk), { kind: 'none', hint: 'manufacture-only' });
+  assert.deepEqual(parseExpiry(['生产日期 2026.03.15'], uk), { kind: 'none', hint: 'manufacture-only' });
+  assert.deepEqual(parseExpiry(['제조일자 2026.03.15'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('Korean expiry label reads the date as labelled expiry', () => {
+  const r = found(['유통기한', '2027.03.15']);
+  assert.equal(r.primary.iso, '2027-03-15');
+  assert.equal(r.label, 'expiry');
+});
+
+// ── Russia, Ukraine, Israel, Romania ────────────────────────────────────────
+// The four markets added for international coverage: their expiry labels
+// (Cyrillic, Hebrew, Arabic, Romanian-with-diacritics), their manufacturing
+// dates (which must never become the expiry), and their day-first evidence.
+
+test('Russian labels: Срок годности and Годен до are expiry labels', () => {
+  const a = found(['СРОК ГОДНОСТИ', '05.2027']);
+  assert.equal(a.primary.iso, '2027-05-31');
+  assert.equal(a.primary.precision, 'month');
+  assert.equal(a.label, 'expiry');
+  assert.equal(a.confidence, 'high');
+
+  const b = found(['ГОДЕН ДО 04.12.27']);
+  assert.equal(b.primary.iso, '2027-12-04');
+  assert.equal(b.label, 'expiry');
+
+  // A shelf-life DURATION after the label is not a date: only a year-bearing
+  // shape is ever read, so "12 мес" (12 months) finds nothing date-like.
+  assert.equal(parseExpiry(['СРОК ГОДНОСТИ 12 МЕС'], uk).kind, 'none');
+  assert.equal(parseExpiry(['СРОК ГОДНОСТИ 2 ГОДА'], uk).kind, 'none');
+});
+
+test('Russian manufacturing date never becomes the expiry', () => {
+  // Дата изготовления alone: honest manufacture-only.
+  assert.deepEqual(parseExpiry(['ДАТА ИЗГОТОВЛЕНИЯ 04.12.23'], uk), { kind: 'none', hint: 'manufacture-only' });
+  assert.deepEqual(parseExpiry(['ИЗГОТОВЛЕНО 04.12.23'], uk), { kind: 'none', hint: 'manufacture-only' });
+  // Both printed: the Годен до date wins.
+  const r = found(['ИЗГОТОВЛЕНО 04.12.23', 'ГОДЕН ДО 04.12.25']);
+  assert.equal(r.primary.iso, '2025-12-04');
+  assert.equal(r.label, 'expiry');
+});
+
+test('Ukrainian labels: Термін придатності and Вжити до', () => {
+  // The photo regression: Ukrainian pouch, dot-matrix date under the barcode.
+  const a = found(['ТЕРМІН ПРИДАТНОСТІ', '04.12.27']);
+  assert.equal(a.primary.iso, '2027-12-04');
+  assert.equal(a.label, 'expiry');
+
+  const b = found(['ВЖИТИ ДО 15.06.2027']);
+  assert.equal(b.primary.iso, '2027-06-15');
+  assert.equal(b.label, 'expiry');
+
+  // The production-date synonym Виготовлено is manufacture, never expiry.
+  assert.deepEqual(parseExpiry(['ВИГОТОВЛЕНО 04.12.23'], uk), { kind: 'none', hint: 'manufacture-only' });
+  assert.deepEqual(parseExpiry(['ВИРОБЛЕНО 04.12.23'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('Hebrew labels: תאריך תפוגה and לשימוש עד', () => {
+  const a = found(['תאריך תפוגה', '03/2027']);
+  assert.equal(a.primary.iso, '2027-03-31');
+  assert.equal(a.primary.precision, 'month');
+  assert.equal(a.label, 'expiry');
+
+  const b = found(['לשימוש עד 15.06.2027']);
+  assert.equal(b.primary.iso, '2027-06-15');
+  assert.equal(b.label, 'expiry');
+
+  // תאריך ייצור (production date) is manufacture, never expiry.
+  assert.deepEqual(parseExpiry(['תאריך ייצור 15.06.2025'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('Arabic label: تاريخ انتهاء الصلاحية', () => {
+  const r = found(['تاريخ انتهاء الصلاحية', '15.06.2027']);
+  assert.equal(r.primary.iso, '2027-06-15');
+  assert.equal(r.label, 'expiry');
+  // Production date تاريخ الإنتاج is manufacture, never expiry.
+  assert.deepEqual(parseExpiry(['تاريخ الإنتاج 15.06.2025'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('Romanian labels read through their diacritics', () => {
+  // EXPIRĂ, A se consuma până la, Data expirării — as printed WITH diacritics;
+  // normalizeLine strips them, the label patterns see the plain forms.
+  assert.equal(found(['EXPIRĂ 15.06.2027']).label, 'expiry');
+  assert.equal(found(['A se consuma până la 15.06.2027']).label, 'expiry');
+  assert.equal(found(['A se consuma de preferință înainte de 15.06.2027']).label, 'expiry');
+  const d = found(['DATA EXPIRĂRII', '15.06.2027']);
+  assert.equal(d.primary.iso, '2027-06-15');
+  assert.equal(d.label, 'expiry');
+  // The same labels on packaging WITHOUT diacritics (common on laser print).
+  assert.equal(found(['A SE CONSUMA PANA LA 15.06.2027']).label, 'expiry');
+  // Data fabricației is the manufacturing date, never the expiry.
+  assert.deepEqual(parseExpiry(['DATA FABRICAȚIEI 15.06.2025'], uk), { kind: 'none', hint: 'manufacture-only' });
+  assert.deepEqual(parseExpiry(['DATA FABRICATIEI 15.06.2025'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('Russian/Ukrainian/Hebrew/Arabic/Romanian expiry labels are day-first evidence', () => {
+  // A month-first USER scanning Russian packaging: 03/04/2027 reads day-first.
+  const ru = found(['СРОК ГОДНОСТИ', '03/04/2027'], us);
+  assert.equal(ru.primary.iso, '2027-04-03');
+  assert.equal(ru.alternatives[0].iso, '2027-03-04');
+  const ua = found(['ТЕРМІН ПРИДАТНОСТІ 03/04/2027'], us);
+  assert.equal(ua.primary.iso, '2027-04-03');
+  const he = found(['לשימוש עד 03/04/2027'], us);
+  assert.equal(he.primary.iso, '2027-04-03');
+  const ro = found(['A SE CONSUMA PANA LA 03/04/2027'], us);
+  assert.equal(ro.primary.iso, '2027-04-03');
+});
+
+test('month/year forms with every separator: 03 2027, 03.2027, 03/2027, 03-2027', () => {
+  // The user's clarification: the month/year print appears with spaces, dots,
+  // slashes and dashes — all must read the same month-only date.
+  assert.equal(found(['03 2027']).primary.iso, '2027-03-31');
+  assert.equal(found(['03.2027']).primary.iso, '2027-03-31');
+  assert.equal(found(['03/2027']).primary.iso, '2027-03-31');
+  assert.equal(found(['03-2027']).primary.iso, '2027-03-31');
+  for (const line of ['03 2027', '03.2027', '03/2027', '03-2027']) {
+    assert.equal(found([line]).primary.precision, 'month', line);
+    assert.ok(found([line]).reasons.includes('month-only'), line);
+  }
+  // The 8-digit stamped form from the same clarification (03 06 2027).
+  assert.equal(found(['EXP 03062027'], uk).primary.iso, '2027-06-03');
+});

@@ -81,13 +81,13 @@ type ProductContext = {
 };
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
-  aim: { icon: 'scan-outline', text: 'Scanning...' },
-  'text-found': { icon: 'text-outline', text: 'Processing scan...' },
-  'hold-steady': { icon: 'hourglass-outline', text: 'Date found. Checking...' },
+  aim: { icon: 'scan-outline', text: 'Looking for the expiry date...' },
+  'text-found': { icon: 'text-outline', text: 'Label text found. Point at the date.' },
+  'hold-steady': { icon: 'hourglass-outline', text: 'Hold still. Checking the date...' },
   'low-light': { icon: 'sunny-outline', text: 'Too dark. Try better light.' },
-  closer: { icon: 'resize-outline', text: 'Move closer to the date.' },
+  closer: { icon: 'resize-outline', text: 'Move closer to the expiry date.' },
   manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
-  unclear: { icon: 'eye-outline', text: 'Date unclear. Try again or enter it manually.' },
+  unclear: { icon: 'eye-outline', text: 'Date not clear. Adjust the angle.' },
   'ocr-error': { icon: 'refresh-outline', text: 'Hard to read. Hold the camera steady.' },
 };
 
@@ -261,9 +261,20 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           return;
         }
         if (stale) return;
+        if (outcome.kind === 'hit') {
+          // A hit whose "name" is lookup furniture ("Report & Lookup 500m+
+          // Products" style): the record exists and the code is real, so the
+          // product IS identified — but no genuine name came back, and none is
+          // invented. The banner says "Product identified", the barcode rides
+          // into the saved item, and the sheet's name field waits for the user.
+          // (Source-level filters already reject such names; this is the
+          // defense that makes the bug impossible for every provider.)
+          setProduct({ barcode: code, name: '', categoryHint: outcome.hit.categoryHint, sourceLabel: outcome.hit.sourceLabel });
+          setProductStatus('found');
+          return;
+        }
         setProduct(null);
-        // A hit whose "name" is lookup furniture counts as no name at all.
-        setProductStatus(outcome.kind === 'miss' || outcome.kind === 'hit' ? 'not-found' : 'unreachable');
+        setProductStatus(outcome.kind === 'miss' ? 'not-found' : 'unreachable');
       };
       setProductStatus('checking');
       if (cached) void identify(cached);
@@ -272,7 +283,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     [],
   );
 
-  const { state, reset } = useExpiryScanner({
+  const { state, reset, stuck } = useExpiryScanner({
     camera,
     geometry,
     // No analysis while the user types the item by hand; otherwise ONE loop
@@ -332,8 +343,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
         expiresOn: date.iso,
         datePrecision: date.precision,
         source: manual ? 'manual' : 'scan',
-        ...(manual ? {} : product?.barcode ? { barcode: product.barcode } : {}),
-        ...(manual ? {} : image ? { image } : {}),
+        // The recognized product's barcode and photo belong to the same physical
+        // item whether the expiry date came from the camera or from the manual
+        // form, so both ride along either way.
+        ...(product?.barcode ? { barcode: product.barcode } : {}),
+        ...(image ? { image } : {}),
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       // Leave the "Added" state on screen for a moment before returning home.
@@ -516,9 +530,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                   <Ionicons name="checkmark-circle" size={18} color={lime} />
                   <View style={s.hintTextCol}>
                     <Text style={[s.hintText, { color: lime, fontWeight: '700' }]} numberOfLines={1}>
-                      Product found: {pillName(product.name)}
+                      {product.name ? `Product found: ${pillName(product.name)}` : 'Product identified'}
                     </Text>
-                    <Text style={s.hintSub}>Now scan the expiry date.</Text>
+                    <Text style={s.hintSub} numberOfLines={2}>
+                      {product.name ? 'Now scan the expiry date.' : 'Product name unavailable — you can type it in. Scan the expiry date.'}
+                    </Text>
                   </View>
                 </View>
               )}
@@ -526,7 +542,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <Ionicons name="help-circle-outline" size={18} color={colors.amberText} />
                   <Text style={s.hintText} numberOfLines={2}>
-                    No product match for that barcode. Point at the expiry date.
+                    We couldn't find this product online. Point at the expiry date.
                   </Text>
                 </View>
               )}
@@ -534,7 +550,9 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <Ionicons name="cloud-offline-outline" size={18} color={colors.amberText} />
                   <Text style={s.hintText} numberOfLines={2}>
-                    Couldn't check the product online. Point at the expiry date.
+                    {offline
+                      ? 'No internet connection. You can continue below.'
+                      : "Product details aren't available right now. Point at the expiry date."}
                   </Text>
                 </View>
               )}
@@ -556,11 +574,13 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 ))}
             </>
           )}
-          {/* Manual entry, OFFLINE ONLY: online the camera does the work and
-              the interface stays clean. Two compact actions — Enter date and
-              Enter product — that appear and disappear live with
-              connectivity, both leading to the same save form as a scan. */}
-          {offline && !detected && !manual && cameraReady && !cameraError && ocrReady && (
+          {/* Manual entry: always while OFFLINE, and — after the scan loop
+              reports `stuck` (roughly 20 seconds of live scanning with no
+              confirmed date) — ONLINE too, so a difficult label never leaves
+              the user without a way forward. Two compact actions, Enter date
+              and Enter product, independent of each other and both leading to
+              the same save form as a scan. */}
+          {(offline || stuck) && !detected && !manual && cameraReady && !cameraError && ocrReady && (
             <View style={s.manualRow}>
               <PressScale
                 onPress={() => openManual('date')}
@@ -595,9 +615,12 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       key={detected ? `${detection.key}:${product?.barcode ?? 'none'}` : 'manual'}
       detection={detected ? detection : null}
       // The recognized product flows into the form: its name is pre-filled and
-      // its retrieved image rides along into the saved item.
-      initialName={detected ? (product?.name ?? '') : ''}
-      productImage={detected ? (product?.image ?? null) : null}
+      // its retrieved image rides along into the saved item. MANUAL entry keeps
+      // them too — the product the camera recognized while the date struggled is
+      // the same physical item, so switching to “Enter date manually” must not
+      // erase it (the spec: preserve any product already detected).
+      initialName={(detected || manual) && product?.name ? product.name : ''}
+      productImage={(detected || manual) && product?.image ? product.image : null}
       // "Enter product" (offline) opens the same manual form with the cursor
       // straight in the empty name field.
       focusName={manual && manualMode === 'product'}
