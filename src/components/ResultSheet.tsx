@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SCANNER_COLORS as colors, useTheme, withAlpha, radius } from '../theme';
-import { useCategories } from '../categories';
+import { DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
 import { type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type DayOrder, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
 import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
+import { IconArt } from './IconArt';
 import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
 
@@ -34,9 +35,19 @@ export function categoryArt(id: CategoryId, size: number) {
       return <HouseArt size={0.95 * size} />;
     case 'skincare':
       return <PumpBottleArt size={size} />;
-    default:
+    case 'pantry':
       return <JarArt size={size} />;
+    default:
+      return <FolderCategoryArt id={id} size={size} />;
   }
+}
+
+// A folder the user added: its chosen icon's illustration (the folder picture
+// when the folder was deleted), so its items match the folder's Home tile
+// instead of borrowing the pantry jar.
+function FolderCategoryArt({ id, size }: { id: string; size: number }) {
+  const { custom } = useCategories();
+  return <IconArt icon={custom.find((c) => c.id === id)?.icon ?? DEFAULT_CATEGORY_ICON} size={size} />;
 }
 
 const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {

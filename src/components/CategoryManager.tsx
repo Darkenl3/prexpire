@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
-import { CATEGORY_ICONS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, safeCategoryIcon, useCategories } from '../categories';
+import { CATEGORY_ICONS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
+import { IconArt } from './IconArt';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { categories } from '../data';
@@ -77,9 +78,7 @@ export function CategoryManager() {
     return (
       <View key={id} style={s.row}>
         <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
-          {def ? categoryArt(id, 24) : (
-            <Ionicons name={safeCategoryIcon(folder?.icon ?? DEFAULT_CATEGORY_ICON) as keyof typeof Ionicons.glyphMap} size={19} color={c === LIGHT ? TINT_ICON[tint] : c.text} />
-          )}
+          {def ? categoryArt(id, 24) : <IconArt icon={folder?.icon ?? DEFAULT_CATEGORY_ICON} size={24} />}
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={s.rowName} numberOfLines={1}>
@@ -359,6 +358,7 @@ const useStyles = makeStyles((c) => ({
   tintRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   tintDot: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   tintDotOn: { borderColor: c.mint },
-  tintFill: { width: 30, height: 30, borderRadius: 15, borderWidth: 1 },
+  // The swatch centres its checkmark (it used to sit in the top-left corner).
+  tintFill: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   pageActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
 }));

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, space, useTheme, LIGHT, type Tint } from '../theme';
 import { categories, type ArtKey } from '../data';
-import { safeCategoryIcon, useCategories } from '../categories';
+import { useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
@@ -15,6 +15,7 @@ import { ItemRow } from '../components/ItemRow';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
+import { IconArt } from '../components/IconArt';
 import { SmallButton } from '../components/SettingsRows';
 import { FadeIn } from '../components/Press';
 
@@ -61,9 +62,6 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { custom, removed } = useCategories();
   const t = useTheme();
   const c = useStyles();
-  // Folder icons sit on the tile gradient: white on the dark theme's rich
-  // gradients, dark ink on the light theme's pastels.
-  const folderIconColor = t === LIGHT ? t.text : 'rgba(255,255,255,0.92)';
   const { warningDays, showExpired } = settings;
   const upcoming = useMemo(
     () =>
@@ -134,8 +132,9 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
       name: cat.name,
       sub: `${saved.filter((i) => i.category === cat.id).length} items`,
       status: tileStatus(attention.byCategory(cat.id)),
-      // Unknown or old icon identifiers fall back to a folder, never a blank.
-      art: <Ionicons name={safeCategoryIcon(cat.icon) as keyof typeof Ionicons.glyphMap} size={compact ? 46 : 54} color={folderIconColor} />,
+      // The folder's illustration, in the built-ins' style (an unknown or old
+      // icon identifier shows the folder picture, never a blank).
+      art: <IconArt icon={cat.icon} size={compact ? 56 : 64} />,
       onPress: () => go(`category:${cat.id}`),
     })),
   ];
