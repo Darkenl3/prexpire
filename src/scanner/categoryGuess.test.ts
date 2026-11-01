@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { guessCategory } from './categoryGuess.ts';
+import { conflictsWithLabel, guessCategory } from './categoryGuess.ts';
 
 // Regression suite for the two-tier keyword scorer: strong words win a
 // category, unit suffixes ("mg", "ml") only reinforce one that already won —
@@ -44,4 +44,21 @@ test('medicine: Cyrillic pharmaceutical vocabulary', () => {
   assert.equal(guessCategory('Бронхо сироп'), 'medicine');
   assert.equal(guessCategory('Ампицилин таблетки 500 mg'), 'medicine');
   assert.equal(guessCategory('Витамин C капсули'), 'medicine');
+});
+
+test('medicine: leaflet words on the Bulgarian bottle and box in the scan photos', () => {
+  // The bottle that was once named "Quaker Chewy Granola Bars".
+  assert.equal(guessCategory('Начин на употреба Противопоказания Предупреждения Предозиране Срок на годност'), 'medicine');
+  // The Krka box once named "ISBN Lookup Find Any Book By ISBN".
+  assert.equal(guessCategory('Всяка филмирана таблетка съдържа аторвастатин По лекарско предписание'), 'medicine');
+});
+
+test('a lookup that contradicts a medicine label is not trusted', () => {
+  const label = 'Начин на употреба Противопоказания Предозиране';
+  assert.equal(conflictsWithLabel(guessCategory('Quaker Chewy Granola Bars'), label), true);
+  assert.equal(conflictsWithLabel('medicine', label), false);
+  // A label that does not name a medicine never overrides a lookup.
+  assert.equal(conflictsWithLabel('food', 'Cottage 3,4% grasime'), false);
+  // An uncategorised lookup is not a contradiction.
+  assert.equal(conflictsWithLabel(null, label), false);
 });

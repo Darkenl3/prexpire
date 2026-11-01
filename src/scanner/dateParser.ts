@@ -158,7 +158,20 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       // "EXP" alone does not match "EXPIRĂ" (the standalone guard), so the
       // stripped form needs its own branch — plus the "use by"/"best before"
       // phrases and "data expirării".
-      '|EXPIRA|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII' +
+      // The full "Expiră la data de:" phrase is consumed whole, so a line that
+      // holds only it joins the date on the next line (joinLabelOnlyLines).
+      '|EXPIRA(?:\\s*LA(?:\\s*DATA(?:\\s*DE)?)?)?|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE' +
+      '|A\\s*SE\\s*CONSUMA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII|DATA\\s*DE\\s*EXPIRARE|VALABIL\\s*PANA\\s*LA' +
+      // Bulgarian: "срок на годност" (shelf life), "най-добър до" (best
+      // before), "годно до" / "използвай до" (use by).
+      '|СРОК\\s*НА\\s*ГОДНОСТ|НАЙ[\\s-]*ДОБЪР\\s*ДО|ГОДНО\\s*ДО|ИЗПОЛЗВАЙ\\s*ДО' +
+      // Russian "употребить до" / "использовать до" (use by), Polish
+      // "należy spożyć do" (use by), German "MHD" (the printed abbreviation of
+      // Mindesthaltbarkeitsdatum), English "valid until".
+      '|УПОТРЕБИТЬ\\s*ДО|ИСПОЛЬЗОВАТЬ\\s*ДО|NALEZY\\s*SPOZYC\\s*DO|MHD|VALID\\s*(?:UNTIL|TILL|THRU|THROUGH)' +
+      // Hebrew "בתוקף עד" (valid until) and the Chinese expiry-date words
+      // 失效日期 / 有效期 (after the longer 有效期限 above has had its turn).
+      '|בתוקף\\s*עד|失效-?期|有效期' +
       // Italian: "scadenza" (expiry) and its pharma abbreviation "SCAD." —
       // the label Italian medicine and supplement packaging prints beside
       // the date (often the only word there; the hourglass-style icons are
@@ -193,9 +206,17 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       '|تاريخ\\s*الإنتاج|تاريخ\\s*الانتاج' +
       // Romanian production date, post-accent-strip: "data fabricației" and
       // "data de fabricație".
-      '|DATA\\s*FABRICATIEI|DATA\\s*DE\\s*FABRICATIE',
+      '|DATA\\s*FABRICATIEI|DATA\\s*DE\\s*FABRICATIE|DATA\\s*PRODUCTIEI|FABRICAT(?:\\s*LA)?' +
+      // Bulgarian "дата на производство" / "произведено", Russian "дата
+      // производства", Polish "data produkcji", German "hergestellt am".
+      '|ДАТА\\s*НА\\s*ПРОИЗВОДСТВО|ПРОИЗВЕДЕН|ДАТА\\s*ПРОИЗВОДСТВА|DATA\\s*PRODUKCJI|HERGESTELLT(?:\\s*AM)?',
   },
-  { kind: 'lot', pattern: 'LOT\\s*NO|LOT|BATCH\\s*NO|BATCH|B\\.?\\s*NO|L\\.?\\s*NO' },
+  {
+    kind: 'lot',
+    // Cyrillic batch labels ("Парт. №", "партида", "партия") and the Italian
+    // "lotto" sit beside the dates on imported medicine and food.
+    pattern: 'LOT\\s*NO|LOTTO|LOT|BATCH\\s*NO|BATCH|B\\.?\\s*NO|L\\.?\\s*NO|PARTIDA|ПАРТИДА|ПАРТИЯ|ПАРТ\\.?\\s*№?',
+  },
   { kind: 'sell', pattern: 'SELL\\s*BY|DISPLAY\\s*UNTIL' },
   {
     // Dot-matrix seals print the expiry label compressed to initials with
@@ -332,6 +353,21 @@ const PATTERNS: Pattern[] = [
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
     },
   },
+  // 25.11,2026 / 25,11.2026 - a dot-matrix stamp whose dots OCR returns as
+  // mixed separators (commas included). Only with a four-digit 20xx year: the
+  // year anchors the shape, so a decimal such as "3,4" never starts a date.
+  {
+    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,/\\-]\\s?(\\d{1,2})\\s?[.,/\\-]\\s?(20\\d{2})${NA}`, 'g'),
+    read: (m, opts) => {
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const year = Number(m[3]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+    },
+  },
   // 06 03 2027 - the no-separator European print (spaces instead of dots or
   // slashes). The same day/month disambiguation as the separator form above.
   // Guards: the first number must not follow a digit OR a decimal point
@@ -374,11 +410,20 @@ const PATTERNS: Pattern[] = [
     re: new RegExp(`${NB}(\\d{1,2})${SEP}(20\\d{2})${NA}`, 'g'),
     read: (m) => [toMonth(Number(m[2]), Number(m[1]))].filter(Boolean) as Interpretation[],
   },
-  // EXP 10/26 (month and two-digit year), only right after an expiry label.
+  // EXP 10/26 (month and two-digit year), only right after an expiry label —
+  // or, when that cannot be a month and year, a day and month with NO year:
+  // "Expiră la data de: 14/11" on Romanian yogurt (14 November, the next time
+  // it comes round, and the user is asked to check the year). The two readings
+  // never compete: a two-digit year inside the accepted range (20..41 from a
+  // 2026 vantage) is never a valid month, and a month is never such a year.
   {
     re: new RegExp(`${NB}(\\d{1,2})${SEP}(\\d{2})${NA}`, 'g'),
     labelledOnly: true,
-    read: (m) => [toMonth(makeYear(m[2]), Number(m[1]))].filter(Boolean) as Interpretation[],
+    read: (m, opts) => {
+      const monthYear = toMonth(makeYear(m[2]), Number(m[1]));
+      if (monthYear && inRange(monthYear, opts.today)) return [monthYear];
+      return dayMonthNoYear(Number(m[1]), Number(m[2]), opts);
+    },
   },
   // BEST BEFORE 27 OCT (no year), only right after an expiry label. The year is the next
   // time that day comes round, and the user is asked to check it.
@@ -456,6 +501,24 @@ const PATTERNS: Pattern[] = [
   },
 ];
 
+// The next time a day and month come round (today counts), or null when the
+// pair is not a calendar date.
+function nextOccurrence(month: number, day: number, today: Date): Interpretation | null {
+  const thisYear = toDay(today.getFullYear(), month, day);
+  if (thisYear && thisYear.iso >= isoToday(today)) return { ...thisYear, yearGuessed: true };
+  const next = toDay(today.getFullYear() + 1, month, day);
+  return next ? { ...next, yearGuessed: true } : null;
+}
+
+// A numeric day and month printed without a year ("14/11"): both orders when
+// both are dates, the preferred order first, each in its next occurrence.
+function dayMonthNoYear(a: number, b: number, opts: ParseOptions): Interpretation[] {
+  const dmy = nextOccurrence(b, a, opts.today);
+  const mdy = nextOccurrence(a, b, opts.today);
+  if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+  return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+}
+
 // The 6-digit no-separator stamp: DDMMYY or MMDDYY (both two-digit years).
 function compact6(digits: string, opts: ParseOptions): Interpretation[] {
   const year = makeYear(digits.slice(4));
@@ -492,7 +555,10 @@ const overlaps = (a: Span, b: Span) => a.start < b.end && b.start < a.end;
 // A date-looking match that failed calendar validation, e.g. 31/02/2026.
 type Invalid = { invalid: true };
 
-function findDates(line: string, opts: ParseOptions, expiryLabelEnds: number[]): (RawDate | (Span & Invalid))[] {
+// `carriedExpiry`: the previous line ended in an expiry label with nothing
+// after it, so a date OPENING this line sits right after that label too
+// ("Expiră la data de:" above "14/11").
+function findDates(line: string, opts: ParseOptions, expiryLabelEnds: number[], carriedExpiry = false): (RawDate | (Span & Invalid))[] {
   const taken: Span[] = [];
   const out: (RawDate | (Span & Invalid))[] = [];
   for (const p of PATTERNS) {
@@ -503,7 +569,9 @@ function findDates(line: string, opts: ParseOptions, expiryLabelEnds: number[]):
       if (p.labelledOnly) {
         // The label has to end just before the date: "EXP 10/26", "EXP: 10/26".
         const before = line.slice(0, span.start);
-        const labelled = expiryLabelEnds.some((end) => end <= span.start && /^[\s:.\-]*$/.test(before.slice(end)));
+        const labelled =
+          expiryLabelEnds.some((end) => end <= span.start && /^[\s:.\-]*$/.test(before.slice(end))) ||
+          (carriedExpiry && /^[\s:.\-]*$/.test(before));
         if (!labelled) continue;
       }
       if (p.isolatedOnly) {
@@ -543,7 +611,7 @@ export function isoToday(today: Date) {
 // The Cyrillic, Hebrew, Arabic and Romanian phrases join them: Russia,
 // Ukraine, Israel and Romania all print DAY-FIRST dates (DD.MM.YYYY).
 const EU_EXPIRY_LABEL_RE =
-  /HALTBAR|CONSOMMER|HOUDBAAR|UPOTR|SPOTRBUJTE|DO SPOTREBY|NAJLEPIEJ|PRZYDATNOSC|CONSUMIR|CADUCA|CONSUMARSI|CONSUMARE|FELHASZNALHATO|MINOSSEGMEGORZES|ГОДЕН|СРОК ГОДНОСТИ|ТЕРМ[ИІ]Н ГОДНОСТ|ПРИДАТНОСТ|ВЖИТИ ДО|תאריך תפוגה|לשימוש עד|تاريخ انتهاء|A SE CONSUMA|DATA EXPIRARII|EXPIRA/;
+  /HALTBAR|MHD|CONSOMMER|HOUDBAAR|UPOTR|SPOTRBUJTE|DO SPOTREBY|NAJLEPIEJ|NALEZY|PRZYDATNOSC|CONSUMIR|CADUCA|CONSUMARSI|CONSUMARE|FELHASZNALHATO|MINOSSEGMEGORZES|ГОДЕН|ГОДНО|ГОДНОСТ|НАЙ|УПОТРЕБИТЬ|ИСПОЛЬЗОВАТЬ|ИЗПОЛЗВАЙ|СРОК ГОДНОСТИ|ТЕРМ[ИІ]Н ГОДНОСТ|ПРИДАТНОСТ|ВЖИТИ ДО|תאריך תפוגה|לשימוש עד|בתוקף עד|تاريخ انتهاء|A SE CONSUMA|DATA EXPIRARII|DATA DE EXPIRARE|VALABIL|EXPIRA/;
 
 // Pulls every date out of the OCR lines and attaches the label that governs it.
 export function extractCandidates(lines: string[], opts: ParseOptions): { candidates: DateCandidate[]; invalid: number } {
@@ -557,21 +625,32 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
 
   norm.forEach((line, lineNo) => {
     const labels = findLabels(line);
-    // A continental expiry label on THIS line is origin evidence: an ambiguous
-    // date it governs reads day-first. The saved alternative still lets the
-    // save sheet offer the other reading.
-    const euExpiry = labels.some((l) => l.kind === 'expiry' && EU_EXPIRY_LABEL_RE.test(l.text));
+    // The previous line ended in an expiry label with nothing after it: a
+    // date that opens this line belongs to it (and short labelled-only forms
+    // such as "14/11" may be read).
+    const lastPending = pending[pending.length - 1];
+    const carriedExpiry = lastPending?.kind === 'expiry' && (!labels.length || labels[0].start > 0);
+    // A continental expiry label on THIS line (or carried from the line above)
+    // is origin evidence: an ambiguous date it governs reads day-first. The
+    // saved alternative still lets the save sheet offer the other reading.
+    const euExpiry =
+      labels.some((l) => l.kind === 'expiry' && EU_EXPIRY_LABEL_RE.test(l.text)) ||
+      (carriedExpiry && EU_EXPIRY_LABEL_RE.test(lastPending.text));
     const lineOpts = euExpiry && opts.preferredOrder !== 'DMY' ? { ...opts, preferredOrder: 'DMY' as const } : opts;
     const dates = findDates(
       line,
       lineOpts,
       labels.filter((l) => l.kind === 'expiry').map((l) => l.end),
+      carriedExpiry,
     );
     const valid = dates.filter((d): d is RawDate => !('invalid' in d));
     invalid += dates.length - valid.length;
 
     if (!valid.length) {
-      pending = labels;
+      // A short wordy line with no label and no digits ("data de:", a stray
+      // brand word) between a label and its date does not break the pairing.
+      const filler = !labels.length && !/\d/.test(line) && line.split(' ').length <= 3;
+      if (!(filler && pending.length)) pending = labels;
       return;
     }
 
@@ -601,10 +680,15 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
       // scanner can never again call a future date "a production date" (the
       // 2028/05 medicine-bottle case, whose classification used to flip with
       // every frame's OCR).
+      // Even a LOT label that OPENS its line lets go of a future MONTH-ONLY
+      // date: a lot identifies one batch and is never just a year and month,
+      // so "LOT 2028/05" is the OCR reading the label column beside the date
+      // column (the LOT belongs to "25F0684" on the next line). The date
+      // stays unlabelled, so the save sheet still asks the user to check it.
       if (
         label &&
         (label.kind === 'manufacture' || label.kind === 'lot') &&
-        (carriedLabel || label.start > 0) &&
+        (carriedLabel || label.start > 0 || (label.kind === 'lot' && d.interpretations[0].precision === 'month')) &&
         d.interpretations[0].iso > isoToday(opts.today)
       ) {
         label = undefined;
@@ -651,15 +735,24 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
     return { kind: 'none', hint: invalid ? 'invalid-date' : 'no-date' };
   }
 
-  // Several distinct dates in the pool: take the latest, since an unlabelled pair on a
-  // package is almost always "made on" then "use by". Flag it so the user checks.
+  // Several distinct dates in the pool: the latest is listed first (an
+  // unlabelled pair is often "made on" then "use by"), but nothing is decided
+  // for the user — every other date rides along as an alternative and the
+  // save sheet asks which one is the expiry date.
   const distinct = new Map<string, DateCandidate>();
   for (const c of pool) distinct.set(c.interpretations[0].iso, c);
-  const chosen = [...distinct.values()].sort((a, b) => b.interpretations[0].iso.localeCompare(a.interpretations[0].iso))[0];
+  const ordered = [...distinct.values()].sort((a, b) => b.interpretations[0].iso.localeCompare(a.interpretations[0].iso));
+  const chosen = ordered[0];
   if (distinct.size > 1) reasons.push('multiple-dates');
 
-  const [primary, ...alternatives] = chosen.interpretations;
-  if (alternatives.length) reasons.push('ambiguous-order');
+  const [primary, ...ownAlternatives] = chosen.interpretations;
+  if (ownAlternatives.length) reasons.push('ambiguous-order');
+  const alternatives = [...ownAlternatives];
+  for (const other of ordered.slice(1)) {
+    for (const i of other.interpretations) {
+      if (i.iso !== primary.iso && !alternatives.some((a) => a.iso === i.iso)) alternatives.push(i);
+    }
+  }
   if (primary.precision === 'month') reasons.push('month-only');
   if (primary.iso < isoToday(opts.today)) reasons.push('in-past');
   if (primary.yearGuessed) reasons.push('no-year');

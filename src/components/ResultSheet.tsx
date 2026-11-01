@@ -41,7 +41,7 @@ export function categoryArt(id: CategoryId, size: number) {
 
 const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {
   'no-label': 'No EXP or BEST BEFORE label was found next to this date.',
-  'multiple-dates': 'More than one date was found, so the latest one was picked.',
+  'multiple-dates': 'More than one date was found. Choose the expiry date.',
   'month-only': 'Only a month is printed. The item will expire at the end of that month.',
   'in-past': 'This date has already passed.',
   'sell-by': 'This is a sell-by date, which can be earlier than the real expiry date.',
@@ -103,8 +103,10 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
   // The Date format setting resolved the day/month order: the reading that
   // matches it (the parser puts it first) is preselected, and a small note
   // says how it was read. Only a format that says nothing about the order
-  // keeps the question below.
-  const autoRead = ambiguous && !!assumedOrder;
+  // keeps the question below. Several different dates on the package are not
+  // a day/month question at all: the user always picks the expiry date.
+  const multipleDates = !!detection && detection.reasons.includes('multiple-dates');
+  const autoRead = ambiguous && !!assumedOrder && !multipleDates;
   // For an unresolved day/month order the user must pick a reading; nothing is preselected.
   const [picked, setPicked] = useState<number | null>(ambiguous && !autoRead ? null : 0);
   const [edited, setEdited] = useState<Interpretation | null>(detection ? null : { iso: isoToday(new Date()), precision: 'day' });
@@ -249,7 +251,9 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
 
         {ambiguous && !autoRead && !edited && (
           <View style={s.block}>
-            <Text style={s.question}>The day and month could be either way round. Which is it?</Text>
+            <Text style={s.question}>
+              {multipleDates ? 'More than one date was found. Which is the expiry date?' : 'The day and month could be either way round. Which is it?'}
+            </Text>
             <View style={s.choiceRow}>
               {readings.map((r, i) => (
                 <PressScale

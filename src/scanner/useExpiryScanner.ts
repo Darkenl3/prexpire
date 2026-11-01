@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { parseExpiry, type DayOrder, type ScanParseResult } from './dateParser';
+import { missHint, settleHint, type ScanHint } from './scanFeedback';
 import type { FrameGeometry, FrameReading, ScannerCameraHandle } from './ScannerCamera.types';
 
 export type Detection = Extract<ScanParseResult, { kind: 'found' }>;
 
-export type ScanHint = 'aim' | 'text-found' | 'low-light' | 'closer' | 'manufacture' | 'unclear' | 'hold-steady' | 'ocr-error' | 'manual';
+export type { ScanHint };
 
 export type ScannerState = { status: 'scanning'; hint: ScanHint } | { status: 'detected'; detection: Detection };
 
@@ -37,8 +38,6 @@ const PASS_GAP_MS = 450;
 // A date has to be read the same way in two of the last three passes before it counts.
 const AGREEMENT_WINDOW = 3;
 const AGREEMENT_NEEDED = 2;
-// Misses before a hint replaces "Keep the date inside the frame".
-const MISSES_BEFORE_HINT = 3;
 // Misses before the loop gives its final verdict: roughly 20 seconds of live
 // scanning with no confirmed date. From that point the hint says plainly
 // that recognition did not work and manual entry is the way forward — the
@@ -51,11 +50,12 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
   const stateRef = useRef(state);
   const history = useRef<(string | null)[]>([]);
   const misses = useRef(0);
-  // True once the date stage has failed for long enough (STUCK_MISSES passes)
-  // that the "Date not recognized" verdict should show. Kept as a ref so the
-  // pass closure and reset() always touch the same flag without resubscribing
-  // the loop.
-  const stuckRef = useRef(false);
+  // What the previous passes saw, for the guidance (scanFeedback.missHint):
+  // consecutive text-less passes, whether the last pass read text, and the
+  // previous pass's candidate hint (a new hint must repeat before it shows).
+  const noTextStreak = useRef(0);
+  const lastText = useRef(false);
+  const lastCandidate = useRef<ScanHint | null>(null);
   // Bumped by reset() so a pass that was already running when the user tapped "Scan again"
   // cannot publish a stale detection.
   const generation = useRef(0);
@@ -72,7 +72,9 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
     generation.current += 1;
     history.current = [];
     misses.current = 0;
-    stuckRef.current = false;
+    noTextStreak.current = 0;
+    lastText.current = false;
+    lastCandidate.current = null;
     stateRef.current = { status: 'scanning', hint: 'aim' };
     setState(stateRef.current);
   }, []);
@@ -123,40 +125,34 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
           return;
         }
         misses.current = 0;
+        noTextStreak.current = 0;
+        lastText.current = true;
+        lastCandidate.current = 'hold-steady';
         publish({ status: 'scanning', hint: 'hold-steady' });
       } else {
         history.current = [...history.current, null].slice(-AGREEMENT_WINDOW);
         misses.current += 1;
-        if (misses.current >= STUCK_MISSES) {
-          // Automatic recognition has had its fair chance: the verdict says so
-          // plainly and points at the manual buttons (always on screen). A
-          // re-aim or "Scan again" resets the counter, so the message only
-          // stays while the same hopeless aim is held.
-          if (!stuckRef.current) stuckRef.current = true;
-          publish({ status: 'scanning', hint: 'manual' });
-          schedule();
-          return;
-        }
-        if (misses.current >= MISSES_BEFORE_HINT) {
-          // The IMAGE's own brightness first (measured by the camera layer),
-          // then the no-text proxy: a dark frame that still reads fragments
-          // of text needs LIGHT, not a steadier aim.
-          const hint: ScanHint = failed
-            ? 'ocr-error'
-            : reading?.dark || result?.hint === 'no-text'
-              ? 'low-light'
-              : result?.hint === 'manufacture-only'
-                ? 'manufacture'
-                : result?.hint === 'invalid-date'
-                  ? 'unclear'
-                  : 'closer';
-          publish({ status: 'scanning', hint });
-        } else if (result?.kind === 'none' && result.hint === 'no-date') {
-          // Text was read but none of it is a date yet.
-          publish({ status: 'scanning', hint: 'text-found' });
-        } else if (stateRef.current.status === 'scanning' && stateRef.current.hint === 'hold-steady') {
-          publish({ status: 'scanning', hint: 'aim' });
-        }
+        noTextStreak.current = lines.length ? 0 : noTextStreak.current + 1;
+        // The guidance follows what THIS pass observed (scanFeedback.ts):
+        // light, distance, steadiness, a production date, a date-shaped
+        // number that would not read — and, after ~20 seconds, the plain
+        // verdict pointing at the manual buttons (always on screen). A re-aim
+        // that reads a date, or "Scan again", resets the counter.
+        const candidate = missHint({
+          misses: misses.current,
+          stuckAfter: STUCK_MISSES,
+          failed: failed || !reading,
+          lines,
+          hadText: lastText.current,
+          noTextStreak: noTextStreak.current,
+          dark: reading?.dark,
+          parseHint: result?.kind === 'none' ? result.hint : undefined,
+          recentDate: history.current.some((k) => k !== null),
+        });
+        lastText.current = lines.length > 0;
+        const shown = stateRef.current.status === 'scanning' ? stateRef.current.hint : 'aim';
+        publish({ status: 'scanning', hint: settleHint(shown, candidate, lastCandidate.current) });
+        lastCandidate.current = candidate;
       }
       schedule();
     };

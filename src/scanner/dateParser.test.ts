@@ -588,3 +588,98 @@ test('long digit runs never partially match the compact stamps', () => {
   assert.equal(parseExpiry(['20261101'], uk).kind, 'none'); // 8 digits, unlabelled
   assert.equal(found(['EXP 03062027']).primary.iso, '2027-06-03');
 });
+
+// ─── Real-photo regressions (Nov 2026 scanner report) ───────────────────────
+
+test('photo: ZUZU yogurt "Expiră la data de: 14/11" reads 14 Nov with the year to check', () => {
+  // As printed: the label over two lines, the date with a time and lot beside it.
+  for (const lines of [
+    ['Expiră la', 'data de:', '14/11 16:38 B', 'L10 J'],
+    ['Expiră la data de:', '14/11 16:38 B'],
+    ['EXPIRĂ LA DATA DE: 14/11 16:38 B'],
+  ]) {
+    const r = found(lines);
+    assert.equal(r.primary.iso, '2026-11-14', JSON.stringify(lines));
+    assert.equal(r.label, 'expiry', JSON.stringify(lines));
+    assert.ok(r.reasons.includes('no-year'), JSON.stringify(lines));
+    assert.equal(r.confidence, 'medium', JSON.stringify(lines));
+  }
+  // Without any expiry label a bare "14/11" is not a date (it could be anything).
+  assert.equal(parseExpiry(['14/11 16:38 B'], uk).kind, 'none');
+  // A day/month already passed this year rolls to next year.
+  assert.equal(found(['EXP 03/02']).primary.iso, '2027-02-03');
+  // "EXP 10/27" stays month/year (October 2027), never 10 Jan... of a guessed year.
+  assert.equal(found(['EXP 10/27']).primary.iso, '2027-10-31');
+});
+
+test('photo: cottage cheese dot-matrix 25.11.2026, including comma-read dots', () => {
+  assert.equal(found(['25.11.2026']).primary.iso, '2026-11-25');
+  assert.equal(found(['25,11.2026']).primary.iso, '2026-11-25');
+  assert.equal(found(['25.11,2026', '26061 10:51']).primary.iso, '2026-11-25');
+  // Decimal commas on the same pack are never dates.
+  assert.equal(parseExpiry(['3,4% grasime', 'Cottage'], uk).kind, 'none');
+});
+
+test('photo: almond drink 07/08/27 with lot and time line', () => {
+  const r = found(['07/08/27', 'L2196 07:55 N.34 A']);
+  assert.equal(r.primary.iso, '2027-08-07');
+  assert.ok(r.alternatives.some((a) => a.iso === '2027-07-08'));
+  assert.ok(r.reasons.includes('ambiguous-order'));
+  assert.equal(found(['07/08/27', 'L2196 07:55 N.34 A'], us).primary.iso, '2027-07-08');
+});
+
+test('photo: 2028/05 read in the same line as the LOT label is still an expiry candidate', () => {
+  const r = found(['LOT 2028/05', '25F0684']);
+  assert.equal(r.primary.iso, '2028-05-31');
+  assert.equal(r.label, null); // unlabelled: reaches the save sheet, which asks to check it
+  assert.equal(parseExpiry(['LOT 25F0684'], uk).kind, 'none');
+  // A real production label still governs a month/year at the start of its line.
+  assert.deepEqual(parseExpiry(['MFG 2025/05'], uk), { kind: 'none', hint: 'manufacture-only' });
+});
+
+test('photo: barcode-only images never produce a date', () => {
+  assert.equal(parseExpiry(['3 838989 614249'], uk).kind, 'none');
+  assert.equal(parseExpiry(['3838989614249'], uk).kind, 'none');
+  assert.equal(parseExpiry(['3 800223 071163', 'PET'], uk).kind, 'none');
+});
+
+test('several dates on one package: every one is offered, nothing is silently chosen', () => {
+  const r = found(['10.01.2026', '10.01.2027']);
+  assert.ok(r.reasons.includes('multiple-dates'));
+  assert.equal(r.confidence, 'medium');
+  assert.equal(r.primary.iso, '2027-01-10');
+  assert.ok(r.alternatives.some((a) => a.iso === '2026-01-10'));
+  // A labelled expiry still wins over an unlabelled neighbour.
+  const s = found(['EXP 10.01.2027', '10.01.2026']);
+  assert.ok(!s.reasons.includes('multiple-dates'));
+  assert.equal(s.primary.iso, '2027-01-10');
+});
+
+test('international expiry and production labels', () => {
+  // Bulgarian
+  assert.equal(found(['Срок на годност: 05.2027']).label, 'expiry');
+  assert.equal(found(['Срок на годност', '31.12.2027']).primary.iso, '2027-12-31');
+  const bg = found(['Дата на производство: 01.02.2026', 'Годно до: 01.02.2027']);
+  assert.equal(bg.primary.iso, '2027-02-01');
+  assert.equal(bg.label, 'expiry');
+  assert.equal(parseExpiry(['Дата на производство: 01.02.2026'], uk).kind, 'none');
+  // Russian, Polish, German, Romanian
+  assert.equal(found(['Употребить до 15.03.2027']).label, 'expiry');
+  assert.equal(found(['Należy spożyć do: 15.03.2027']).label, 'expiry');
+  assert.equal(found(['MHD 06.03.2027']).label, 'expiry');
+  assert.equal(found(['A se consuma inainte de: 06.03.2027']).label, 'expiry');
+  assert.equal(parseExpiry(['Data fabricatiei: 06.03.2026'], uk).kind, 'none');
+  // Hebrew and Chinese
+  assert.equal(found(['בתוקף עד 15/03/2027']).primary.iso, '2027-03-15');
+  const zh = found(['有效期至2027年3月15日']);
+  assert.equal(zh.primary.iso, '2027-03-15');
+  assert.equal(zh.label, 'expiry');
+  // A continental label reads an ambiguous date day-first even for a US user.
+  assert.equal(found(['Годно до: 03.04.2027'], us).primary.iso, '2027-04-03');
+  // US month-first dates.
+  assert.equal(found(['EXP 03/15/2027'], uk).primary.iso, '2027-03-15');
+  assert.equal(found(['BEST BY 03/04/2027'], us).primary.iso, '2027-03-04');
+  // Year-first and month/year forms.
+  assert.equal(found(['EXP 2027/03/15']).primary.iso, '2027-03-15');
+  assert.equal(found(['EXP 03.2027']).primary.iso, '2027-03-31');
+});

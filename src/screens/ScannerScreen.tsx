@@ -82,14 +82,14 @@ type ProductContext = {
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
   aim: { icon: 'scan-outline', text: 'Looking for the expiry date...' },
-  'text-found': { icon: 'text-outline', text: 'Label text found. Point at the date.' },
-  'hold-steady': { icon: 'hourglass-outline', text: 'Hold still. Checking the date...' },
-  'low-light': { icon: 'sunny-outline', text: 'The date is too dark to read. Try better lighting.' },
+  'text-found': { icon: 'text-outline', text: 'Expiry date not in view. Point at the date.' },
+  'hold-steady': { icon: 'hourglass-outline', text: 'Hold still. Reading the date...' },
+  'low-light': { icon: 'sunny-outline', text: 'Too dark. Improve the lighting.' },
   closer: { icon: 'resize-outline', text: 'Move closer to the expiry date.' },
   manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
-  unclear: { icon: 'eye-outline', text: 'Reduce glare by changing the angle.' },
-  'ocr-error': { icon: 'refresh-outline', text: 'Hard to read. Hold the camera steady.' },
-  manual: { icon: 'create-outline', text: 'Date not recognized. You can enter it manually.' },
+  unclear: { icon: 'eye-outline', text: 'The date is hard to read. Try a different angle.' },
+  'ocr-error': { icon: 'refresh-outline', text: 'Hold the camera steady.' },
+  manual: { icon: 'create-outline', text: "We couldn't read the expiry date. You can enter it manually." },
 };
 
 // A product name for the status banner: shortened to fit one line WITHOUT

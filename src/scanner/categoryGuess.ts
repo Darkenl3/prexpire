@@ -50,6 +50,12 @@ const KEYWORDS: CategoryWords[] = [
       // Latin roots above do. Shorter roots (маз/гел) are deliberately left
       // out: they also live inside non-medicine words ("смазка" = lubricant).
       'сироп', 'таблетк', 'капсул',
+      // Leaflet vocabulary printed on Bulgarian/Russian medicine boxes and
+      // bottles: prescription ("по лекарско предписание", "лекарствен"),
+      // contraindications, overdose, antiseptic, film-coated.
+      'лекарск', 'лекарств', 'противопоказ', 'предозир', 'антисептич', 'филмиран',
+      // Romanian: tablets, medicine, package leaflet.
+      'comprimate', 'medicament', 'prospect',
     ],
     ['mg', 'ml', 'mcg', 'iu', 'gtt'],
   ],
@@ -109,4 +115,13 @@ export function guessCategory(text: string): CategoryId | null {
     }
   }
   return best;
+}
+
+// The package's OWN printed words outrank a lookup: when the label the camera
+// reads names a medicine outright, a barcode result that files the product as
+// anything else (a granola bar for a cough syrup) describes some other product.
+// Returns true when the hit must not be trusted for this package.
+export function conflictsWithLabel(hitCategory: CategoryId | null, labelText: string): boolean {
+  if (!hitCategory || !labelText) return false;
+  return guessCategory(labelText) === 'medicine' && hitCategory !== 'medicine';
 }
