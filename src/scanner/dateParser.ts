@@ -567,6 +567,20 @@ const PATTERNS: Pattern[] = [
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
     },
   },
+  // 14 07 27 / 14 07 2027 - day, month and year separated by spaces only, as
+  // dot-matrix and laser stamps print them (a protein bar's "14 07 27").
+  // Two-digit day and month so loose numbers ("3 4 25") stay out. Listed
+  // before "05 2027", which would claim the month and year alone. Without a
+  // label only a future date reads, like the bare compact stamps below.
+  {
+    re: new RegExp(`${NB}(\\d{2})\\s{1,3}(\\d{2})\\s{1,3}(20\\d{2}|\\d{2})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m, opts) => spacedDate(m, opts),
+  },
+  {
+    re: new RegExp(`${NB}(\\d{2})\\s{1,3}(\\d{2})\\s{1,3}(20\\d{2}|\\d{2})${NA}`, 'g'),
+    read: (m, opts) => spacedDate(m, opts).filter((i) => i.iso >= isoToday(opts.today)),
+  },
   // 05 2027 - month and year with no separator and no day: May 2027, the
   // standard "best before month" print. A first number above 12 simply fails
   // month validation (and counts as an invalid read, not a false date). The
@@ -705,7 +719,7 @@ const PATTERNS: Pattern[] = [
   {
     re: new RegExp(`${NB}(\\d{2})(\\d{2})(\\d{2})${NA}`, 'g'),
     isolatedOnly: true,
-    read: (m, opts) => compact6(m[0], opts).filter((i) => i.iso >= isoToday(opts.today)),
+    read: (m, opts) => compact6(m[0], opts, true).filter((i) => i.iso >= isoToday(opts.today)),
   },
   // EXP 20627 - the 5-digit stamp: the printer dropped the month's leading
   // zero, so the token is day, SINGLE-digit month, year ("20627" = 20.6.27
@@ -778,11 +792,28 @@ function compact8(digits: string, opts: ParseOptions): Interpretation[] {
   return out;
 }
 
+// The spaced stamp "14 07 27": both day/month orders, preferred first.
+function spacedDate(m: RegExpExecArray, opts: ParseOptions): Interpretation[] {
+  const year = makeYear(m[3]);
+  const dmy = toDay(year, Number(m[2]), Number(m[1]));
+  const mdy = toDay(year, Number(m[1]), Number(m[2]));
+  if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+  return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+}
+
 // The 6-digit no-separator stamp: DDMMYY or MMDDYY (both two-digit years).
-function compact6(digits: string, opts: ParseOptions): Interpretation[] {
+// `ownOrderOnly`: a BARE stamp reads only in the user's own day/month order.
+// Six loose digits that make a date only the other way round ("072629" in a
+// day-first country: 26 July 2029) are a batch code far more often than a
+// foreign date, so they are not offered at all.
+function compact6(digits: string, opts: ParseOptions, ownOrderOnly = false): Interpretation[] {
   const year = makeYear(digits.slice(4));
-  const dmy = toDay(year, Number(digits.slice(2, 4)), Number(digits.slice(0, 2)));
-  const mdy = toDay(year, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)));
+  let dmy = toDay(year, Number(digits.slice(2, 4)), Number(digits.slice(0, 2)));
+  let mdy = toDay(year, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)));
+  if (ownOrderOnly) {
+    if (opts.preferredOrder === 'MDY') dmy = null;
+    else mdy = null;
+  }
   const dayMonth =
     dmy && mdy && dmy.iso !== mdy.iso ? (opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy]) : ([dmy ?? mdy].filter(Boolean) as Interpretation[]);
   return withYearFirst(dayMonth, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)), Number(digits.slice(4)), opts);
@@ -1018,7 +1049,11 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
   const reasons: ConfirmReason[] = [];
   if (expiry.length) pool = expiry;
   else if (unlabelled.length) {
-    pool = unlabelled;
+    // Unlabelled, a date printed WITH separators ("14 07 27", "12/07/28")
+    // outranks a bare digit run in the same view ("072629"): that run is far
+    // more likely the batch code beside the date, so it is not offered.
+    const spaced = unlabelled.filter((c) => !/^\d+$/.test(c.raw));
+    pool = spaced.length ? spaced : unlabelled;
     reasons.push('no-label');
   } else if (sell.length) {
     pool = sell;

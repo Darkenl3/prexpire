@@ -224,3 +224,20 @@ test('a date glued to the numbers around it is cut free, anchored on its year', 
     assert.equal(parseExpiry([junk], dmy).kind, 'none', junk);
   }
 });
+
+test('photo: protein bar "14 07 27" under its batch code "072629"', () => {
+  // The spaced stamp is the date; the bare run beside it is the batch code.
+  for (const lines of [['072629', '14 07 27'], ['14 07 27', '072629'], ['072629 14 07 27'], ['Consumir de preferencia', '072629', '14 07 27']]) {
+    const r = offers(lines, '2027-07-14');
+    assert.equal(r.primary.iso, '2027-07-14', JSON.stringify(lines));
+    assert.ok(!r.alternatives.some((a) => a.iso === '2029-07-26'), JSON.stringify(lines));
+  }
+  offers(['14 07 2027'], '2027-07-14');
+  offers(['EXP 14 07 25'], '2025-07-14');
+  // Alone, "072629" is a date only month-first: not in a day-first country...
+  assert.equal(parseExpiry(['072629'], dmy).kind, 'none');
+  // ...but it is where dates are written month-first.
+  offers(['072629'], '2029-07-26', { today, preferredOrder: 'MDY' });
+  // Loose single digits are not a spaced date.
+  assert.equal(parseExpiry(['3 4 25'], dmy).kind, 'none');
+});
