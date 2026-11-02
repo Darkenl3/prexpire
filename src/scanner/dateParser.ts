@@ -311,16 +311,19 @@ type FoundLabel = Span & { kind: LabelKind; text: string };
 // OCR often reads O as 0, I or L as 1, S as 5 and B as 8 inside numbers. Only standalone
 // tokens that already contain a digit are touched, so "OCT", "BEST" or "27OCT" keep their letters.
 function normalizeDigits(line: string): string {
-  // G (6) and Z (2) are the usual dot-matrix confusions on top of those.
-  return line.replace(/(?<![A-Z])[0-9OILSBGZ|]+(?![A-Z])/g, (token) => {
+  // G (6) and Z (2) are the usual dot-matrix confusions on top of those. With
+  // Cyrillic recognition on, the reader can also return CYRILLIC lookalikes
+  // for digits (О for 0, З for 3, Б for 6, І for 1) — read as digits too.
+  return line.replace(/(?<![A-Z])[0-9OILSBGZ|ОЗБІ]+(?![A-Z])/g, (token) => {
     if (!/[0-9]/.test(token)) return token;
     return token
-      .replace(/O/g, '0')
-      .replace(/[IL|]/g, '1')
+      .replace(/[OО]/g, '0')
+      .replace(/[IL|І]/g, '1')
       .replace(/S/g, '5')
       .replace(/B/g, '8')
-      .replace(/G/g, '6')
-      .replace(/Z/g, '2');
+      .replace(/[GБ]/g, '6')
+      .replace(/Z/g, '2')
+      .replace(/З/g, '3');
   });
 }
 

@@ -182,3 +182,13 @@ test('shelf life is read in many languages and units', () => {
   assert.deepEqual(readShelfLife(['賞味期限 1年']), { n: 1, unit: 'year' });
   assert.equal(readShelfLife(['24 months warranty']), null); // no shelf-life label
 });
+
+test('Cyrillic lookalike letters inside numbers read as digits', () => {
+  // О (Cyrillic O) for 0, З for 3, Б for 6, І for 1 — what the reader returns
+  // for digits when Cyrillic recognition is on.
+  offers(['EXP 1З.О6.2О28'], '2028-06-13');
+  offers(['ГОДЕН ДО 1Б.11.2027'], '2027-11-16');
+  offers(['EXP І5.03.2027'], '2027-03-15');
+  // Cyrillic words with no digit stay words.
+  assert.equal(parseExpiry(['ЗОО'], dmy).kind, 'none');
+});
