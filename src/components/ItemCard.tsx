@@ -16,7 +16,8 @@ import { SmallButton } from './SettingsRows';
 // The redesigned item card for the Lists tab (the reference's compact card): a
 // rounded pale-green art square carrying the category's art on the left, the
 // name / category / expiry-date meta rows and the days-left pill in the
-// middle, and on the right the Consumed button and the three-dot action menu. The name stays on one
+// middle, and the three-dot action menu on the right (Consumed, Add to
+// Shopping List, Remove). The name stays on one
 // line (ellipsized when needed) so every card keeps exactly the same height.
 // Every value is real data (the item's own fields); nothing is sampled or
 // invented.
@@ -77,10 +78,6 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   // The same days-left wording every list uses ("Today", "1 day", "5 days") —
   // the card's own date row says the exact day.
   const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
-
-  // The Consumed button's ink: the bright lime on the dark page, the deep
-  // readable green on the light one (the pill's translucent-fill language).
-  const consumeInk = t === LIGHT ? t.green : t.mint;
 
   const known = custom.find((cat) => cat.id === item.category);
   const icon = categoryIcon(item.category, known?.icon);
@@ -163,29 +160,16 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           anchored at the top (aligned with the name), and the days-left
           pill on the right edge below it, centred in the remaining space. */}
       <View style={s.side}>
-        <View style={s.sideActions}>
-          {/* Consumed: one tap when the item is used up or eaten. */}
-          <PressScale
-            onPress={() => setConsumeOpen(true)}
-            hitSlop={6}
-            scaleTo={0.88}
-            style={[s.consumed, { backgroundColor: withAlpha(consumeInk, 0.14), borderColor: withAlpha(consumeInk, 0.42) }]}
-            accessibilityRole="button"
-            accessibilityLabel={`Mark ${item.name} as consumed`}
-          >
-            <Ionicons name="checkmark-done" size={16} color={consumeInk} />
-          </PressScale>
-          <PressScale
-            onPress={openMenu}
-            hitSlop={8}
-            scaleTo={0.88}
-            style={s.dots}
-            accessibilityRole="button"
-            accessibilityLabel={`Actions for ${item.name}`}
-          >
-            <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
-          </PressScale>
-        </View>
+        <PressScale
+          onPress={openMenu}
+          hitSlop={8}
+          scaleTo={0.88}
+          style={s.dots}
+          accessibilityRole="button"
+          accessibilityLabel={`Actions for ${item.name}`}
+        >
+          <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
+        </PressScale>
         <View style={s.pillAnchor}>
           <View
             style={[
@@ -223,6 +207,20 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               <Text style={s.menuName} numberOfLines={2}>
                 {item.name}
               </Text>
+              {/* Consumed: the item was used up or eaten. The menu hands over
+                  to the Consumed dialog, which asks about restocking. */}
+              <PressScale
+                onPress={() => {
+                  closeMenu();
+                  setConsumeOpen(true);
+                }}
+                style={s.menuRow}
+                accessibilityRole="button"
+                accessibilityLabel={`Mark ${item.name} as consumed`}
+              >
+                <Ionicons name="checkmark-done" size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>Mark as consumed</Text>
+              </PressScale>
               <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Add ${item.name} to your Shopping List`}>
                 <Ionicons name="cart-outline" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Add to Shopping List</Text>
@@ -328,12 +326,6 @@ const useStyles = makeStyles((t) => ({
   pillText: { fontSize: 12.5, fontWeight: '700' },
   pillTextCompact: { fontSize: 12 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  // The top of the right-hand stack: Consumed, then the three-dot menu.
-  sideActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  // Consumed: a small round button with a translucent green fill and rim (the
-  // days-left pill's language), the same size as the menu's touch target so
-  // the card keeps its height.
-  consumed: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   menu: {
