@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { makeStyles, useTheme, withAlpha, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
@@ -12,6 +12,7 @@ import { daysUntil } from '../scanner/dateParser';
 import { categoryArt } from './ResultSheet';
 import { FadeIn, PressScale } from './Press';
 import { SmallButton } from './SettingsRows';
+import { useWebKeyboardInset } from './WebKeyboardInset';
 
 // The redesigned item card for the Lists tab (the reference's compact card): a
 // rounded pale-green art square carrying the category's art on the left, the
@@ -62,7 +63,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const s = useStyles();
   const { settings, formatDate } = useSettings();
   const { nameOf, custom, all } = useCategories();
-  const { removeItem, setItemCategory } = useItems();
+  const { removeItem, setItemCategory, renameItem } = useItems();
   const { addManual } = useShopping();
   const [menuOpen, setMenuOpen] = useState(false);
   // Removing asks twice, exactly like the app's other destructive actions
@@ -73,6 +74,12 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const [consumeOpen, setConsumeOpen] = useState(false);
   // The Change category dialog.
   const [categoryOpen, setCategoryOpen] = useState(false);
+  // The Rename dialog, its draft name and its field's active state.
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [draft, setDraft] = useState(item.name);
+  const [draftFocused, setDraftFocused] = useState(false);
+  // The phone keyboard's footprint on the web: the Rename dialog rides above it.
+  const webKeyboard = useWebKeyboardInset();
 
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
@@ -112,6 +119,21 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     }
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
     onToast(result.ok ? `${item.name} consumed and added to your list` : `${item.name} consumed. It is already on your list`);
+  };
+
+  // Rename: saves the new name, then confirms with the screen's toast.
+  const saveName = async () => {
+    const clean = draft.trim();
+    if (!clean) return;
+    setRenameOpen(false);
+    if (clean === item.name) return;
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      await renameItem(item.id, clean);
+      onToast(`Renamed to ${clean.slice(0, 80)}`);
+    } catch {
+      onToast("Couldn't rename the item. Please try again.");
+    }
   };
 
   // Change category: moves the item, then confirms with the screen's toast.
@@ -236,6 +258,20 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 <Ionicons name="checkmark-done" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Mark as consumed</Text>
               </PressScale>
+              {/* Rename: hands over to the Rename dialog. */}
+              <PressScale
+                onPress={() => {
+                  closeMenu();
+                  setDraft(item.name);
+                  setRenameOpen(true);
+                }}
+                style={s.menuRow}
+                accessibilityRole="button"
+                accessibilityLabel={`Rename ${item.name}`}
+              >
+                <Ionicons name="pencil-outline" size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>Rename</Text>
+              </PressScale>
               {/* Change category: hands over to the category picker dialog. */}
               <PressScale
                 onPress={() => {
@@ -259,6 +295,43 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               </PressScale>
               <View style={s.menuClose}>
                 <SmallButton label="Close" onPress={closeMenu} />
+              </View>
+            </View>
+          </FadeIn>
+        </View>
+      </Modal>
+
+      {/* The Rename dialog: the same compact dialog, with one name field
+          (the app's input box, lime while active) and Cancel / Save. */}
+      <Modal visible={renameOpen} transparent animationType="fade" onRequestClose={() => setRenameOpen(false)}>
+        <View style={[s.backdrop, webKeyboard > 0 && { paddingBottom: webKeyboard }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRenameOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <FadeIn>
+            <View
+              style={[s.menu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
+              accessibilityRole={'dialog' as never}
+              accessibilityLabel={`Rename ${item.name}`}
+              {...({ 'aria-modal': true } as object)}
+            >
+              <Text style={[s.consumeQuestion, { color: t.text }]}>Rename</Text>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Product name"
+                placeholderTextColor={t.textMuted}
+                maxLength={80}
+                autoFocus
+                selectTextOnFocus
+                returnKeyType="done"
+                onSubmitEditing={() => void saveName()}
+                onFocus={() => setDraftFocused(true)}
+                onBlur={() => setDraftFocused(false)}
+                accessibilityLabel="Product name"
+                style={[s.nameInput, { color: t.text, borderColor: draftFocused ? t.chipOnBorder : t.surfaceBorder, backgroundColor: t === LIGHT ? '#FFFFFF' : t.cardAlt }]}
+              />
+              <View style={s.renameButtons}>
+                <SmallButton label="Cancel" onPress={() => setRenameOpen(false)} />
+                <SmallButton label="Save" icon="checkmark" tone="mint" onPress={() => void saveName()} />
               </View>
             </View>
           </FadeIn>
@@ -423,6 +496,9 @@ const useStyles = makeStyles((t) => ({
   },
   menuRowText: { fontSize: 15, fontWeight: '600' },
   menuClose: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
+  // The Rename dialog's field (the shopping list's input box) and buttons.
+  nameInput: { borderWidth: 1, borderRadius: 12, fontSize: 16, paddingHorizontal: 14, minHeight: 52 },
+  renameButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 6 },
   // The Change category dialog: a scrolling list of menu rows, art first.
   categoryMenu: { maxHeight: '80%' },
   categoryList: { flexGrow: 0 },

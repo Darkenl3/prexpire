@@ -79,6 +79,9 @@ type ItemsContext = {
   // Moves one tracked item to another category (the item card's "Change
   // category" action).
   setItemCategory: (id: string, category: CategoryId) => Promise<void>;
+  // Renames one tracked item (the item card's "Rename" action). Names are
+  // trimmed and capped like a new item's; an empty name is refused.
+  renameItem: (id: string, name: string) => Promise<void>;
   // Deletes every saved item and the remembered category from storage.
   clearSaved: () => Promise<void>;
 };
@@ -148,6 +151,17 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     setSaved(next);
   }, []);
 
+  const renameItem = useCallback(async (id: string, name: string) => {
+    const clean = name.trim().slice(0, 80);
+    if (!clean) throw new Error('empty name');
+    if (!savedRef.current.some((i) => i.id === id && i.name !== clean)) return; // unknown id or no change
+    const next = savedRef.current.map((i) => (i.id === id ? { ...i, name: clean } : i));
+    // Persist first, like the other writes: a failed write keeps the old name.
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    savedRef.current = next;
+    setSaved(next);
+  }, []);
+
   const clearSaved = useCallback(async () => {
     await AsyncStorage.multiRemove([STORAGE_KEY, LAST_CATEGORY_KEY]);
     savedRef.current = [];
@@ -157,8 +171,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
 
   const defaultCategory = settings.defaultCategory === 'last' ? lastCategory : settings.defaultCategory;
   const value = useMemo(
-    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, clearSaved }),
-    [saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, clearSaved],
+    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, renameItem, clearSaved }),
+    [saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, renameItem, clearSaved],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

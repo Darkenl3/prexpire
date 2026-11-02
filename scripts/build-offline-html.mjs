@@ -97,9 +97,14 @@ if (!inlined.some((n) => n.startsWith('Ionicons.'))) {
   throw new Error('build-offline-html: the Ionicons font was not inlined — the offline bundle would render no icons');
 }
 
-// The version stamp: content hash of the ORIGINAL bundle + build date. The
-// shell reads this marker to validate downloads and compare versions.
-const version = `v${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${createHash('sha1').update(rawJs).digest('hex').slice(0, 10)}`;
+// The version stamp: build date, build time (UTC) and the content hash of the
+// ORIGINAL bundle — "v20261102-t1530-7902ffc625". The shell reads this marker
+// to validate downloads and compare versions. Shells built before the time
+// existed read the date alone ("v" + 8 digits + "-" still opens the stamp),
+// and newer shells also compare the time, so a web update deployed later the
+// same day as the installed app reaches it.
+const now = new Date().toISOString();
+const version = `v${now.slice(0, 10).replace(/-/g, '')}-t${now.slice(11, 16).replace(':', '')}-${createHash('sha1').update(rawJs).digest('hex').slice(0, 10)}`;
 
 // The BOOT CANVAS: the page's background from the first parsed head bytes, so
 // the WebView's surface wears the app's page tone BEFORE and WHILE the ~2 MB
