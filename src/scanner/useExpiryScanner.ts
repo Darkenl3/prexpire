@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { parseExpiry, type DayOrder, type ScanParseResult } from './dateParser';
-import { missHint, settleHint, type ScanHint } from './scanFeedback';
+import { AGREEMENT_WINDOW, confirmsDate, missHint, settleHint, type ScanHint } from './scanFeedback';
 import type { FrameGeometry, FrameReading, ScannerCameraHandle } from './ScannerCamera.types';
 
 export type Detection = Extract<ScanParseResult, { kind: 'found' }>;
@@ -35,9 +35,9 @@ type Options = {
 // on the device, so frames are sampled about once a second instead of analysing every one.
 // Passes never overlap: the next is scheduled only after the previous one finishes.
 const PASS_GAP_MS = 450;
-// A date has to be read the same way in two of the last three passes before it counts.
-const AGREEMENT_WINDOW = 3;
-const AGREEMENT_NEEDED = 2;
+// A date confirms per scanFeedback.confirmsDate: at once when the read is
+// clean and labelled, otherwise when the same date is read twice within the
+// agreement window.
 // Misses before the loop gives its final verdict: roughly 20 seconds of live
 // scanning with no confirmed date. From that point the hint says plainly
 // that recognition did not work and manual entry is the way forward — the
@@ -118,9 +118,9 @@ export function useExpiryScanner({ camera, geometry, enabled, readBarcodes, onBa
       const lines = reading?.lines ?? [];
       const result: ScanParseResult | null = reading ? parseExpiry(lines, { today: new Date(), preferredOrder: order }) : null;
       if (result?.kind === 'found') {
-        const h = [...history.current, result.key].slice(-AGREEMENT_WINDOW);
+        const h = [...history.current, result.primary.iso].slice(-AGREEMENT_WINDOW);
         history.current = h;
-        if (h.filter((k) => k === result.key).length >= AGREEMENT_NEEDED) {
+        if (confirmsDate(h, result.primary.iso, result.confidence)) {
           publish({ status: 'detected', detection: result });
           return;
         }

@@ -83,6 +83,21 @@ export function missHint(o: MissObservation): ScanHint {
   return 'text-found';
 }
 
+// When a read date is confirmed (and the save sheet opens):
+//   • a HIGH-confidence read (a labelled, unambiguous expiry date) confirms
+//     on the spot — the save sheet shows it for the user to check anyway;
+//   • anything else needs the same DATE read twice within the last few passes.
+// Agreement is on the date itself, not on everything around it: dot-matrix
+// stamps read slightly differently every pass (a stray second line, a lost
+// label), and requiring identical reads made a correct "25 Nov 2026" appear
+// and vanish again instead of confirming.
+export const AGREEMENT_WINDOW = 5;
+
+export function confirmsDate(recent: (string | null)[], iso: string, confidence: 'high' | 'medium'): boolean {
+  if (confidence === 'high') return true;
+  return recent.slice(-AGREEMENT_WINDOW).filter((k) => k === iso).length >= 2;
+}
+
 // One pass's hint only replaces the one on screen when the next pass agrees,
 // so the guidance does not flicker between two messages every half second.
 // 'manual' (the verdict) and a return to 'aim'/'hold-steady' apply at once.

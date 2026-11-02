@@ -1,7 +1,7 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { looksDateShaped, missHint, settleHint, type MissObservation } from './scanFeedback.ts';
+import { confirmsDate, looksDateShaped, missHint, settleHint, type MissObservation } from './scanFeedback.ts';
 
 const base: MissObservation = {
   misses: 5,
@@ -58,4 +58,15 @@ test('a date in view that reads as scattered digits is "hard to read", not "not 
   assert.equal(missHint({ ...base, lines: ['126S571S195'], parseHint: 'no-date' }), 'unclear');
   // Two digits (a fat percentage) are not a date in view.
   assert.equal(missHint({ ...base, lines: ['3,4% grasime'], parseHint: 'no-date' }), 'text-found');
+});
+
+test('a date confirms on the date itself, not on identical reads', () => {
+  // A clean labelled read confirms at once.
+  assert.equal(confirmsDate(['2026-11-25'], '2026-11-25', 'high'), true);
+  // An unlabelled read needs the same date twice, however the reads around it differ.
+  assert.equal(confirmsDate(['2026-11-25'], '2026-11-25', 'medium'), false);
+  assert.equal(confirmsDate(['2026-11-25', null, null, '2026-11-25'], '2026-11-25', 'medium'), true);
+  // ...within the window.
+  assert.equal(confirmsDate(['2026-11-25', null, null, null, null, '2026-11-25'], '2026-11-25', 'medium'), false);
+  assert.equal(confirmsDate(['2026-11-24', '2026-11-25'], '2026-11-25', 'medium'), false);
 });
