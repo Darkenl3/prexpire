@@ -293,9 +293,9 @@ test('photo: Turkish PD/ED pair — ED is the expiry, PD the production date', (
   assert.equal(r.primary.iso, '2026-08-31');
   assert.equal(r.primary.precision, 'month');
   assert.equal(r.label, 'expiry');
-  // The production date alone reads nothing date-like (its MM/YY form is only
-  // matched after an EXPIRY label): honest "no date", never an expiry.
-  assert.deepEqual(parseExpiry(['PD: 08.23'], uk), { kind: 'none', hint: 'no-date' });
+  // The production date alone reads as exactly that — a production month
+  // (short MM/YY forms read after a production label too) — never an expiry.
+  assert.deepEqual(parseExpiry(['PD: 08.23'], uk), { kind: 'none', hint: 'manufacture-only' });
   // A full production date IS a date candidate, just manufacture-labelled:
   // "manufacture-only", never an expiry.
   assert.deepEqual(parseExpiry(['URETIM TARIHI 24.03.21'], uk), { kind: 'none', hint: 'manufacture-only' });

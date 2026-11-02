@@ -152,6 +152,9 @@ const MONTH_ALT = Object.keys(MONTHS)
 const ML = '(?<!\\p{L})';
 const MR = '(?!\\p{L})';
 
+// Canada's bilingual two-letter month codes (English/French compromise).
+const CANADA_MONTHS: Record<string, number> = { JA: 1, FE: 2, MR: 3, AL: 4, MA: 5, JN: 6, JL: 7, AU: 8, SE: 9, OC: 10, NO: 11, DE: 12 };
+
 // Roman-numeral months (Polish, Russian, Bulgarian and Czech packaging:
 // "15.III.2027"), longest first so XII wins over XI and X.
 const ROMAN: Record<string, number> = { XII: 12, XI: 11, X: 10, IX: 9, VIII: 8, VII: 7, VI: 6, V: 5, IV: 4, III: 3, II: 2, I: 1 };
@@ -160,7 +163,7 @@ const ROMAN_ALT = Object.keys(ROMAN).join('|');
 // Labels, longest phrases first so "BEST BEFORE END" wins over "BEST BEFORE".
 const LABELS: { kind: LabelKind; pattern: string }[] = [
   { kind: 'expiry', pattern: 'BEST\\s*BEFORE\\s*END|BEST\\s*BEFORE|BEST\\s*BY|BEST\\s*IF\\s*USED\\s*BY|USE\\s*BEFORE|USE\\s*BY' },
-  { kind: 'expiry', pattern: 'EXPIRY\\s*DATE|EXPIRATION\\s*DATE|EXP\\.?\\s*DATE|EXP\\.?\\s*DT|EXPIRY|EXPIRATION|EXPIRES|EXPIRE|EXPD|EXP|BBE|B\\s*/\\s*B|BB|E\\s*/\\s*D|E\\.?\\s*D' },
+  { kind: 'expiry', pattern: 'EXPIRY\\s*DATE|EXPIRATION\\s*DATE|EXP\\.?\\s*DATE|EXP\\.?\\s*DT|EXPIRY|EXPIRATION|EXPIRES|EXPIRE|EXPD|EXP|BB\\s*/\\s*MA|BBE|B\\s*/\\s*B|BB|E\\s*/\\s*D|E\\.?\\s*D' },
   // The standard expiry phrases of the other EU packaging languages, as they
   // read after accent stripping (diacritics are removed in normalizeLine, so
   // these patterns stay plain ASCII). Imported goods carry these next to the
@@ -248,6 +251,32 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       '|SCADENZA|SCAD\\.?',
   },
   {
+    // Expiry wordings found missing by the country test table
+    // (countryFormats.test.ts), as they read after normalizeLine (accents
+    // stripped, upper case; ø and Greek/Arabic/Thai/CJK letters stay):
+    // Scandinavia, Iberia and Latin America, France, Germany, Poland,
+    // Czechia, Hungary, Turkey, Greece, Vietnam, Indonesia, Malaysia,
+    // Thailand, the Arab world, Taiwan and Korea. Three earlier entries had
+    // spelling slips (SPOZYT, SPOTRBUJTE, MINOSSEGMEGORZES) and never matched;
+    // the correct spellings are here.
+    kind: 'expiry',
+    pattern:
+      'BAST\\s*FORE|BEST\\s*F[OØ]R|BEDST\\s*F[OØ]R|MINDST\\s*HOLDBAR\\s*TIL|SISTA\\s*FORBRUKNINGSDAG|PARASTA\\s*ENNEN|VIIMEINEN\\s*KAYTTOPAIVA' +
+      "|CONSUMIR\\s*DE\\s*PREFERENCIA\\s*ANTES\\s*DE|FECHA\\s*DE\\s*CADUCIDAD|FECHA\\s*DE\\s*VENCIMIENTO|CADUCIDAD|CONS\\.?\\s*PREF\\.?|VENCIMENTO|VENCIMIENTO|VALIDADE|VENCE|VTO\\.?|VAL\\.?|CAD\\.?" +
+      "|A\\s*CONSOMMER\\s*JUSQU.?\\s*AU|DLUO|DDM|DLC|ZU\\s*VERBRAUCHEN\\s*BIS|NAJLEPIEJ\\s*SPOZYC\\s*PRZED|DATA\\s*WAZNOSCI" +
+      '|MINIMALN[IA]\\s*TRVANLIVOST|SPOTREBUJTE\\s*DO|MINOSEGET\\s*MEGORZI|FOGYASZTHATO|SON\\s*TUKETIM\\s*TARIHI|TETT|THT|TGT' +
+      '|ΑΝΑΛΩΣΗ|ΛΗΞΗ|HAN\\s*SU\\s*DUNG|HSD|BAIK\\s*DIGUNAKAN\\s*SEBELUM|KEDALUWARSA|KADALUARSA|KADALUWARSA|TARIKH\\s*LUPUT' +
+      '|หมดอายุ|ควรบริโภคก่อน|صالح\\s*حتى|صالح\\s*لغاية|يستهلك\\s*قبل|有效-期|保存期限|소비기한|MEILLEUR\\s*AVANT',
+  },
+  {
+    kind: 'manufacture',
+    // The production-date wordings of the same countries: Vietnam (NSX),
+    // Brazil and Spain (FAB / fabricación), Egypt and the Gulf (PRD), Greece,
+    // Thailand, Indonesia.
+    pattern:
+      'NSX|NGAY\\s*SAN\\s*XUAT|FECHA\\s*DE\\s*FABRICACION|DATA\\s*DE\\s*FABRICACAO|FABRICACAO|FABRICACION|FAB\\.?|PRD\\.?|ΠΑΡΑΓΩΓΗ|ผลิต|TANGGAL\\s*PRODUKSI|TARIKH\\s*DIBUAT',
+  },
+  {
     kind: 'manufacture',
     pattern:
       'DATE\\s*OF\\s*MANUFACTURE|DATE\\s*OF\\s*MFG|MANUFACTURED(?:\\s*ON)?|MANUFACTURE|MANUF|MFG\\.?\\s*DATE|MFG|MFD(?:\\s*ON)?|MFR|PRODUCTION\\s*DATE|PRODUCED(?:\\s*ON)?|PROD\\.?\\s*DATE|PROD|PACKED(?:\\s*ON)?|PACK\\s*DATE|PKD|MADE\\s*ON|DOM|P\\s*/\\s*D|PD' +
@@ -257,7 +286,9 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       '|URETIM\\s*TARIHI|URET[II]M\\s*TAR\\.?' +
       // East-Asian production dates: Japanese seizo nengappi, Chinese
       // shengchan riqi, Korean jego ilja - the other date on East-Asian goods.
-      '|製造|生産|生产|제조' +
+      // 生产日期 / 生産日期 read "生产-期" here (日 is already a separator), so
+      // the full form is listed first and the date right after it pairs up.
+      '|生产-期|生産-期|製造|生産|生产|제조' +
       // Russian production date: "дата изготовления" / "изготовлено" (the bare
       // stem covers every inflection — Cyrillic letters pass the [A-Z] word
       // guards, and every word grown on this stem still means "manufactured").
@@ -373,7 +404,10 @@ function daysInMonth(year: number, month: number) {
 
 function makeYear(text: string): number {
   const n = Number(text);
-  return text.length === 2 ? 2000 + n : n;
+  if (text.length === 2) return 2000 + n;
+  // Thai packaging may print the Buddhist-era year (2570 = 2027 CE).
+  if (n >= 2540 && n <= 2599) return n - 543;
+  return n;
 }
 
 function toDay(year: number, month: number, day: number): Interpretation | null {
@@ -406,6 +440,16 @@ const NA = '(?![0-9])';
 
 // Order matters: earlier patterns claim their text first.
 const PATTERNS: Pattern[] = [
+  // 27 MR 15 / 2027 MR 15 - Canada's bilingual date: YEAR, a two-letter month
+  // code shared by English and French (JA FE MR AL MA JN JL AU SE OC NO DE),
+  // then the day (Health Canada / CFIA date markings). Two-letter codes are
+  // too easily ordinary text, so only right after an expiry label
+  // ("BEST BEFORE / MEILLEUR AVANT", "BB/MA").
+  {
+    re: new RegExp(`${NB}(\\d{4}|\\d{2})\\s?${ML}(JA|FE|MR|AL|MA|JN|JL|AU|SE|OC|NO|DE)${MR}\\s?(\\d{1,2})${NA}`, 'gu'),
+    labelledOnly: true,
+    read: (m) => [toDay(makeYear(m[1]), CANADA_MONTHS[m[2]], Number(m[3]))].filter(Boolean) as Interpretation[],
+  },
   // 27 OCT 2026, 27OCT26, 27TH OCTOBER 2026
   {
     re: new RegExp(`${NB}(\\d{1,2})(?:ST|ND|RD|TH)?${SP}${ML}(${MONTH_ALT})${MR}${SP}(\\d{4}|\\d{2})${NA}`, 'gu'),
@@ -858,7 +902,10 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
     const dates = findDates(
       line,
       lineOpts,
-      labels.filter((l) => l.kind === 'expiry').map((l) => l.end),
+      // Short and compact forms (10/26, 20260315) read after an expiry OR a
+      // production label: a production date written "生产日期: 20260315" is
+      // still that pack's production date (and feeds the shelf-life sum).
+      labels.filter((l) => l.kind === 'expiry' || l.kind === 'manufacture').map((l) => l.end),
       carriedExpiry,
     );
     const valid = dates.filter((d): d is RawDate => !('invalid' in d));
@@ -1006,11 +1053,14 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
 // would erase the Chinese and Japanese units.
 const SHELF_LIFE_RE = new RegExp(
   '(?:SHELF\\s*LIFE|BEST\\s*WITHIN|保质期|保質期|賞味期限|消費期限|유통기한|СРОК\\s*(?:НА\\s*)?ГОДНОСТИ?|ТЕРМ[ИІ]Н\\s*ПРИДАТНОСТ[ИІ]|' +
-    'TERMEN\\s*DE\\s*VALABILITATE|VALABILITATE|HALTBARKEIT|DURATA|תוקף)' +
+    'TERMEN\\s*DE\\s*VALABILITATE|VALABILITATE|HALTBARKEIT|DURATA|תוקף|' +
+    // An expiry label followed by a DURATION rather than a date: India's
+    // "Best before 12 months from manufacture", Vietnam's "HSD: 30 tháng".
+    'BEST\\s*BEFORE|USE\\s*BEFORE|USE\\s*BY|EXPIRY|HSD|HẠN\\s*SỬ\\s*DỤNG)' +
     '\\s*[:：\\-–]?\\s*(?:\\S+\\s+)?(\\d{1,4})\\s*' +
-    '(MONTHS?|MTHS?|МЕС[А-ЯЁ]*|LUNI|LUNA|MONATE?|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודשים|חודש|' +
-    'DAYS?|ДН[А-ЯЁ]*|ДЕН[А-ЯЁ]*|СУТ[А-ЯЁ]*|ZILE|TAGE|GIORNI|DIAS|JOURS|天|日|일|ימים|' +
-    'YEARS?|YRS?|ГОД[А-ЯЁ]*|ЛЕТ|ANI|JAHRE?|ANNI|ANOS|ANS|年|년|שנים|שנה)',
+    '(MONTHS?|MTHS?|МЕС[А-ЯЁ]*|LUNI|LUNA|MONATE?|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודשים|חודש|THÁNG|THANG|' +
+    'DAYS?|ДН[А-ЯЁ]*|ДЕН[А-ЯЁ]*|СУТ[А-ЯЁ]*|ZILE|TAGE|GIORNI|DIAS|JOURS|天|日|일|ימים|NGÀY|NGAY|' +
+    'YEARS?|YRS?|ГОД[А-ЯЁ]*|ЛЕТ|ANI|JAHRE?|ANNI|ANOS|ANS|年|년|שנים|שנה|NĂM|NAM)',
 );
 
 type ShelfLife = { n: number; unit: 'day' | 'month' | 'year' };
@@ -1021,9 +1071,9 @@ export function readShelfLife(lines: string[]): ShelfLife | null {
   const n = Number(m[1]);
   if (!n) return null;
   const u = m[2];
-  const unit: ShelfLife['unit'] = /^(?:MONTH|MTH|МЕС|LUN|MONAT|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודש)/.test(u)
+  const unit: ShelfLife['unit'] = /^(?:MONTH|MTH|МЕС|LUN|MONAT|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודש|THÁNG|THANG)/.test(u)
     ? 'month'
-    : /^(?:YEAR|YR|ГОД|ЛЕТ|ANI|JAHR|ANNI|ANOS|ANS|年|년|שנ)/.test(u)
+    : /^(?:YEAR|YR|ГОД|ЛЕТ|ANI|JAHR|ANNI|ANOS|ANS|年|년|שנ|NĂM|NAM)/.test(u)
       ? 'year'
       : 'day';
   // Sanity: nothing keeps longer than 15 years.
