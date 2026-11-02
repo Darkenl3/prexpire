@@ -241,3 +241,11 @@ test('photo: protein bar "14 07 27" under its batch code "072629"', () => {
   // Loose single digits are not a spaced date.
   assert.equal(parseExpiry(['3 4 25'], dmy).kind, 'none');
 });
+
+test('photo: cottage cheese dot-matrix "25.11.2026" read with colons', () => {
+  offers(['25:11:2026'], '2026-11-25');
+  offers(['25:11.2026', '2655 3E5 10:51'], '2026-11-25');
+  // A clock time and a two-digit-year colon run stay non-dates.
+  assert.equal(parseExpiry(['10:51'], dmy).kind, 'none');
+  assert.equal(parseExpiry(['23:11:29'], dmy).kind, 'none');
+});

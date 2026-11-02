@@ -533,11 +533,13 @@ const PATTERNS: Pattern[] = [
       return m[4].length === 2 ? withYearFirst(dayMonth, a, b, Number(m[4]), opts) : dayMonth;
     },
   },
-  // 25.11,2026 / 25,11.2026 - a dot-matrix stamp whose dots OCR returns as
-  // mixed separators (commas included). Only with a four-digit 20xx year: the
-  // year anchors the shape, so a decimal such as "3,4" never starts a date.
+  // 25.11,2026 / 25,11.2026 / 25:11:2026 - a dot-matrix stamp whose dots OCR
+  // returns as mixed separators: commas, and colons where a stamped period
+  // lines up with a dot of the row below. Only with a four-digit 20xx year:
+  // the year anchors the shape, so a decimal ("3,4") or a clock time
+  // ("10:51") never starts a date.
   {
-    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,/\\-]\\s?(\\d{1,2})\\s?[.,/\\-]\\s?(20\\d{2})${NA}`, 'g'),
+    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,:;/\\-]\\s?(\\d{1,2})\\s?[.,:;/\\-]\\s?(20\\d{2})${NA}`, 'g'),
     read: (m, opts) => {
       const a = Number(m[1]);
       const b = Number(m[2]);
