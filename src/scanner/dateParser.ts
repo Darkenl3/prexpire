@@ -393,7 +393,30 @@ export function normalizeLine(line: string): string {
   // clean-up below would read its L as a 1 and fuse the two into one number.
   // A standalone "L5521" is a lot code too ("L" + 3 or more digits).
   const lotSplit = upper.replace(/(\d{4,})L(?=\d)/g, '$1 LOT ').replace(/(^|\s)L(?=\d{3,}(?:\s|$))/g, '$1LOT ');
-  return normalizeDigits(lotSplit).trim();
+  return splitGluedDates(normalizeDigits(lotSplit)).trim();
+}
+
+// A date the reader glued to the numbers around it — two stamped lines read
+// as one ("12/07/281209375193"), a code run straight into the day
+// ("93751912/07/28") — is cut free, anchored on its separators and its year:
+// a 20xx four-digit year when the digits after the month say so
+// ("12/07/2028120937"), otherwise two digits. Only separator-shaped dates are
+// cut, so plain codes are never split into dates.
+function splitGluedDates(line: string): string {
+  return line
+    // The whole digit run after the month decides: a plain year (2 digits,
+    // or 4 starting 20) is left alone; a longer run is cut after its 20xx
+    // year when it starts 20, otherwise after two digits.
+    .replace(/(\d{1,2})([./-])(\d{1,2})\2(\d+)/g, (all, d: string, sep: string, mo: string, run: string) => {
+      // (25xx is a Thai Buddhist-era year: also complete.)
+      if (run.length === 2 || (run.length === 4 && (run.startsWith('20') || run.startsWith('25')))) return all;
+      if (run.length < 2) return all;
+      const year = run.startsWith('20') && run.length > 4 ? run.slice(0, 4) : run.slice(0, 2);
+      return `${d}${sep}${mo}${sep}${year} ${run.slice(year.length)}`;
+    })
+    // A code of three or more digits run into a two-digit day. (A shorter
+    // prefix is the start of a year-first date — "2027-03-15" — not a code.)
+    .replace(/(\d{3,})(\d{2}[./-]\d{1,2}[./-](?:20\d{2}|\d{2})(?!\d))/g, '$1 $2');
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -924,6 +947,12 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
       // The nearest label before the date on this line, unless another date sits between them.
       const before = labels.filter((l) => l.end <= d.start && !valid.some((o) => o !== d && o.start >= l.end && o.end <= d.start));
       let label: FoundLabel | undefined = before[before.length - 1];
+      // A LOT or production label governs what it is printed NEXT to: with
+      // its own code in between ("LOT 5693478 12.07.28"), the label belongs
+      // to that code, and the date after it is not a lot or production date.
+      if (label && (label.kind === 'lot' || label.kind === 'manufacture') && /\d{3,}/.test(line.slice(label.end, d.start))) {
+        label = undefined;
+      }
       let carriedLabel = false;
       if (!label && carried.length) {
         label = carried.length === valid.length ? carried[i] : carried[carried.length - 1];

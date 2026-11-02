@@ -207,3 +207,20 @@ test('photo: chocolate "012028L813" is January 2028 with lot L813 glued on', () 
   // 6-digit day/month/year stamps keep reading as before.
   assert.equal(offers(['EXP 200627'], '2027-06-20').primary.iso, '2027-06-20');
 });
+
+test('a date glued to the numbers around it is cut free, anchored on its year', () => {
+  // The dog-food tin: the date line and the code line read as one.
+  offers(['12/07/281209375193'], '2028-07-12');
+  offers(['12/07/2028120937'], '2028-07-12');
+  offers(['93751912/07/28'], '2028-07-12');
+  // A LOT label with its own number in between does not make the date a lot date.
+  const r = offers(['LOT 5693478 12.07.28 85'], '2028-07-12');
+  assert.equal(r.label, null);
+  // Plain dates and year-first dates are never cut.
+  offers(['EXP 03/15/2027'], '2027-03-15', { today, preferredOrder: 'MDY' });
+  offers(['EXP 2027-03-15'], '2027-03-15');
+  // The dog-food code line misreads stay non-dates.
+  for (const junk of ['15693/73,651', '5693478, 85', '8693478,55', '1209375193']) {
+    assert.equal(parseExpiry([junk], dmy).kind, 'none', junk);
+  }
+});
