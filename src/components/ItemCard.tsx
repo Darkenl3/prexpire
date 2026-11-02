@@ -16,7 +16,7 @@ import { SmallButton } from './SettingsRows';
 // The redesigned item card for the Lists tab (the reference's compact card): a
 // rounded pale-green art square carrying the category's art on the left, the
 // name / category / expiry-date meta rows and the days-left pill in the
-// middle, and the three-dot action menu on the right. The name stays on one
+// middle, and on the right the Consumed button and the three-dot action menu. The name stays on one
 // line (ellipsized when needed) so every card keeps exactly the same height.
 // Every value is real data (the item's own fields); nothing is sampled or
 // invented.
@@ -67,6 +67,9 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   // Removing asks twice, exactly like the app's other destructive actions
   // (clearing purchased items, deleting a category folder).
   const [confirmRemove, setConfirmRemove] = useState(false);
+  // The "Consumed" dialog: the user used the item up (ate it, used it), and
+  // is asked whether to restock it on the Shopping List.
+  const [consumeOpen, setConsumeOpen] = useState(false);
 
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
@@ -74,6 +77,10 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   // The same days-left wording every list uses ("Today", "1 day", "5 days") —
   // the card's own date row says the exact day.
   const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
+
+  // The Consumed button's ink: the bright lime on the dark page, the deep
+  // readable green on the light one (the pill's translucent-fill language).
+  const consumeInk = t === LIGHT ? t.green : t.mint;
 
   const known = custom.find((cat) => cat.id === item.category);
   const icon = categoryIcon(item.category, known?.icon);
@@ -92,6 +99,20 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
     closeMenu();
     onToast(result.ok ? `${result.item.name} added to your list` : 'That is already on your list');
+  };
+
+  // Consumed: the item leaves the tracked list (it is no longer in the
+  // house), optionally landing on the Shopping List so it gets bought again.
+  const consume = async (restock: boolean) => {
+    setConsumeOpen(false);
+    Haptics.selectionAsync().catch(() => {});
+    await removeItem(item.id);
+    if (!restock) {
+      onToast(`${item.name} marked as consumed`);
+      return;
+    }
+    const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
+    onToast(result.ok ? `${item.name} consumed and added to your list` : `${item.name} consumed. It is already on your list`);
   };
 
   const removePressed = async () => {
@@ -142,16 +163,29 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           anchored at the top (aligned with the name), and the days-left
           pill on the right edge below it, centred in the remaining space. */}
       <View style={s.side}>
-        <PressScale
-          onPress={openMenu}
-          hitSlop={8}
-          scaleTo={0.88}
-          style={s.dots}
-          accessibilityRole="button"
-          accessibilityLabel={`Actions for ${item.name}`}
-        >
-          <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
-        </PressScale>
+        <View style={s.sideActions}>
+          {/* Consumed: one tap when the item is used up or eaten. */}
+          <PressScale
+            onPress={() => setConsumeOpen(true)}
+            hitSlop={6}
+            scaleTo={0.88}
+            style={[s.consumed, { backgroundColor: withAlpha(consumeInk, 0.14), borderColor: withAlpha(consumeInk, 0.42) }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark ${item.name} as consumed`}
+          >
+            <Ionicons name="checkmark-done" size={16} color={consumeInk} />
+          </PressScale>
+          <PressScale
+            onPress={openMenu}
+            hitSlop={8}
+            scaleTo={0.88}
+            style={s.dots}
+            accessibilityRole="button"
+            accessibilityLabel={`Actions for ${item.name}`}
+          >
+            <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
+          </PressScale>
+        </View>
         <View style={s.pillAnchor}>
           <View
             style={[
@@ -199,6 +233,37 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               </PressScale>
               <View style={s.menuClose}>
                 <SmallButton label="Close" onPress={closeMenu} />
+              </View>
+            </View>
+          </FadeIn>
+        </View>
+      </Modal>
+
+      {/* The Consumed dialog: the same compact dialog as the actions menu. */}
+      <Modal visible={consumeOpen} transparent animationType="fade" onRequestClose={() => setConsumeOpen(false)}>
+        <View style={s.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setConsumeOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <FadeIn>
+            <View
+              style={[s.menu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
+              accessibilityRole={'dialog' as never}
+              accessibilityLabel={`${item.name} consumed`}
+              {...({ 'aria-modal': true } as object)}
+            >
+              <Text style={s.menuName} numberOfLines={2}>
+                {item.name}
+              </Text>
+              <Text style={[s.consumeQuestion, { color: t.text }]}>Used it up? Add it to your Shopping List to buy it again.</Text>
+              <PressScale onPress={() => void consume(true)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Mark ${item.name} as consumed and add it to your Shopping List`}>
+                <Ionicons name="cart-outline" size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>Consumed, add to Shopping List</Text>
+              </PressScale>
+              <PressScale onPress={() => void consume(false)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Mark ${item.name} as consumed`}>
+                <Ionicons name="checkmark-done" size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>Consumed, don't add</Text>
+              </PressScale>
+              <View style={s.menuClose}>
+                <SmallButton label="Cancel" onPress={() => setConsumeOpen(false)} />
               </View>
             </View>
           </FadeIn>
@@ -263,6 +328,12 @@ const useStyles = makeStyles((t) => ({
   pillText: { fontSize: 12.5, fontWeight: '700' },
   pillTextCompact: { fontSize: 12 },
   dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  // The top of the right-hand stack: Consumed, then the three-dot menu.
+  sideActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // Consumed: a small round button with a translucent green fill and rim (the
+  // days-left pill's language), the same size as the menu's touch target so
+  // the card keeps its height.
+  consumed: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   menu: {
@@ -286,4 +357,5 @@ const useStyles = makeStyles((t) => ({
   },
   menuRowText: { fontSize: 15, fontWeight: '600' },
   menuClose: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
+  consumeQuestion: { fontSize: 15, lineHeight: 20, fontWeight: '600', marginBottom: 4, paddingHorizontal: 2 },
 }));
