@@ -357,7 +357,12 @@ export function normalizeLine(line: string): string {
     .replace(/[‐-―−]/g, '-')
     .replace(/[·•]/g, '.')
     .replace(/\s+/g, ' ');
-  return normalizeDigits(upper).trim();
+  // A lot code printed straight after a date with no space ("012028L813" =
+  // 01/2028 then lot L813): split it off as a LOT label before the digit
+  // clean-up below would read its L as a 1 and fuse the two into one number.
+  // A standalone "L5521" is a lot code too ("L" + 3 or more digits).
+  const lotSplit = upper.replace(/(\d{4,})L(?=\d)/g, '$1 LOT ').replace(/(^|\s)L(?=\d{3,}(?:\s|$))/g, '$1LOT ');
+  return normalizeDigits(lotSplit).trim();
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -608,6 +613,15 @@ const PATTERNS: Pattern[] = [
     isolatedOnly: true,
     read: (m, opts) => compact8(m[1], opts).filter((i) => i.iso >= isoToday(opts.today)),
   },
+  // 012028 - month and four-digit year with no separator (chocolate and
+  // sweets: "012028" = January 2028). Listed before the 6-digit day/month/year
+  // stamps, which would otherwise read it as 20 Jan 2028. Labelled or not; a
+  // bare one must stand alone in its line and not be over.
+  {
+    re: new RegExp(`${NB}(0[1-9]|1[0-2])(20\\d{2})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => [toMonth(Number(m[2]), Number(m[1]))].filter((i): i is Interpretation => !!i && i.iso >= isoToday(opts.today)),
+  },
   // EXP 200627 - the 6-digit dot-matrix stamp (no separators at all): day,
   // month, two-digit year in either order. Only right after an expiry label
   // does the past also read; see the bare variant below for why.
@@ -773,7 +787,8 @@ function findDates(line: string, opts: ParseOptions, expiryLabelEnds: number[], 
         // A bare compact stamp only reads as a date when it stands ALONE:
         // with other long digit runs in the line, this is a barcode or a
         // serial number whose groups happen to parse ("9 010437 034685").
-        const rest = line.slice(0, span.start) + ' ' + line.slice(span.end);
+        // A lot number ("LOT 5521") on the same line is not such a run.
+        const rest = (line.slice(0, span.start) + ' ' + line.slice(span.end)).replace(/(?<![A-Z])LOT\s*[A-Z0-9]+/g, ' ');
         if (/\d{4,}/.test(rest)) continue;
       }
       const interpretations = p.read(m, opts).filter((i) => inRange(i, opts.today));

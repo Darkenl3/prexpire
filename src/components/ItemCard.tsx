@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { makeStyles, useTheme, withAlpha, LIGHT, CARD_SHADOW, CARD_SHADOW_DARK, CARD_SHADOW_LIFTED, type Tint, type Tone } from '../theme';
 import { useCategories } from '../categories';
-import { useItems, type Item } from '../items';
+import { useItems, type CategoryId, type Item } from '../items';
 import { expiryStatus } from '../preferences';
 import { useSettings } from '../settings';
 import { useShopping } from '../shopping';
@@ -61,8 +61,8 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const t = useTheme();
   const s = useStyles();
   const { settings, formatDate } = useSettings();
-  const { nameOf, custom } = useCategories();
-  const { removeItem } = useItems();
+  const { nameOf, custom, all } = useCategories();
+  const { removeItem, setItemCategory } = useItems();
   const { addManual } = useShopping();
   const [menuOpen, setMenuOpen] = useState(false);
   // Removing asks twice, exactly like the app's other destructive actions
@@ -71,6 +71,8 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   // The "Consumed" dialog: the user used the item up (ate it, used it), and
   // is asked whether to restock it on the Shopping List.
   const [consumeOpen, setConsumeOpen] = useState(false);
+  // The Change category dialog.
+  const [categoryOpen, setCategoryOpen] = useState(false);
 
   const status = expiryStatus(item.expiresOn, settings.warningDays);
   const days = daysUntil(item.expiresOn, new Date());
@@ -110,6 +112,19 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     }
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
     onToast(result.ok ? `${item.name} consumed and added to your list` : `${item.name} consumed. It is already on your list`);
+  };
+
+  // Change category: moves the item, then confirms with the screen's toast.
+  const moveTo = async (category: CategoryId) => {
+    setCategoryOpen(false);
+    if (category === item.category) return;
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      await setItemCategory(item.id, category);
+      onToast(`${item.name} moved to ${nameOf(category)}`);
+    } catch {
+      onToast("Couldn't change the category. Please try again.");
+    }
   };
 
   const removePressed = async () => {
@@ -221,6 +236,19 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 <Ionicons name="checkmark-done" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Mark as consumed</Text>
               </PressScale>
+              {/* Change category: hands over to the category picker dialog. */}
+              <PressScale
+                onPress={() => {
+                  closeMenu();
+                  setCategoryOpen(true);
+                }}
+                style={s.menuRow}
+                accessibilityRole="button"
+                accessibilityLabel={`Change the category of ${item.name}`}
+              >
+                <Ionicons name="folder-open-outline" size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>Change category</Text>
+              </PressScale>
               <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Add ${item.name} to your Shopping List`}>
                 <Ionicons name="cart-outline" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Add to Shopping List</Text>
@@ -231,6 +259,52 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               </PressScale>
               <View style={s.menuClose}>
                 <SmallButton label="Close" onPress={closeMenu} />
+              </View>
+            </View>
+          </FadeIn>
+        </View>
+      </Modal>
+
+      {/* The Change category dialog: the same compact dialog as the actions
+          menu, listing every category the user keeps with its artwork; the
+          current one is ticked. Scrolls when the list is long. */}
+      <Modal visible={categoryOpen} transparent animationType="fade" onRequestClose={() => setCategoryOpen(false)}>
+        <View style={s.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setCategoryOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <FadeIn>
+            <View
+              style={[s.menu, s.categoryMenu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
+              accessibilityRole={'dialog' as never}
+              accessibilityLabel={`Category of ${item.name}`}
+              {...({ 'aria-modal': true } as object)}
+            >
+              <Text style={s.menuName} numberOfLines={2}>
+                {item.name}
+              </Text>
+              <Text style={[s.consumeQuestion, { color: t.text }]}>Move it to another category.</Text>
+              <ScrollView style={s.categoryList} contentContainerStyle={s.categoryListBody}>
+                {all.map((cat) => {
+                  const current = cat.id === item.category;
+                  return (
+                    <PressScale
+                      key={cat.id}
+                      onPress={() => void moveTo(cat.id as CategoryId)}
+                      style={[s.menuRow, current && { borderWidth: 1, borderColor: t.chipOnBorder }]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: current }}
+                      accessibilityLabel={`Move ${item.name} to ${cat.name}`}
+                    >
+                      <View style={s.categoryArt}>{categoryArt(cat.id as CategoryId, 22)}</View>
+                      <Text style={[s.menuRowText, s.categoryName, { color: t.text }]} numberOfLines={1}>
+                        {cat.name}
+                      </Text>
+                      {current && <Ionicons name="checkmark" size={19} color={t.green} />}
+                    </PressScale>
+                  );
+                })}
+              </ScrollView>
+              <View style={s.menuClose}>
+                <SmallButton label="Cancel" onPress={() => setCategoryOpen(false)} />
               </View>
             </View>
           </FadeIn>
@@ -349,5 +423,11 @@ const useStyles = makeStyles((t) => ({
   },
   menuRowText: { fontSize: 15, fontWeight: '600' },
   menuClose: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
+  // The Change category dialog: a scrolling list of menu rows, art first.
+  categoryMenu: { maxHeight: '80%' },
+  categoryList: { flexGrow: 0 },
+  categoryListBody: { gap: 8 },
+  categoryArt: { width: 26, alignItems: 'center' },
+  categoryName: { flex: 1 },
   consumeQuestion: { fontSize: 15, lineHeight: 20, fontWeight: '600', marginBottom: 4, paddingHorizontal: 2 },
 }));

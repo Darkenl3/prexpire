@@ -192,3 +192,18 @@ test('Cyrillic lookalike letters inside numbers read as digits', () => {
   // Cyrillic words with no digit stay words.
   assert.equal(parseExpiry(['ЗОО'], dmy).kind, 'none');
 });
+
+test('photo: chocolate "012028L813" is January 2028 with lot L813 glued on', () => {
+  const r = offers(['012028L813'], '2028-01-31');
+  assert.equal(r.primary.precision, 'month');
+  assert.equal(r.primary.iso, '2028-01-31');
+  offers(['012028'], '2028-01-31');
+  offers(['EXP 012028'], '2028-01-31');
+  offers(['122027 L5521'], '2027-12-31');
+  // The lot number itself is never a date.
+  assert.equal(parseExpiry(['L813'], dmy).kind, 'none');
+  // A past month/year without a label is a code, not an expiry.
+  assert.equal(parseExpiry(['012024'], dmy).kind, 'none');
+  // 6-digit day/month/year stamps keep reading as before.
+  assert.equal(offers(['EXP 200627'], '2027-06-20').primary.iso, '2027-06-20');
+});
