@@ -58,6 +58,7 @@ const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {
   'sell-by': 'This is a sell-by date, which can be earlier than the real expiry date.',
   'no-year': 'No year is printed, so the next time this date comes round was used. Check the year.',
   'coded-date': 'This date was printed as a code (year and day of the year). Check it.',
+  'shelf-life': 'Calculated from the production date and the printed shelf life. Check it.',
 };
 
 export type SaveInput = { name: string; category: CategoryId; date: Interpretation; image?: string };

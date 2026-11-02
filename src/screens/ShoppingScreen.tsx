@@ -360,6 +360,7 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
   // The default may name a category the user removed; fall back to the first one they keep.
   const known = (all.some((cat) => cat.id === defaultCategory) ? defaultCategory : (all[0]?.id ?? 'food')) as CategoryId;
   const [name, setName] = useState('');
+  const [nameFocused, setNameFocused] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [category, setCategory] = useState<CategoryId>(known);
   const [error, setError] = useState<string | null>(null);
@@ -410,7 +411,11 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
             maxLength={80}
             autoFocus
             accessibilityLabel="Item name"
-            style={c.input}
+            // The box itself shows it is active (the same lime edge as the
+            // search field), instead of a browser ring drawn inside it.
+            onFocus={() => setNameFocused(true)}
+            onBlur={() => setNameFocused(false)}
+            style={[c.input, nameFocused && { borderColor: t.chipOnBorder }]}
             returnKeyType="done"
             onSubmitEditing={() => void save()}
           />

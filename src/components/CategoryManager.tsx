@@ -164,6 +164,7 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
   const s = useStyles();
   const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
+  const [nameFocused, setNameFocused] = useState(false);
   const [icon, setIcon] = useState<string>(DEFAULT_CATEGORY_ICON);
   const [tint, setTint] = useState<Tint>(CUSTOM_TINTS[0]);
   const [rejected, setRejected] = useState(false);
@@ -223,7 +224,10 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
               }}
               placeholder="Name, e.g. Pet food"
               placeholderTextColor={c.textMuted}
-              style={[s.input, rejected && !trimmed && s.inputWarn]}
+              // The box itself shows it is active (lime edge), not a ring inside it.
+              onFocus={() => setNameFocused(true)}
+              onBlur={() => setNameFocused(false)}
+              style={[s.input, nameFocused && { borderColor: c.chipOnBorder }, rejected && !trimmed && s.inputWarn]}
               maxLength={24}
               returnKeyType="done"
               accessibilityLabel="Category name"

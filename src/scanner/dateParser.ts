@@ -46,7 +46,9 @@ export type ConfirmReason =
   // No year was printed, so it was assumed.
   | 'no-year'
   // Printed as a year + day-of-year code ("27280"); worth a second look.
-  | 'coded-date';
+  | 'coded-date'
+  // Calculated: the production date plus the printed shelf life.
+  | 'shelf-life';
 
 export type ScanParseResult =
   | {
@@ -75,6 +77,9 @@ export type ParseOptions = {
   today: Date;
   // Order to prefer for numeric dates where both readings are valid. Comes from the device region.
   preferredOrder: DayOrder;
+  // Set per line by the parser itself (callers leave it out): an East-Asian
+  // expiry label on the line makes two-digit-year dates read year-first.
+  yearFirst?: boolean;
 };
 
 // Regions that write numeric dates month first. Everyone else reads day first.
@@ -84,26 +89,73 @@ export function dayOrderForRegion(region: string | null | undefined): DayOrder {
   return region && MONTH_FIRST_REGIONS.has(region.toUpperCase()) ? 'MDY' : 'DMY';
 }
 
-// English first, then the abbreviations of a few other languages that show up on imported goods.
-// Ambiguous spellings are left to the language they collide with least (MAR = March everywhere).
+// Month names and their printed abbreviations, as they read AFTER
+// normalizeLine (upper-cased, accents stripped: "März" → MARZ, "Şubat" →
+// SUBAT, "март" → МАРТ, "май" → МАИ since the breve is stripped too). English
+// first, then the languages of imported goods: French, German, Italian,
+// Spanish, Portuguese, Dutch, Romanian, Polish, Turkish, Russian, Ukrainian,
+// Bulgarian and Hebrew. A spelling shared by two languages always means the
+// same month in both (MAR, MAI, OKT); the few that would collide are left out.
 const MONTHS: Record<string, number> = {
-  JAN: 1, JANUARY: 1, JANV: 1, ENE: 1, GEN: 1, JANUAR: 1,
-  FEB: 2, FEBRUARY: 2, FEV: 2, FEVR: 2, FEBR: 2, FEBRUAR: 2,
-  MAR: 3, MARCH: 3, MARS: 3, MRZ: 3, MAERZ: 3, MARZ: 3,
-  APR: 4, APRIL: 4, AVR: 4, ABR: 4, AVRIL: 4,
-  MAY: 5, MAI: 5, MAG: 5,
-  JUN: 6, JUNE: 6, JUIN: 6, GIU: 6, JUNI: 6,
-  JUL: 7, JULY: 7, JUIL: 7, LUG: 7, JULI: 7,
-  AUG: 8, AUGUST: 8, AOUT: 8, AGO: 8,
-  SEP: 9, SEPT: 9, SEPTEMBER: 9, SET: 9,
-  OCT: 10, OCTOBER: 10, OKT: 10, OTT: 10, OT: 10, OKTOBER: 10,
-  NOV: 11, NOVEMBER: 11,
-  DEC: 12, DECEMBER: 12, DEZ: 12, DIC: 12, DEZEMBER: 12,
+  // English
+  JAN: 1, JANUARY: 1, FEB: 2, FEBRUARY: 2, MAR: 3, MARCH: 3, APR: 4, APRIL: 4, MAY: 5, JUN: 6, JUNE: 6,
+  JUL: 7, JULY: 7, AUG: 8, AUGUST: 8, SEP: 9, SEPT: 9, SEPTEMBER: 9, OCT: 10, OCTOBER: 10, NOV: 11, NOVEMBER: 11,
+  DEC: 12, DECEMBER: 12,
+  // French
+  JANV: 1, JANVIER: 1, FEV: 2, FEVR: 2, FEVRIER: 2, MARS: 3, AVR: 4, AVRIL: 4, MAI: 5, JUIN: 6, JUIL: 7,
+  JUILLET: 7, AOUT: 8, SEPTEMBRE: 9, OCTOBRE: 10, NOVEMBRE: 11, DECEMBRE: 12,
+  // German
+  JANUAR: 1, FEBR: 2, FEBRUAR: 2, MRZ: 3, MAERZ: 3, MARZ: 3, JUNI: 6, JULI: 7, OKT: 10, OKTOBER: 10, DEZ: 12, DEZEMBER: 12,
+  // Italian
+  GEN: 1, GENNAIO: 1, FEBBRAIO: 2, MARZO: 3, APRILE: 4, MAG: 5, MAGGIO: 5, GIU: 6, GIUGNO: 6, LUG: 7, LUGLIO: 7,
+  AGO: 8, AGOSTO: 8, SET: 9, SETTEMBRE: 9, OTT: 10, OT: 10, OTTOBRE: 10, DIC: 12, DICEMBRE: 12,
+  // Spanish
+  ENE: 1, ENERO: 1, FEBRERO: 2, ABR: 4, ABRIL: 4, MAYO: 5, JUNIO: 6, JULIO: 7, SEPTIEMBRE: 9, OCTUBRE: 10, NOVIEMBRE: 11, DICIEMBRE: 12,
+  // Portuguese
+  JANEIRO: 1, FEVEREIRO: 2, MARCO: 3, MAIO: 5, JUNHO: 6, JULHO: 7, SETEMBRO: 9, OUT: 10, OUTUBRO: 10, NOVEMBRO: 11, DEZEMBRO: 12,
+  // Dutch
+  JANUARI: 1, FEBRUARI: 2, MRT: 3, MAART: 3, MEI: 5, AUGUSTUS: 8,
+  // Romanian
+  IAN: 1, IANUARIE: 1, FEBRUARIE: 2, MARTIE: 3, APRILIE: 4, IUN: 6, IUNIE: 6, IUL: 7, IULIE: 7,
+  SEPTEMBRIE: 9, OCTOMBRIE: 10, NOI: 11, NOIEMBRIE: 11, DECEMBRIE: 12,
+  // Polish
+  STY: 1, STYCZEN: 1, STYCZNIA: 1, LUT: 2, LUTY: 2, LUTEGO: 2, MARZEC: 3, MARCA: 3, KWI: 4, KWIECIEN: 4, KWIETNIA: 4,
+  MAJ: 5, MAJA: 5, CZE: 6, CZERWIEC: 6, CZERWCA: 6, LIP: 7, LIPIEC: 7, LIPCA: 7, SIE: 8, SIERPIEN: 8, SIERPNIA: 8,
+  WRZ: 9, WRZESIEN: 9, WRZESNIA: 9, PAZ: 10, PAZDZIERNIK: 10, PAZDZIERNIKA: 10, LIS: 11, LISTOPAD: 11, LISTOPADA: 11,
+  GRU: 12, GRUDZIEN: 12, GRUDNIA: 12,
+  // Turkish
+  OCA: 1, OCAK: 1, SUB: 2, SUBAT: 2, MART: 3, NIS: 4, NISAN: 4, MAYIS: 5, HAZ: 6, HAZIRAN: 6, TEM: 7, TEMMUZ: 7,
+  AGU: 8, AGUSTOS: 8, EYL: 9, EYLUL: 9, EKI: 10, EKIM: 10, KAS: 11, KASIM: 11, ARA: 12, ARALIK: 12,
+  // Russian (nominative, genitive "15 марта", and printed abbreviations)
+  ЯНВ: 1, ЯНВАРЬ: 1, ЯНВАРЯ: 1, ФЕВ: 2, ФЕВР: 2, ФЕВРАЛЬ: 2, ФЕВРАЛЯ: 2, МАР: 3, МАРТ: 3, МАРТА: 3,
+  АПР: 4, АПРЕЛЬ: 4, АПРЕЛЯ: 4, МАИ: 5, МАЯ: 5, ИЮН: 6, ИЮНЬ: 6, ИЮНЯ: 6, ИЮЛ: 7, ИЮЛЬ: 7, ИЮЛЯ: 7,
+  АВГ: 8, АВГУСТ: 8, АВГУСТА: 8, СЕН: 9, СЕНТ: 9, СЕНТЯБРЬ: 9, СЕНТЯБРЯ: 9, ОКТ: 10, ОКТЯБРЬ: 10, ОКТЯБРЯ: 10,
+  НОЯ: 11, НОЯБ: 11, НОЯБРЬ: 11, НОЯБРЯ: 11, ДЕК: 12, ДЕКАБРЬ: 12, ДЕКАБРЯ: 12,
+  // Ukrainian (genitive, as dates print it)
+  СІЧ: 1, СІЧНЯ: 1, ЛЮТ: 2, ЛЮТОГО: 2, БЕР: 3, БЕРЕЗНЯ: 3, КВІ: 4, КВІТНЯ: 4, ТРАВ: 5, ТРАВНЯ: 5,
+  ЧЕРВ: 6, ЧЕРВНЯ: 6, ЛИП: 7, ЛИПНЯ: 7, СЕРП: 8, СЕРПНЯ: 8, ВЕР: 9, ВЕРЕСНЯ: 9, ЖОВТ: 10, ЖОВТНЯ: 10,
+  ЛИСТ: 11, ЛИСТОПАДА: 11, ГРУД: 12, ГРУДНЯ: 12,
+  // Bulgarian
+  ЯНУ: 1, ЯНУАРИ: 1, ФЕВРУАРИ: 2, АПРИЛ: 4, ЮНИ: 6, ЮЛИ: 7, СЕП: 9, СЕПТЕМВРИ: 9, ОКТОМВРИ: 10, НОЕ: 11, НОЕМВРИ: 11,
+  ДЕКЕМВРИ: 12,
+  // Hebrew (Israeli packaging writes the civil months)
+  ינואר: 1, פברואר: 2, מרץ: 3, מרס: 3, אפריל: 4, מאי: 5, יוני: 6, יולי: 7, אוגוסט: 8, ספטמבר: 9, אוקטובר: 10,
+  נובמבר: 11, דצמבר: 12,
 };
 
 const MONTH_ALT = Object.keys(MONTHS)
   .sort((a, b) => b.length - a.length)
   .join('|');
+
+// Month words stand alone: no letter of ANY script directly before or after
+// (the Latin-only [A-Z] guard let Cyrillic and Hebrew months match inside words).
+const ML = '(?<!\\p{L})';
+const MR = '(?!\\p{L})';
+
+// Roman-numeral months (Polish, Russian, Bulgarian and Czech packaging:
+// "15.III.2027"), longest first so XII wins over XI and X.
+const ROMAN: Record<string, number> = { XII: 12, XI: 11, X: 10, IX: 9, VIII: 8, VII: 7, VI: 6, V: 5, IV: 4, III: 3, II: 2, I: 1 };
+const ROMAN_ALT = Object.keys(ROMAN).join('|');
 
 // Labels, longest phrases first so "BEST BEFORE END" wins over "BEST BEFORE".
 const LABELS: { kind: LabelKind; pattern: string }[] = [
@@ -165,11 +217,17 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       // phrases and "data expirării".
       // The full "Expiră la data de:" phrase is consumed whole, so a line that
       // holds only it joins the date on the next line (joinLabelOnlyLines).
-      '|EXPIRA(?:\\s*LA(?:\\s*DATA(?:\\s*DE)?)?)?|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE' +
-      '|A\\s*SE\\s*CONSUMA\\s*INAINTE\\s*DE|DATA\\s*EXPIRARII|DATA\\s*DE\\s*EXPIRARE|VALABIL\\s*PANA\\s*LA' +
+      '|EXPIRA(?:\\s*LA(?:\\s*DATA(?:\\s*DE)?)?)?|A\\s*SE\\s*CONSUMA\\s*PANA\\s*LA' +
+      '|A\\s*SE\\s*CONSUMA\\s*DE\\s*PREFERINTA\\s*INAINTE\\s*DE(?:\\s*SFARSITUL)?' +
+      '|A\\s*SE\\s*CONSUMA\\s*INAINTE\\s*DE(?:\\s*SFARSITUL)?|DATA\\s*EXPIRARII|DATA\\s*DE\\s*EXPIRARE|VALABIL\\s*PANA\\s*LA' +
+      // Romanian "data limită de consum" (use-by date) and "termen de
+      // valabilitate" (validity term), printed beside the date.
+      '|DATA\\s*LIMITA\\s*DE\\s*CONSUM|TERMEN\\s*DE\\s*VALABILITATE' +
       // Bulgarian: "срок на годност" (shelf life), "най-добър до" (best
-      // before), "годно до" / "използвай до" (use by).
-      '|СРОК\\s*НА\\s*ГОДНОСТ|НАЙ[\\s-]*ДОБЪР\\s*ДО|ГОДНО\\s*ДО|ИЗПОЛЗВАЙ\\s*ДО' +
+      // before), "годно до" / "използвай до" (use by), "да се консумира
+      // до/преди" (to be consumed by/before). Й reads as И here: normalizeLine
+      // strips its breve like any other accent.
+      '|СРОК\\s*НА\\s*ГОДНОСТ|НА[ИЙ][\\s-]*ДОБЪР\\s*ДО|ГОДНО\\s*ДО|ИЗПОЛЗВА[ИЙ]\\s*ДО|ДА\\s*СЕ\\s*КОНСУМИРА\\s*(?:ДО|ПРЕДИ)' +
       // Russian "употребить до" / "использовать до" (use by), Polish
       // "należy spożyć do" (use by), German "MHD" (the printed abbreviation of
       // Mindesthaltbarkeitsdatum), English "valid until".
@@ -177,6 +235,11 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       // Hebrew "בתוקף עד" (valid until) and the Chinese expiry-date words
       // 失效日期 / 有效期 (after the longer 有效期限 above has had its turn).
       '|בתוקף\\s*עד|失效-?期|有效期' +
+      // More Hebrew: "להשתמש עד" (use by), "יש לצרוך עד" / "עדיף לצרוך עד"
+      // (consume by / best consumed by), "תפוגה" alone and its "ת. תפוגה"
+      // abbreviation. Arabic "انتهاء" / "ينتهي" (expiry / expires) and Persian
+      // "انقضا" (expiry) for Middle-Eastern packs.
+      '|להשתמש\\s*עד|יש\\s*לצרוך\\s*עד|עדיף\\s*לצרוך\\s*עד|ת\\.?\\s*תפוגה|תפוגה|انتهاء|ينتهي|انقضا' +
       // Italian: "scadenza" (expiry) and its pharma abbreviation "SCAD." —
       // the label Italian medicine and supplement packaging prints beside
       // the date (often the only word there; the hourglass-style icons are
@@ -211,10 +274,11 @@ const LABELS: { kind: LabelKind; pattern: string }[] = [
       '|تاريخ\\s*الإنتاج|تاريخ\\s*الانتاج' +
       // Romanian production date, post-accent-strip: "data fabricației" and
       // "data de fabricație".
-      '|DATA\\s*FABRICATIEI|DATA\\s*DE\\s*FABRICATIE|DATA\\s*PRODUCTIEI|FABRICAT(?:\\s*LA)?' +
-      // Bulgarian "дата на производство" / "произведено", Russian "дата
-      // производства", Polish "data produkcji", German "hergestellt am".
-      '|ДАТА\\s*НА\\s*ПРОИЗВОДСТВО|ПРОИЗВЕДЕН|ДАТА\\s*ПРОИЗВОДСТВА|DATA\\s*PRODUKCJI|HERGESTELLT(?:\\s*AM)?',
+      '|DATA\\s*FABRICATIEI|DATA\\s*DE\\s*FABRICATIE|DATA\\s*PRODUCTIEI|FABRICAT(?:\\s*LA)?|DATA\\s*AMBALARII|AMBALAT(?:\\s*LA)?' +
+      // Bulgarian "дата на производство" / "произведено" / "пакетирано"
+      // (packed), Russian "дата производства", Polish "data produkcji",
+      // German "hergestellt am".
+      '|ДАТА\\s*НА\\s*ПРОИЗВОДСТВО|ПРОИЗВЕДЕН|ПАКЕТИРАН|ДАТА\\s*ПРОИЗВОДСТВА|DATA\\s*PRODUKCJI|HERGESTELLT(?:\\s*AM)?',
   },
   {
     kind: 'lot',
@@ -247,9 +311,16 @@ type FoundLabel = Span & { kind: LabelKind; text: string };
 // OCR often reads O as 0, I or L as 1, S as 5 and B as 8 inside numbers. Only standalone
 // tokens that already contain a digit are touched, so "OCT", "BEST" or "27OCT" keep their letters.
 function normalizeDigits(line: string): string {
-  return line.replace(/(?<![A-Z])[0-9OILSB|]+(?![A-Z])/g, (token) => {
+  // G (6) and Z (2) are the usual dot-matrix confusions on top of those.
+  return line.replace(/(?<![A-Z])[0-9OILSBGZ|]+(?![A-Z])/g, (token) => {
     if (!/[0-9]/.test(token)) return token;
-    return token.replace(/O/g, '0').replace(/[IL|]/g, '1').replace(/S/g, '5').replace(/B/g, '8');
+    return token
+      .replace(/O/g, '0')
+      .replace(/[IL|]/g, '1')
+      .replace(/S/g, '5')
+      .replace(/B/g, '8')
+      .replace(/G/g, '6')
+      .replace(/Z/g, '2');
   });
 }
 
@@ -266,6 +337,10 @@ export function normalizeLine(line: string): string {
     // Full-width digits and punctuation (Japanese packaging) become their
     // ASCII twins.
     .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    // Arabic-Indic (٠-٩) and Persian (۰-۹) digits, as Middle-Eastern packs
+    // print them, become ASCII digits too.
+    .replace(/[٠-٩]/g, (ch) => String(ch.charCodeAt(0) - 0x660))
+    .replace(/[۰-۹]/g, (ch) => String(ch.charCodeAt(0) - 0x6f0))
     .replace(/．/g, '.')
     .replace(/／/g, '/')
     .replace(/－/g, '-')
@@ -315,7 +390,9 @@ type Pattern = {
 };
 
 const SEP = '\\s?[./\\-]\\s?';
-const SP = '[\\s./,\\-]*';
+// Between a month name and its numbers: spaces, dots, slashes, commas, dashes
+// and the apostrophe of a shortened year ("MAR '27").
+const SP = "[\\s./,'’\\-]*";
 const NB = '(?<![0-9])';
 const NA = '(?![0-9])';
 
@@ -323,12 +400,32 @@ const NA = '(?![0-9])';
 const PATTERNS: Pattern[] = [
   // 27 OCT 2026, 27OCT26, 27TH OCTOBER 2026
   {
-    re: new RegExp(`${NB}(\\d{1,2})(?:ST|ND|RD|TH)?${SP}(${MONTH_ALT})(?![A-Z])${SP}(\\d{4}|\\d{2})${NA}`, 'g'),
+    re: new RegExp(`${NB}(\\d{1,2})(?:ST|ND|RD|TH)?${SP}${ML}(${MONTH_ALT})${MR}${SP}(\\d{4}|\\d{2})${NA}`, 'gu'),
     read: (m) => [toDay(makeYear(m[3]), MONTHS[m[2]], Number(m[1]))].filter(Boolean) as Interpretation[],
+  },
+  // 15.III.2027, 15 III 27 - the Roman-numeral month of Polish, Russian,
+  // Bulgarian and Czech packaging. The numerals only count between two
+  // numbers, so a stray "V" or "X" in text never becomes a month.
+  {
+    re: new RegExp(`${NB}(\\d{1,2})\\s?[.\\s/\\-]\\s?(${ROMAN_ALT})\\s?[.\\s/\\-]\\s?(\\d{4}|\\d{2})${NA}`, 'g'),
+    read: (m) => [toDay(makeYear(m[3]), ROMAN[m[2]], Number(m[1]))].filter(Boolean) as Interpretation[],
+  },
+  // III.2027 - a Roman-numeral month with a four-digit 20xx year, joined by
+  // a dot, slash or dash (a space alone would let a stray "V 2027" in text
+  // become May).
+  {
+    re: new RegExp(`(?<![A-Z0-9])(${ROMAN_ALT})\\s?[./\\-]\\s?(20\\d{2})${NA}`, 'g'),
+    read: (m) => [toMonth(Number(m[2]), ROMAN[m[1]])].filter(Boolean) as Interpretation[],
+  },
+  // R9.3.15 / 令和9年3月15日 - Japanese era dates: Reiwa year n is 2018 + n.
+  // (The 年/月/日 markers are already dashes here.)
+  {
+    re: new RegExp(`(?:(?<![A-Z])R|令和)\\s?(\\d{1,2})\\s?[.\\-/]\\s?(\\d{1,2})\\s?[.\\-/]\\s?(\\d{1,2})${NA}`, 'g'),
+    read: (m) => [toDay(2018 + Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
   },
   // OCT 27 2026, OCTOBER 27, 2026
   {
-    re: new RegExp(`(?<![A-Z])(${MONTH_ALT})${SP}(\\d{1,2})(?:ST|ND|RD|TH)?[\\s,./\\-]+(\\d{4})${NA}`, 'g'),
+    re: new RegExp(`${ML}(${MONTH_ALT})${MR}${SP}(\\d{1,2})(?:ST|ND|RD|TH)?[\\s,./\\-]+(\\d{4})${NA}`, 'gu'),
     read: (m) => [toDay(Number(m[3]), MONTHS[m[1]], Number(m[2]))].filter(Boolean) as Interpretation[],
   },
   // 2026-10-27, 2026/10/27
@@ -346,6 +443,8 @@ const PATTERNS: Pattern[] = [
     read: (m) => [toDay(Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
   },
   // 27/10/2026, 10/27/2026, 27.10.26
+  // With a two-digit year the same shape can also be Japanese/Chinese
+  // year-first (27.03.15 = 2027-03-15): see withYearFirst.
   {
     re: new RegExp(`${NB}(\\d{1,2})(${SEP})(\\d{1,2})\\2(\\d{4}|\\d{2})${NA}`, 'g'),
     read: (m, opts) => {
@@ -354,8 +453,9 @@ const PATTERNS: Pattern[] = [
       const year = makeYear(m[4]);
       const dmy = toDay(year, b, a);
       const mdy = toDay(year, a, b);
-      if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
-      return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+      const dayMonth =
+        dmy && mdy && dmy.iso !== mdy.iso ? (opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy]) : ([dmy ?? mdy].filter(Boolean) as Interpretation[]);
+      return m[4].length === 2 ? withYearFirst(dayMonth, a, b, Number(m[4]), opts) : dayMonth;
     },
   },
   // 25.11,2026 / 25,11.2026 - a dot-matrix stamp whose dots OCR returns as
@@ -402,7 +502,7 @@ const PATTERNS: Pattern[] = [
   },
   // OCT 2026, OCT/26
   {
-    re: new RegExp(`(?<![A-Z])(${MONTH_ALT})(?![A-Z])${SP}(\\d{4}|\\d{2})${NA}`, 'g'),
+    re: new RegExp(`${ML}(${MONTH_ALT})${MR}${SP}(\\d{4}|\\d{2})${NA}`, 'gu'),
     read: (m) => [toMonth(makeYear(m[2]), MONTHS[m[1]])].filter(Boolean) as Interpretation[],
   },
   // 2026-10, 2026/10
@@ -433,7 +533,7 @@ const PATTERNS: Pattern[] = [
   // BEST BEFORE 27 OCT (no year), only right after an expiry label. The year is the next
   // time that day comes round, and the user is asked to check it.
   {
-    re: new RegExp(`${NB}(\\d{1,2})(?:ST|ND|RD|TH)?${SP}(${MONTH_ALT})(?![A-Z0-9])(?![\\s./,\\-]*\\d)`, 'g'),
+    re: new RegExp(`${NB}(\\d{1,2})(?:ST|ND|RD|TH)?${SP}${ML}(${MONTH_ALT})(?![\\p{L}0-9])(?![\\s./,'’\\-]*\\d)`, 'gu'),
     labelledOnly: true,
     read: (m, opts) => {
       const t = opts.today;
@@ -467,6 +567,24 @@ const PATTERNS: Pattern[] = [
       const mdy = toDay(year, a, b);
       if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+    },
+  },
+  // EXP 1226 - a 4-digit code right after an expiry label: month and
+  // two-digit year (December 2026) when that is a date, otherwise the
+  // one-digit-year Julian code (EXP 7074 = day 74 of 2027). A bare year
+  // ("EXP 2027") is neither and is left alone.
+  {
+    re: new RegExp(`${NB}(?!20\\d{2}${NA})(\\d{4})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m, opts) => {
+      const d = m[1];
+      const monthYear = toMonth(2000 + Number(d.slice(2)), Number(d.slice(0, 2)));
+      if (monthYear && inRange(monthYear, opts.today)) return [monthYear];
+      const y = opts.today.getFullYear();
+      let year = y - 1;
+      while (year % 10 !== Number(d[0])) year += 1;
+      const j = julian(year, Number(d.slice(1)));
+      return j ? [j] : [];
     },
   },
   // EXP 2027280 - the 7-digit Julian code (four-digit year, day of the
@@ -581,8 +699,25 @@ function compact6(digits: string, opts: ParseOptions): Interpretation[] {
   const year = makeYear(digits.slice(4));
   const dmy = toDay(year, Number(digits.slice(2, 4)), Number(digits.slice(0, 2)));
   const mdy = toDay(year, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)));
-  if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
-  return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+  const dayMonth =
+    dmy && mdy && dmy.iso !== mdy.iso ? (opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy]) : ([dmy ?? mdy].filter(Boolean) as Interpretation[]);
+  return withYearFirst(dayMonth, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)), Number(digits.slice(4)), opts);
+}
+
+// The year-first reading of a two-digit-year date (YY MM DD), as Japanese and
+// Chinese packs print it: "27.03.15" / "270315" = 15 March 2027. The same
+// digits read day-first in Europe ("27.10.26" = 27 Oct 2026), so year-first is
+// only added when the day/month readings are impossible (out of range or not a
+// date) — or when an East-Asian expiry label on the line says year-first is
+// the packaging's own convention, in which case it leads and the day/month
+// readings stay as alternatives for the user to pick.
+function withYearFirst(dayMonth: Interpretation[], yy: number, mm: number, dd: number, opts: ParseOptions): Interpretation[] {
+  const ymd = toDay(2000 + yy, mm, dd);
+  if (!ymd || !inRange(ymd, opts.today)) return dayMonth;
+  const plausible = dayMonth.filter((i) => inRange(i, opts.today));
+  if (!plausible.length) return [ymd];
+  if (!opts.yearFirst) return dayMonth;
+  return [ymd, ...plausible.filter((i) => i.iso !== ymd.iso)];
 }
 
 // The 5-digit no-separator stamp: day, single-digit month, year (DDMYY), or
@@ -667,8 +802,11 @@ export function isoToday(today: Date) {
 // English appears on packaging in both day-first and month-first markets.
 // The Cyrillic, Hebrew, Arabic and Romanian phrases join them: Russia,
 // Ukraine, Israel and Romania all print DAY-FIRST dates (DD.MM.YYYY).
+// Japanese kana, CJK ideographs and Hangul: an expiry label written in them.
+const CJK_RE = /[぀-ヿ一-鿿가-힯]/;
+
 const EU_EXPIRY_LABEL_RE =
-  /HALTBAR|MHD|CONSOMMER|HOUDBAAR|UPOTR|SPOTRBUJTE|DO SPOTREBY|NAJLEPIEJ|NALEZY|PRZYDATNOSC|CONSUMIR|CADUCA|CONSUMARSI|CONSUMARE|FELHASZNALHATO|MINOSSEGMEGORZES|ГОДЕН|ГОДНО|ГОДНОСТ|НАЙ|УПОТРЕБИТЬ|ИСПОЛЬЗОВАТЬ|ИЗПОЛЗВАЙ|СРОК ГОДНОСТИ|ТЕРМ[ИІ]Н ГОДНОСТ|ПРИДАТНОСТ|ВЖИТИ ДО|תאריך תפוגה|לשימוש עד|בתוקף עד|تاريخ انتهاء|A SE CONSUMA|DATA EXPIRARII|DATA DE EXPIRARE|VALABIL|EXPIRA/;
+  /HALTBAR|MHD|CONSOMMER|HOUDBAAR|UPOTR|SPOTRBUJTE|DO SPOTREBY|NAJLEPIEJ|NALEZY|PRZYDATNOSC|CONSUMIR|CADUCA|CONSUMARSI|CONSUMARE|FELHASZNALHATO|MINOSSEGMEGORZES|ГОДЕН|ГОДНО|ГОДНОСТ|НА[ИЙ]|КОНСУМИРА|УПОТРЕБИТЬ|ИСПОЛЬЗОВАТЬ|ИЗПОЛЗВА[ИЙ]|СРОК ГОДНОСТИ|ТЕРМ[ИІ]Н ГОДНОСТ|ПРИДАТНОСТ|ВЖИТИ ДО|תאריך תפוגה|לשימוש עד|בתוקף עד|تاريخ انتهاء|A SE CONSUMA|DATA EXPIRARII|DATA DE EXPIRARE|DATA LIMITA|TERMEN DE VALABILITATE|VALABIL|EXPIRA/;
 
 // Pulls every date out of the OCR lines and attaches the label that governs it.
 export function extractCandidates(lines: string[], opts: ParseOptions): { candidates: DateCandidate[]; invalid: number } {
@@ -693,7 +831,12 @@ export function extractCandidates(lines: string[], opts: ParseOptions): { candid
     const euExpiry =
       labels.some((l) => l.kind === 'expiry' && EU_EXPIRY_LABEL_RE.test(l.text)) ||
       (carriedExpiry && EU_EXPIRY_LABEL_RE.test(lastPending.text));
-    const lineOpts = euExpiry && opts.preferredOrder !== 'DMY' ? { ...opts, preferredOrder: 'DMY' as const } : opts;
+    const dayFirstOpts = euExpiry && opts.preferredOrder !== 'DMY' ? { ...opts, preferredOrder: 'DMY' as const } : opts;
+    // A Japanese, Chinese or Korean expiry label (here or carried from the line
+    // above) is year-first evidence for two-digit-year dates ("27.03.15").
+    const cjkExpiry =
+      labels.some((l) => l.kind === 'expiry' && CJK_RE.test(l.text)) || (carriedExpiry && CJK_RE.test(lastPending.text));
+    const lineOpts = cjkExpiry ? { ...dayFirstOpts, yearFirst: true } : dayFirstOpts;
     const dates = findDates(
       line,
       lineOpts,
@@ -787,6 +930,12 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
     pool = sell;
     reasons.push('sell-by');
   } else if (candidates.length) {
+    // Only a production date is printed — but many packs (Chinese, Russian,
+    // Bulgarian, Romanian) print the shelf life beside it instead of an
+    // expiry date ("生产日期 2026.03.15 保质期 24个月"). Then the expiry is
+    // that date plus the shelf life, offered for the user to check.
+    const computed = fromShelfLife(candidates, lines, opts.today);
+    if (computed) return computed;
     return { kind: 'none', hint: 'manufacture-only' };
   } else {
     return { kind: 'none', hint: invalid ? 'invalid-date' : 'no-date' };
@@ -830,6 +979,78 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
     // category from the words around the date (see scanner/categoryGuess.ts).
     text,
     key: [primary.iso, ...alternatives.map((a) => a.iso), chosen.label ?? '-'].join('|'),
+  };
+}
+
+// A printed shelf life: a shelf-life label, then a number and a unit, in the
+// languages that print one instead of an expiry date. Read off the RAW text
+// (upper-cased only): normalizeLine turns 月/日/年 into separators, which
+// would erase the Chinese and Japanese units.
+const SHELF_LIFE_RE = new RegExp(
+  '(?:SHELF\\s*LIFE|BEST\\s*WITHIN|保质期|保質期|賞味期限|消費期限|유통기한|СРОК\\s*(?:НА\\s*)?ГОДНОСТИ?|ТЕРМ[ИІ]Н\\s*ПРИДАТНОСТ[ИІ]|' +
+    'TERMEN\\s*DE\\s*VALABILITATE|VALABILITATE|HALTBARKEIT|DURATA|תוקף)' +
+    '\\s*[:：\\-–]?\\s*(?:\\S+\\s+)?(\\d{1,4})\\s*' +
+    '(MONTHS?|MTHS?|МЕС[А-ЯЁ]*|LUNI|LUNA|MONATE?|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודשים|חודש|' +
+    'DAYS?|ДН[А-ЯЁ]*|ДЕН[А-ЯЁ]*|СУТ[А-ЯЁ]*|ZILE|TAGE|GIORNI|DIAS|JOURS|天|日|일|ימים|' +
+    'YEARS?|YRS?|ГОД[А-ЯЁ]*|ЛЕТ|ANI|JAHRE?|ANNI|ANOS|ANS|年|년|שנים|שנה)',
+);
+
+type ShelfLife = { n: number; unit: 'day' | 'month' | 'year' };
+
+export function readShelfLife(lines: string[]): ShelfLife | null {
+  const m = SHELF_LIFE_RE.exec(lines.join(' ').normalize('NFC').toUpperCase());
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!n) return null;
+  const u = m[2];
+  const unit: ShelfLife['unit'] = /^(?:MONTH|MTH|МЕС|LUN|MONAT|MESI|MESES|MOIS|个月|個月|ヶ月|か月|カ月|개월|חודש)/.test(u)
+    ? 'month'
+    : /^(?:YEAR|YR|ГОД|ЛЕТ|ANI|JAHR|ANNI|ANOS|ANS|年|년|שנ)/.test(u)
+      ? 'year'
+      : 'day';
+  // Sanity: nothing keeps longer than 15 years.
+  const days = unit === 'day' ? n : unit === 'month' ? n * 30 : n * 365;
+  return days <= 15 * 365 ? { n, unit } : null;
+}
+
+function addShelfLife(i: Interpretation, life: ShelfLife): Interpretation | null {
+  const [y, m, d] = i.iso.split('-').map(Number);
+  if (life.unit === 'day') {
+    const t = new Date(Date.UTC(y, m - 1, d + life.n));
+    return { iso: `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`, precision: 'day' };
+  }
+  const months = life.unit === 'year' ? life.n * 12 : life.n;
+  const total = (m - 1) + months;
+  const year = y + Math.floor(total / 12);
+  const month = (total % 12) + 1;
+  if (i.precision === 'month') return toMonth(year, month);
+  // The same day N months on, clamped to the end of a shorter month.
+  return toDay(year, month, Math.min(d, daysInMonth(year, month)));
+}
+
+function fromShelfLife(candidates: DateCandidate[], lines: string[], today: Date): ScanParseResult | null {
+  const made = candidates.filter((c) => c.label === 'manufacture');
+  if (!made.length) return null;
+  const life = readShelfLife(lines);
+  if (!life) return null;
+  const latest = made.reduce((a, b) => (b.interpretations[0].iso > a.interpretations[0].iso ? b : a));
+  const expiry = addShelfLife(latest.interpretations[0], life);
+  if (!expiry || !inRange(expiry, today)) return null;
+  const reasons: ConfirmReason[] = ['shelf-life'];
+  if (expiry.precision === 'month') reasons.push('month-only');
+  if (expiry.iso < isoToday(today)) reasons.push('in-past');
+  const unitText = `${life.n} ${life.unit}${life.n === 1 ? '' : 's'}`;
+  return {
+    kind: 'found',
+    primary: expiry,
+    alternatives: [],
+    confidence: 'medium',
+    reasons,
+    label: 'expiry',
+    labelText: `shelf life ${unitText}`,
+    raw: `${latest.raw} + ${unitText}`,
+    text: lines.join(' ').trim(),
+    key: [expiry.iso, 'shelf-life'].join('|'),
   };
 }
 

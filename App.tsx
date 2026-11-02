@@ -54,7 +54,9 @@ function writeHash(route: Route) {
 
 // Keyboard focus rings for the web build (react-native-web leaves them to the
 // browser). The ring follows the active theme: the bright lime on the dark
-// page, the deep readable green on the light one.
+// page, the deep readable green on the light one. Text fields are NOT ringed:
+// each one sits inside its own rounded box, which turns lime itself while the
+// field is active — a browser ring on top drew a second, inner box.
 function useFocusStyles() {
   const t = useTheme();
   useEffect(() => {
@@ -62,9 +64,10 @@ function useFocusStyles() {
     const ring = t === LIGHT ? t.green : t.mint;
     const style = document.createElement('style');
     style.textContent =
-      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible,input:focus-visible{outline:2px solid ' +
+      '[role=button]:focus-visible,[role=radio]:focus-visible,[role=switch]:focus-visible,[role=tab]:focus-visible,[role=link]:focus-visible{outline:2px solid ' +
       ring +
-      ';outline-offset:2px;border-radius:10px}';
+      ';outline-offset:2px;border-radius:10px}' +
+      'input,input:focus,input:focus-visible,textarea,textarea:focus,textarea:focus-visible{outline:none}';
     document.head.appendChild(style);
     return () => style.remove();
   }, [t]);
