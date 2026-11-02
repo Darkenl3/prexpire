@@ -17,6 +17,9 @@ export type Interpretation = {
   precision: Precision;
   // The label printed no year ("BEST BEFORE 27 OCT"); the next such date was assumed.
   yearGuessed?: boolean;
+  // Printed as a code, not a calendar date: the US "Julian" form, year plus
+  // day of the year ("27280" = day 280 of 2027 = 7 Oct 2027).
+  coded?: boolean;
 };
 
 export type DateCandidate = {
@@ -41,7 +44,9 @@ export type ConfirmReason =
   // Labelled SELL BY / DISPLAY UNTIL, which is not the same as an expiry date.
   | 'sell-by'
   // No year was printed, so it was assumed.
-  | 'no-year';
+  | 'no-year'
+  // Printed as a year + day-of-year code ("27280"); worth a second look.
+  | 'coded-date';
 
 export type ScanParseResult =
   | {
@@ -464,6 +469,24 @@ const PATTERNS: Pattern[] = [
       return [dmy ?? mdy].filter(Boolean) as Interpretation[];
     },
   },
+  // EXP 2027280 - the 7-digit Julian code (four-digit year, day of the
+  // year), only right after an expiry label.
+  {
+    re: new RegExp(`${NB}(20\\d{2})(\\d{3})${NA}`, 'g'),
+    labelledOnly: true,
+    read: (m) => [julian(Number(m[1]), Number(m[2]))].filter(Boolean) as Interpretation[],
+  },
+  // 17112026 with NO label (a bread bag's stamp under its lot code): an
+  // 8-digit token standing ALONE in its line, read year-first (20261117) or
+  // day/month-first (17112026 / 11172026). Future dates only, for the same
+  // reason as the bare 6-digit stamp below: an unlabelled past 8-digit number
+  // is a code far more often than an expiry worth tracking. Unlabelled, so the
+  // save sheet always asks the user to check it.
+  {
+    re: new RegExp(`${NB}(\\d{8})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => compact8(m[1], opts).filter((i) => i.iso >= isoToday(opts.today)),
+  },
   // EXP 200627 - the 6-digit dot-matrix stamp (no separators at all): day,
   // month, two-digit year in either order. Only right after an expiry label
   // does the past also read; see the bare variant below for why.
@@ -488,7 +511,15 @@ const PATTERNS: Pattern[] = [
   {
     re: new RegExp(`${NB}(\\d{5})${NA}`, 'g'),
     labelledOnly: true,
-    read: (m, opts) => compact5(m[0], opts),
+    // When no day/month split is a date, the token may be the US "Julian"
+    // code: two-digit year then day of the year ("EXPIRATION: 27280" =
+    // 7 Oct 2027). Only ever read right after an expiry label.
+    read: (m, opts) => {
+      const dated = compact5(m[0], opts).filter((i) => inRange(i, opts.today));
+      if (dated.length) return dated;
+      const j = julian(makeYear(m[0].slice(0, 2)), Number(m[0].slice(2)));
+      return j ? [j] : [];
+    },
   },
   // 20627 bare, future-only (same reasoning as the bare 6-digit form: a past
   // unlabelled 5-digit token is a lot code, not an expiry). The single-digit
@@ -517,6 +548,32 @@ function dayMonthNoYear(a: number, b: number, opts: ParseOptions): Interpretatio
   const mdy = nextOccurrence(a, b, opts.today);
   if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
   return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+}
+
+// A year and a day of the year (1..365/366) as a calendar date, marked coded.
+function julian(year: number, dayOfYear: number): Interpretation | null {
+  const days = new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1 ? 366 : 365;
+  if (dayOfYear < 1 || dayOfYear > days) return null;
+  const d = new Date(Date.UTC(year, 0, dayOfYear));
+  return { iso: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`, precision: 'day', coded: true };
+}
+
+// The 8-digit no-separator stamp: YYYYMMDD, or DDMMYYYY / MMDDYYYY with a
+// 20xx year. Every valid reading survives (preferred day/month order first).
+function compact8(digits: string, opts: ParseOptions): Interpretation[] {
+  const out: Interpretation[] = [];
+  if (digits.startsWith('20')) {
+    const ymd = toDay(Number(digits.slice(0, 4)), Number(digits.slice(4, 6)), Number(digits.slice(6)));
+    if (ymd) out.push(ymd);
+  }
+  if (digits.slice(4, 6) === '20') {
+    const year = Number(digits.slice(4));
+    const dmy = toDay(year, Number(digits.slice(2, 4)), Number(digits.slice(0, 2)));
+    const mdy = toDay(year, Number(digits.slice(0, 2)), Number(digits.slice(2, 4)));
+    const pair = opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+    for (const i of pair) if (i && !out.some((o) => o.iso === i.iso)) out.push(i);
+  }
+  return out;
 }
 
 // The 6-digit no-separator stamp: DDMMYY or MMDDYY (both two-digit years).
@@ -756,6 +813,7 @@ export function parseExpiry(lines: string[], opts: ParseOptions): ScanParseResul
   if (primary.precision === 'month') reasons.push('month-only');
   if (primary.iso < isoToday(opts.today)) reasons.push('in-past');
   if (primary.yearGuessed) reasons.push('no-year');
+  if (primary.coded) reasons.push('coded-date');
 
   // Month-only expiry with a clear label is how medicine is printed; that alone is not doubt.
   const doubts = reasons.filter((r) => r !== 'month-only');

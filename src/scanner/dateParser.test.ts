@@ -114,9 +114,13 @@ test('short MM/YY without a label is ignored', () => {
   assert.equal(parseExpiry(['10/27'], uk).kind, 'none');
 });
 
-test('compact YYYYMMDD only after an expiry label', () => {
+test('compact YYYYMMDD: confident after an expiry label, confirmed when bare', () => {
   assert.equal(found(['EXP 20261027']).primary.iso, '2026-10-27');
-  assert.equal(parseExpiry(['20261027'], uk).kind, 'none');
+  assert.equal(found(['EXP 20261027']).confidence, 'high');
+  // Bare: read (it stands alone in its line and is not past), but unlabelled.
+  const bare = found(['20261027']);
+  assert.equal(bare.primary.iso, '2026-10-27');
+  assert.equal(bare.confidence, 'medium');
 });
 
 test('unlabelled date needs confirmation', () => {
@@ -365,8 +369,8 @@ test('8-digit stamped dates: EXP 03062027 follows the preferred order', () => {
   // The year-first 8-digit stamp stays unambiguous and wins first.
   assert.equal(found(['EXP 20260315']).primary.iso, '2026-03-15');
   assert.ok(!found(['EXP 20260315']).reasons.includes('ambiguous-order'));
-  // Unlabelled 8-digit numbers are still not dates (honest no-date).
-  assert.equal(parseExpiry(['03062027'], uk).kind, 'none');
+  // Unlabelled 8-digit numbers read only as unlabelled dates to confirm.
+  assert.ok(found(['03062027'], uk).reasons.includes('no-label'));
 });
 
 test('EU-language expiry label resolves an ambiguous date day-first', () => {
@@ -585,7 +589,12 @@ test('past unlabelled compact stamps stay lot codes, not expiry dates', () => {
 test('long digit runs never partially match the compact stamps', () => {
   // A barcode or an 8-digit date inside one token: no 5/6-digit window reads.
   assert.equal(parseExpiry(['3800223071163'], uk).kind, 'none');
-  assert.equal(parseExpiry(['20261101'], uk).kind, 'none'); // 8 digits, unlabelled
+  // A bare 8-digit stamp alone in its line is now read (future dates only),
+  // always as an unlabelled date the user must confirm; a past one is a code.
+  const bare = found(['20261101']);
+  assert.equal(bare.primary.iso, '2026-11-01');
+  assert.ok(bare.reasons.includes('no-label'));
+  assert.equal(parseExpiry(['20240101'], uk).kind, 'none');
   assert.equal(found(['EXP 03062027']).primary.iso, '2027-06-03');
 });
 
@@ -682,4 +691,40 @@ test('international expiry and production labels', () => {
   // Year-first and month/year forms.
   assert.equal(found(['EXP 2027/03/15']).primary.iso, '2027-03-15');
   assert.equal(found(['EXP 03.2027']).primary.iso, '2027-03-31');
+});
+
+// ─── Real-photo regressions (2 Nov 2026 scanner report) ─────────────────────
+
+test('photo: bread bag 17112026 under its lot code L42A17 reads 17 Nov 2026', () => {
+  const r = found(['L42A17', '17112026']);
+  assert.equal(r.primary.iso, '2026-11-17');
+  assert.equal(r.label, null);
+  assert.equal(r.confidence, 'medium');
+  // Labelled, the same stamp is high confidence.
+  assert.equal(found(['EXP 17112026']).confidence, 'high');
+  // An 8-digit run next to other long numbers is a barcode, not a date.
+  assert.equal(parseExpiry(['17112026 5901234'], uk).kind, 'none');
+  // US order for a US user when both orders are dates.
+  const us8 = found(['03042027'], us);
+  assert.equal(us8.primary.iso, '2027-03-04');
+  assert.ok(us8.alternatives.some((a) => a.iso === '2027-04-03'));
+});
+
+test('photo: "EXPIRATION: 27280" is the US Julian code for 7 Oct 2027', () => {
+  const r = found(['LOT: 1687054', 'EXPIRATION: 27280']);
+  assert.equal(r.primary.iso, '2027-10-07');
+  assert.equal(r.label, 'expiry');
+  assert.ok(r.reasons.includes('coded-date'));
+  assert.equal(r.confidence, 'medium');
+  // Four-digit-year form.
+  assert.equal(found(['EXP 2027280']).primary.iso, '2027-10-07');
+  // Day 366 only exists in leap years.
+  assert.equal(found(['EXP 28366']).primary.iso, '2028-12-31');
+  assert.equal(parseExpiry(['EXP 27366'], uk).kind, 'none');
+  // Without a label a 5-digit code is never read as Julian, and the LOT
+  // number is never a date.
+  assert.equal(parseExpiry(['27280'], uk).kind, 'none');
+  assert.equal(parseExpiry(['LOT: 1687054'], uk).kind, 'none');
+  // A 5-digit stamp that IS a day/month/year keeps that reading.
+  assert.equal(found(['EXP 20627']).primary.iso, '2027-06-20');
 });

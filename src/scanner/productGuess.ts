@@ -54,6 +54,14 @@ const NOISE_RE = new RegExp(
     '\\b(EXP|EXPIRY|EXPIRATION|EXPIRES|EXPIRED|EXPD|BBE|BEST\\s*BEFORE|BEST\\s*BY|BEST\\s*IF\\s*USED\\s*BY|USE\\s*BY|USE\\s*BEFORE|SELL\\s*BY|DISPLAY\\s*UNTIL|LOT|BATCH|MFG|MFD|MFR|PROD|PACKED|PKD|NET\\s*WT|NET\\s*WEIGHT|DR\\s*WT|INGREDIENTS?|NUTRITION|NUTRITIONAL|DIETARY|SODIUM|CALCIUM|IRON|ALLERGENS?|MAY\\s*CONTAIN|CONTAINS|DISTRIBUTED|DISTRIBUTOR|IMPORTERS?|EXPORTERS?|IMPORTED|MADE\\s*IN|MADE\\s*WITH|PRODUCT\\s*OF|COUNTRY\\s*OF\\s*ORIGIN|REFRIGERATE|REFRIGERATED|KEEP\\s*FROZEN|STORAGE|STORED|ONCE\\s*OPENED|WWW\\.|HTTPS?:|\\.COM|\\.CO\\.|\\.NET\\b|LTD|LLC|INC|CORP|GMBH|PLC)\\b',
     '\\b(?:OF|PER|CONTAINS|WITH)\\s+(ENERGY|VITAMINS?|MINERALS?|PROTEINS?|CARBOHYDRATES?|SUGARS?|FIBER|FIBRE)\\b',
     '\\b(ENERGY|VITAMINS?|MINERALS?|PROTEINS?|CARBOHYDRATES?|SUGARS?|FIBER|FIBRE)\\s*[:\\d]',
+    // "Serving suggestion" print beside a product photo, in the languages it
+    // appears in (and its stems, since the frame often cuts it: "sugestie de
+    // p" once became the name "Sugest"), plus ingredient/claim furniture of
+    // continental packs.
+    '\\b(SUGEST\\w*|SUGGEST\\w*|SERVING\\s*SUGGESTION|SERVIERVORSCHLAG|SUGGERIMENTO|SUGERENCIA|PREZENTARE|PRESENTAZIONE|ABBILDUNG|ILLUSTRATION|INGREDIENTE|INGREDIENTI|ZUTATEN|INGREDIENTES|BOGAT\\s*IN|FARA\\s*GLUTEN|A\\s*SE\\s*PASTRA)\\b',
+    // The same furniture in Cyrillic (\\b does not see Cyrillic letters, so
+    // these match as plain substrings).
+    'СЪСТАВКИ|СЪСТАВ|СОСТАВ|ПРЕДЛОЖЕНИЕ ЗА СЕРВИРАНЕ|ВАРИАНТ ПОДАЧИ|СРОК НА ГОДНОСТ|СРОК ГОДНОСТИ|ГОДЕН ДО|ДА СЕ СЪХРАНЯВА|ХРАНИТЬ',
   ].join('|'),
 );
 
@@ -88,11 +96,15 @@ function scoreLine(raw: string, index: number): Scored | null {
   // brand tokens like 7UP survive).
   if (words.some((w) => NUMBER_TOKEN_RE.test(w) || DATE_TOKEN_RE.test(w))) return null;
   // Letters have to dominate; otherwise this is symbols/noise.
-  const letters = n.replace(/[^A-Z]/g, '').length;
+  // Any script's letters count (Cyrillic, Greek, Hebrew names are names too).
+  const letters = n.replace(/[^\p{L}]/gu, '').length;
   const solid = n.replace(/\s/g, '').length;
   if (!solid || letters / solid < 0.55) return null;
   if (NOISE_RE.test(n)) return null;
   if (words.every((w) => CALENDARISH.has(w))) return null;
+  // A name has at least one real word (3+ letters): a stray "P" or "DE" left
+  // at the frame's edge is a fragment, not a product.
+  if (!words.some((w) => w.replace(/[^\p{L}]/gu, '').length >= 3)) return null;
 
   let score = index <= 1 ? 3 : index <= 3 ? 1.5 : 0;
   if (PRODUCT_RE.test(n)) score += 2.5;
@@ -159,7 +171,9 @@ const COUNT_TOKEN_RE = /^\d+(?:[.,]\d+)?\s*(?:m|k|bn|b|mm)?\+?$/i;
 export function looksLikeTechnicalTitle(name: string): boolean {
   const words = name
     .toLowerCase()
-    .replace(/[^a-z0-9&\s/.-]/g, ' ')
+    // Letters of every script survive, so a Cyrillic or Greek name is a name
+    // (stripping them to nothing used to reject every non-Latin product).
+    .replace(/[^\p{L}\p{N}&\s/.-]/gu, ' ')
     .split(/[\s/.-]+/)
     .filter(Boolean);
   if (!words.length) return true;
@@ -193,6 +207,41 @@ export function guessProduct(lines: string[]): ProductGuess {
   // Lookup-page furniture never names a product, no matter which path
   // produced it ("Search Barcodestock" once leaked through exactly here).
   if (looksLikeTechnicalTitle(name)) return null;
+  return { name };
+}
+
+// One line of text the on-device reader found, with where it sits in the
+// scanning frame, normalized to 0..1 of the frame (top-left origin).
+export type TextBlock = { text: string; top: number; left: number; width: number; height: number };
+
+// The product's NAME is the biggest text printed on the front of a pack —
+// the brand and product line ("Delaco", "Cottage"), set far larger than
+// claims, weights and fine print. When the reader reports text sizes, the
+// guess therefore goes by size, not by line order: the largest name-like
+// line wins, joined with the neighbouring line of similar size (brand over
+// product). Fine print alone never names anything: when even the largest
+// name-like text is small in the frame, there is no name in view.
+const NAME_MIN_HEIGHT = 0.06;
+
+export function guessProductFromBlocks(blocks: TextBlock[]): ProductGuess {
+  const named = blocks.filter((b) => b.text.trim() && b.height > 0 && scoreLine(b.text, 99));
+  if (!named.length) return null;
+  const maxH = Math.max(...named.map((b) => b.height));
+  if (maxH < NAME_MIN_HEIGHT) return null;
+  const big = named.filter((b) => b.height >= 0.6 * maxH).sort((a, b) => a.top - b.top);
+  const lead = big.reduce((a, b) => (b.height > a.height ? b : a));
+  const at = big.indexOf(lead);
+  // A neighbour line joins when it sits right above or below (gap under about
+  // one line height) and the two together stay a short name.
+  const near = (a: TextBlock, b: TextBlock) => Math.abs(b.top - (a.top + a.height)) < 1.2 * Math.max(a.height, b.height);
+  const words = (b: TextBlock) => b.text.trim().split(/\s+/).length;
+  const parts = [lead];
+  const above = big[at - 1];
+  const below = big[at + 1];
+  if (above && near(above, lead) && words(above) + words(lead) <= 6) parts.unshift(above);
+  else if (below && near(lead, below) && words(lead) + words(below) <= 6) parts.push(below);
+  const name = formatProductName(titleCase(parts.map((p) => p.text.trim()).join(' ')), 48);
+  if (!name || looksLikeTechnicalTitle(name)) return null;
   return { name };
 }
 

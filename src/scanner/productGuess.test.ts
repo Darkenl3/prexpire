@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatProductName, looksLikeTechnicalTitle, guessProduct } from './productGuess.ts';
+import { formatProductName, looksLikeTechnicalTitle, guessProduct, guessProductFromBlocks, type TextBlock } from './productGuess.ts';
 
 // Furniture guard for product names: internal lookup/search labels ("Search
 // Barcodestock", "Lookup & ISBN Search") must NEVER become product names on
@@ -81,4 +81,39 @@ test('looksLikeTechnicalTitle rejects ISBN-service furniture ("Isbn Lookup Find 
   // A real book keeps its title: genuine words survive.
   assert.equal(looksLikeTechnicalTitle('Harry Potter and the Prisoner of Azkaban'), false);
   assert.equal(looksLikeTechnicalTitle('The Little Prince'), false);
+});
+
+// ─── 2 Nov 2026 scan report ──────────────────────────────────────────────────
+
+test('serving-suggestion print never becomes a product name ("Sugest")', () => {
+  assert.equal(guessProduct(['sugestie de p']), null);
+  assert.equal(guessProduct(['sugestie de prezentare']), null);
+  assert.equal(guessProduct(['Serving suggestion']), null);
+  assert.equal(guessProduct(['BOGAT IN PROTEINE', 'FARA GLUTEN']), null);
+  // A stray fragment at the frame's edge is not a name either.
+  assert.equal(guessProduct(['de p']), null);
+});
+
+test('Cyrillic product names are names', () => {
+  assert.equal(guessProduct(['Бронхолитин'])?.name, 'Бронхолитин');
+  // ...but Cyrillic leaflet furniture is not.
+  assert.equal(guessProduct(['Състав: вода, захар']), null);
+});
+
+test('with text sizes, the biggest name-like text names the product', () => {
+  const blocks: TextBlock[] = [
+    { text: '3,4% grasime', top: 0.05, left: 0.1, width: 0.3, height: 0.08 },
+    { text: 'Delaco', top: 0.2, left: 0.1, width: 0.4, height: 0.14 },
+    { text: 'Cottage', top: 0.36, left: 0.1, width: 0.5, height: 0.2 },
+    { text: 'BOGAT IN PROTEINE', top: 0.62, left: 0.4, width: 0.3, height: 0.06 },
+    { text: 'sugestie de prezentare', top: 0.9, left: 0.6, width: 0.3, height: 0.04 },
+  ];
+  assert.equal(guessProductFromBlocks(blocks)?.name, 'Delaco Cottage');
+  // Only fine print in view: no name.
+  assert.equal(
+    guessProductFromBlocks([{ text: 'Ingredients: milk, cream', top: 0.5, left: 0, width: 0.6, height: 0.03 }]),
+    null,
+  );
+  // A lone big line that is furniture names nothing.
+  assert.equal(guessProductFromBlocks([{ text: 'sugestie de prezentare', top: 0.4, left: 0, width: 0.9, height: 0.2 }]), null);
 });

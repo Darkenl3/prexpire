@@ -57,6 +57,7 @@ const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {
   'in-past': 'This date has already passed.',
   'sell-by': 'This is a sell-by date, which can be earlier than the real expiry date.',
   'no-year': 'No year is printed, so the next time this date comes round was used. Check the year.',
+  'coded-date': 'This date was printed as a code (year and day of the year). Check it.',
 };
 
 export type SaveInput = { name: string; category: CategoryId; date: Interpretation; image?: string };
