@@ -87,7 +87,7 @@ const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: stri
   'low-light': { icon: 'sunny-outline', text: 'Too dark. Improve the lighting.' },
   closer: { icon: 'resize-outline', text: 'Move closer to the expiry date.' },
   manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
-  unclear: { icon: 'eye-outline', text: 'The date is hard to read. Try a different angle.' },
+  unclear: { icon: 'eye-outline', text: 'Date hard to read. Move closer or tilt to avoid glare.' },
   'ocr-error': { icon: 'refresh-outline', text: 'Hold the camera steady.' },
   manual: { icon: 'create-outline', text: "We couldn't read the expiry date. You can enter it manually." },
 };

@@ -51,3 +51,11 @@ test('a new hint has to repeat before it replaces the one on screen', () => {
   assert.equal(settleHint('unclear', 'manual', 'unclear'), 'manual');
   assert.equal(settleHint('unclear', 'hold-steady', 'unclear'), 'hold-steady');
 });
+
+test('a date in view that reads as scattered digits is "hard to read", not "not in view"', () => {
+  // A dot-matrix stamp read as fragments: digits, but no date shape.
+  assert.equal(missHint({ ...base, lines: ['Ons', '2 S 11 2O26'], parseHint: 'no-date' }), 'unclear');
+  assert.equal(missHint({ ...base, lines: ['126S571S195'], parseHint: 'no-date' }), 'unclear');
+  // Two digits (a fat percentage) are not a date in view.
+  assert.equal(missHint({ ...base, lines: ['3,4% grasime'], parseHint: 'no-date' }), 'text-found');
+});

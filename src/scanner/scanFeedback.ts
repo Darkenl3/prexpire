@@ -9,9 +9,10 @@
 //   a dark photo                          → improve the lighting
 //   no text at all                        → move closer
 //   a production date only                → find the expiry date instead
-//   a date-shaped number that won't parse → try a different angle (glare,
-//                                           curvature, dot-matrix gaps)
-//   label text but nothing date-shaped    → point the frame at the date
+//   a date-shaped number that won't parse,
+//   or several loose digits               → the date is hard to read: move
+//                                           closer, tilt against glare
+//   label text with no digits at all      → point the frame at the date
 //   ~20 s without a confirmed date        → say so, and point at manual entry
 // The product stage never enters this decision: a recognised product does not
 // pause, replace or silence any of it.
@@ -58,6 +59,13 @@ export function looksDateShaped(lines: string[]): boolean {
   return lines.some((l) => DATE_SHAPED_RE.test(l.replace(BARCODE_RUN_RE, ' ')));
 }
 
+// Several digits in view (barcode numbers aside) that did not read as a date:
+// the date is most likely IN the frame but unreadable — a dot-matrix stamp
+// read as scattered digits, glare across a printed date — not missing.
+export function hasLooseDigits(lines: string[]): boolean {
+  return lines.join(' ').replace(BARCODE_RUN_RE, ' ').replace(/\D/g, '').length >= 3;
+}
+
 export function missHint(o: MissObservation): ScanHint {
   if (o.misses >= o.stuckAfter) return 'manual';
   const hasText = o.lines.length > 0;
@@ -70,7 +78,7 @@ export function missHint(o: MissObservation): ScanHint {
   if (o.dark) return 'low-light';
   if (!hasText) return o.hadText ? 'ocr-error' : 'closer';
   if (o.parseHint === 'manufacture-only') return 'manufacture';
-  if (o.parseHint === 'invalid-date' || looksDateShaped(o.lines)) return 'unclear';
+  if (o.parseHint === 'invalid-date' || looksDateShaped(o.lines) || hasLooseDigits(o.lines)) return 'unclear';
   if (o.recentDate) return 'hold-steady';
   return 'text-found';
 }

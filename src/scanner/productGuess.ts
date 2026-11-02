@@ -203,7 +203,7 @@ export function guessProduct(lines: string[]): ProductGuess {
   }
 
   const name = formatProductName(titleCase(combined), 48);
-  if (!name) return null;
+  if (!name || !hasRealWord(name)) return null;
   // Lookup-page furniture never names a product, no matter which path
   // produced it ("Search Barcodestock" once leaked through exactly here).
   if (looksLikeTechnicalTitle(name)) return null;
@@ -212,7 +212,20 @@ export function guessProduct(lines: string[]): ProductGuess {
 
 // One line of text the on-device reader found, with where it sits in the
 // scanning frame, normalized to 0..1 of the frame (top-left origin).
-export type TextBlock = { text: string; top: number; left: number; width: number; height: number };
+// `confidence` (0..1) is the reader's own certainty, when it reports one.
+export type TextBlock = { text: string; top: number; left: number; width: number; height: number; confidence?: number };
+
+// A name shown to the user must contain at least one real word: four or more
+// letters. Short fragments the reader picks out of a pack ("Ons" from a
+// curved "smântână", "De", "Cu") are never a product's name.
+function hasRealWord(name: string): boolean {
+  return name.split(/\s+/).some((w) => w.replace(/[^\p{L}]/gu, '').length >= 4);
+}
+
+// The reader's certainty a name line needs: Apple Vision reports 1.0 for text
+// it read cleanly and 0.5 or 0.3 for guesses, and a guessed line must not
+// become the product's name.
+const NAME_MIN_CONFIDENCE = 0.8;
 
 // The product's NAME is the biggest text printed on the front of a pack —
 // the brand and product line ("Delaco", "Cottage"), set far larger than
@@ -224,7 +237,9 @@ export type TextBlock = { text: string; top: number; left: number; width: number
 const NAME_MIN_HEIGHT = 0.06;
 
 export function guessProductFromBlocks(blocks: TextBlock[]): ProductGuess {
-  const named = blocks.filter((b) => b.text.trim() && b.height > 0 && scoreLine(b.text, 99));
+  const named = blocks.filter(
+    (b) => b.text.trim() && b.height > 0 && (b.confidence === undefined || b.confidence >= NAME_MIN_CONFIDENCE) && scoreLine(b.text, 99),
+  );
   if (!named.length) return null;
   const maxH = Math.max(...named.map((b) => b.height));
   if (maxH < NAME_MIN_HEIGHT) return null;
@@ -241,7 +256,7 @@ export function guessProductFromBlocks(blocks: TextBlock[]): ProductGuess {
   if (above && near(above, lead) && words(above) + words(lead) <= 6) parts.unshift(above);
   else if (below && near(lead, below) && words(lead) + words(below) <= 6) parts.push(below);
   const name = formatProductName(titleCase(parts.map((p) => p.text.trim()).join(' ')), 48);
-  if (!name || looksLikeTechnicalTitle(name)) return null;
+  if (!name || !hasRealWord(name) || looksLikeTechnicalTitle(name)) return null;
   return { name };
 }
 

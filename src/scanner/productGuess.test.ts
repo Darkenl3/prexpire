@@ -117,3 +117,15 @@ test('with text sizes, the biggest name-like text names the product', () => {
   // A lone big line that is furniture names nothing.
   assert.equal(guessProductFromBlocks([{ text: 'sugestie de prezentare', top: 0.4, left: 0, width: 0.9, height: 0.2 }]), null);
 });
+
+test('short or uncertain fragments never become names ("Ons")', () => {
+  assert.equal(guessProduct(['Ons']), null);
+  assert.equal(guessProduct(['Cu Ons']), null);
+  const ons: TextBlock[] = [{ text: 'Ons', top: 0.4, left: 0.3, width: 0.2, height: 0.15, confidence: 1 }];
+  assert.equal(guessProductFromBlocks(ons), null);
+  // A real name read only as a guess (Vision confidence 0.5) is not shown.
+  const guessed: TextBlock[] = [{ text: 'Cottage', top: 0.4, left: 0.1, width: 0.6, height: 0.2, confidence: 0.5 }];
+  assert.equal(guessProductFromBlocks(guessed), null);
+  // The same name read cleanly is.
+  assert.equal(guessProductFromBlocks([{ ...guessed[0], confidence: 1 }])?.name, 'Cottage');
+});
