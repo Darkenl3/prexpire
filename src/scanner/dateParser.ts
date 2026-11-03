@@ -720,6 +720,23 @@ const PATTERNS: Pattern[] = [
     isolatedOnly: true,
     read: (m, opts) => compact8(m[1], opts).filter((i) => i.iso >= isoToday(opts.today)),
   },
+  // 2511:2026 / 2511 2026 - a dot-matrix "25.11.2026" whose first dot was
+  // lost and whose second was read as a colon or a gap (PaddleOCR on the
+  // cottage cheese lid). Day and month run together, then the 20xx year.
+  // Without a label only a future date reads, like the bare stamps below.
+  {
+    re: new RegExp(`${NB}(\\d{2})(\\d{2})\\s?[.,:;/\\-]?\\s?(20\\d{2})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => {
+      const year = Number(m[3]);
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      const order = opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return order.filter((i, k): i is Interpretation => !!i && i.iso >= isoToday(opts.today) && (k === 0 || i.iso !== order[0]?.iso));
+    },
+  },
   // 012028 - month and four-digit year with no separator (chocolate and
   // sweets: "012028" = January 2028). Listed before the 6-digit day/month/year
   // stamps, which would otherwise read it as 20 Jan 2028. Labelled or not; a

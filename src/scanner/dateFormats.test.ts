@@ -271,3 +271,10 @@ test('photo: cottage cheese rebuilt reads with a missing dot or an S for 5', () 
   // A version number before a month and year still does not lend its digit.
   assert.equal(offers(['V4.2 05 2027'], '2027-05-31').primary.iso, '2027-05-31');
 });
+
+test('photo: cottage cheese read by PaddleOCR ("2511:2026", "25112026")', () => {
+  for (const read of ['2511:2026', '2511 2026', '25112026']) assert.equal(offers([read], '2026-11-25').primary.iso, '2026-11-25', read);
+  // Past or not a date: nothing (a bare form reads only ahead of today).
+  assert.equal(parseExpiry(['2511:2025'], dmy).kind, 'none');
+  assert.equal(parseExpiry(['4013:2027'], dmy).kind, 'none');
+});
