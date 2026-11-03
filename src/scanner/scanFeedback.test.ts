@@ -1,7 +1,7 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, dayMonthHint, fuseDate, type MissObservation } from './scanFeedback.ts';
+import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, dayMonthHint, fuseDate, readFor, lostDayBefore, type MissObservation } from './scanFeedback.ts';
 
 const base: MissObservation = {
   misses: 5,
@@ -98,4 +98,16 @@ test('a date put together from several reads of the same stamp', () => {
   assert.equal(dayMonthHint(['12,99 LEI', '10,50%'], 'DMY'), null);
   assert.equal(dayMonthHint(['25.11.2026'], 'DMY'), null);
   assert.equal(dayMonthHint(['1209.375'], 'DMY'), null);
+});
+
+test('a month-only read of a dot-matrix stamp waits for the day', () => {
+  // The same month with its day in a recent read: that date.
+  assert.deepEqual(readFor('2026-11-30', 'month', false, ['2026-11-25']), { iso: '2026-11-25', needed: 2 });
+  // Unlabelled and alone: four agreeing reads; labelled (EXP 11/2026): two.
+  assert.deepEqual(readFor('2026-11-30', 'month', false, []), { iso: '2026-11-30', needed: 4 });
+  assert.deepEqual(readFor('2026-11-30', 'month', true, []), { iso: '2026-11-30', needed: 2 });
+  // A lost day right before it never confirms on its own.
+  assert.equal(lostDayBefore(['. 11 .2026'], '11 .2026'), true);
+  assert.equal(readFor('2026-11-30', 'month', false, [], true).needed, Infinity);
+  assert.equal(lostDayBefore(['EXP 11/2026'], '11/2026'), false);
 });

@@ -93,9 +93,42 @@ export function missHint(o: MissObservation): ScanHint {
 // and vanish again instead of confirming.
 export const AGREEMENT_WINDOW = 5;
 
-export function confirmsDate(recent: (string | null)[], iso: string, confidence: 'high' | 'medium'): boolean {
+// `needed`: how many agreeing reads an unlabelled date needs (see readFor).
+export function confirmsDate(recent: (string | null)[], iso: string, confidence: 'high' | 'medium', needed = 2): boolean {
   if (confidence === 'high') return true;
-  return recent.slice(-AGREEMENT_WINDOW).filter((k) => k === iso).length >= 2;
+  return recent.slice(-AGREEMENT_WINDOW).filter((k) => k === iso).length >= needed;
+}
+
+// What one read counts as for agreement. A month-only read of a dot-matrix
+// stamp is often the full date with its day lost ("25.11.2026" read as
+// ". 11 .2026"): when a recent read of the same month had the day, it is
+// that date; otherwise, unlabelled, it needs four agreeing reads, so the
+// reads that keep the day have the time to arrive. (Replayed on the cottage
+// cheese lid's reads, 1 in 5 confirmations was "30 Nov" without this.)
+// A month-only read whose line shows a lost day right before it (a dot or
+// comma with no number, ". 11 .2026") never confirms on its own at all.
+export function readFor(
+  iso: string,
+  precision: 'day' | 'month',
+  labelled: boolean,
+  recentDays: string[],
+  dayLost = false,
+): { iso: string; needed: number } {
+  if (precision === 'day') return { iso, needed: 2 };
+  const day = [...recentDays].reverse().find((d) => d.slice(0, 7) === iso.slice(0, 7));
+  if (day) return { iso: day, needed: 2 };
+  if (dayLost && !labelled) return { iso, needed: Infinity };
+  return { iso, needed: labelled ? 2 : 4 };
+}
+
+// Whether the text right before a read date ends in a bare separator: the
+// stamp's day was there and the reader lost it (". 11 .2026").
+export function lostDayBefore(lines: string[], raw: string): boolean {
+  for (const line of lines) {
+    const at = line.indexOf(raw);
+    if (at >= 0) return /(^|\s)[.,:]\s*$/.test(line.slice(0, at));
+  }
+  return false;
 }
 
 // One pass's hint only replaces the one on screen when the next pass agrees,

@@ -527,7 +527,7 @@ const PATTERNS: Pattern[] = [
   // lookalikes of "20", reads as that 20xx year. Never a past year, never a
   // year far ahead, and unlabelled reads still need repeating to confirm.
   {
-    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,:;/\\-]\\s?(\\d{1,2})\\s?[.,:;/\\-]\\s?(?!20)([2378Z][0689OD])(\\d{2})${NA}`, 'g'),
+    re: new RegExp(`(?<![0-9.,])(\\d{1,2})(?:\\s?[.,:;/\\-]\\s?|\\s)(\\d{1,2})(?:\\s?[.,:;/\\-]\\s?|\\s)(?!20)([2378Z][0689OD])(\\d{2})${NA}`, 'g'),
     read: (m, opts) => {
       const year = 2000 + Number(m[4]);
       const now = opts.today.getFullYear();
@@ -562,7 +562,8 @@ const PATTERNS: Pattern[] = [
   // the year anchors the shape, so a decimal ("3,4") or a clock time
   // ("10:51") never starts a date.
   {
-    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,:;/\\-]\\s?(\\d{1,2})\\s?[.,:;/\\-]\\s?(20\\d{2})${NA}`, 'g'),
+    // A dot of the stamp can also go missing altogether ("25 11.2026").
+    re: new RegExp(`(?<![0-9.,])(\\d{1,2})(?:\\s?[.,:;/\\-]\\s?|\\s)(\\d{1,2})(?:\\s?[.,:;/\\-]\\s?|\\s)(20\\d{2})${NA}`, 'g'),
     read: (m, opts) => {
       const a = Number(m[1]);
       const b = Number(m[2]);

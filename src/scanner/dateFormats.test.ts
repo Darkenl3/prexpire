@@ -260,3 +260,14 @@ test('photo: cottage cheese rebuilt stamp "25.11:8926" (the 20 read as 89)', () 
   // A product code with no day.month shape stays a code.
   assert.equal(parseExpiry(['8926'], dmy).kind, 'none');
 });
+
+test('photo: cottage cheese rebuilt reads with a missing dot or an S for 5', () => {
+  // Reads of the rebuilt stamp by a modern OCR engine (Windows): each is
+  // 25 November 2026, never the month-only "11.2026" (30 November).
+  for (const read of ['25 11.2026', '2S 11.2026', '25. 11 .2026', '25.11 2026']) {
+    const r = offers([read], '2026-11-25');
+    assert.equal(r.primary.iso, '2026-11-25', read);
+  }
+  // A version number before a month and year still does not lend its digit.
+  assert.equal(offers(['V4.2 05 2027'], '2027-05-31').primary.iso, '2027-05-31');
+});
