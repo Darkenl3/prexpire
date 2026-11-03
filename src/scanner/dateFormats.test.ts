@@ -249,3 +249,14 @@ test('photo: cottage cheese dot-matrix "25.11.2026" read with colons', () => {
   assert.equal(parseExpiry(['10:51'], dmy).kind, 'none');
   assert.equal(parseExpiry(['23:11:29'], dmy).kind, 'none');
 });
+
+test('photo: cottage cheese rebuilt stamp "25.11:8926" (the 20 read as 89)', () => {
+  offers(['25.11:8926'], '2026-11-25');
+  offers(['25.11.2O27'], '2027-11-25');
+  offers(['25.11.8026'], '2026-11-25');
+  // Only a near-future year: a real 8926-style number or a past year is not a date.
+  assert.equal(parseExpiry(['25.11.8915'], dmy).kind, 'none');
+  assert.equal(parseExpiry(['25.11.8999'], dmy).kind, 'none');
+  // A product code with no day.month shape stays a code.
+  assert.equal(parseExpiry(['8926'], dmy).kind, 'none');
+});

@@ -410,6 +410,9 @@ function splitGluedDates(line: string): string {
     .replace(/(\d{1,2})([./-])(\d{1,2})\2(\d+)/g, (all, d: string, sep: string, mo: string, run: string) => {
       // (25xx is a Thai Buddhist-era year: also complete.)
       if (run.length === 2 || (run.length === 4 && (run.startsWith('20') || run.startsWith('25')))) return all;
+      // A dot-matrix year whose "20" was misread ("8026"): also complete
+      // (the lookalike pattern decides whether it reads as a date).
+      if (run.length === 4 && /^[2378][0689]/.test(run)) return all;
       if (run.length < 2) return all;
       const year = run.startsWith('20') && run.length > 4 ? run.slice(0, 4) : run.slice(0, 2);
       return `${d}${sep}${mo}${sep}${year} ${run.slice(year.length)}`;
@@ -516,6 +519,26 @@ const PATTERNS: Pattern[] = [
   {
     re: new RegExp(`(?<![0-9.])(20\\d{2})\\s+(\\d{1,2})\\s+(\\d{1,2})(?![0-9])`, 'g'),
     read: (m) => [toDay(Number(m[1]), Number(m[2]), Number(m[3]))].filter(Boolean) as Interpretation[],
+  },
+  // 25.11:8926 - the same dot-matrix date with its century misread: in a
+  // stamp's dots a 2 reads as 8, 3 or 7, and a 0 as 9, 8, 6 or O ("2026" ->
+  // "8926"). A full day.month.year shape whose last two year digits make a
+  // year from now to five years ahead, and whose first two are such
+  // lookalikes of "20", reads as that 20xx year. Never a past year, never a
+  // year far ahead, and unlabelled reads still need repeating to confirm.
+  {
+    re: new RegExp(`${NB}(\\d{1,2})\\s?[.,:;/\\-]\\s?(\\d{1,2})\\s?[.,:;/\\-]\\s?(?!20)([2378Z][0689OD])(\\d{2})${NA}`, 'g'),
+    read: (m, opts) => {
+      const year = 2000 + Number(m[4]);
+      const now = opts.today.getFullYear();
+      if (year < now || year > now + 5) return [];
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      if (dmy && mdy && dmy.iso !== mdy.iso) return opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return [dmy ?? mdy].filter(Boolean) as Interpretation[];
+    },
   },
   // 27/10/2026, 10/27/2026, 27.10.26
   // With a two-digit year the same shape can also be Japanese/Chinese
