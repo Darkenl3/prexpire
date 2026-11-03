@@ -15,8 +15,9 @@ import { GlassIconButton } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
 // Managing the user's categories: the unified list (the built-ins they keep
-// plus the folders they added, all removable), a restore section for the
-// built-ins they removed, and the full-screen "New category" page.
+// plus the folders they added, in the user's order, all removable), a
+// restore section for the built-ins they removed, and the full-screen page
+// that creates a category or edits one (tap a row).
 
 // Folder icon ink on the light theme's pastel chips (one per tile tint), so
 // each folder keeps its colour language; the dark theme uses plain text ink.
@@ -47,10 +48,12 @@ const SHELL = Platform.OS === 'web' && typeof window !== 'undefined' && !!(windo
 export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
-  const { all, custom, removed, add, remove, restore, saveError } = useCategories();
+  const { all, custom, removed, add, edit, move, remove, restore, saveError } = useCategories();
   const { saved } = useItems();
   const { settings, update } = useSettings();
   const [adding, setAdding] = useState(false);
+  // The category being edited (its page is open), or null.
+  const [editing, setEditing] = useState<string | null>(null);
   // Two-tap delete: the button flips to "Remove?" and confirms on the second tap.
   const [confirming, setConfirming] = useState<string | null>(null);
 
@@ -66,8 +69,10 @@ export function CategoryManager() {
 
   const countFor = (id: string) => saved.filter((i) => i.category === id).length;
 
-  // One row shape for every category the user keeps, built-in or their own.
-  const renderRow = (id: string, name: string, isCustom: boolean) => {
+  // One row shape for every category the user keeps, built-in or their own:
+  // tap it to edit, the arrows move it (the Home grid and every list follow
+  // this order), the bin removes it.
+  const renderRow = (id: string, name: string, isCustom: boolean, index: number) => {
     const folder = custom.find((x) => x.id === id);
     const def = BUILTINS.find((x) => x.id === id);
     const tint: Tint = isCustom && folder ? folder.tint : def ? def.tint : 'add';
@@ -75,18 +80,55 @@ export function CategoryManager() {
     const iconBg = c === LIGHT ? g.top : `${g.top}33`;
     const iconBorder = c === LIGHT ? g.border : `${g.top}66`;
     const confirmingThis = confirming === id;
+    const arrow = (by: -1 | 1) => {
+      const off = by === -1 ? index === 0 : index === all.length - 1;
+      return (
+        <PressScale
+          onPress={() => {
+            if (off) return;
+            Haptics.selectionAsync().catch(() => {});
+            setConfirming(null);
+            move(id, by);
+          }}
+          hitSlop={4}
+          scaleTo={0.97}
+          disabled={off}
+          accessibilityRole="button"
+          accessibilityLabel={by === -1 ? `Move ${name} up` : `Move ${name} down`}
+          style={[s.arrow, off && s.arrowOff]}
+        >
+          <Ionicons name={by === -1 ? 'chevron-up' : 'chevron-down'} size={16} color={c.textMuted} />
+        </PressScale>
+      );
+    };
     return (
       <View key={id} style={s.row}>
-        <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
-          {def ? categoryArt(id, 24) : <IconArt icon={folder?.icon ?? DEFAULT_CATEGORY_ICON} size={24} />}
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.rowName} numberOfLines={1}>
-            {name}
-          </Text>
-          <Text style={s.rowSub}>
-            {def ? 'Default category' : 'Your folder'} · {countFor(id) === 1 ? '1 item' : `${countFor(id)} items`}
-          </Text>
+        <PressScale
+          onPress={() => {
+            setConfirming(null);
+            setEditing(id);
+          }}
+          scaleTo={0.99}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${name}`}
+          style={s.rowMain}
+        >
+          <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
+            {def ? categoryArt(id, 24) : <IconArt icon={folder?.icon ?? DEFAULT_CATEGORY_ICON} size={24} />}
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={s.rowName} numberOfLines={1}>
+              {name}
+            </Text>
+            <Text style={s.rowSub} numberOfLines={1}>
+              {countFor(id) === 1 ? '1 item' : `${countFor(id)} items`}
+            </Text>
+          </View>
+        </PressScale>
+        {/* Up over down, one narrow column, so the name keeps its width. */}
+        <View style={s.arrows}>
+          {arrow(-1)}
+          {arrow(1)}
         </View>
         <PressScale
           onPress={() => {
@@ -113,7 +155,7 @@ export function CategoryManager() {
 
   return (
     <View style={s.wrap}>
-      {all.map((cat) => renderRow(cat.id, cat.name, cat.custom))}
+      {all.map((cat, i) => renderRow(cat.id, cat.name, cat.custom, i))}
       {removed.length > 0 && (
         <View style={s.removedWrap}>
           <Text style={s.removedTitle}>Removed</Text>
@@ -147,19 +189,45 @@ export function CategoryManager() {
       )}
       <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => setAdding(true)} />
       {saveError && <Note tone="warn">The last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>}
-      <NewCategoryPage visible={adding} onClose={() => setAdding(false)} onAdd={(name, icon, tint) => !!add(name, icon, tint)} />
+      <CategoryPage visible={adding} onClose={() => setAdding(false)} onSave={(name, icon, tint) => !!add(name, icon, tint)} />
+      {(() => {
+        const cat = all.find((x) => x.id === editing);
+        const folder = custom.find((x) => x.id === editing);
+        return (
+          <CategoryPage
+            visible={!!cat}
+            editing={cat ? { name: cat.name, icon: folder?.icon, tint: folder?.tint, builtin: !folder } : undefined}
+            onClose={() => setEditing(null)}
+            onSave={(name, icon, tint) => !!editing && edit(editing, { name, icon, tint })}
+          />
+        );
+      })()}
     </View>
   );
 }
 
-// The full-screen "New category" page: a name, an icon and a tile colour get
-// room to breathe (the compact dialog these used to squeeze into is gone).
+// The full-screen category page, "New category" or "Edit category": a name,
+// an icon and a tile colour get room to breathe (the compact dialog these
+// used to squeeze into is gone). A built-in being edited shows only its name:
+// its artwork and colour are part of it.
 // It slides up over the app, keeps its own back button and primary action,
 // and pads its bottom for the shell's floating glass bar. The keyboard stays
 // closed until the user actually taps the name field - no autofocus, no
 // programmatic focus, no flicker - and the layout keeps its place when the
 // keyboard opens (iOS padding) so the actions are never covered.
-function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClose: () => void; onAdd: (name: string, icon: string, tint: Tint) => boolean }) {
+type Editing = { name: string; icon?: string; tint?: Tint; builtin: boolean };
+
+function CategoryPage({
+  visible,
+  editing,
+  onClose,
+  onSave,
+}: {
+  visible: boolean;
+  editing?: Editing;
+  onClose: () => void;
+  onSave: (name: string, icon: string, tint: Tint) => boolean;
+}) {
   const c = useTheme();
   const s = useStyles();
   const insets = useSafeAreaInsets();
@@ -169,14 +237,18 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
   const [tint, setTint] = useState<Tint>(CUSTOM_TINTS[0]);
   const [rejected, setRejected] = useState(false);
 
+  // Filled once each time the page opens (later re-renders never reset what
+  // the user is typing).
   useEffect(() => {
     if (visible) {
-      setName('');
-      setIcon(DEFAULT_CATEGORY_ICON);
-      setTint(CUSTOM_TINTS[0]);
+      setName(editing?.name ?? '');
+      setIcon(editing?.icon ?? DEFAULT_CATEGORY_ICON);
+      setTint(editing?.tint ?? CUSTOM_TINTS[0]);
       setRejected(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+  const builtin = !!editing?.builtin;
 
   const trimmed = name.trim();
   const submit = () => {
@@ -184,7 +256,7 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
       setRejected(true);
       return;
     }
-    if (onAdd(trimmed, icon, tint)) {
+    if (onSave(trimmed, icon, tint)) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       onClose();
     } else {
@@ -201,7 +273,7 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
                 touch oval); the spacer opposite keeps the title centred. */}
             <GlassIconButton icon="chevron-back" iconSize={22} size={42} label="Cancel" onPress={onClose} />
             <Text style={s.pageTitle} accessibilityRole="header">
-              New category
+              {editing ? 'Edit category' : 'New category'}
             </Text>
             <View style={s.backBtn} />
           </View>
@@ -211,7 +283,13 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <Text style={s.pageIntro}>A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.</Text>
+            <Text style={s.pageIntro}>
+              {!editing
+                ? 'A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.'
+                : builtin
+                  ? 'Give this category your own name. Its picture and colour stay as they are, and every item in it keeps its place.'
+                  : 'Change the name, icon or colour. Every item in this folder stays in it.'}
+            </Text>
             <Text style={s.label}>Name</Text>
             {/* Deliberately NOT autofocused: the keyboard opens only when the
                 user taps this field. Typed text survives keyboard dismissals
@@ -233,8 +311,8 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
               accessibilityLabel="Category name"
             />
             {rejected && !trimmed && <Text style={s.warn}>Give the category a name first.</Text>}
-            <Text style={s.label}>Icon</Text>
-            <View style={s.iconGrid}>
+            {!builtin && <Text style={s.label}>Icon</Text>}
+            {!builtin && <View style={s.iconGrid}>
               {CATEGORY_ICONS.map((ic) => {
                 const on = ic === icon;
                 return (
@@ -251,9 +329,9 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
                   </PressScale>
                 );
               })}
-            </View>
-            <Text style={s.label}>Colour</Text>
-            <View style={s.tintRow}>
+            </View>}
+            {!builtin && <Text style={s.label}>Colour</Text>}
+            {!builtin && <View style={s.tintRow}>
               {CUSTOM_TINTS.map((t) => {
                 const on = t === tint;
                 const g = c.tints[t];
@@ -273,10 +351,14 @@ function NewCategoryPage({ visible, onClose, onAdd }: { visible: boolean; onClos
                   </PressScale>
                 );
               })}
-            </View>
+            </View>}
             <View style={s.pageActions}>
               <SmallButton label="Cancel" onPress={onClose} />
-              <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
+              {editing ? (
+                <SmallButton label="Save" icon="checkmark-circle-outline" tone="mint" onPress={submit} />
+              ) : (
+                <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
+              )}
             </View>
           </ScrollView>
         </View>
@@ -290,14 +372,20 @@ const useStyles = makeStyles((c) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 4,
     padding: 12,
+    paddingRight: 6,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.surface,
     ...(c === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } } : null),
   },
+  // The tappable part of a row (icon and text) opens the edit page.
+  rowMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  arrows: { gap: 2 },
+  arrow: { width: 30, height: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  arrowOff: { opacity: 0.25 },
   rowIcon: {
     width: 38,
     height: 38,

@@ -59,7 +59,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const layout = useLayout();
   const { items, saved } = useItems();
   const { settings, motion } = useSettings();
-  const { custom, removed } = useCategories();
+  const { all, custom } = useCategories();
   const t = useTheme();
   const c = useStyles();
   const { warningDays, showExpired } = settings;
@@ -105,9 +105,9 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { columns, tileWidth } = gridFor(gridWidth, gridGap, 100);
   const compact = tileWidth < 112 || layout.short;
 
-  // The grid in order: the built-ins the user keeps, then their own folders,
-  // and the Add-category tile always last (it opens Settings' category page).
-  const keptBuiltins = categories.filter((x) => x.tint !== 'add' && !removed.includes(x.id));
+  // The grid in the user's order (Settings > Categories), built-ins and their
+  // own folders alike, and the Add-category tile always last (it opens
+  // Settings' category page).
   const addTile = categories.find((x) => x.tint === 'add');
 
   // A long grid collapses to two full rows; the folders beyond them wait
@@ -116,28 +116,24 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   // user's folder count. Expanding never reorders or duplicates anything -
   // the same array is simply shown in full.
   const [gridExpanded, setGridExpanded] = useState(false);
-  const catTiles = [
-    ...keptBuiltins.map((t) => ({
-      key: t.id,
-      tint: t.tint,
-      name: t.name,
-      sub: `${saved.filter((i) => i.category === t.id).length} items`,
-      status: tileStatus(attention.byCategory(t.id)),
-      art: categoryArt(t.art, compact ? 56 : 64),
-      onPress: () => go(`category:${t.id}`),
-    })),
-    ...custom.map((cat) => ({
-      key: cat.id,
-      tint: cat.tint as Tint,
-      name: cat.name,
-      sub: `${saved.filter((i) => i.category === cat.id).length} items`,
-      status: tileStatus(attention.byCategory(cat.id)),
-      // The folder's illustration, in the built-ins' style (an unknown or old
-      // icon identifier shows the folder picture, never a blank).
-      art: <IconArt icon={cat.icon} size={compact ? 56 : 64} />,
-      onPress: () => go(`category:${cat.id}`),
-    })),
-  ];
+  const catTiles = all.flatMap((cat) => {
+    const builtin = categories.find((x) => x.id === cat.id && x.tint !== 'add');
+    const folder = custom.find((x) => x.id === cat.id);
+    if (!builtin && !folder) return [];
+    return [
+      {
+        key: cat.id,
+        tint: (builtin ? builtin.tint : folder!.tint) as Tint,
+        name: cat.name,
+        sub: `${saved.filter((i) => i.category === cat.id).length} items`,
+        status: tileStatus(attention.byCategory(cat.id)),
+        // A folder's illustration is in the built-ins' style (an unknown or
+        // old icon identifier shows the folder picture, never a blank).
+        art: builtin ? categoryArt(builtin.art, compact ? 56 : 64) : <IconArt icon={folder!.icon} size={compact ? 56 : 64} />,
+        onPress: () => go(`category:${cat.id}`),
+      },
+    ];
+  });
   // When collapsed, the last visible category slot is reserved for Add, so
   // the collapsed grid is always exactly COLLAPSED_ROWS full rows.
   const cap = columns * COLLAPSED_ROWS;

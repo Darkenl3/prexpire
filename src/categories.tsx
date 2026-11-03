@@ -15,6 +15,10 @@ import { CATEGORY_IDS, CATEGORY_NAMES } from './items';
 
 export const CATEGORIES_KEY = 'prexpire.categories.v1';
 export const REMOVED_KEY = 'prexpire.categoriesRemoved.v1';
+// The user's own names for built-ins ({ food: "Fridge" }) and the order of
+// every category they keep (ids; unlisted ones follow in the default order).
+export const NAMES_KEY = 'prexpire.categoryNames.v1';
+export const ORDER_KEY = 'prexpire.categoryOrder.v1';
 
 export type CustomCategory = {
   // Generated: "cat-<base36 time><random>".
@@ -133,6 +137,14 @@ function isCustomCategory(x: unknown): x is CustomCategory {
   );
 }
 
+function isNameMap(x: unknown): x is Record<string, string> {
+  return !!x && typeof x === 'object' && !Array.isArray(x) && Object.entries(x).every(([k, v]) => CATEGORY_IDS.includes(k) && typeof v === 'string' && v.length > 0);
+}
+
+function isIdList(x: unknown): x is string[] {
+  return Array.isArray(x) && x.every((id) => typeof id === 'string');
+}
+
 function isRemovedList(x: unknown): x is string[] {
   return Array.isArray(x) && x.every((id) => typeof id === 'string' && CATEGORY_IDS.includes(id));
 }
@@ -167,6 +179,11 @@ type CategoriesContext = {
   // removed (their items keep their label); unknown ids fall back to "Other".
   nameOf: (id: string) => string;
   add: (name: string, icon: string, tint: Tint) => CustomCategory | null;
+  // Changes a category the user keeps: a folder's name, icon and colour, or
+  // a built-in's name (its artwork and colour stay). False for an empty name.
+  edit: (id: string, change: { name: string; icon?: string; tint?: Tint }) => boolean;
+  // Moves a category one place earlier (-1) or later (+1) in every list.
+  move: (id: string, by: -1 | 1) => void;
   // Removes a category the user no longer wants: a built-in is remembered in
   // the removed list (restorable), a custom folder is deleted outright.
   remove: (id: string) => void;
@@ -182,24 +199,43 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [removed, setRemoved] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [names, setNames] = useState<Record<string, string>>({});
+  const [order, setOrder] = useState<string[]>([]);
   // Writes go through these refs so two quick changes never overwrite each other.
   const customRef = useRef<CustomCategory[]>([]);
   const removedRef = useRef<string[]>([]);
+  const namesRef = useRef<Record<string, string>>({});
+  const orderRef = useRef<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [rawCustom, rawRemoved] = await AsyncStorage.multiGet([CATEGORIES_KEY, REMOVED_KEY]);
-        const parsedCustom: unknown = rawCustom[1] ? JSON.parse(rawCustom[1]) : [];
-        const parsedRemoved: unknown = rawRemoved[1] ? JSON.parse(rawRemoved[1]) : [];
+        const [rawCustom, rawRemoved, rawNames, rawOrder] = await AsyncStorage.multiGet([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY]);
+        const parse = (raw: string | null, fallback: unknown): unknown => {
+          try {
+            return raw ? JSON.parse(raw) : fallback;
+          } catch {
+            return fallback;
+          }
+        };
+        const parsedCustom = parse(rawCustom[1], []);
+        const parsedRemoved = parse(rawRemoved[1], []);
+        const parsedNames = parse(rawNames[1], {});
+        const parsedOrder = parse(rawOrder[1], []);
         const list = Array.isArray(parsedCustom) ? parsedCustom.filter(isCustomCategory) : [];
         const gone = isRemovedList(parsedRemoved) ? parsedRemoved : [];
+        const renamed = isNameMap(parsedNames) ? parsedNames : {};
+        const ordered = isIdList(parsedOrder) ? parsedOrder : [];
         if (cancelled) return;
         customRef.current = list;
         removedRef.current = gone;
+        namesRef.current = renamed;
+        orderRef.current = ordered;
         setCustom(list);
         setRemoved(gone);
+        setNames(renamed);
+        setOrder(ordered);
       } catch {
         // Unreadable storage starts with the default set of categories.
       } finally {
@@ -211,22 +247,31 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const persist = useCallback(async (nextCustom: CustomCategory[], nextRemoved: string[]) => {
-    customRef.current = nextCustom;
-    removedRef.current = nextRemoved;
-    setCustom(nextCustom);
-    setRemoved(nextRemoved);
-    try {
-      await AsyncStorage.multiSet([
-        [CATEGORIES_KEY, JSON.stringify(nextCustom)],
-        [REMOVED_KEY, JSON.stringify(nextRemoved)],
-      ]);
+  const persist = useCallback(
+    async (nextCustom: CustomCategory[], nextRemoved: string[], nextNames = namesRef.current, nextOrder = orderRef.current) => {
+      customRef.current = nextCustom;
+      removedRef.current = nextRemoved;
+      namesRef.current = nextNames;
+      orderRef.current = nextOrder;
+      setCustom(nextCustom);
+      setRemoved(nextRemoved);
+      setNames(nextNames);
+      setOrder(nextOrder);
+      try {
+        await AsyncStorage.multiSet([
+          [CATEGORIES_KEY, JSON.stringify(nextCustom)],
+          [REMOVED_KEY, JSON.stringify(nextRemoved)],
+          [NAMES_KEY, JSON.stringify(nextNames)],
+          [ORDER_KEY, JSON.stringify(nextOrder)],
+        ]);
       setSaveError(false);
     } catch {
       // The change still applies until the page closes.
-      setSaveError(true);
-    }
-  }, []);
+        setSaveError(true);
+      }
+    },
+    [],
+  );
 
   const add = useCallback(
     (name: string, icon: string, tint: Tint) => {
@@ -268,24 +313,69 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  const edit = useCallback(
+    (id: string, change: { name: string; icon?: string; tint?: Tint }) => {
+      const clean = change.name.trim().slice(0, 24);
+      if (!clean) return false;
+      if (CATEGORY_IDS.includes(id)) {
+        // Back to the original name: the override is dropped.
+        const rest = { ...namesRef.current };
+        delete rest[id];
+        void persist(customRef.current, removedRef.current, clean === CATEGORY_NAMES[id] ? rest : { ...rest, [id]: clean });
+        return true;
+      }
+      if (!customRef.current.some((c) => c.id === id)) return false;
+      const tint = change.tint && (CUSTOM_TINTS as string[]).includes(change.tint) ? change.tint : undefined;
+      void persist(
+        customRef.current.map((c) => (c.id === id ? { ...c, name: clean, icon: change.icon ?? c.icon, tint: tint ?? c.tint } : c)),
+        removedRef.current,
+      );
+      return true;
+    },
+    [persist],
+  );
+
+  const move = useCallback(
+    (id: string, by: -1 | 1) => {
+      // The order is written out in full for what is shown right now, so a
+      // move always lands exactly one place over.
+      const ids = orderedIds(customRef.current, removedRef.current, orderRef.current);
+      const at = ids.indexOf(id);
+      const to = at + by;
+      if (at < 0 || to < 0 || to >= ids.length) return;
+      [ids[at], ids[to]] = [ids[to], ids[at]];
+      void persist(customRef.current, removedRef.current, namesRef.current, ids);
+    },
+    [persist],
+  );
+
   const clearAll = useCallback(async () => {
-    await AsyncStorage.multiRemove([CATEGORIES_KEY, REMOVED_KEY]);
+    await AsyncStorage.multiRemove([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY]);
     customRef.current = [];
     removedRef.current = [];
+    namesRef.current = {};
+    orderRef.current = [];
     setCustom([]);
     setRemoved([]);
+    setNames({});
+    setOrder([]);
     setSaveError(false);
   }, []);
 
   const value = useMemo<CategoriesContext>(() => {
-    const gone = new Set(removed);
-    const all: CategoryDef[] = [
-      ...CATEGORY_IDS.filter((id) => !gone.has(id)).map((id) => ({ id, name: CATEGORY_NAMES[id], custom: false })),
-      ...custom.map((c) => ({ id: c.id, name: c.name, custom: true })),
-    ];
     // Built-in names stay known even while removed, so items filed in a
-    // removed built-in keep showing their real category label.
-    const names = new Map<string, string>([...Object.entries(CATEGORY_NAMES), ...custom.map((c) => [c.id, c.name] as [string, string])]);
+    // removed built-in keep showing their real category label (the user's
+    // own name for it when they gave one).
+    const nameMap = new Map<string, string>([
+      ...Object.entries(CATEGORY_NAMES),
+      ...Object.entries(names),
+      ...custom.map((c) => [c.id, c.name] as [string, string]),
+    ]);
+    const all: CategoryDef[] = orderedIds(custom, removed, order).map((id) => ({
+      id,
+      name: nameMap.get(id) ?? 'Other',
+      custom: !CATEGORY_IDS.includes(id),
+    }));
     return {
       custom,
       removed,
@@ -293,15 +383,29 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       saveError,
       all,
       ids: all.map((c) => c.id),
-      nameOf: (id: string) => names.get(id) ?? 'Other',
+      nameOf: (id: string) => nameMap.get(id) ?? 'Other',
       add,
+      edit,
+      move,
       remove,
       restore,
       clearAll,
     };
-  }, [custom, removed, ready, saveError, add, remove, restore, clearAll]);
+  }, [custom, removed, names, order, ready, saveError, add, edit, move, remove, restore, clearAll]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+// Every category the user keeps, in their order: ids they placed come first
+// as placed, the rest (new folders, restored built-ins) follow in the default
+// order, built-ins then folders by creation.
+function orderedIds(custom: CustomCategory[], removed: string[], order: string[]): string[] {
+  const gone = new Set(removed);
+  const kept = [...CATEGORY_IDS.filter((id) => !gone.has(id)), ...custom.map((c) => c.id)];
+  const keptSet = new Set(kept);
+  const placed = order.filter((id, i) => keptSet.has(id) && order.indexOf(id) === i);
+  const placedSet = new Set(placed);
+  return [...placed, ...kept.filter((id) => !placedSet.has(id))];
 }
 
 export function useCategories() {
