@@ -279,50 +279,41 @@ function useNativeGlass(button: Omit<ChromeButton, 'element'>) {
   return { native, ref };
 }
 
-// One small glass pill: an icon in the app's green and its label. Inside the
-// iOS app it is drawn natively in the scanner's liquid glass.
-function GlassPill({ icon, text, onPress, primary }: { icon: keyof typeof Ionicons.glyphMap; text: string; onPress: () => void; primary?: boolean }) {
+// One small action button: a soft tinted fill (green-tinted for the first
+// choice, neutral for the other), the icon and its label. Plain and clean on
+// purpose: no glass, no outline, no shadow.
+function ActionButton({ icon, text, onPress, primary }: { icon: keyof typeof Ionicons.glyphMap; text: string; onPress: () => void; primary?: boolean }) {
   const c = useTheme();
-  const { native, ref } = useNativeGlass({ icon, iconSize: 18, label: text, text, accentIcon: true, onPress });
-  if (native) {
-    return (
-      <View ref={ref} style={{ height: 46, borderRadius: 23, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={text} style={[StyleSheet.absoluteFill, { opacity: 0 }]}>
-          <View />
-        </PressScale>
-        {/* Invisible, only to give the slot the label's width. */}
-        <View style={{ width: 18 }} />
-        <Text style={{ fontSize: 15, fontWeight: '700', opacity: 0 }}>{text}</Text>
-      </View>
-    );
-  }
+  const light = c === LIGHT;
   return (
     <PressScale
       onPress={onPress}
       scaleTo={0.96}
       accessibilityRole="button"
       accessibilityLabel={text}
-      style={[
-        { flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 15, borderRadius: 20 },
-        liquidGlass(c),
-        primary && { borderColor: c === LIGHT ? 'rgba(14,143,107,0.35)' : 'rgba(166,223,107,0.38)' },
-      ]}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 7,
+        height: 40,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        backgroundColor: primary ? (light ? "rgba(14,143,107,0.10)" : "rgba(166,223,107,0.12)") : light ? "rgba(16,35,30,0.05)" : "rgba(255,255,255,0.06)",
+      }}
     >
-      <Ionicons name={icon} size={17} color={c.green} />
-      <Text style={{ color: c.text, fontSize: 14, fontWeight: '700' }}>{text}</Text>
+      <Ionicons name={icon} size={17} color={primary ? c.green : c.textMuted} />
+      <Text style={{ color: primary ? c.green : c.text, fontSize: 14, fontWeight: "700" }}>{text}</Text>
     </PressScale>
   );
 }
 
-// The two ways to add something, as a pair of small glass buttons: the same
-// glass as the header circles, the icon in the app's green, and only Scan a
-// label carrying a faint green rim as the first choice. Used by the empty
-// states on Home and Lists.
+// The two ways to add something, as a pair of small clean buttons (Scan a
+// label first, in the app's green). Used by the empty states on Home and Lists.
 export function AddActions({ onScan, onManual }: { onScan: () => void; onManual: () => void }) {
   return (
     <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-      <GlassPill icon="scan-outline" text="Scan a label" onPress={onScan} primary />
-      <GlassPill icon="create-outline" text="Add manually" onPress={onManual} />
+      <ActionButton icon="scan-outline" text="Scan a label" onPress={onScan} primary />
+      <ActionButton icon="create-outline" text="Add manually" onPress={onManual} />
     </View>
   );
 }
