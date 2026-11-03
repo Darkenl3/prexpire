@@ -106,3 +106,22 @@ export function settleHint(shown: ScanHint, candidate: ScanHint, previousCandida
   if (candidate === 'manual' || candidate === 'aim' || candidate === 'hold-steady' || shown === 'aim' || shown === 'hold-steady') return candidate;
   return candidate === previousCandidate ? candidate : shown;
 }
+
+// A dot-matrix stamp the reader cannot make out still often shows its YEAR
+// in the fragments ("202C", "2O26": the 6 read as C, the 0 as O). The year a
+// stamp seems to carry, from this year to five years ahead, or null. Only a
+// four-character run that starts "20" counts, with the usual dot-matrix
+// lookalikes mapped back to digits in its last two places.
+const YEAR_LOOKALIKE: Record<string, string> = { O: '0', D: '0', Q: '0', I: '1', L: '1', Z: '2', S: '5', G: '6', C: '6', E: '6', B: '8' };
+export function yearHint(lines: string[], today: Date): number | null {
+  const now = today.getFullYear();
+  for (const raw of lines.join(' ').toUpperCase().split(/[^0-9A-Z]+/)) {
+    const m = /^2[0O]([0-9A-Z]{2})$/.exec(raw);
+    if (!m) continue;
+    const tail = [...m[1]].map((ch) => (/\d/.test(ch) ? ch : (YEAR_LOOKALIKE[ch] ?? 'x'))).join('');
+    if (!/^\d\d$/.test(tail)) continue;
+    const year = 2000 + Number(tail);
+    if (year >= now && year <= now + 5) return year;
+  }
+  return null;
+}

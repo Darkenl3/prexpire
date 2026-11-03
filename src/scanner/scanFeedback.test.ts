@@ -1,7 +1,7 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { confirmsDate, looksDateShaped, missHint, settleHint, type MissObservation } from './scanFeedback.ts';
+import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, type MissObservation } from './scanFeedback.ts';
 
 const base: MissObservation = {
   misses: 5,
@@ -69,4 +69,15 @@ test('a date confirms on the date itself, not on identical reads', () => {
   // ...within the window.
   assert.equal(confirmsDate(['2026-11-25', null, null, null, null, '2026-11-25'], '2026-11-25', 'medium'), false);
   assert.equal(confirmsDate(['2026-11-24', '2026-11-25'], '2026-11-25', 'medium'), false);
+});
+
+test('an unreadable stamp still gives away its year', () => {
+  const today = new Date(2026, 10, 3);
+  assert.equal(yearHint(['202C'], today), 2026);
+  assert.equal(yearHint(['25 1', '2O27'], today), 2027);
+  assert.equal(yearHint(['9283', 'p92e'], today), null);
+  // Not a past year, nor one far ahead, nor a longer number.
+  assert.equal(yearHint(['2019'], today), null);
+  assert.equal(yearHint(['2045'], today), null);
+  assert.equal(yearHint(['120265'], today), null);
 });
