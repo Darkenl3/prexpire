@@ -10,6 +10,8 @@ import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 import { IconArt } from './IconArt';
 import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
+import { useSettings } from '../settings';
+import { nativeDatePicker, pickNativeDate } from '../platform/nativeDate';
 
 // The sheet's category pills: the same solid "selected" language as the
 // Items filters and sort row — the ACTIVE theme's lime fill with its ink on
@@ -310,7 +312,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
         {editing && (
           <DateEditor
             value={date ?? readings[0] ?? { iso: isoToday(new Date()), precision: 'day' }}
-            onChange={(iso) => setEdited({ iso, precision: 'day' })}
+            onChange={(iso, precision = 'day') => setEdited({ iso, precision })}
           />
         )}
       </ScrollView>
@@ -364,8 +366,32 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Day, month and year steppers. Works the same on iOS, Android and web without a native picker.
-function DateEditor({ value, onChange }: { value: Interpretation; onChange: (iso: string) => void }) {
+// Day, month and year steppers. Works the same on iOS, Android and web
+// without a native picker. Inside the iOS app the date opens the app's own
+// iOS date wheels instead (platform/nativeDate).
+function DateEditor({ value, onChange }: { value: Interpretation; onChange: (iso: string, precision?: 'day' | 'month') => void }) {
+  if (nativeDatePicker()) return <NativeDateField value={value} onChange={onChange} />;
+  return <StepperEditor value={value} onChange={onChange} />;
+}
+
+// The date as one field; tapping it opens the iOS wheels.
+function NativeDateField({ value, onChange }: { value: Interpretation; onChange: (iso: string, precision?: 'day' | 'month') => void }) {
+  const t = useTheme();
+  const { formatDate } = useSettings();
+  const open = async () => {
+    const picked = await pickNativeDate({ iso: value.iso, precision: value.precision });
+    if (picked) onChange(picked.iso, picked.precision);
+  };
+  return (
+    <PressScale onPress={() => void open()} scaleTo={0.98} style={s.nativeDate} accessibilityRole="button" accessibilityLabel={`Expiry date ${formatDate(value.iso, value.precision)}. Change`}>
+      <Ionicons name="calendar-outline" size={20} color={t.mint} />
+      <Text style={s.nativeDateText}>{formatDate(value.iso, value.precision)}</Text>
+      <Text style={[s.nativeDateAction, { color: t.mint }]}>Change</Text>
+    </PressScale>
+  );
+}
+
+function StepperEditor({ value, onChange }: { value: Interpretation; onChange: (iso: string) => void }) {
   const [y, m, d] = value.iso.split('-').map(Number);
   const set = (year: number, month: number, day: number) => {
     const max = new Date(Date.UTC(year, month, 0)).getUTCDate();
@@ -462,6 +488,9 @@ const s = StyleSheet.create({
   tickRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2, paddingBottom: 10 },
   tickText: { color: colors.text, fontSize: 14.5, fontWeight: '500' },
   editor: { flexDirection: 'row', gap: 8, paddingTop: 4, paddingBottom: 6 },
+  nativeDate: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 54, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, marginTop: 10 },
+  nativeDateText: { flex: 1, color: colors.text, fontSize: 17, fontWeight: '700' },
+  nativeDateAction: { fontSize: 14.5, fontWeight: '700' },
   stepper: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.surfaceBorder, backgroundColor: colors.surface, height: 52 },
   stepBtn: { width: 30, height: '100%', alignItems: 'center', justifyContent: 'center' },
   stepValue: { flex: 1, alignItems: 'center' },

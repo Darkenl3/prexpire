@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Image, StyleSheet, Text, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
 import { useSettings } from '../settings';
 import { PressScale } from './Press';
+import { chromeId, nativeChrome, registerChrome, updateChrome } from '../platform/nativeChrome';
 
 // The brand wordmark: the user's own logo artwork, cut pixel-exact from
 // their file (transparent PNGs): the solid filled four-leaf lime icon stays
@@ -81,6 +82,7 @@ export function GlassIconButton({
   children,
   style,
   size = 46,
+  badge,
 }: {
   icon?: keyof typeof Ionicons.glyphMap;
   iconSize?: number;
@@ -92,8 +94,35 @@ export function GlassIconButton({
   // for compact placements like Settings' back button (38). Everything else —
   // the glass fill, hairline rim, blur, shadow and press feedback — is shared.
   size?: number;
+  // A count shown on the button (the bell's reminders), for the app's
+  // native glass version of the button.
+  badge?: number;
 }) {
   const c = useTheme();
+  // Inside the iOS app the button is drawn natively in liquid glass (see
+  // platform/nativeChrome): here it keeps its place, invisible, and reports
+  // where it is.
+  const native = useMemo(nativeChrome, []);
+  const ref = useRef<View>(null);
+  const id = useMemo(chromeId, []);
+  const latest = { icon: icon ?? 'chevron-back', iconSize, badge, label, onPress, element: () => ref.current as unknown as HTMLElement | null };
+  useEffect(() => {
+    if (!native) return;
+    return registerChrome(id, latest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [native, id]);
+  useEffect(() => {
+    if (native) updateChrome(id, latest);
+  });
+  if (native) {
+    return (
+      <View ref={ref} style={[GLASS_BUTTON, { width: size, height: size, borderRadius: size / 2 }, style]}>
+        <PressScale onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={label} style={[StyleSheet.absoluteFill, { opacity: 0 }]}>
+          <View />
+        </PressScale>
+      </View>
+    );
+  }
   return (
     <PressScale
       onPress={onPress}
@@ -181,7 +210,7 @@ export function Header({
           still carries no counts of any kind - neither the reminder count nor
           the shopping count.) */}
       {onBell && (
-        <GlassIconButton icon="notifications-outline" iconSize={22} label={`${badge} notifications`} onPress={onBell}>
+        <GlassIconButton icon="notifications-outline" iconSize={22} badge={badge} label={`${badge} notifications`} onPress={onBell}>
           <Ionicons name="notifications-outline" size={22} color={c.text} />
           {badge > 0 && (
             <View style={[s.bellBadge, { borderColor: c.bg }]}>
