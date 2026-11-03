@@ -98,9 +98,9 @@ export function GlassIconButton({
   const { native, ref } = useNativeGlass({ icon: icon ?? 'chevron-back', iconSize, badge, label, onPress });
   if (native) {
     return (
-      // The app draws every header button as the scanner's 46 pt glass
-      // circle, so the slot it keeps here is that size too.
-      <View ref={ref} style={[GLASS_BUTTON, style]}>
+      // The app draws the button in the slot kept here: Home's menu and bell
+      // at the full 46 pt, the quieter back and search circles at 40 pt.
+      <View ref={ref} style={[GLASS_BUTTON, size !== 46 && { width: 40, height: 40, borderRadius: 20 }, style]}>
         <PressScale onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={label} style={[StyleSheet.absoluteFill, { opacity: 0 }]}>
           <View />
         </PressScale>

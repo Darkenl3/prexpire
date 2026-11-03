@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Modal, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, View, type PanResponderInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -96,6 +96,13 @@ export function CategoryManager() {
     return v;
   };
   const [dragging, setDragging] = useState<string | null>(null);
+  const resetPending = useRef(false);
+  useLayoutEffect(() => {
+    if (!resetPending.current) return;
+    resetPending.current = false;
+    dragY.setValue(0);
+    shifts.forEach((v) => v.setValue(0));
+  }, [all, dragging, dragY, shifts]);
   const drag = useRef<{ id: string; from: number; to: number } | null>(null);
   const responders = useRef(new Map<string, PanResponderInstance>()).current;
   const responderFor = (id: string) => {
@@ -113,15 +120,13 @@ export function CategoryManager() {
       if (!d) return;
       drag.current = null;
       Animated.spring(dragY, { toValue: (d.to - d.from) * pitch.current, damping: 26, stiffness: 340, useNativeDriver: true }).start(() => {
+        // The new order and the cleared offsets must land in the SAME frame:
+        // the offsets are cleared by the layout effect below, after the list
+        // has rendered in its new order and before it is painted. (Clearing
+        // them a frame early or late made the rows jump.)
+        resetPending.current = true;
         if (d.to !== d.from) moveToRef.current(d.id, d.to);
-        // Once the list has re-rendered in its new order, the offsets go.
-        requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
-            dragY.setValue(0);
-            shifts.forEach((v) => v.setValue(0));
-            setDragging(null);
-          }),
-        );
+        setDragging(null);
       });
     };
     r = PanResponder.create({
