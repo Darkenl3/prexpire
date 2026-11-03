@@ -150,7 +150,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
         </View>
       ) : (
         <View style={s.caughtUp}>
-          <StatusMedallion tone="ok" size={54} />
+          <StatusMedallion tone="ok" size={46} />
           <Text style={s.caughtUpTitle}>All caught up!</Text>
           <Text style={s.caughtUpSub}>
             {next

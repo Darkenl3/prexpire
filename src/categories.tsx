@@ -184,6 +184,8 @@ type CategoriesContext = {
   edit: (id: string, change: { name: string; icon?: string; tint?: Tint }) => boolean;
   // Moves a category one place earlier (-1) or later (+1) in every list.
   move: (id: string, by: -1 | 1) => void;
+  // Moves a category to a position in the order (drag to reorder).
+  moveTo: (id: string, index: number) => void;
   // Removes a category the user no longer wants: a built-in is remembered in
   // the removed list (restorable), a custom folder is deleted outright.
   remove: (id: string) => void;
@@ -349,6 +351,19 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     [persist],
   );
 
+  const moveTo = useCallback(
+    (id: string, index: number) => {
+      const ids = orderedIds(customRef.current, removedRef.current, orderRef.current);
+      const at = ids.indexOf(id);
+      const to = Math.max(0, Math.min(ids.length - 1, index));
+      if (at < 0 || at === to) return;
+      ids.splice(at, 1);
+      ids.splice(to, 0, id);
+      void persist(customRef.current, removedRef.current, namesRef.current, ids);
+    },
+    [persist],
+  );
+
   const clearAll = useCallback(async () => {
     await AsyncStorage.multiRemove([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY]);
     customRef.current = [];
@@ -387,11 +402,12 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       add,
       edit,
       move,
+      moveTo,
       remove,
       restore,
       clearAll,
     };
-  }, [custom, removed, names, order, ready, saveError, add, edit, move, remove, restore, clearAll]);
+  }, [custom, removed, names, order, ready, saveError, add, edit, move, moveTo, remove, restore, clearAll]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

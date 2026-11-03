@@ -25,6 +25,11 @@ export type ChromeButton = {
   iconSize: number;
   badge?: number;
   label: string;
+  // A pill with this text beside the icon (Scan a label / Add manually),
+  // instead of a round icon button.
+  text?: string;
+  // The icon in the app's green (the pills' leading glyph).
+  accentIcon?: boolean;
   onPress: () => void;
   element: () => HTMLElement | null;
 };
@@ -63,7 +68,21 @@ function opacityOf(el: HTMLElement): number {
 }
 
 function snapshot() {
-  const out: { id: string; icon: string; iconSize: number; badge: number; label: string; x: number; y: number; size: number; opacity: number }[] = [];
+  const out: {
+    id: string;
+    icon: string;
+    iconSize: number;
+    badge: number;
+    label: string;
+    text?: string;
+    accentIcon?: boolean;
+    x: number;
+    y: number;
+    size: number;
+    w: number;
+    h: number;
+    opacity: number;
+  }[] = [];
   for (const [id, b] of buttons) {
     const el = b.element();
     if (!el) continue;
@@ -81,9 +100,13 @@ function snapshot() {
       iconSize: b.iconSize,
       badge: b.badge ?? 0,
       label: b.label,
+      text: b.text,
+      accentIcon: b.accentIcon,
       x: Math.round(r.left * 2) / 2,
       y: Math.round(r.top * 2) / 2,
       size: Math.round(r.width),
+      w: Math.round(r.width),
+      h: Math.round(r.height),
       opacity: Math.round(opacity * 20) / 20,
     });
   }

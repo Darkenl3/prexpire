@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme, LIGHT, CARD_SHADOW, type Tint, type Tone } from '../theme';
 import { useSettings } from '../settings';
 import { PressScale } from './Press';
-import { chromeId, nativeChrome, registerChrome, updateChrome } from '../platform/nativeChrome';
+import { chromeId, nativeChrome, registerChrome, updateChrome, type ChromeButton } from '../platform/nativeChrome';
 
 // The brand wordmark: the user's own logo artwork, cut pixel-exact from
 // their file (transparent PNGs): the solid filled four-leaf lime icon stays
@@ -102,18 +102,7 @@ export function GlassIconButton({
   // Inside the iOS app the button is drawn natively in liquid glass (see
   // platform/nativeChrome): here it keeps its place, invisible, and reports
   // where it is.
-  const native = useMemo(nativeChrome, []);
-  const ref = useRef<View>(null);
-  const id = useMemo(chromeId, []);
-  const latest = { icon: icon ?? 'chevron-back', iconSize, badge, label, onPress, element: () => ref.current as unknown as HTMLElement | null };
-  useEffect(() => {
-    if (!native) return;
-    return registerChrome(id, latest);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [native, id]);
-  useEffect(() => {
-    if (native) updateChrome(id, latest);
-  });
+  const { native, ref } = useNativeGlass({ icon: icon ?? 'chevron-back', iconSize, badge, label, onPress });
   if (native) {
     return (
       // The app draws every header button as the scanner's 46 pt glass
@@ -255,13 +244,13 @@ export function AttentionCard({
   );
 }
 
-// The round status badge: a filled disc (lime-to-green when all is well,
-// red when something needs attention) with a bold glyph, inside a soft halo
-// ring. Home's attention card and the Reminders "All caught up" card share it.
+// The round status badge: a quiet tinted disc with a thin glyph in the
+// card's own colour (green check when all is well, red mark when something
+// needs attention). Calm on purpose: it tells, it does not shout. Home's
+// attention card and the Reminders "All caught up" card share it.
 export function StatusMedallion({ tone, size }: { tone: 'ok' | 'alert'; size: number }) {
   const c = useTheme();
   const ok = tone === 'ok';
-  const inner = Math.round(size * 0.72);
   return (
     <View
       style={{
@@ -271,19 +260,64 @@ export function StatusMedallion({ tone, size }: { tone: 'ok' | 'alert'; size: nu
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: ok ? c.okIconBg : c.alertIconBg,
-        borderWidth: 1,
-        borderColor: ok ? c.okBorder : c.alertBorder,
       }}
     >
-      <LinearGradient
-        colors={ok ? [c.mint, c.green] : ['#FF8F86', c.red]}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
-        style={{ width: inner, height: inner, borderRadius: inner / 2, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Ionicons name={ok ? 'checkmark' : 'alert'} size={Math.round(inner * 0.62)} color={ok ? c.scanInk : '#FFFFFF'} />
-      </LinearGradient>
+      <Ionicons name={ok ? 'checkmark' : 'alert'} size={Math.round(size * 0.5)} color={ok ? c.green : c.red} />
     </View>
+  );
+}
+
+// Registers a button the iOS app draws in native liquid glass (see
+// platform/nativeChrome), returning whether it does and the ref of the slot
+// the page keeps for it.
+function useNativeGlass(button: Omit<ChromeButton, 'element'>) {
+  const native = useMemo(nativeChrome, []);
+  const ref = useRef<View>(null);
+  const id = useMemo(chromeId, []);
+  const latest: ChromeButton = { ...button, element: () => ref.current as unknown as HTMLElement | null };
+  useEffect(() => {
+    if (!native) return;
+    return registerChrome(id, latest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [native, id]);
+  useEffect(() => {
+    if (native) updateChrome(id, latest);
+  });
+  return { native, ref };
+}
+
+// One small glass pill: an icon in the app's green and its label. Inside the
+// iOS app it is drawn natively in the scanner's liquid glass.
+function GlassPill({ icon, text, onPress, primary }: { icon: keyof typeof Ionicons.glyphMap; text: string; onPress: () => void; primary?: boolean }) {
+  const c = useTheme();
+  const { native, ref } = useNativeGlass({ icon, iconSize: 18, label: text, text, accentIcon: true, onPress });
+  if (native) {
+    return (
+      <View ref={ref} style={{ height: 46, borderRadius: 23, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={text} style={[StyleSheet.absoluteFill, { opacity: 0 }]}>
+          <View />
+        </PressScale>
+        {/* Invisible, only to give the slot the label's width. */}
+        <View style={{ width: 18 }} />
+        <Text style={{ fontSize: 15, fontWeight: '700', opacity: 0 }}>{text}</Text>
+      </View>
+    );
+  }
+  return (
+    <PressScale
+      onPress={onPress}
+      scaleTo={0.96}
+      accessibilityRole="button"
+      accessibilityLabel={text}
+      style={[
+        { flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 15, borderRadius: 20 },
+        liquidGlass(c),
+        primary && { borderColor: c === LIGHT ? 'rgba(14,143,107,0.35)' : 'rgba(166,223,107,0.38)' },
+      ]}
+    >
+      <Ionicons name={icon} size={17} color={c.green} />
+      <Text style={{ color: c.text, fontSize: 14, fontWeight: '700' }}>{text}</Text>
+    </PressScale>
   );
 }
 
@@ -292,28 +326,10 @@ export function StatusMedallion({ tone, size }: { tone: 'ok' | 'alert'; size: nu
 // label carrying a faint green rim as the first choice. Used by the empty
 // states on Home and Lists.
 export function AddActions({ onScan, onManual }: { onScan: () => void; onManual: () => void }) {
-  const c = useTheme();
-  const button = (primary: boolean) => (
-    <PressScale
-      key={primary ? 'scan' : 'manual'}
-      onPress={primary ? onScan : onManual}
-      scaleTo={0.96}
-      accessibilityRole="button"
-      accessibilityLabel={primary ? 'Scan a label' : 'Add manually'}
-      style={[
-        { flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 15, borderRadius: 20 },
-        liquidGlass(c),
-        primary && { borderColor: c === LIGHT ? 'rgba(14,143,107,0.35)' : 'rgba(166,223,107,0.38)' },
-      ]}
-    >
-      <Ionicons name={primary ? 'scan-outline' : 'create-outline'} size={17} color={c.green} />
-      <Text style={{ color: c.text, fontSize: 14, fontWeight: '700' }}>{primary ? 'Scan a label' : 'Add manually'}</Text>
-    </PressScale>
-  );
   return (
     <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-      {button(true)}
-      {button(false)}
+      <GlassPill icon="scan-outline" text="Scan a label" onPress={onScan} primary />
+      <GlassPill icon="create-outline" text="Add manually" onPress={onManual} />
     </View>
   );
 }

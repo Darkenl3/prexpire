@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, KeyboardAvoidingView, Modal, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, View, type PanResponderInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -50,7 +50,7 @@ const SHELL = Platform.OS === 'web' && typeof window !== 'undefined' && !!(windo
 export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
-  const { all, custom, removed, add, edit, move, remove, restore, saveError } = useCategories();
+  const { all, custom, removed, add, edit, move, moveTo, remove, restore, saveError } = useCategories();
   const { saved, moveCategory } = useItems();
   const { settings, update } = useSettings();
   const [adding, setAdding] = useState(false);
@@ -73,9 +73,94 @@ export function CategoryManager() {
 
   const countFor = (id: string) => saved.filter((i) => i.category === id).length;
 
+  // ── Drag to reorder ──
+  // Hold the grip on a row and drag: the row follows the finger, lifted, and
+  // the rows it passes slide out of its way (one row's height each, with a
+  // light tick); letting go drops it there. The responders are made once per
+  // row and read everything through refs, so re-renders mid-drag never drop
+  // the gesture.
+  const allRef = useRef(all);
+  allRef.current = all;
+  const moveToRef = useRef(moveTo);
+  moveToRef.current = moveTo;
+  // One row's height plus the list's gap, measured from the first row.
+  const pitch = useRef(64);
+  const dragY = useRef(new Animated.Value(0)).current;
+  const shifts = useRef(new Map<string, Animated.Value>()).current;
+  const shiftOf = (id: string) => {
+    let v = shifts.get(id);
+    if (!v) {
+      v = new Animated.Value(0);
+      shifts.set(id, v);
+    }
+    return v;
+  };
+  const [dragging, setDragging] = useState<string | null>(null);
+  const drag = useRef<{ id: string; from: number; to: number } | null>(null);
+  const responders = useRef(new Map<string, PanResponderInstance>()).current;
+  const responderFor = (id: string) => {
+    let r = responders.get(id);
+    if (r) return r;
+    const settleOthers = (from: number, to: number) => {
+      allRef.current.forEach((cat, i) => {
+        if (cat.id === id) return;
+        const shift = from < i && i <= to ? -pitch.current : to <= i && i < from ? pitch.current : 0;
+        Animated.spring(shiftOf(cat.id), { toValue: shift, damping: 24, stiffness: 320, useNativeDriver: true }).start();
+      });
+    };
+    const drop = () => {
+      const d = drag.current;
+      if (!d) return;
+      drag.current = null;
+      Animated.spring(dragY, { toValue: (d.to - d.from) * pitch.current, damping: 26, stiffness: 340, useNativeDriver: true }).start(() => {
+        if (d.to !== d.from) moveToRef.current(d.id, d.to);
+        // Once the list has re-rendered in its new order, the offsets go.
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            dragY.setValue(0);
+            shifts.forEach((v) => v.setValue(0));
+            setDragging(null);
+          }),
+        );
+      });
+    };
+    r = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        const from = allRef.current.findIndex((x) => x.id === id);
+        if (from < 0) return;
+        drag.current = { id, from, to: from };
+        dragY.setValue(0);
+        setConfirming(null);
+        setDragging(id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      },
+      onPanResponderMove: (_e, g) => {
+        const d = drag.current;
+        if (!d) return;
+        const last = allRef.current.length - 1;
+        // The row cannot be dragged past the ends of the list.
+        const dy = Math.max(-d.from * pitch.current, Math.min((last - d.from) * pitch.current, g.dy));
+        dragY.setValue(dy);
+        const to = Math.max(0, Math.min(last, d.from + Math.round(dy / pitch.current)));
+        if (to !== d.to) {
+          d.to = to;
+          Haptics.selectionAsync().catch(() => {});
+          settleOthers(d.from, to);
+        }
+      },
+      onPanResponderRelease: drop,
+      onPanResponderTerminate: drop,
+    });
+    responders.set(id, r);
+    return r;
+  };
+
   // One row shape for every category the user keeps, built-in or their own:
-  // tap it to edit, the arrows move it (the Home grid and every list follow
-  // this order), the bin removes it.
+  // tap it to edit, drag its grip to move it (the Home grid and every list
+  // follow this order), the bin removes it.
   const renderRow = (id: string, name: string, isCustom: boolean, index: number) => {
     const folder = custom.find((x) => x.id === id);
     const def = BUILTINS.find((x) => x.id === id);
@@ -84,29 +169,17 @@ export function CategoryManager() {
     const iconBg = c === LIGHT ? g.top : `${g.top}33`;
     const iconBorder = c === LIGHT ? g.border : `${g.top}66`;
     const confirmingThis = confirming === id;
-    const arrow = (by: -1 | 1) => {
-      const off = by === -1 ? index === 0 : index === all.length - 1;
-      return (
-        <PressScale
-          onPress={() => {
-            if (off) return;
-            Haptics.selectionAsync().catch(() => {});
-            setConfirming(null);
-            move(id, by);
-          }}
-          hitSlop={4}
-          scaleTo={0.97}
-          disabled={off}
-          accessibilityRole="button"
-          accessibilityLabel={by === -1 ? `Move ${name} up` : `Move ${name} down`}
-          style={[s.arrow, off && s.arrowOff]}
-        >
-          <Ionicons name={by === -1 ? 'chevron-up' : 'chevron-down'} size={16} color={c.textMuted} />
-        </PressScale>
-      );
-    };
+    const lifted = dragging === id;
     return (
-      <View key={id} style={s.row}>
+      <Animated.View
+        key={id}
+        onLayout={index === 0 ? (e) => (pitch.current = e.nativeEvent.layout.height + 8) : undefined}
+        style={[
+          s.row,
+          { transform: [{ translateY: lifted ? dragY : shiftOf(id) }, { scale: lifted ? 1.02 : 1 }] },
+          lifted && s.rowLifted,
+        ]}
+      >
         <PressScale
           onPress={() => {
             setConfirming(null);
@@ -129,10 +202,24 @@ export function CategoryManager() {
             </Text>
           </View>
         </PressScale>
-        {/* Up over down, one narrow column, so the name keeps its width. */}
-        <View style={s.arrows}>
-          {arrow(-1)}
-          {arrow(1)}
+        {/* The grip: hold and drag to reorder. Screen readers move the row
+            one place with the adjust actions instead. */}
+        <View
+          {...responderFor(id).panHandlers}
+          accessible
+          accessibilityRole="adjustable"
+          accessibilityLabel={`Reorder ${name}`}
+          accessibilityActions={[
+            { name: 'increment', label: 'Move down' },
+            { name: 'decrement', label: 'Move up' },
+          ]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'increment' && index < all.length - 1) move(id, 1);
+            if (e.nativeEvent.actionName === 'decrement' && index > 0) move(id, -1);
+          }}
+          {...({ style: [s.grip, Platform.OS === 'web' ? ({ cursor: lifted ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none' } as object) : null] } as object)}
+        >
+          <Ionicons name="reorder-three" size={22} color={lifted ? c.green : c.textMuted} />
         </View>
         <PressScale
           onPress={() => {
@@ -155,7 +242,7 @@ export function CategoryManager() {
         >
           <Ionicons name={confirmingThis ? 'trash' : 'trash-outline'} size={17} color={confirmingThis ? c.red : c.textMuted} />
         </PressScale>
-      </View>
+      </Animated.View>
     );
   };
 
@@ -491,9 +578,17 @@ const useStyles = makeStyles((c) => ({
   dialogRowText: { color: c.text, fontSize: 15, fontWeight: '600', flex: 1 },
   // The tappable part of a row (icon and text) opens the edit page.
   rowMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  arrows: { gap: 2 },
-  arrow: { width: 30, height: 20, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  arrowOff: { opacity: 0.25 },
+  grip: { width: 34, height: 40, alignItems: 'center', justifyContent: 'center' },
+  // The row being dragged floats above the others.
+  rowLifted: {
+    zIndex: 10,
+    borderColor: c.chipOnBorder,
+    shadowColor: '#000',
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
   rowIcon: {
     width: 38,
     height: 38,
