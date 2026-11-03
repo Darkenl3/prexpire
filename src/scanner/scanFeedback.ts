@@ -108,15 +108,16 @@ export function settleHint(shown: ScanHint, candidate: ScanHint, previousCandida
 }
 
 // A dot-matrix stamp the reader cannot make out still often shows its YEAR
-// in the fragments ("202C", "2O26": the 6 read as C, the 0 as O). The year a
-// stamp seems to carry, from this year to five years ahead, or null. Only a
-// four-character run that starts "20" counts, with the usual dot-matrix
-// lookalikes mapped back to digits in its last two places.
+// in the fragments ("202C", "2O26": the 6 read as C, the 0 as O; "2926":
+// the 0 as 9). The year a stamp seems to carry, from this year to five years
+// ahead, or null. Only a four-character run counts whose first two are "20"
+// or its dot-matrix lookalikes (2 as 8, 3, 7 or Z; 0 as 9, 8, 6, O or D),
+// with the lookalike letters mapped back to digits in its last two places.
 const YEAR_LOOKALIKE: Record<string, string> = { O: '0', D: '0', Q: '0', I: '1', L: '1', Z: '2', S: '5', G: '6', C: '6', E: '6', B: '8' };
 export function yearHint(lines: string[], today: Date): number | null {
   const now = today.getFullYear();
   for (const raw of lines.join(' ').toUpperCase().split(/[^0-9A-Z]+/)) {
-    const m = /^2[0O]([0-9A-Z]{2})$/.exec(raw);
+    const m = /^[2378Z][0689OD]([0-9A-Z]{2})$/.exec(raw);
     if (!m) continue;
     const tail = [...m[1]].map((ch) => (/\d/.test(ch) ? ch : (YEAR_LOOKALIKE[ch] ?? 'x'))).join('');
     if (!/^\d\d$/.test(tail)) continue;
@@ -124,4 +125,42 @@ export function yearHint(lines: string[], today: Date): number | null {
     if (year >= now && year <= now + 5) return year;
   }
   return null;
+}
+
+// The day and month a stamp seems to carry when the reader caught them on
+// their own ("25.11", the year lost to the dots), as "MM-DD" in the user's
+// order, or null. Two digits each, a dot or comma between them only: a colon
+// is a clock time ("10:51"), a run of more digits is a code or a full date,
+// and a percentage, price or quantity ("3,4%", "12,99 LEI") is not a date.
+export function dayMonthHint(lines: string[], order: 'DMY' | 'MDY'): string | null {
+  for (const line of lines) {
+    const re = /(?<![\d.,])(\d{2})[.,](\d{2})(?![\d]|[.,:]\d|\s?[%€$£]|\s?(?:LEI|RON|EUR|KG|G|ML|L)\b)/gi;
+    for (let m = re.exec(line); m; m = re.exec(line)) {
+      const day = Number(order === 'MDY' ? m[2] : m[1]);
+      const month = Number(order === 'MDY' ? m[1] : m[2]);
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) return `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+  }
+  return null;
+}
+
+// A date put together from several reads of the same stamp: the day and
+// month caught twice, and a year caught at least once (the most frequent
+// one). A real calendar date, not in the past. Null when the reads do not
+// add up to one.
+export function fuseDate(dayMonths: (string | null)[], years: (number | null)[], today: Date): string | null {
+  const count = <T,>(list: (T | null)[]) => {
+    const m = new Map<T, number>();
+    for (const v of list) if (v !== null) m.set(v, (m.get(v) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  };
+  const dm = count(dayMonths)[0];
+  const year = count(years)[0];
+  if (!dm || dm[1] < 2 || !year) return null;
+  const iso = `${year[0]}-${dm[0]}`;
+  const [y, mo, d] = iso.split('-').map(Number);
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  if (date.getUTCMonth() !== mo - 1) return null;
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  return iso >= todayIso ? iso : null;
 }

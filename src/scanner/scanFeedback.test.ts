@@ -1,7 +1,7 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, type MissObservation } from './scanFeedback.ts';
+import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, dayMonthHint, fuseDate, type MissObservation } from './scanFeedback.ts';
 
 const base: MissObservation = {
   misses: 5,
@@ -80,4 +80,22 @@ test('an unreadable stamp still gives away its year', () => {
   assert.equal(yearHint(['2019'], today), null);
   assert.equal(yearHint(['2045'], today), null);
   assert.equal(yearHint(['120265'], today), null);
+});
+
+test('a date put together from several reads of the same stamp', () => {
+  const today = new Date(2026, 10, 3);
+  // The cottage cheese readout: "25.11" on its own, the year as "2926".
+  assert.equal(dayMonthHint(['25.11', '288522210:5', 'sugest'], 'DMY'), '11-25');
+  assert.equal(yearHint(['53:11:2926', 'suge'], today), 2026);
+  assert.equal(fuseDate(['11-25', null, '11-25'], [null, 2026], today), '2026-11-25');
+  // Seen once only, no year, or a past date: nothing.
+  assert.equal(fuseDate(['11-25'], [2026], today), null);
+  assert.equal(fuseDate(['11-25', '11-25'], [null], today), null);
+  assert.equal(fuseDate(['10-01', '10-01'], [2026], today), null);
+  // Clock times, codes and full dates are not a day and month.
+  assert.equal(dayMonthHint(['10:51'], 'DMY'), null);
+  assert.equal(dayMonthHint(['3,4% grasime'], 'DMY'), null);
+  assert.equal(dayMonthHint(['12,99 LEI', '10,50%'], 'DMY'), null);
+  assert.equal(dayMonthHint(['25.11.2026'], 'DMY'), null);
+  assert.equal(dayMonthHint(['1209.375'], 'DMY'), null);
 });
