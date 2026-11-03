@@ -116,7 +116,9 @@ export function GlassIconButton({
   });
   if (native) {
     return (
-      <View ref={ref} style={[GLASS_BUTTON, { width: size, height: size, borderRadius: size / 2 }, style]}>
+      // The app draws every header button as the scanner's 46 pt glass
+      // circle, so the slot it keeps here is that size too.
+      <View ref={ref} style={[GLASS_BUTTON, style]}>
         <PressScale onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={label} style={[StyleSheet.absoluteFill, { opacity: 0 }]}>
           <View />
         </PressScale>
