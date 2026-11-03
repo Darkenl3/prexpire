@@ -45,23 +45,16 @@ export const GLASS_STRIP_FX = {
 // page's raised surface, the light page's pale mint - with nothing but a
 // hairline rim: flat and calm like the reference's ghost circles, never a
 // lifted solid button.
-// The round buttons' liquid glass, modelled on the scanner's native glass
-// circles (iOS 26 glass over the camera): a see-through fill, a bright
-// specular rim along the top edge, a faint inner shade at the bottom and a
-// soft drop shadow, over the backdrop blur. Web style keys (backgroundImage,
-// boxShadow) that react-native-web passes straight to the DOM.
+// The round buttons' glass where the app cannot draw its native liquid glass
+// (the open web, older app builds): kept as plain as the scanner's own
+// fallback circle — a see-through fill, a hairline edge and the backdrop
+// blur, nothing else.
 export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
   const light = c === LIGHT;
   return {
-    backgroundColor: light ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: light ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.16)',
-    backgroundImage: light
-      ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.35) 55%, rgba(255,255,255,0.15) 100%)'
-      : 'linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 100%)',
-    boxShadow: light
-      ? 'inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 2px rgba(20,60,60,0.08), 0 6px 18px rgba(20,60,60,0.14)'
-      : 'inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -2px 3px rgba(0,0,0,0.28), 0 8px 20px rgba(0,0,0,0.38)',
+    backgroundColor: light ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.08)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: light ? 'rgba(16,35,30,0.10)' : 'rgba(255,255,255,0.14)',
     ...(GLASS_FX as ViewStyle),
   } as ViewStyle;
 }
