@@ -8,7 +8,7 @@ import { useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
-import { AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
+import { AddActions, AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
 import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
 import { TabTransition } from '../components/TabTransition';
 import { ItemRow } from '../components/ItemRow';
@@ -58,28 +58,28 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const { items, saved } = useItems();
-  const { settings, motion } = useSettings();
+  const { settings, motion, warning } = useSettings();
   const { all, custom } = useCategories();
   const t = useTheme();
   const c = useStyles();
-  const { warningDays, showExpired } = settings;
+  const { showExpired } = settings;
   const upcoming = useMemo(
     () =>
       items
-        .filter((i) => showExpired || expiryStatus(i.expiresOn, warningDays) !== 'expired')
+        .filter((i) => showExpired || expiryStatus(i.expiresOn, warning(i.category)) !== 'expired')
         .sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))
         .slice(0, UPCOMING_COUNT),
-    [items, showExpired, warningDays],
+    [items, showExpired, warning],
   );
   // Expired items, and items expiring within the warning period chosen in Settings.
   const attention = useMemo(() => {
-    const statuses = items.map((i) => ({ category: i.category, status: expiryStatus(i.expiresOn, warningDays) }));
+    const statuses = items.map((i) => ({ category: i.category, status: expiryStatus(i.expiresOn, warning(i.category)) }));
     return {
       expired: statuses.filter((x) => x.status === 'expired').length,
       soon: statuses.filter((x) => x.status === 'soon').length,
       byCategory: (id: string) => statuses.filter((x) => x.category === id && x.status !== 'ok').length,
     };
-  }, [items, warningDays]);
+  }, [items, warning]);
 
   const go = (route: string) => {
     onNavigate?.(route);
@@ -159,7 +159,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
       <AttentionCard
         tone="green"
         title="All caught up!"
-        subtitle={[items.length === 0 ? 'Nothing to watch yet' : 'Nothing needs attention']}
+        subtitle={[items.length === 0 ? 'Nothing to watch yet' : `Nothing needs attention  •  ${items.length} tracked`]}
         onPress={() => go('tab:reminders')}
       />
     );
@@ -238,10 +238,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           <View style={c.empty}>
             <Text style={c.emptyTitle}>Nothing here yet</Text>
             <Text style={c.emptyText}>Scan a label or add a product by hand to start tracking it.</Text>
-            <View style={c.emptyButtons}>
-              <SmallButton label="Scan a label" icon="scan-outline" tone="mint" onPress={() => go('scan')} />
-              <SmallButton label="Add manually" icon="create-outline" onPress={() => go('manual')} />
-            </View>
+            <AddActions onScan={() => go('scan')} onManual={() => go('manual')} />
           </View>
         )}
       </View>

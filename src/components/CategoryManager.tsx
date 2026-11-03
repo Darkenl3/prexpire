@@ -13,6 +13,8 @@ import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
 import { GlassIconButton } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
+import { ChoicePill, type PillColors } from './ChoicePill';
+import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
 
 // Managing the user's categories: the unified list (the built-ins they keep
 // plus the folders they added, in the user's order, all removable), a
@@ -49,11 +51,13 @@ export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
   const { all, custom, removed, add, edit, move, remove, restore, saveError } = useCategories();
-  const { saved } = useItems();
+  const { saved, moveCategory } = useItems();
   const { settings, update } = useSettings();
   const [adding, setAdding] = useState(false);
   // The category being edited (its page is open), or null.
   const [editing, setEditing] = useState<string | null>(null);
+  // A category with items the user is removing: asked where its items go.
+  const [moving, setMoving] = useState<string | null>(null);
   // Two-tap delete: the button flips to "Remove?" and confirms on the second tap.
   const [confirming, setConfirming] = useState<string | null>(null);
 
@@ -134,8 +138,10 @@ export function CategoryManager() {
           onPress={() => {
             if (confirmingThis) {
               Haptics.selectionAsync().catch(() => {});
-              doRemove(id);
               setConfirming(null);
+              // Items in it: ask where they go first.
+              if (countFor(id) > 0) setMoving(id);
+              else doRemove(id);
             } else {
               Haptics.selectionAsync().catch(() => {});
               setConfirming(id);
@@ -188,17 +194,65 @@ export function CategoryManager() {
         </View>
       )}
       <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => setAdding(true)} />
+      {(() => {
+        const from = all.find((x) => x.id === moving);
+        if (!from) return null;
+        const n = countFor(from.id);
+        const close = () => setMoving(null);
+        const finish = async (to: string | null) => {
+          close();
+          Haptics.selectionAsync().catch(() => {});
+          if (to) await moveCategory(from.id, to).catch(() => {});
+          doRemove(from.id);
+        };
+        return (
+          <Modal visible transparent animationType="fade" onRequestClose={close}>
+            <PressScale onPress={close} scaleTo={1} style={s.scrim} accessibilityLabel="Close">
+              <View />
+            </PressScale>
+            <View style={s.dialogWrap} pointerEvents="box-none">
+              <View style={s.dialog} accessibilityRole={'dialog' as never}>
+                <Text style={s.dialogTitle}>Remove {from.name}?</Text>
+                <Text style={s.dialogText}>
+                  {n === 1 ? 'It has 1 item.' : `It has ${n} items.`} Move {n === 1 ? 'it' : 'them'} to:
+                </Text>
+                <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={{ gap: 6 }}>
+                  {all
+                    .filter((x) => x.id !== from.id)
+                    .map((x) => (
+                      <PressScale key={x.id} onPress={() => void finish(x.id)} scaleTo={0.98} style={s.dialogRow} accessibilityRole="button" accessibilityLabel={`Move to ${x.name}`}>
+                        <Ionicons name="folder-open-outline" size={18} color={c.green} />
+                        <Text style={s.dialogRowText} numberOfLines={1}>
+                          {x.name}
+                        </Text>
+                      </PressScale>
+                    ))}
+                </ScrollView>
+                <PressScale onPress={() => void finish(null)} scaleTo={0.98} style={s.dialogRow} accessibilityRole="button">
+                  <Ionicons name="trash-outline" size={18} color={c.red} />
+                  <Text style={[s.dialogRowText, { color: c.red }]} numberOfLines={2}>
+                    {from.custom ? 'Remove anyway (items show as "Other")' : 'Remove, keep items filed (restore later)'}
+                  </Text>
+                </PressScale>
+                <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
+                  <SmallButton label="Cancel" onPress={close} />
+                </View>
+              </View>
+            </View>
+          </Modal>
+        );
+      })()}
       {saveError && <Note tone="warn">The last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>}
-      <CategoryPage visible={adding} onClose={() => setAdding(false)} onSave={(name, icon, tint) => !!add(name, icon, tint)} />
+      <CategoryPage visible={adding} onClose={() => setAdding(false)} onSave={(name, icon, tint) => add(name, icon, tint)?.id ?? null} />
       {(() => {
         const cat = all.find((x) => x.id === editing);
         const folder = custom.find((x) => x.id === editing);
         return (
           <CategoryPage
             visible={!!cat}
-            editing={cat ? { name: cat.name, icon: folder?.icon, tint: folder?.tint, builtin: !folder } : undefined}
+            editing={cat ? { id: cat.id, name: cat.name, icon: folder?.icon, tint: folder?.tint, builtin: !folder } : undefined}
             onClose={() => setEditing(null)}
-            onSave={(name, icon, tint) => !!editing && edit(editing, { name, icon, tint })}
+            onSave={(name, icon, tint) => (editing && edit(editing, { name, icon, tint }) ? editing : null)}
           />
         );
       })()}
@@ -215,7 +269,12 @@ export function CategoryManager() {
 // closed until the user actually taps the name field - no autofocus, no
 // programmatic focus, no flicker - and the layout keeps its place when the
 // keyboard opens (iOS padding) so the actions are never covered.
-type Editing = { name: string; icon?: string; tint?: Tint; builtin: boolean };
+type Editing = { id: string; name: string; icon?: string; tint?: Tint; builtin: boolean };
+
+// The page's choice pills: the app's own (the Items filters, the save sheet).
+function pagePills(c: ReturnType<typeof useTheme>): PillColors {
+  return { offBg: c.cardAlt, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: c.scanInk };
+}
 
 function CategoryPage({
   visible,
@@ -226,7 +285,8 @@ function CategoryPage({
   visible: boolean;
   editing?: Editing;
   onClose: () => void;
-  onSave: (name: string, icon: string, tint: Tint) => boolean;
+  // Saves the category and returns its id (null when refused).
+  onSave: (name: string, icon: string, tint: Tint) => string | null;
 }) {
   const c = useTheme();
   const s = useStyles();
@@ -236,6 +296,11 @@ function CategoryPage({
   const [icon, setIcon] = useState<string>(DEFAULT_CATEGORY_ICON);
   const [tint, setTint] = useState<Tint>(CUSTOM_TINTS[0]);
   const [rejected, setRejected] = useState(false);
+  const { settings, update } = useSettings();
+  // This category's own warning period ('general' follows Settings), and how
+  // long an opened product of it stays good.
+  const [warn, setWarn] = useState<WarningDays | 'general'>('general');
+  const [open, setOpen] = useState(OPEN_DAYS_FALLBACK);
 
   // Filled once each time the page opens (later re-renders never reset what
   // the user is typing).
@@ -245,6 +310,8 @@ function CategoryPage({
       setIcon(editing?.icon ?? DEFAULT_CATEGORY_ICON);
       setTint(editing?.tint ?? CUSTOM_TINTS[0]);
       setRejected(false);
+      setWarn((editing && settings.categoryWarning[editing.id]) ?? 'general');
+      setOpen((editing && (settings.openDays[editing.id] ?? OPEN_DAYS_DEFAULT[editing.id])) ?? OPEN_DAYS_FALLBACK);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -256,7 +323,12 @@ function CategoryPage({
       setRejected(true);
       return;
     }
-    if (onSave(trimmed, icon, tint)) {
+    const id = onSave(trimmed, icon, tint);
+    if (id) {
+      const categoryWarning = { ...settings.categoryWarning };
+      if (warn === 'general') delete categoryWarning[id];
+      else categoryWarning[id] = warn;
+      update({ categoryWarning, openDays: { ...settings.openDays, [id]: open } });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       onClose();
     } else {
@@ -352,6 +424,34 @@ function CategoryPage({
                 );
               })}
             </View>}
+            <Text style={s.label}>Warning period</Text>
+            <Text style={s.hint}>How early items here show as expiring and join your Shopping List.</Text>
+            <View style={s.pillRow}>
+              {(['general', ...WARNING_DAYS] as const).map((w) => (
+                <ChoicePill
+                  key={String(w)}
+                  label={w === 'general' ? `Same as app (${settings.warningDays} days)` : `${w} days`}
+                  selected={warn === w}
+                  onPress={() => setWarn(w)}
+                  colors={pagePills(c)}
+                  size="small"
+                />
+              ))}
+            </View>
+            <Text style={s.label}>Once opened, use within</Text>
+            <Text style={s.hint}>When you mark an item here as opened, its date moves to this many days from that day (never later than the printed date).</Text>
+            <View style={s.pillRow}>
+              {OPEN_DAY_CHOICES.map((d) => (
+                <ChoicePill
+                  key={d}
+                  label={d === 1 ? '1 day' : `${d} days`}
+                  selected={open === d}
+                  onPress={() => setOpen(d)}
+                  colors={pagePills(c)}
+                  size="small"
+                />
+              ))}
+            </View>
             <View style={s.pageActions}>
               <SmallButton label="Cancel" onPress={onClose} />
               {editing ? (
@@ -381,6 +481,14 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.surface,
     ...(c === LIGHT ? { shadowColor: '#64748B', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } } : null),
   },
+  // The "where do its items go" dialog.
+  scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  dialogWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  dialog: { width: '100%', maxWidth: 380, borderRadius: 20, padding: 18, gap: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder },
+  dialogTitle: { color: c.text, fontSize: 17, fontWeight: '700' },
+  dialogText: { color: c.textMuted, fontSize: 13.5, lineHeight: 18 },
+  dialogRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 12, backgroundColor: c.cardAlt },
+  dialogRowText: { color: c.text, fontSize: 15, fontWeight: '600', flex: 1 },
   // The tappable part of a row (icon and text) opens the edit page.
   rowMain: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
   arrows: { gap: 2 },
@@ -448,6 +556,8 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
   },
   tintRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  hint: { color: c.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: -4 },
   tintDot: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   tintDotOn: { borderColor: c.mint },
   // The swatch centres its checkmark (it used to sit in the top-left corner).

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Modal, PanResponder, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme } from '../theme';
@@ -17,15 +17,17 @@ import { NAV_HEIGHT, navOffset } from './HomeComponents';
 //     behind the navigation.
 //   • MAX HEIGHT + SCROLLING — the sheet never grows past the available
 //     screen space; longer content scrolls inside it.
-//   • OPEN/CLOSE ANIMATION — one consistent language: the sheet rises 220 ms
-//     (out-cubic) on open and settles 190 ms (in-cubic) on close, with the
-//     scrim fading alongside (the Modal's fade). Motion settings and the OS
-//     reduce-motion flag collapse both to zero. Rapid open/close never
+//   • OPEN/CLOSE ANIMATION — the iOS sheet language: the sheet rises from
+//     below the screen edge on a soft spring (a touch of settle, no bounce)
+//     and slides fully back down on close, and the scrim's dimming is tied to
+//     the sheet's position, so it lightens as the sheet goes. Motion settings
+//     and the OS reduce-motion flag make both instant. Rapid open/close never
 //     glitches: every open restarts from the entry pose.
-//   • DISMISSAL — swipe down on the grabber/title row (the drag follows the
-//     finger; past 90 px or with downward velocity it closes, otherwise it
-//     springs back), tap the scrim, the footer's Cancel, or the back/Escape
-//     key. The swipe responder lives ONLY on the header row, so scrolling
+//   • DISMISSAL — swipe down on the grabber/title row: the sheet follows the
+//     finger (pulling UP meets a rubber-band resistance), the scrim lightens
+//     with it, and on release it closes past 90 px or with downward speed,
+//     otherwise it springs back carrying the finger's velocity. Tap the
+//     scrim, the footer's Cancel, or the back/Escape key also close it. The swipe responder lives ONLY on the header row, so scrolling
 //     inside the content can never be stolen or accidentally dismiss.
 //
 // The sheet does not change its callers' content: rows, sections, checkmarks
@@ -77,45 +79,55 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
   const motionRef = useRef(motion);
   motionRef.current = motion;
 
-  // The rise animation (0 = fully down, 1 = in place) plus the live drag
-  // offset from the swipe gesture; the sheet rides on their sum.
+  // The rise animation (0 = below the screen edge, 1 = in place) plus the
+  // live drag offset from the swipe gesture; the sheet rides on their sum.
+  // The travel is the sheet's own measured height, so it starts fully hidden.
   const rise = useRef(new Animated.Value(0)).current;
   const drag = useRef(new Animated.Value(0)).current;
-  const sheetY = Animated.add(
-    rise.interpolate({ inputRange: [0, 1], outputRange: [64, 0] }),
-    drag,
-  );
+  const [height, setHeight] = useState(0);
+  const travel = Math.max(height, 320) + 24;
+  const sheetY = Animated.add(rise.interpolate({ inputRange: [0, 1], outputRange: [travel, 0] }), drag);
+  // The scrim dims with the rise and lightens as the sheet is dragged down.
+  const scrim = Animated.multiply(rise, drag.interpolate({ inputRange: [0, travel], outputRange: [1, 0.15], extrapolate: 'clamp' }));
 
   useEffect(() => {
     if (visible) {
       drag.setValue(0);
       rise.setValue(0);
-      Animated.timing(rise, { toValue: 1, duration: motionRef.current ? 220 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+      if (motionRef.current) Animated.spring(rise, { toValue: 1, damping: 26, stiffness: 240, mass: 0.9, useNativeDriver: true }).start();
+      else rise.setValue(1);
     }
   }, [visible, rise, drag]);
 
   const requestClose = useCallback(() => {
-    drag.setValue(0);
-    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 190 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => onClose());
+    // From wherever the sheet is (dragged or not), all the way down.
+    Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 240 : 0, easing: Easing.bezier(0.32, 0, 0.67, 0), useNativeDriver: true }).start(() => {
+      drag.setValue(0);
+      onClose();
+    });
   }, [rise, drag, onClose]);
 
   // Swipe-to-dismiss, captured ONLY on the header row (grabber + title) so
   // the content's own scrolling is never stolen. A clear downward drag
   // follows the finger; releasing past the distance/velocity thresholds
   // closes, anything else springs back.
+  // The latest close, for the responder created once below.
+  const requestCloseRef = useRef(requestClose);
+  requestCloseRef.current = requestClose;
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_e, g) => g.dy > DRAG_CAPTURE && g.dy > Math.abs(g.dx) * 1.5,
+      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dy) > DRAG_CAPTURE && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
       onPanResponderMove: (_e, g) => {
-        if (g.dy > 0) drag.setValue(g.dy);
+        // Down follows the finger; up meets a rubber band (a few px at most).
+        drag.setValue(g.dy > 0 ? g.dy : -18 * (1 - Math.exp(g.dy / 60)));
       },
       onPanResponderRelease: (_e, g) => {
-        if (g.dy > DISMISS_DISTANCE || g.vy > DISMISS_VELOCITY) requestClose();
-        else Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+        if (g.dy > DISMISS_DISTANCE || g.vy > DISMISS_VELOCITY) requestCloseRef.current();
+        else Animated.spring(drag, { toValue: 0, velocity: g.vy, damping: 22, stiffness: 320, useNativeDriver: true }).start();
       },
       onPanResponderTerminate: () => {
-        Animated.spring(drag, { toValue: 0, useNativeDriver: true }).start();
+        Animated.spring(drag, { toValue: 0, damping: 22, stiffness: 320, useNativeDriver: true }).start();
       },
     }),
   ).current;
@@ -130,10 +142,12 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
   const bottomPad = Math.max(insets.bottom, 12) + 8 + navZone;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={requestClose} {...({ 'aria-modal': true } as object)}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={requestClose} {...({ 'aria-modal': true } as object)}>
       <View style={s.wrap}>
+        <Animated.View style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrim }]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={requestClose} accessibilityLabel={`Close ${title}`} importantForAccessibility="no" />
         <Animated.View
+          onLayout={(e) => setHeight(Math.round(e.nativeEvent.layout.height))}
           style={[s.sheet, { backgroundColor: c.dialogBg, maxWidth, maxHeight, paddingBottom: bottomPad, transform: [{ translateY: sheetY }] }]}
           accessibilityRole={'dialog' as never}
           accessibilityLabel={accessibilityLabel ?? title}
@@ -162,7 +176,8 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
 }
 
 const useStyles = makeStyles((c) => ({
-  wrap: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(3,7,9,0.5)' },
+  wrap: { flex: 1, justifyContent: 'flex-end' },
+  scrim: { backgroundColor: 'rgba(3,7,9,0.5)' },
   sheet: {
     width: '100%',
     alignSelf: 'center',
@@ -173,7 +188,8 @@ const useStyles = makeStyles((c) => ({
     paddingTop: 6,
     paddingHorizontal: 14,
   },
-  header: { alignItems: 'center' },
+  // A taller header gives the swipe a generous grip.
+  header: { alignItems: 'center', paddingTop: 2 },
   grabber: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.separator, alignSelf: 'center', marginTop: 6 },
   title: { color: c.textMuted, fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 12, alignSelf: 'stretch' },
   scroll: { flexShrink: 1 },

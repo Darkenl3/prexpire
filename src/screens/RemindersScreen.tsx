@@ -11,6 +11,7 @@ import { Page } from '../components/Page';
 import { PressScale } from '../components/Press';
 import { categoryArt } from '../components/ResultSheet';
 import { SmallButton } from '../components/SettingsRows';
+import { StatusMedallion } from '../components/HomeComponents';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
@@ -38,9 +39,9 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Soonest first', added: 
 function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?: boolean; onPress: () => void }) {
   const t = useTheme();
   const s = useStyles();
-  const { settings } = useSettings();
+  const { warning, formatDate } = useSettings();
   const { nameOf } = useCategories();
-  const status = expiryStatus(item.expiresOn, settings.warningDays);
+  const status = expiryStatus(item.expiresOn, warning(item.category));
   const days = daysUntil(item.expiresOn, new Date());
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
   const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Due today' : days === 1 ? '1 day' : `${days} days`;
@@ -65,13 +66,13 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
         <Text style={s.name} numberOfLines={2}>
           {item.name}
         </Text>
-        {/* Clean meta: just the category. The pill is the countdown; the
-            exact date stays on the Lists tab's item cards. */}
+        {/* The category and the exact date beside the countdown pill. */}
         <Text style={s.meta} numberOfLines={1}>
-          {nameOf(item.category)}
+          {nameOf(item.category)} · {formatDate(item.expiresOn, item.datePrecision)}
         </Text>
       </View>
       <View style={[s.pill, { backgroundColor: t.pills[tone].bg }]}>
+        <Ionicons name={status === 'expired' ? 'alert-circle' : 'time-outline'} size={13} color={t.pills[tone].text} />
         <Text style={[s.pillText, { color: t.pills[tone].text }]} numberOfLines={1} minimumFontScale={0.8} adjustsFontSizeToFit>
           {pill}
         </Text>
@@ -91,6 +92,12 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
     const dueIds = new Set(dueList.map((i) => i.id));
     return { due: dueList, upcoming: sortItems(items.filter((i) => !dueIds.has(i.id)), settings.sort) };
   }, [items, settings.reminderLead, settings.sort]);
+  // Upcoming, split into the next seven days and later.
+  const now = new Date();
+  const thisWeek = upcoming.filter((i) => daysUntil(i.expiresOn, now) <= 7);
+  const later = upcoming.filter((i) => daysUntil(i.expiresOn, now) > 7);
+  const next = [...upcoming].sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))[0];
+  const nextDays = next ? daysUntil(next.expiresOn, now) : null;
 
   // Cycles the shared sort preference through the app's orders (the control
   // the reference shows as "Soonest first" with its up/down icon).
@@ -113,15 +120,18 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
 
   return (
     <Page tab="reminders" title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
-      {/* The information banner: what this page shows and what notifications
-          actually are here (in-app alerts while open, nothing in the
-          background) — the same accurate message as before, in the
-          reference's glass card with the mint info medallion. */}
-      <View style={s.banner}>
-        <View style={s.bannerIcon}>
-          <Ionicons name="information" size={17} color={t.green} />
-        </View>
-        <Text style={s.bannerText}>Reminders are listed here. Expiry alerts also appear while the app is open; nothing is sent in the background.</Text>
+      {/* The summary: how much is due now, this week, and later. */}
+      <View style={s.summary}>
+        {[
+          { label: 'Due now', value: due.length, color: due.length ? t.red : t.text },
+          { label: 'This week', value: thisWeek.length, color: thisWeek.length ? t.amberText : t.text },
+          { label: 'Later', value: later.length, color: t.text },
+        ].map((x) => (
+          <View key={x.label} style={s.summaryBox}>
+            <Text style={[s.summaryValue, { color: x.color }]}>{x.value}</Text>
+            <Text style={s.summaryLabel}>{x.label}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Due now: the live status beside the heading, and either the actual
@@ -140,16 +150,13 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
         </View>
       ) : (
         <View style={s.caughtUp}>
-          <View style={s.caughtUpIcon}>
-            <Ionicons name="calendar-outline" size={25} color={t.textMuted} />
-            <View style={s.caughtUpCheck}>
-              <Ionicons name="checkmark" size={12} color={t.scanInk} />
-            </View>
-          </View>
-          <View style={s.caughtUpText}>
-            <Text style={s.caughtUpTitle}>All caught up!</Text>
-            <Text style={s.caughtUpSub}>You have no reminders due right now.</Text>
-          </View>
+          <StatusMedallion tone="ok" size={54} />
+          <Text style={s.caughtUpTitle}>All caught up!</Text>
+          <Text style={s.caughtUpSub}>
+            {next
+              ? `Nothing is due. Next up: ${next.name}, ${nextDays === 0 ? 'today' : nextDays === 1 ? 'tomorrow' : `in ${nextDays} days`}.`
+              : 'Nothing is due, and nothing is being tracked yet.'}
+          </Text>
         </View>
       )}
 
@@ -174,19 +181,51 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
         </PressScale>
       </View>
       {upcoming.length > 0 ? (
-        <View style={[s.list, settings.compact && s.listCompact]}>
-          {upcoming.map((item) => (
-            <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
-          ))}
-        </View>
+        [
+          { key: 'week', title: 'This week', list: thisWeek },
+          { key: 'later', title: 'Later', list: later },
+        ]
+          .filter((g) => g.list.length)
+          .map((g) => (
+            <View key={g.key}>
+              <Text style={s.groupTitle}>{g.title}</Text>
+              <View style={[s.list, settings.compact && s.listCompact]}>
+                {g.list.map((item) => (
+                  <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
+                ))}
+              </View>
+            </View>
+          ))
       ) : (
         <Text style={s.noneText}>No upcoming reminders.</Text>
       )}
+      {/* What notifications are here, honestly: in-app alerts only. */}
+      <View style={s.footnote}>
+        <Ionicons name="information-circle-outline" size={16} color={t.textMuted} />
+        <Text style={s.footnoteText}>Expiry alerts appear while the app is open. Nothing is sent in the background yet.</Text>
+      </View>
     </Page>
   );
 }
 
 const useStyles = makeStyles((t) => ({
+  // The summary row: three numbers in the cards' surface language.
+  summary: { flexDirection: 'row', gap: 10, marginBottom: 18 },
+  summaryBox: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 18,
+    backgroundColor: t.surface,
+    borderWidth: 1,
+    borderColor: t.surfaceBorder,
+    ...(t === LIGHT ? CARD_SHADOW : null),
+  },
+  summaryValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  summaryLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 1 },
+  groupTitle: { color: t.textMuted, fontSize: 12.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 6, marginBottom: 8 },
+  footnote: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, paddingHorizontal: 4 },
+  footnoteText: { flex: 1, color: t.textMuted, fontSize: 12.5, lineHeight: 17 },
   // The glass information banner: the content cards' own surface language.
   banner: {
     flexDirection: 'row',
@@ -264,17 +303,17 @@ const useStyles = makeStyles((t) => ({
   body: { flex: 1, minWidth: 0 },
   name: { color: t.text, fontSize: 16, fontWeight: '700', lineHeight: 20 },
   meta: { color: t.textSub, fontSize: 13, lineHeight: 18, marginTop: 3 },
-  pill: { minHeight: 28, paddingHorizontal: 12, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  pill: { minHeight: 28, paddingHorizontal: 10, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 4 },
   pillText: { fontSize: 13, fontWeight: '700' },
 
   // The "All caught up!" empty card: a quiet but clearly-visible card on
   // the light page too — hairline plus the soft shadow.
   caughtUp: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    padding: 18,
-    borderRadius: 16,
+    gap: 8,
+    paddingVertical: 26,
+    paddingHorizontal: 20,
+    borderRadius: 22,
     backgroundColor: t.surface,
     borderWidth: 1,
     borderColor: t.surfaceBorder,
@@ -302,8 +341,8 @@ const useStyles = makeStyles((t) => ({
     borderColor: t.bg,
   },
   caughtUpText: { flex: 1, minWidth: 0 },
-  caughtUpTitle: { color: t.text, fontSize: 17, fontWeight: '700' },
-  caughtUpSub: { color: t.textMuted, fontSize: 13.5, marginTop: 2 },
+  caughtUpTitle: { color: t.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3, marginTop: 8 },
+  caughtUpSub: { color: t.textMuted, fontSize: 14, lineHeight: 19, textAlign: 'center' },
   noneText: { color: t.textMuted, fontSize: 14, paddingVertical: 8 },
 
   // Reminders off: the same quiet card, centred, still one tap from Settings.

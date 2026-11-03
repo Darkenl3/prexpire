@@ -61,9 +61,9 @@ type Props = {
 export function ItemCard({ item, compact = false, onToast }: Props) {
   const t = useTheme();
   const s = useStyles();
-  const { settings, formatDate } = useSettings();
+  const { settings, formatDate, warning, openDays } = useSettings();
   const { nameOf, custom, all } = useCategories();
-  const { removeItem, setItemCategory, renameItem } = useItems();
+  const { removeItem, setItemCategory, renameItem, openItem, unopenItem } = useItems();
   const { addManual } = useShopping();
   const [menuOpen, setMenuOpen] = useState(false);
   // Removing asks twice, exactly like the app's other destructive actions
@@ -81,7 +81,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   // The phone keyboard's footprint on the web: the Rename dialog rides above it.
   const webKeyboard = useWebKeyboardInset();
 
-  const status = expiryStatus(item.expiresOn, settings.warningDays);
+  const status = expiryStatus(item.expiresOn, warning(item.category));
   const days = daysUntil(item.expiresOn, new Date());
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
   // The same days-left wording every list uses ("Today", "1 day", "5 days") —
@@ -112,13 +112,31 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const consume = async (restock: boolean) => {
     setConsumeOpen(false);
     Haptics.selectionAsync().catch(() => {});
-    await removeItem(item.id);
+    await removeItem(item.id, 'consumed');
     if (!restock) {
       onToast(`${item.name} marked as consumed`);
       return;
     }
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
     onToast(result.ok ? `${item.name} consumed and added to your list` : `${item.name} consumed. It is already on your list`);
+  };
+
+  // Mark as opened: the date becomes the category's "use within" period from
+  // today (never later than the printed date); tapping again undoes it.
+  const toggleOpened = async () => {
+    closeMenu();
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      if (item.openedOn) {
+        await unopenItem(item.id);
+        onToast(`${item.name}: printed date restored`);
+        return;
+      }
+      const useBy = await openItem(item.id, openDays(item.category));
+      if (useBy) onToast(`Opened. Use by ${formatDate(useBy)}`);
+    } catch {
+      onToast("Couldn't save that. Please try again.");
+    }
   };
 
   // Rename: saves the new name, then confirms with the screen's toast.
@@ -190,6 +208,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           <Ionicons name="calendar-outline" size={13.5} color={t.textSub} />
           <Text style={s.metaText} numberOfLines={1}>
             {formatDate(item.expiresOn, item.datePrecision)}
+            {item.openedOn ? ' · opened' : ''}
           </Text>
         </View>
       </View>
@@ -257,6 +276,18 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               >
                 <Ionicons name="checkmark-done" size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>Mark as consumed</Text>
+              </PressScale>
+              {/* Opened: moves the date to the category's use-within period. */}
+              <PressScale
+                onPress={() => void toggleOpened()}
+                style={s.menuRow}
+                accessibilityRole="button"
+                accessibilityLabel={item.openedOn ? `Mark ${item.name} as not opened` : `Mark ${item.name} as opened`}
+              >
+                <Ionicons name={item.openedOn ? 'arrow-undo-outline' : 'open-outline'} size={19} color={t.green} />
+                <Text style={[s.menuRowText, { color: t.text }]}>
+                  {item.openedOn ? 'Not opened (printed date)' : `Mark as opened (use within ${openDays(item.category)} d)`}
+                </Text>
               </PressScale>
               {/* Rename: hands over to the Rename dialog. */}
               <PressScale

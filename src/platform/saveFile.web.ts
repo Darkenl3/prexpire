@@ -15,6 +15,22 @@ export async function saveTextFile(fileName: string, mimeType: string, text: str
     return;
   }
 
+  // On a phone (and inside the iOS app, whose web view ignores downloads) the
+  // system share sheet saves the file: "Save to Files", AirDrop, Mail.
+  // Desktop browsers keep the plain download below.
+  const touch = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
+  if (touch && typeof navigator.canShare === 'function' && typeof File !== 'undefined') {
+    const file = new File([text], fileName, { type: mimeType });
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+      } catch (e) {
+        if ((e as { name?: string })?.name !== 'AbortError') throw e;
+      }
+      return;
+    }
+  }
+
   // The object URL is released once the download has started.
   const blob = new Blob([text], { type: `${mimeType};charset=utf-8` });
   const url = URL.createObjectURL(blob);

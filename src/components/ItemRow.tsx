@@ -55,9 +55,9 @@ type Props = {
 // The days-left pill already says how long is left, so the subtitle carries
 // ONLY the category — never a repeated "Expires in N days" phrase.
 export function ItemRow({ item, showDate = false, note, onPress }: Props) {
-  const { settings, formatDate } = useSettings();
+  const { settings, formatDate, warning } = useSettings();
   const { nameOf } = useCategories();
-  const { pill, tone } = itemPill(item, settings.warningDays);
+  const { pill, tone } = itemPill(item, warning(item.category));
   const sub = note ? [note] : [nameOf(item.category)];
   if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (

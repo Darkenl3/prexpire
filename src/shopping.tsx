@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useItems, type Item } from './items';
 import { useSettings } from './settings';
+import { warningFor } from './preferences';
 import {
   autoAdditions,
   eventKeyFor,
@@ -91,8 +92,11 @@ export function ShoppingProvider({ children }: { children: ReactNode }) {
   alertsRef.current = alerts;
   const trackedRef = useRef(tracked);
   trackedRef.current = tracked;
-  const warningDaysRef = useRef(settings.warningDays);
-  warningDaysRef.current = settings.warningDays;
+  // The warning period per category (Settings > Categories), else the general one.
+  const { warningDays, categoryWarning } = settings;
+  const warning = useCallback((category: string) => warningFor({ warningDays, categoryWarning }, category), [warningDays, categoryWarning]);
+  const warningRef = useRef(warning);
+  warningRef.current = warning;
 
   useEffect(() => {
     let cancelled = false;
@@ -269,7 +273,7 @@ export function ShoppingProvider({ children }: { children: ReactNode }) {
     // additions: existing entries stay. Re-enabling picks up anything not yet
     // handled, while events already listed or dismissed stay as they are.
     if (settings.autoShoppingList) {
-      for (const item of autoAdditions(tracked, eventsRef.current, itemsRef.current, settings.warningDays, today)) {
+      for (const item of autoAdditions(tracked, eventsRef.current, itemsRef.current, warning, today)) {
         addForProduct(item, 'auto');
       }
     }
@@ -277,13 +281,13 @@ export function ShoppingProvider({ children }: { children: ReactNode }) {
     // Queue the one-time expiry alerts (shown only while the app is open).
     if (settings.reminders) {
       const pending = alertsRef.current.map((a) => a.key);
-      const notes = notificationsToShow(tracked, eventsRef.current, settings.warningDays, today, pending);
+      const notes = notificationsToShow(tracked, eventsRef.current, warning, today, pending);
       if (notes.length) {
         const queued: AlertInfo[] = notes.map((i) => ({ key: eventKeyFor(i), itemId: i.id, name: i.name, expiresOn: i.expiresOn }));
         setAlerts((q) => [...q, ...queued]);
       }
     }
-  }, [ready, itemsReady, settingsReady, tracked, settings.autoShoppingList, settings.warningDays, settings.reminders, tick, addForProduct, persistEvents]);
+  }, [ready, itemsReady, settingsReady, tracked, settings.autoShoppingList, warning, settings.reminders, tick, addForProduct, persistEvents]);
 
   // An alert is marked shown the moment it becomes the one on screen, so a
   // restart never re-offers an alert the user has already seen, while an alert
@@ -324,7 +328,7 @@ export function ShoppingProvider({ children }: { children: ReactNode }) {
         // exist, its expiry date must be unchanged, it must still be expiring
         // soon, and the event must not already have an open entry.
         const live = trackedRef.current.find((i) => i.id === head.itemId && i.expiresOn === head.expiresOn);
-        if (live && isExpiringSoon(live, warningDaysRef.current) && !itemsRef.current.some((s) => s.eventKey === head.key && !s.purchasedAt)) {
+        if (live && isExpiringSoon(live, warningRef.current) && !itemsRef.current.some((s) => s.eventKey === head.key && !s.purchasedAt)) {
           addForProduct(live, 'notification');
           markEvent(head.key, { notifAction: 'added' });
           return true;

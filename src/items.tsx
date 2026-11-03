@@ -38,10 +38,34 @@ export type Item = {
   // https URL): the item card's real product image. Absent when no reliable
   // image could be retrieved, in which case the neutral category art stands in.
   image?: string;
+  // Set by "Mark as opened": the day it was opened (YYYY-MM-DD), and the date
+  // printed on the pack, which expiresOn replaced with the earlier "use within"
+  // date (kept so "Not opened" can put it back).
+  openedOn?: string;
+  printedExpiresOn?: string;
+  printedPrecision?: 'day' | 'month';
 };
+
+// What happened to an item when it left the list, for the waste stats in
+// Settings: used up (Mark as consumed), thrown away expired (removed after
+// its date), or simply removed before expiring.
+export type HistoryEntry = { at: string; kind: 'used' | 'expired' | 'removed'; category: CategoryId; name: string };
+const HISTORY_LIMIT = 3000;
 
 const STORAGE_KEY = 'prexpire.items.v1';
 const LAST_CATEGORY_KEY = 'prexpire.lastCategory.v1';
+export const HISTORY_KEY = 'prexpire.history.v1';
+
+function isHistoryEntry(x: unknown): x is HistoryEntry {
+  const h = x as HistoryEntry;
+  return !!h && typeof h.at === 'string' && ['used', 'expired', 'removed'].includes(h.kind) && typeof h.category === 'string' && typeof h.name === 'string';
+}
+
+const todayIso = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+function addDaysIso(days: number, d = new Date()) {
+  return todayIso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + days));
+}
 
 function isItem(x: unknown): x is Item {
   const i = x as Item;
@@ -75,13 +99,24 @@ type ItemsContext = {
   // Deletes one tracked item (the item card's "Remove item" action). The
   // remembered category is untouched: removing a product never changes where
   // the NEXT one starts.
-  removeItem: (id: string) => Promise<void>;
+  // 'consumed' (Mark as consumed) counts it as used in the waste stats; a
+  // plain removal counts as thrown away when the item had already expired.
+  removeItem: (id: string, reason?: 'consumed' | 'removed') => Promise<void>;
+  // Marks an item opened today: its date becomes "use within N days" from
+  // today, never later than the printed date. Returns the new date.
+  openItem: (id: string, days: number) => Promise<string | null>;
+  // Undoes Mark as opened: the printed date comes back.
+  unopenItem: (id: string) => Promise<void>;
+  // Items that have left the list, newest last.
+  history: HistoryEntry[];
   // Moves one tracked item to another category (the item card's "Change
   // category" action).
   setItemCategory: (id: string, category: CategoryId) => Promise<void>;
   // Renames one tracked item (the item card's "Rename" action). Names are
   // trimmed and capped like a new item's; an empty name is refused.
   renameItem: (id: string, name: string) => Promise<void>;
+  // Moves every item of one category to another (removing a category).
+  moveCategory: (from: CategoryId, to: CategoryId) => Promise<void>;
   // Deletes every saved item and the remembered category from storage.
   clearSaved: () => Promise<void>;
 };
@@ -92,6 +127,8 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved] = useState<Item[]>([]);
   const [ready, setReady] = useState(false);
   const [lastCategory, setLastCategory] = useState<CategoryId>('food');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const historyRef = useRef<HistoryEntry[]>([]);
   const { settings } = useSettings();
   // Writes go through this ref so two quick saves never overwrite each other.
   const savedRef = useRef<Item[]>([]);
@@ -100,12 +137,21 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [raw, cat] = await AsyncStorage.multiGet([STORAGE_KEY, LAST_CATEGORY_KEY]);
+        const [raw, cat, hist] = await AsyncStorage.multiGet([STORAGE_KEY, LAST_CATEGORY_KEY, HISTORY_KEY]);
         const parsed: unknown = raw[1] ? JSON.parse(raw[1]) : [];
         const list = Array.isArray(parsed) ? parsed.filter(isItem) : [];
+        let past: HistoryEntry[] = [];
+        try {
+          const h: unknown = hist[1] ? JSON.parse(hist[1]) : [];
+          past = Array.isArray(h) ? h.filter(isHistoryEntry) : [];
+        } catch {
+          // A damaged history only empties the stats.
+        }
         if (cancelled) return;
         savedRef.current = list;
         setSaved(list);
+        historyRef.current = past;
+        setHistory(past);
         if (cat[1] && typeof cat[1] === 'string') setLastCategory(cat[1]);
       } catch {
         // Unreadable storage starts empty rather than blocking the app.
@@ -132,11 +178,56 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     return item;
   }, []);
 
-  const removeItem = useCallback(async (id: string) => {
+  const removeItem = useCallback(async (id: string, reason: 'consumed' | 'removed' = 'removed') => {
+    const gone = savedRef.current.find((i) => i.id === id);
+    if (!gone) return; // unknown id: nothing to do
     const next = savedRef.current.filter((i) => i.id !== id);
-    if (next.length === savedRef.current.length) return; // unknown id: nothing to do
+    const kind: HistoryEntry['kind'] = reason === 'consumed' ? 'used' : gone.expiresOn < todayIso() ? 'expired' : 'removed';
+    const past = [...historyRef.current, { at: new Date().toISOString(), kind, category: gone.category, name: gone.name }].slice(-HISTORY_LIMIT);
     // Persist first, exactly like addItem: if the write fails the list on
     // screen keeps the item rather than silently losing it.
+    await AsyncStorage.multiSet([
+      [STORAGE_KEY, JSON.stringify(next)],
+      [HISTORY_KEY, JSON.stringify(past)],
+    ]);
+    savedRef.current = next;
+    setSaved(next);
+    historyRef.current = past;
+    setHistory(past);
+  }, []);
+
+  const openItem = useCallback(async (id: string, days: number) => {
+    const item = savedRef.current.find((i) => i.id === id);
+    if (!item) return null;
+    const printed = item.printedExpiresOn ?? item.expiresOn;
+    const useBy = addDaysIso(Math.max(0, days));
+    const earlier = useBy < printed;
+    const next = savedRef.current.map((i) =>
+      i.id === id
+        ? {
+            ...i,
+            openedOn: todayIso(),
+            printedExpiresOn: printed,
+            printedPrecision: i.printedPrecision ?? i.datePrecision,
+            expiresOn: earlier ? useBy : printed,
+            datePrecision: earlier ? ('day' as const) : (i.printedPrecision ?? i.datePrecision),
+          }
+        : i,
+    );
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    savedRef.current = next;
+    setSaved(next);
+    return earlier ? useBy : printed;
+  }, []);
+
+  const unopenItem = useCallback(async (id: string) => {
+    const item = savedRef.current.find((i) => i.id === id);
+    if (!item?.openedOn) return;
+    const next = savedRef.current.map((i) => {
+      if (i.id !== id) return i;
+      const { openedOn: _o, printedExpiresOn, printedPrecision, ...rest } = i;
+      return { ...rest, expiresOn: printedExpiresOn ?? i.expiresOn, datePrecision: printedPrecision ?? i.datePrecision };
+    });
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     savedRef.current = next;
     setSaved(next);
@@ -162,17 +253,27 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     setSaved(next);
   }, []);
 
+  const moveCategory = useCallback(async (from: CategoryId, to: CategoryId) => {
+    if (from === to || !savedRef.current.some((i) => i.category === from)) return;
+    const next = savedRef.current.map((i) => (i.category === from ? { ...i, category: to } : i));
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    savedRef.current = next;
+    setSaved(next);
+  }, []);
+
   const clearSaved = useCallback(async () => {
-    await AsyncStorage.multiRemove([STORAGE_KEY, LAST_CATEGORY_KEY]);
+    await AsyncStorage.multiRemove([STORAGE_KEY, LAST_CATEGORY_KEY, HISTORY_KEY]);
     savedRef.current = [];
     setSaved([]);
+    historyRef.current = [];
+    setHistory([]);
     setLastCategory('food');
   }, []);
 
   const defaultCategory = settings.defaultCategory === 'last' ? lastCategory : settings.defaultCategory;
   const value = useMemo(
-    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, renameItem, clearSaved }),
-    [saved, ready, lastCategory, defaultCategory, addItem, removeItem, setItemCategory, renameItem, clearSaved],
+    () => ({ items: saved, saved, ready, lastCategory, defaultCategory, addItem, removeItem, openItem, unopenItem, history, setItemCategory, renameItem, moveCategory, clearSaved }),
+    [saved, ready, lastCategory, defaultCategory, addItem, removeItem, openItem, unopenItem, history, setItemCategory, renameItem, moveCategory, clearSaved],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

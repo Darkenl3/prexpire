@@ -198,7 +198,7 @@ function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone,
   const c = useStyles();
   const t = useTheme();
   const { nameOf } = useCategories();
-  const { settings, motion } = useSettings();
+  const { settings, motion, warning } = useSettings();
   const { setQuantity } = useShopping();
 
   // The row's height is measured so the animations can grow and collapse to
@@ -228,7 +228,7 @@ function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone,
 
   const days = entry.expiresOn ? daysUntil(entry.expiresOn, new Date()) : null;
   const pill = days === null ? null : days < 0 ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
-  const amber = days !== null && days <= settings.warningDays;
+  const amber = days !== null && days <= warning(entry.category);
 
   const reasonLabel = entry.reason === 'expiring' ? 'Expiring soon' : 'Manually added';
   const sub = entry.purchasedAt ? purchasedLabel(entry.purchasedAt, settings.dateFormat) : `${nameOf(entry.category)}  •  ${reasonLabel}`;

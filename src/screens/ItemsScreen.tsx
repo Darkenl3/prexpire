@@ -7,6 +7,7 @@ import { useCategories } from '../categories';
 import { useItems, type CategoryId } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus, SORT_LABELS, SORT_ORDERS, sortItems, type SortOrder } from '../preferences';
+import { AddActions } from '../components/HomeComponents';
 import { Page } from '../components/Page';
 import { ItemCard, categoryIcon } from '../components/ItemCard';
 import { Note, SmallButton } from '../components/SettingsRows';
@@ -32,7 +33,7 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'R
 // sorting, item management) unchanged.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { items } = useItems();
-  const { settings, update } = useSettings();
+  const { settings, update, warning } = useSettings();
   const { all, custom } = useCategories();
   const c = useTheme();
   const s = useStyles();
@@ -53,10 +54,10 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const needle = query.trim().toLowerCase();
   const inCategory = useMemo(() => (filter === 'all' ? items : items.filter((i) => i.category === filter)), [items, filter]);
   const searched = useMemo(() => (needle ? inCategory.filter((i) => i.name.toLowerCase().includes(needle)) : inCategory), [inCategory, needle]);
-  const expired = searched.filter((i) => expiryStatus(i.expiresOn, settings.warningDays) === 'expired');
+  const expired = searched.filter((i) => expiryStatus(i.expiresOn, warning(i.category)) === 'expired');
   const shown = useMemo(
-    () => sortItems(settings.showExpired ? searched : searched.filter((i) => expiryStatus(i.expiresOn, settings.warningDays) !== 'expired'), settings.sort),
-    [searched, settings.showExpired, settings.sort, settings.warningDays],
+    () => sortItems(settings.showExpired ? searched : searched.filter((i) => expiryStatus(i.expiresOn, warning(i.category)) !== 'expired'), settings.sort),
+    [searched, settings.showExpired, settings.sort, warning],
   );
   // The count line's valid half, computed from the real filtered items.
   const valid = searched.length - expired.length;
@@ -194,10 +195,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
               <View style={s.empty}>
                 <Text style={s.emptyTitle}>{items.length ? 'Nothing here' : 'No items yet'}</Text>
                 <Text style={s.emptyText}>Scan a label or add a product by hand.</Text>
-                <View style={s.emptyButtons}>
-                  <SmallButton label="Scan a label" icon="scan-outline" tone="mint" onPress={() => onNavigate('scan')} />
-                  <SmallButton label="Add manually" icon="create-outline" onPress={() => onNavigate('manual')} />
-                </View>
+                <AddActions onScan={() => onNavigate('scan')} onManual={() => onNavigate('manual')} />
               </View>
             )}
           </>

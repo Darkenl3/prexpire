@@ -32,6 +32,9 @@ import { useShopping } from '../shopping';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BACKUP_PREFIX, backupFileName, buildBackup, parseBackup } from '../backup';
+import { byCategory, byMonth, tally, usedInTime, type Tally } from '../stats';
 import appConfig from '../../app.json';
 
 const APP_VERSION: string = appConfig.expo.version;
@@ -51,6 +54,7 @@ type PageId =
   | 'categories'
   | 'appearance'
   | 'backup'
+  | 'stats'
   | 'help'
   | 'terms';
 
@@ -60,7 +64,8 @@ const PAGE_TITLES: Record<PageId, string> = {
   notifications: 'Notifications',
   categories: 'Categories',
   appearance: 'Appearance',
-  backup: 'Backup & Sync',
+  backup: 'Backup & Restore',
+  stats: 'Waste stats',
   help: 'Help & Support',
   terms: 'Terms & Privacy',
 };
@@ -221,14 +226,19 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         </SettingsCard>
       </SettingsSection>
 
+      <SettingsSection title="Insights">
+        <SettingsCard>
+          <SettingRow icon="leaf-outline" accent="mint" title="Waste stats" description="What you used in time and what expired" onPress={() => open('stats')} />
+        </SettingsCard>
+      </SettingsSection>
+
       <SettingsSection title="Data & Storage">
         <SettingsCard>
           <SettingRow
             icon="cloud-upload-outline"
             accent="mint"
-            title="Backup & Sync"
-            description="No upload or sync"
-            right={<StatusBadge label="Off" />}
+            title="Backup & Restore"
+            description="Save everything to a file, or restore one"
             onPress={() => open('backup')}
           />
         </SettingsCard>
@@ -370,7 +380,8 @@ function searchIndex(): SearchEntry[] {
     { key: 'date-format', title: 'Date format', description: 'How dates are displayed', icon: 'calendar-outline', accent: 'teal', page: null },
     { key: 'sorting', title: 'Sorting', description: 'Order items', icon: 'swap-vertical-outline', accent: 'blue', page: null },
     { key: 'show-expired', title: 'Show expired items', description: 'Keep past-date items visible', icon: 'eye-outline', accent: 'teal', page: null },
-    { key: 'backup', title: 'Backup & Sync', description: 'No upload or sync', icon: 'cloud-upload-outline', accent: 'mint', page: 'backup' },
+    { key: 'backup', title: 'Backup & Restore', description: 'Save everything to a file, or restore one', icon: 'cloud-upload-outline', accent: 'mint', page: 'backup' },
+    { key: 'stats', title: 'Waste stats', description: 'What you used in time and what expired', icon: 'leaf-outline', accent: 'mint', page: 'stats' },
     { key: 'export', title: 'Export data', description: 'Download your items as JSON or CSV', icon: 'download-outline', accent: 'teal', page: 'backup' },
     { key: 'help', title: 'Help & Support', description: 'How PREXPIRE works', icon: 'help-circle-outline', accent: 'teal', page: 'help' },
     { key: 'terms', title: 'Terms & Privacy', description: 'Your data, camera and exports', icon: 'document-text-outline', accent: 'purple', page: 'terms' },
@@ -463,6 +474,8 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void) {
       return <AppearanceDetail />;
     case 'backup':
       return <BackupDetail />;
+    case 'stats':
+      return <StatsDetail />;
     case 'help':
       return <HelpDetail />;
     case 'terms':
@@ -742,9 +755,94 @@ function BackupDetail() {
       setExportError('The file could not be created. Your browser may be blocking downloads on this page.');
     }
   };
+  // The full backup: every key Prexpire stores, in one file.
+  const [backupNote, setBackupNote] = useState<{ tone: 'ok' | 'warn'; text: string } | null>(null);
+  const [pending, setPending] = useState<{ data: Record<string, string>; items: number; createdAt: string | null } | null>(null);
+  const saveBackup = async () => {
+    setBackupNote(null);
+    try {
+      const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(BACKUP_PREFIX));
+      const entries = await AsyncStorage.multiGet(keys);
+      const now = new Date();
+      await saveTextFile(backupFileName(now), 'application/json', buildBackup(entries, APP_VERSION, now));
+      setBackupNote({ tone: 'ok', text: 'Backup file created. Keep it somewhere safe, such as iCloud Drive or Files.' });
+    } catch {
+      setBackupNote({ tone: 'warn', text: "The backup file couldn't be created here." });
+    }
+  };
+  const pickBackup = () => {
+    setBackupNote(null);
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const parsed = parseBackup(await file.text());
+      if (!parsed.ok) setBackupNote({ tone: 'warn', text: parsed.reason });
+      else setPending({ data: parsed.data, items: parsed.items, createdAt: parsed.createdAt });
+    };
+    input.click();
+  };
+  const restore = async () => {
+    if (!pending) return;
+    try {
+      // Everything stored now is replaced by the backup, then the app starts
+      // over from it.
+      const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(BACKUP_PREFIX) && !(k in pending.data));
+      if (keys.length) await AsyncStorage.multiRemove(keys);
+      await AsyncStorage.multiSet(Object.entries(pending.data));
+      if (typeof window !== 'undefined') window.location.reload();
+    } catch {
+      setPending(null);
+      setBackupNote({ tone: 'warn', text: "The backup couldn't be restored. Nothing was changed." });
+    }
+  };
   return (
     <>
-      <SettingsSection title="Backup & Sync">
+      <SettingsSection title="Backup">
+        <SettingsCard>
+          <SettingRow
+            icon="archive-outline"
+            accent="mint"
+            title="Save a backup"
+            description="Items, categories, settings, Shopping List and stats, in one file"
+            below={
+              <View style={s.buttons}>
+                <SmallButton label="Save backup" icon="download-outline" tone="mint" onPress={() => void saveBackup()} />
+              </View>
+            }
+          />
+          <SettingRow
+            icon="refresh-circle-outline"
+            accent="blue"
+            title="Restore a backup"
+            description="Replaces everything here with the backup's contents"
+            below={
+              <>
+                {pending ? (
+                  <>
+                    <Note tone="warn">
+                      {`Restore ${pending.items} ${pending.items === 1 ? 'item' : 'items'}${pending.createdAt ? ` saved ${new Date(pending.createdAt).toLocaleDateString()}` : ''}? What is here now will be replaced.`}
+                    </Note>
+                    <View style={s.buttons}>
+                      <SmallButton label="Cancel" onPress={() => setPending(null)} />
+                      <SmallButton label="Restore" icon="refresh-outline" tone="mint" onPress={() => void restore()} />
+                    </View>
+                  </>
+                ) : (
+                  <View style={s.buttons}>
+                    <SmallButton label="Choose file" icon="folder-open-outline" onPress={pickBackup} />
+                  </View>
+                )}
+                {backupNote && <Note tone={backupNote.tone === 'warn' ? 'warn' : undefined}>{backupNote.text}</Note>}
+              </>
+            }
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Sync">
         <SettingsCard>
           <SettingRow
             icon="cloud-offline-outline"
@@ -771,6 +869,102 @@ function BackupDetail() {
         </SettingsCard>
       </SettingsSection>
       <Note>To keep a copy, export before clearing your browser data or moving devices</Note>
+    </>
+  );
+}
+
+// Waste stats: from the history of items that left the list (Mark as
+// consumed counts as used; removing an item after its date counts as thrown
+// away). History starts when this version is installed.
+function StatsDetail() {
+  const c = useTheme();
+  const s = useStyles();
+  const { history, saved } = useItems();
+  const { nameOf } = useCategories();
+  const { warning } = useSettings();
+  const now = new Date();
+  const thisMonth = byMonth(history, now, 1)[0].tally;
+  const total = tally(history);
+  const months = byMonth(history, now, 6);
+  const peak = Math.max(1, ...months.map((m) => m.tally.used + m.tally.expired));
+  const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const soon = saved.filter((i) => {
+    const d = Math.round((new Date(i.expiresOn).getTime() - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+    return d >= 0 && d <= warning(i.category);
+  }).length;
+  const pct = (t: Tally) => {
+    const p = usedInTime(t);
+    return p === null ? '–' : `${Math.round(p * 100)}%`;
+  };
+  const stat = (label: string, value: string, color: string) => (
+    <View style={s.statBox}>
+      <Text style={[s.statValue, { color }]}>{value}</Text>
+      <Text style={s.statLabel}>{label}</Text>
+    </View>
+  );
+  return (
+    <>
+      <SettingsSection title="This month">
+        <View style={s.statGrid}>
+          {stat('Used in time', pct(thisMonth), c.green)}
+          {stat('Used', String(thisMonth.used), c.text)}
+          {stat('Expired', String(thisMonth.expired), c.red)}
+        </View>
+      </SettingsSection>
+      <SettingsSection title="Last 6 months">
+        <SettingsCard>
+          <View style={s.chart} accessibilityLabel="Used and expired items per month">
+            {months.map((m) => {
+              const used = (m.tally.used / peak) * 100;
+              const expired = (m.tally.expired / peak) * 100;
+              return (
+                <View key={m.key} style={s.chartCol}>
+                  <View style={s.chartBarArea}>
+                    <View style={[s.chartBar, { height: `${expired}%`, backgroundColor: c.red, borderTopLeftRadius: 6, borderTopRightRadius: 6 }]} />
+                    <View style={[s.chartBar, { height: `${used}%`, backgroundColor: c.green, ...(expired ? null : { borderTopLeftRadius: 6, borderTopRightRadius: 6 }) }]} />
+                  </View>
+                  <Text style={s.chartLabel}>{MONTH[m.month]}</Text>
+                </View>
+              );
+            })}
+          </View>
+          <View style={s.legend}>
+            <View style={[s.legendDot, { backgroundColor: c.green }]} />
+            <Text style={s.statLabel}>Used</Text>
+            <View style={[s.legendDot, { backgroundColor: c.red, marginLeft: 12 }]} />
+            <Text style={s.statLabel}>Expired</Text>
+          </View>
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="All time">
+        <SettingsCard>
+          <SettingRow icon="checkmark-done" accent="mint" title="Used in time" value={pct(total)} />
+          <SettingRow icon="restaurant-outline" accent="teal" title="Items used" value={String(total.used)} />
+          <SettingRow icon="trash-outline" accent="red" title="Thrown away expired" value={String(total.expired)} />
+          <SettingRow icon="time-outline" accent="amber" title="Expiring soon now" value={String(soon)} />
+        </SettingsCard>
+      </SettingsSection>
+      {history.length > 0 && (
+        <SettingsSection title="By category">
+          <SettingsCard>
+            {byCategory(history).map((row) => (
+              <SettingRow
+                key={row.category}
+                icon="folder-open-outline"
+                accent="blue"
+                title={nameOf(row.category)}
+                description={`${row.tally.used} used · ${row.tally.expired} expired`}
+                value={pct(row.tally)}
+              />
+            ))}
+          </SettingsCard>
+        </SettingsSection>
+      )}
+      <Note>
+        {history.length
+          ? 'Use "Mark as consumed" when you finish something: it counts as used. Removing an item after its date counts as thrown away.'
+          : 'Nothing yet. Use "Mark as consumed" in an item\'s menu when you finish it; removing an item after its date counts as thrown away.'}
+      </Note>
     </>
   );
 }
@@ -925,6 +1119,18 @@ const useStyles = makeStyles((t) => ({
   aboutTagline: { color: t.text, fontSize: 14.5, textAlign: 'center' },
   aboutVersion: { color: t.textMuted, fontSize: 13 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // Waste stats.
+  statGrid: { flexDirection: 'row', gap: 10 },
+  statBox: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 24, fontWeight: '800' },
+  statLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
+  chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150, paddingHorizontal: 14, paddingTop: 14 },
+  chartCol: { flex: 1, alignItems: 'center', gap: 6, height: '100%' },
+  chartBarArea: { flex: 1, width: '70%', justifyContent: 'flex-end' },
+  chartBar: { width: '100%' },
+  chartLabel: { color: t.textMuted, fontSize: 11.5, fontWeight: '600' },
+  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14 },
+  legendDot: { width: 9, height: 9, borderRadius: 5 },
   banner: { borderRadius: 14, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: t.bg, zIndex: 10, elevation: 6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },

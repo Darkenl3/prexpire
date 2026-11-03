@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { dayOrderForRegion } from './scanner/dateParser';
 import { useCategories } from './categories';
-import { defaultSettings, formatDisplayDate, sanitizeSettings, type Settings } from './preferences';
+import { defaultSettings, formatDisplayDate, openDaysFor, sanitizeSettings, warningFor, type Settings } from './preferences';
 
 // User preferences, saved with AsyncStorage (localStorage in the browser) next to the items.
 
@@ -23,6 +23,10 @@ type SettingsContext = {
   // Animations allowed by both the setting and the operating system.
   motion: boolean;
   formatDate: (iso: string, precision?: 'day' | 'month') => string;
+  // The warning period for a category (its own, else the general one), and
+  // how many days an opened product of it stays good.
+  warning: (category: string) => number;
+  openDays: (category: string) => number;
 };
 
 const Ctx = createContext<SettingsContext | null>(null);
@@ -107,6 +111,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       systemReduceMotion,
       motion,
       formatDate: (iso, precision = 'day') => formatDisplayDate(iso, precision, settings.dateFormat),
+      warning: (category) => warningFor(settings, category),
+      openDays: (category) => openDaysFor(settings, category),
     };
   }, [settings, ready, saveError, update, reset, systemReduceMotion]);
 

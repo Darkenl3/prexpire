@@ -65,32 +65,38 @@ export function eventKeyFor(item: Pick<Item, 'id' | 'expiresOn'>): string {
   return `${item.id}:${item.expiresOn}`;
 }
 
+// A warning period: one number for every product, or one per category
+// (Settings > Categories gives each its own; see preferences.warningFor).
+export type Warning = number | ((category: string) => number);
+const warningDaysFor = (warning: Warning, category: string | undefined) =>
+  typeof warning === 'number' ? warning : warning(category ?? '');
+
 // "Expiring soon" follows the app's existing expiry rule (the same window that
 // drives amber pills, the attention card and reminders): expired, or within
 // the warning period chosen in Settings. Items with missing or invalid dates
 // never qualify.
-export function isExpiringSoon(item: Pick<Item, 'expiresOn'>, warningDays: number, today = new Date()): boolean {
+export function isExpiringSoon(item: Pick<Item, 'expiresOn'> & { category?: string }, warning: Warning, today = new Date()): boolean {
   if (!ISO_DATE.test(item.expiresOn)) return false;
-  return daysBetween(item.expiresOn, today) <= warningDays;
+  return daysBetween(item.expiresOn, today) <= warningDaysFor(warning, item.category);
 }
 
 // True when the item was already inside the warning window at the moment it
 // was added: the user just told the app about it, so an expiry alert for that
 // event would be noise (the automatic list addition still happens).
-export function wasEligibleAtAdd(item: Item, warningDays: number): boolean {
+export function wasEligibleAtAdd(item: Item, warning: Warning): boolean {
   if (!ISO_DATE.test(item.expiresOn)) return false;
   const added = new Date(item.addedAt);
   if (Number.isNaN(added.getTime())) return false;
-  return daysBetween(item.expiresOn, added) <= warningDays;
+  return daysBetween(item.expiresOn, added) <= warningDaysFor(warning, item.category);
 }
 
 // Tracked products that should land on the Shopping List right now: expiring,
 // not yet listed for this event, and not dismissed. Passing the current list
 // entries as well means even a lost or damaged event store cannot produce a
 // duplicate open entry for the same event.
-export function autoAdditions(items: Item[], events: EventStore, shopping: ShoppingItem[], warningDays: number, today = new Date()): Item[] {
+export function autoAdditions(items: Item[], events: EventStore, shopping: ShoppingItem[], warning: Warning, today = new Date()): Item[] {
   return items.filter((item) => {
-    if (!isExpiringSoon(item, warningDays, today)) return false;
+    if (!isExpiringSoon(item, warning, today)) return false;
     const key = eventKeyFor(item);
     const state = events[key];
     if (state?.listed || state?.autoDismissed) return false;
@@ -105,13 +111,13 @@ export function autoAdditions(items: Item[], events: EventStore, shopping: Shopp
 export function notificationsToShow(
   items: Item[],
   events: EventStore,
-  warningDays: number,
+  warning: Warning,
   today = new Date(),
   pendingKeys: readonly string[] = [],
 ): Item[] {
   return items.filter((item) => {
-    if (!isExpiringSoon(item, warningDays, today)) return false;
-    if (wasEligibleAtAdd(item, warningDays)) return false;
+    if (!isExpiringSoon(item, warning, today)) return false;
+    if (wasEligibleAtAdd(item, warning)) return false;
     const key = eventKeyFor(item);
     const state = events[key];
     if (state?.notifShown || state?.autoDismissed) return false;

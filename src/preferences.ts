@@ -35,10 +35,33 @@ export type Settings = {
   // Shopping List: expiring products are added automatically. Enabled by
   // default; a preference that has never been saved is treated as enabled.
   autoShoppingList: boolean;
+  // Per category (edited on its page in Settings > Categories): a warning
+  // period of its own instead of warningDays (milk 2 days, medicine 30), and
+  // how many days an opened product of that category stays good ("use within
+  // 3 days of opening"). Categories without an entry use the general warning
+  // period and OPEN_DAYS_DEFAULT.
+  categoryWarning: Record<string, WarningDays>;
+  openDays: Record<string, number>;
 };
 
 export const REMINDER_LEADS: ReminderLead[] = [0, 1, 3, 7];
 export const WARNING_DAYS: WarningDays[] = [3, 7, 14, 30];
+// "Use within" choices after opening, in days.
+export const OPEN_DAY_CHOICES = [1, 2, 3, 5, 7, 14, 30, 60, 90];
+// Typical use-within periods once opened, for the built-ins: fresh food and
+// dairy keep days, pantry jars weeks, medicine and toiletries months.
+export const OPEN_DAYS_DEFAULT: Record<string, number> = { food: 3, pantry: 30, medicine: 90, household: 90, skincare: 90 };
+export const OPEN_DAYS_FALLBACK = 7;
+
+// The warning period that applies to one category: its own, else the general one.
+export function warningFor(settings: Pick<Settings, 'warningDays' | 'categoryWarning'>, category: string): number {
+  return settings.categoryWarning[category] ?? settings.warningDays;
+}
+
+// How long an opened product of this category stays good, in days.
+export function openDaysFor(settings: Pick<Settings, 'openDays'>, category: string): number {
+  return settings.openDays[category] ?? OPEN_DAYS_DEFAULT[category] ?? OPEN_DAYS_FALLBACK;
+}
 export const DATE_FORMATS: DateFormat[] = ['DMY', 'MDY', 'YMD'];
 export const SORT_ORDERS: SortOrder[] = ['expiry', 'added', 'name'];
 export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'system'];
@@ -75,6 +98,8 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     showExpired: true,
     defaultCategory: 'last',
     autoShoppingList: true,
+    categoryWarning: {},
+    openDays: {},
   };
 }
 
@@ -98,7 +123,17 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     showExpired: bool('showExpired'),
     defaultCategory: oneOf('defaultCategory', ['last', ...categories] as DefaultCategory[]),
     autoShoppingList: bool('autoShoppingList'),
+    categoryWarning: idMap(r.categoryWarning, (v): v is WarningDays => WARNING_DAYS.includes(v as WarningDays)),
+    openDays: idMap(r.openDays, (v): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 365),
   };
+}
+
+// A stored { categoryId: value } map, keeping only the valid entries.
+function idMap<T>(raw: unknown, valid: (v: unknown) => v is T): Record<string, T> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, T> = {};
+  for (const [k, v] of Object.entries(raw)) if (k.length > 0 && k.length <= 40 && valid(v)) out[k] = v;
+  return out;
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');

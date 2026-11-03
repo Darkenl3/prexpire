@@ -44,6 +44,27 @@ export const GLASS_STRIP_FX = {
 // page's raised surface, the light page's pale mint - with nothing but a
 // hairline rim: flat and calm like the reference's ghost circles, never a
 // lifted solid button.
+// The round buttons' liquid glass, modelled on the scanner's native glass
+// circles (iOS 26 glass over the camera): a see-through fill, a bright
+// specular rim along the top edge, a faint inner shade at the bottom and a
+// soft drop shadow, over the backdrop blur. Web style keys (backgroundImage,
+// boxShadow) that react-native-web passes straight to the DOM.
+export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
+  const light = c === LIGHT;
+  return {
+    backgroundColor: light ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: light ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.16)',
+    backgroundImage: light
+      ? 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.35) 55%, rgba(255,255,255,0.15) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 100%)',
+    boxShadow: light
+      ? 'inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 2px rgba(20,60,60,0.08), 0 6px 18px rgba(20,60,60,0.14)'
+      : 'inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -2px 3px rgba(0,0,0,0.28), 0 8px 20px rgba(0,0,0,0.38)',
+    ...(GLASS_FX as ViewStyle),
+  } as ViewStyle;
+}
+
 export const GLASS_BUTTON: ViewStyle = {
   width: 46,
   height: 46,
@@ -84,8 +105,7 @@ export function GlassIconButton({
       style={[
         GLASS_BUTTON,
         size !== 46 && { width: size, height: size, borderRadius: size / 2 },
-        { backgroundColor: c.glassBg, borderWidth: 1, borderColor: c.glassBorder },
-        GLASS_FX as ViewStyle,
+        liquidGlass(c),
         style,
       ]}
     >
@@ -192,17 +212,78 @@ export function AttentionCard({
   const ok = tone === 'green';
   return (
     <PressScale onPress={onPress} accessibilityRole="button" style={[s.alert, ok && s.alertOk]} scaleTo={0.985}>
-      <View style={[s.alertIcon, { backgroundColor: ok ? c.okIconBg : c.alertIconBg }]}>
-        {/* Red in both themes: urgency reads the same whatever the theme.
-            The green twin speaks in the leaf-green family instead. */}
-        <Ionicons name={ok ? 'checkmark-circle' : 'warning'} size={24} color={ok ? c.green : c.red} />
-      </View>
+      {/* Red in both themes: urgency reads the same whatever the theme.
+          The green twin speaks in the leaf-green family instead. */}
+      <StatusMedallion tone={ok ? 'ok' : 'alert'} size={38} />
       <View style={{ flex: 1 }}>
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
         <Text style={[s.alertSub, { color: c.textMuted }]}>{subtitle.join('  •  ')}</Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
     </PressScale>
+  );
+}
+
+// The round status badge: a filled disc (lime-to-green when all is well,
+// red when something needs attention) with a bold glyph, inside a soft halo
+// ring. Home's attention card and the Reminders "All caught up" card share it.
+export function StatusMedallion({ tone, size }: { tone: 'ok' | 'alert'; size: number }) {
+  const c = useTheme();
+  const ok = tone === 'ok';
+  const inner = Math.round(size * 0.72);
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: ok ? c.okIconBg : c.alertIconBg,
+        borderWidth: 1,
+        borderColor: ok ? c.okBorder : c.alertBorder,
+      }}
+    >
+      <LinearGradient
+        colors={ok ? [c.mint, c.green] : ['#FF8F86', c.red]}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+        style={{ width: inner, height: inner, borderRadius: inner / 2, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Ionicons name={ok ? 'checkmark' : 'alert'} size={Math.round(inner * 0.62)} color={ok ? c.scanInk : '#FFFFFF'} />
+      </LinearGradient>
+    </View>
+  );
+}
+
+// The two ways to add something, as a pair of small glass buttons: the same
+// glass as the header circles, the icon in the app's green, and only Scan a
+// label carrying a faint green rim as the first choice. Used by the empty
+// states on Home and Lists.
+export function AddActions({ onScan, onManual }: { onScan: () => void; onManual: () => void }) {
+  const c = useTheme();
+  const button = (primary: boolean) => (
+    <PressScale
+      key={primary ? 'scan' : 'manual'}
+      onPress={primary ? onScan : onManual}
+      scaleTo={0.96}
+      accessibilityRole="button"
+      accessibilityLabel={primary ? 'Scan a label' : 'Add manually'}
+      style={[
+        { flexDirection: 'row', alignItems: 'center', gap: 7, height: 40, paddingHorizontal: 15, borderRadius: 20 },
+        liquidGlass(c),
+        primary && { borderColor: c === LIGHT ? 'rgba(14,143,107,0.35)' : 'rgba(166,223,107,0.38)' },
+      ]}
+    >
+      <Ionicons name={primary ? 'scan-outline' : 'create-outline'} size={17} color={c.green} />
+      <Text style={{ color: c.text, fontSize: 14, fontWeight: '700' }}>{primary ? 'Scan a label' : 'Add manually'}</Text>
+    </PressScale>
+  );
+  return (
+    <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+      {button(true)}
+      {button(false)}
+    </View>
   );
 }
 
@@ -615,7 +696,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 4,
     minHeight: 58,
     paddingVertical: 7,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: c.alertBorder,
     backgroundColor: c.alertBg,
