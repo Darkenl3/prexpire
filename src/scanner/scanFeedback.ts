@@ -190,10 +190,72 @@ export function fuseDate(dayMonths: (string | null)[], years: (number | null)[],
   const dm = count(dayMonths)[0];
   const year = count(years)[0];
   if (!dm || dm[1] < 2 || !year) return null;
+  // A day and month also caught with a lookalike digit ("11-22" beside
+  // "11-25") must lead it by two.
+  if (!beatsRivals(dayMonths, dm[0])) return null;
   const iso = `${year[0]}-${dm[0]}`;
   const [y, mo, d] = iso.split('-').map(Number);
   const date = new Date(Date.UTC(y, mo - 1, d));
   if (date.getUTCMonth() !== mo - 1) return null;
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   return iso >= todayIso ? iso : null;
+}
+
+// Digits a dot-matrix stamp's reader confuses: 2 and 5 are mirror images in
+// the dot font (one vertical stroke missed turns a 5 into a 2), and 3/8,
+// 0/6/8/9 and 1/7 differ by a stroke or two.
+const LOOKALIKE_DIGITS = ['25', '38', '0689', '17'];
+const lookalike = (a: string, b: string) => a === b || LOOKALIKE_DIGITS.some((g) => g.includes(a) && g.includes(b));
+
+// Other dates in the recent reads that are the same date with a lookalike
+// digit swapped ("2026-11-22" beside "2026-11-25"): the stamp could be
+// either, so neither may confirm by a narrow margin.
+export function lookalikeRivals(recent: (string | null)[], iso: string): string[] {
+  const out: string[] = [];
+  for (const other of recent) {
+    if (!other || other === iso || out.includes(other) || other.length !== iso.length) continue;
+    let diff = 0;
+    let ok = true;
+    for (let i = 0; i < iso.length; i++) {
+      if (iso[i] === other[i]) continue;
+      diff += 1;
+      if (!lookalike(iso[i], other[i])) ok = false;
+    }
+    if (ok && diff === 1) out.push(other);
+  }
+  return out;
+}
+
+// With lookalike rivals in view, a date confirms only once it leads each of
+// them by two reads AND has at least twice their count. `recent` should be a
+// longer memory than the agreement window (RIVAL_WINDOW reads): a stamp that
+// reads "22" now and then must not win on a lucky streak.
+export const RIVAL_WINDOW = 12;
+export function beatsRivals(recent: (string | null)[], iso: string): boolean {
+  const n = (k: string) => recent.filter((r) => r === k).length;
+  return lookalikeRivals(recent, iso).every((r) => n(iso) >= n(r) + 2 && n(iso) >= n(r) * 2);
+}
+
+// The same date with one digit of its DAY swapped for a dot-matrix lookalike
+// (22 -> 25; 25 -> 22; 18 -> 13), when that is a real date and not past:
+// the choices a dot-matrix read offers beside the date it read, since the
+// reader cannot tell those digits apart reliably.
+export function lookalikeDays(iso: string, today: Date): string[] {
+  const [y, m, d] = iso.split('-');
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const out: string[] = [];
+  for (let i = 0; i < 2; i++) {
+    for (const g of LOOKALIKE_DIGITS) {
+      if (!g.includes(d[i])) continue;
+      for (const ch of g) {
+        if (ch === d[i]) continue;
+        const day = i === 0 ? ch + d[1] : d[0] + ch;
+        const n = Number(day);
+        const candidate = `${y}-${m}-${day}`;
+        const dim = new Date(Date.UTC(Number(y), Number(m), 0)).getUTCDate();
+        if (n >= 1 && n <= dim && candidate >= todayIso && !out.includes(candidate)) out.push(candidate);
+      }
+    }
+  }
+  return out;
 }

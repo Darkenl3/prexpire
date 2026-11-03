@@ -1,7 +1,7 @@
 // Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, dayMonthHint, fuseDate, readFor, lostDayBefore, type MissObservation } from './scanFeedback.ts';
+import { confirmsDate, looksDateShaped, missHint, settleHint, yearHint, dayMonthHint, fuseDate, readFor, lostDayBefore, lookalikeRivals, beatsRivals, lookalikeDays, type MissObservation } from './scanFeedback.ts';
 
 const base: MissObservation = {
   misses: 5,
@@ -110,4 +110,26 @@ test('a month-only read of a dot-matrix stamp waits for the day', () => {
   assert.equal(lostDayBefore(['. 11 .2026'], '11 .2026'), true);
   assert.equal(readFor('2026-11-30', 'month', false, [], true).needed, Infinity);
   assert.equal(lostDayBefore(['EXP 11/2026'], '11/2026'), false);
+});
+
+test('a lookalike digit never wins by a narrow margin', () => {
+  // 22 and 25 Nov: the 5 read as 2 in the dot font.
+  assert.deepEqual(lookalikeRivals(['2026-11-25', '2026-11-22', null], '2026-11-22'), ['2026-11-25']);
+  assert.equal(beatsRivals(['2026-11-22', '2026-11-25', '2026-11-22'], '2026-11-22'), false);
+  assert.equal(beatsRivals(['2026-11-25', '2026-11-25', '2026-11-25', '2026-11-22'], '2026-11-25'), true);
+  // Not lookalikes (4 and 5), or two digits apart: not rivals.
+  assert.deepEqual(lookalikeRivals(['2026-11-24'], '2026-11-25'), []);
+  assert.deepEqual(lookalikeRivals(['2026-12-22'], '2026-11-25'), []);
+  // No rivals: nothing to beat.
+  assert.equal(beatsRivals(['2026-11-25', '2026-11-25'], '2026-11-25'), true);
+});
+
+test('a dot-matrix read offers its lookalike days', () => {
+  const today = new Date(2026, 10, 3);
+  assert.ok(lookalikeDays('2026-11-22', today).includes('2026-11-25'));
+  assert.ok(lookalikeDays('2026-11-25', today).includes('2026-11-22'));
+  // Not a real day (52, 55), not past (02 Nov).
+  assert.ok(!lookalikeDays('2026-11-22', today).some((d) => d.endsWith('-52') || d === '2026-11-02'));
+  assert.deepEqual(lookalikeDays('2026-11-14', today), []);
+  assert.ok(lookalikeDays('2026-11-11', today).includes('2026-11-17'));
 });
