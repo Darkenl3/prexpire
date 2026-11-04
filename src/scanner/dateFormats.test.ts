@@ -278,3 +278,14 @@ test('photo: cottage cheese read by PaddleOCR ("2511:2026", "25112026")', () => 
   assert.equal(parseExpiry(['2511:2025'], dmy).kind, 'none');
   assert.equal(parseExpiry(['4013:2027'], dmy).kind, 'none');
 });
+
+test('photo: dog-food tin "22/06/28" read with its slashes as 1s ("22106128")', () => {
+  assert.equal(offers(['22106128'], '2028-06-22').primary.iso, '2028-06-22');
+  assert.equal(offers(['LOT 5693478 22106128'], '2028-06-22').primary.iso, '2028-06-22');
+  // The usual 8-digit stamps keep their reading.
+  assert.equal(offers(['17112026'], '2026-11-17').primary.iso, '2026-11-17');
+  assert.equal(offers(['20261117'], '2026-11-17').primary.iso, '2026-11-17');
+  // Not a date, or not in the future: nothing.
+  assert.equal(parseExpiry(['99106128'], dmy).kind, 'none');
+  assert.equal(parseExpiry(['22106125'], dmy).kind, 'none');
+});

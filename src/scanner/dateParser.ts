@@ -709,6 +709,24 @@ const PATTERNS: Pattern[] = [
     labelledOnly: true,
     read: (m) => [julian(Number(m[1]), Number(m[2]))].filter(Boolean) as Interpretation[],
   },
+  // 22106128 - a dot-matrix "22/06/28" whose slashes were read as 1s (the
+  // dog-food tin: a slash's dots are a thin diagonal, read as a 1). Eight
+  // digits with a 1 in the third and sixth places: day, month, two-digit
+  // year. Only standing alone in its line and only in the future, so a code
+  // like "12107128" is never a date unless it is a plausible expiry ahead.
+  {
+    re: new RegExp(`${NB}(\\d{2})1(\\d{2})1(\\d{2})${NA}`, 'g'),
+    isolatedOnly: true,
+    read: (m, opts) => {
+      const year = makeYear(m[3]);
+      const a = Number(m[1]);
+      const b = Number(m[2]);
+      const dmy = toDay(year, b, a);
+      const mdy = toDay(year, a, b);
+      const order = opts.preferredOrder === 'MDY' ? [mdy, dmy] : [dmy, mdy];
+      return order.filter((i, k): i is Interpretation => !!i && i.iso >= isoToday(opts.today) && (k === 0 || i.iso !== order[0]?.iso));
+    },
+  },
   // 17112026 with NO label (a bread bag's stamp under its lot code): an
   // 8-digit token standing ALONE in its line, read year-first (20261117) or
   // day/month-first (17112026 / 11172026). Future dates only, for the same
