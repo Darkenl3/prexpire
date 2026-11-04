@@ -239,13 +239,15 @@ export function beatsRivals(recent: (string | null)[], iso: string): boolean {
 // The same date with one digit of its DAY swapped for a dot-matrix lookalike
 // (22 -> 25; 25 -> 22; 18 -> 13), when that is a real date and not past:
 // the choices a dot-matrix read offers beside the date it read, since the
-// reader cannot tell those digits apart reliably.
-export function lookalikeDays(iso: string, today: Date): string[] {
+// reader cannot tell those digits apart reliably. `groups` narrows which
+// confusions count: ['25'] keeps only the 2/5 mirror, the one a dot font
+// really produces, so a clean "16" doesn't also offer 10, 18 and 19.
+export function lookalikeDays(iso: string, today: Date, groups: string[] = LOOKALIKE_DIGITS): string[] {
   const [y, m, d] = iso.split('-');
   const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const out: string[] = [];
   for (let i = 0; i < 2; i++) {
-    for (const g of LOOKALIKE_DIGITS) {
+    for (const g of groups) {
       if (!g.includes(d[i])) continue;
       for (const ch of g) {
         if (ch === d[i]) continue;

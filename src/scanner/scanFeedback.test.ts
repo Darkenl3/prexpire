@@ -132,4 +132,8 @@ test('a dot-matrix read offers its lookalike days', () => {
   assert.ok(!lookalikeDays('2026-11-22', today).some((d) => d.endsWith('-52') || d === '2026-11-02'));
   assert.deepEqual(lookalikeDays('2026-11-14', today), []);
   assert.ok(lookalikeDays('2026-11-11', today).includes('2026-11-17'));
+  // Only the 2/5 mirror: a clean 16 offers nothing, 22 still offers 25.
+  assert.deepEqual(lookalikeDays('2027-03-16', today, ['25']), []);
+  assert.deepEqual(lookalikeDays('2026-11-22', today, ['25']), ['2026-11-25']);
+  assert.ok(lookalikeDays('2027-03-16', today).includes('2027-03-18'));
 });
