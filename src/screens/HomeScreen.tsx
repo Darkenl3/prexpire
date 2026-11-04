@@ -125,7 +125,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         key: cat.id,
         tint: (builtin ? builtin.tint : folder!.tint) as Tint,
         name: cat.name,
-        sub: `${saved.filter((i) => i.category === cat.id).length} items`,
+        sub: ((n) => (n === 1 ? '1 item' : `${n} items`))(saved.filter((i) => i.category === cat.id).length),
         status: tileStatus(attention.byCategory(cat.id)),
         // A folder's illustration is in the built-ins' style (an unknown or
         // old icon identifier shows the folder picture, never a blank).
