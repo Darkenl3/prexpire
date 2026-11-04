@@ -38,16 +38,6 @@ import { byCategory, byMonth, tally, usedInTime, type Tally } from '../stats';
 import appConfig from '../../app.json';
 
 const APP_VERSION: string = appConfig.expo.version;
-// The web build the phone is running: the offline bundle's stamp (build day,
-// UTC time and hash, "v20261104-t1258-…"), shortened to its day and time.
-// Changes when the app downloads a newer build from its host. On the open
-// web (no offline bundle) the row is not shown.
-const WEB_BUILD: string | null = (() => {
-  if (typeof document === 'undefined') return null;
-  const stamp = document.querySelector('meta[name="prexpire-offline"]')?.getAttribute('content');
-  const m = stamp ? /^v(\d{4})(\d{2})(\d{2})-t(\d{2})(\d{2})/.exec(stamp) : null;
-  return m ? `${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]} UTC` : null;
-})();
 const WEB = Platform.OS === 'web';
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -257,7 +247,6 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <SettingsSection title="About">
         <SettingsCard>
           <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION} />
-          {WEB_BUILD && <SettingRow icon="cloud-download-outline" accent="teal" title="Web version" value={WEB_BUILD} />}
           <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" onPress={() => open('help')} />
           <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
         </SettingsCard>
