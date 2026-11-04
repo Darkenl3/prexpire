@@ -1,0 +1,9 @@
+{
+  "cleanUrls": false,
+  "headers": [
+    {
+      "source": "offline.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
+}

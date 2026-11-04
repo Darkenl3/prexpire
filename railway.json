@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "buildCommand": "npx expo export --platform web && node scripts/build-offline-html.mjs"
+  },
+  "deploy": {
+    "startCommand": "npx --yes serve@14.2.4 dist -c ../serve.json",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
