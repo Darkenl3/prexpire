@@ -28,6 +28,16 @@ type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPa
 const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
 
+// iOS zooms the page into a text field when it's tapped (and leaves it
+// zoomed). maximum-scale=1 stops that focus zoom; iOS still lets people pinch
+// to zoom, so it costs no accessibility.
+if (WEB && typeof document !== 'undefined') {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (meta && !/maximum-scale/.test(meta.getAttribute('content') ?? '')) {
+    meta.setAttribute('content', `${meta.getAttribute('content')}, maximum-scale=1, viewport-fit=cover`);
+  }
+}
+
 // Set once the get-started screen has been answered (or skipped because the
 // person already had items), so it shows on a fresh install only.
 const WELCOME_KEY = 'prexpire.welcomed.v1';

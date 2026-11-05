@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme } from '../theme';
 import { useSettings } from '../settings';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
+import { useWebKeyboardInset } from './WebKeyboardInset';
 
 // The shared bottom sheet every expandable panel in the app sits on (Filter &
 // Sort, the settings value pickers, and any future panel). It owns the whole
@@ -132,18 +133,43 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
     }),
   ).current;
 
+  // The phone keyboard (web / the iPhone app's WebView): the sheet sits right
+  // on top of it and shrinks to the space that's left, so the field being
+  // typed in stays in view. iOS also shoves the whole page up to reveal a
+  // focused field; with the sheet already above the keys that shove is only
+  // a jump, so it's undone.
+  const keyboard = useWebKeyboardInset();
+  useEffect(() => {
+    if (!visible || typeof window === 'undefined') return;
+    const vv = (window as unknown as { visualViewport?: { offsetTop: number; addEventListener: (t: string, f: () => void) => void; removeEventListener: (t: string, f: () => void) => void } }).visualViewport;
+    if (!vv) return;
+    const settle = () => {
+      if (vv.offsetTop > 0) window.scrollTo(0, 0);
+    };
+    vv.addEventListener('scroll', settle);
+    vv.addEventListener('resize', settle);
+    return () => {
+      vv.removeEventListener('scroll', settle);
+      vv.removeEventListener('resize', settle);
+    };
+  }, [visible]);
+  // The full page height minus the keyboard. (On the web the window size React
+  // Native reports already shrinks with the keyboard, so measure the page.)
+  const pageHeight = typeof window !== 'undefined' && window.innerHeight ? window.innerHeight : win.height;
+  const visibleHeight = pageHeight - keyboard;
   // The sheet's height budget: never above this ratio of the window, and
   // never reaching into the status-bar/header zone.
-  const maxHeight = Math.max(240, Math.min(win.height * maxHeightRatio, win.height - insets.top - 24));
+  const maxHeight = Math.max(keyboard ? 200 : 240, Math.min(visibleHeight * (keyboard ? 1 : maxHeightRatio), visibleHeight - insets.top - 24));
   // Bottom clearance: the home-indicator inset, plus the bottom navigation's
   // zone (the app's pill on the web, the native glass bar inside the shell)
-  // so the last row and every action button sit fully clear of it.
+  // so the last row and every action button sit fully clear of it. With the
+  // keyboard up, both are behind the keys: a small margin is enough.
   const navZone = shellEmbedded() ? SHELL_NAV_ZONE : NAV_HEIGHT + navOffset(insets.bottom) + 12;
-  const bottomPad = Math.max(insets.bottom, 12) + 8 + navZone;
+  const bottomPad = keyboard ? 12 : Math.max(insets.bottom, 12) + 8 + navZone;
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={requestClose} {...({ 'aria-modal': true } as object)}>
-      <View style={s.wrap}>
+      <View style={[s.wrap, keyboard ? { paddingBottom: keyboard } : null]}>
         <Animated.View style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrim }]} pointerEvents="none" />
         <Pressable style={StyleSheet.absoluteFill} onPress={requestClose} accessibilityLabel={`Close ${title}`} importantForAccessibility="no" />
         <Animated.View
