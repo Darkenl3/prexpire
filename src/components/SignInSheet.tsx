@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet } from './BottomSheet';
 import { PressScale } from './Press';
 import { makeStyles, useTheme, LIGHT } from '../theme';
-import { MIN_PASSWORD, appleSignInAvailable, useAuth, type Outcome } from '../auth';
+import { MIN_PASSWORD, appleSignInAvailable, googleSignInAvailable, useAuth, type Outcome } from '../auth';
 import { TurnstileFrame } from './TurnstileFrame';
 
 // Signing in, creating an account, and resetting a password, in one sheet.
@@ -270,28 +270,46 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     />
   ) : null;
 
-  // Sign in with Apple (inside the iPhone app): first, as Apple asks, and
-  // the same button whether signing in or creating an account.
-  const apple = appleSignInAvailable() ? (
+  // Sign in with Apple and Google (inside the iPhone app), first, as Apple
+  // asks: the same buttons whether signing in or creating an account. Each
+  // shows only in builds that support it.
+  const viaProvider = async (run: () => Promise<Outcome>) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const out = await run();
+    setBusy(false);
+    if (!out.error) return done();
+    if (out.error !== 'canceled') setError(out.error);
+  };
+  const hasApple = appleSignInAvailable();
+  const hasGoogle = googleSignInAvailable();
+  const apple = hasApple || hasGoogle ? (
     <>
-      <PressScale
-        onPress={async () => {
-          if (busy) return;
-          setBusy(true);
-          setError(null);
-          const out = await auth.signInWithApple();
-          setBusy(false);
-          if (!out.error) return done();
-          if (out.error !== 'canceled') setError(out.error);
-        }}
-        scaleTo={0.97}
-        accessibilityRole="button"
-        accessibilityLabel="Continue with Apple"
-        style={[s.apple, { backgroundColor: c === LIGHT ? '#000' : '#fff' }]}
-      >
-        <Ionicons name="logo-apple" size={20} color={c === LIGHT ? '#fff' : '#000'} />
-        <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>Continue with Apple</Text>
-      </PressScale>
+      {hasApple ? (
+        <PressScale
+          onPress={() => viaProvider(auth.signInWithApple)}
+          scaleTo={0.97}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Apple"
+          style={[s.apple, { backgroundColor: c === LIGHT ? '#000' : '#fff' }]}
+        >
+          <Ionicons name="logo-apple" size={20} color={c === LIGHT ? '#fff' : '#000'} />
+          <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>Continue with Apple</Text>
+        </PressScale>
+      ) : null}
+      {hasGoogle ? (
+        <PressScale
+          onPress={() => viaProvider(auth.signInWithGoogle)}
+          scaleTo={0.97}
+          accessibilityRole="button"
+          accessibilityLabel="Continue with Google"
+          style={[s.apple, s.google]}
+        >
+          <Ionicons name="logo-google" size={18} color={c.text} />
+          <Text style={[s.appleText, { color: c.text }]}>Continue with Google</Text>
+        </PressScale>
+      ) : null}
       <View style={s.orRow}>
         <View style={s.orLine} />
         <Text style={s.orText}>or with email</Text>
@@ -522,6 +540,7 @@ const useStyles = makeStyles((c) => ({
   body: { gap: 12, paddingTop: 4, paddingBottom: 8 },
   apple: { height: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   appleText: { fontSize: 17, fontWeight: '600' },
+  google: { backgroundColor: c.cardAlt, borderWidth: 1.5, borderColor: c.surfaceBorder },
   orRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
   orLine: { flex: 1, height: 1, backgroundColor: c.surfaceBorder },
   orText: { color: c.textMuted, fontSize: 13 },

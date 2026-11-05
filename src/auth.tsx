@@ -51,6 +51,7 @@ type AuthContext = {
   // Resolves with error null on success, 'canceled' when the person closed
   // Apple's sheet (no message needed), or a sentence.
   signInWithApple: () => Promise<Outcome>;
+  signInWithGoogle: () => Promise<Outcome>;
   signOut: () => Promise<void>;
 };
 
@@ -132,21 +133,28 @@ function randomNonce(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Asks the iPhone app for Apple's native sign-in sheet, then signs in to
-// Supabase with Apple's identity token.
-async function appleIdToken(hashedNonce: string): Promise<{ token?: string; error?: string }> {
+// Sign in with Google is native too; the flag is set only by app builds that
+// have it configured.
+export function googleSignInAvailable(): boolean {
+  return typeof window !== 'undefined' && !!(window as { __prexpireGoogleSignIn?: unknown }).__prexpireGoogleSignIn && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
+}
+
+// Asks the iPhone app for a native sign-in sheet (Apple's or Google's) and
+// waits for the identity token it sends back.
+async function nativeIdToken(provider: 'apple' | 'google', extra: Record<string, string> = {}): Promise<{ token?: string; error?: string }> {
   const shell = (window as { ReactNativeWebView?: { postMessage?: (d: string) => void } }).ReactNativeWebView;
   if (!shell?.postMessage) return { error: 'failed' };
-  const requestId = `apple-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const requestId = `${provider}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const event = `prexpire:${provider}-signin`;
   return new Promise((resolve) => {
     const onReply = (e: Event) => {
       const d = (e as CustomEvent<{ requestId?: string; token?: string; error?: string }>).detail;
       if (!d || d.requestId !== requestId) return;
-      window.removeEventListener('prexpire:apple-signin', onReply);
+      window.removeEventListener(event, onReply);
       resolve({ token: d.token, error: d.error });
     };
-    window.addEventListener('prexpire:apple-signin', onReply);
-    shell.postMessage!(JSON.stringify({ type: 'apple-signin', requestId, nonce: hashedNonce }));
+    window.addEventListener(event, onReply);
+    shell.postMessage!(JSON.stringify({ type: `${provider}-signin`, requestId, ...extra }));
   });
 }
 const fail = (e: unknown): Outcome => ({ error: explain({ message: String(e) }) });
@@ -267,10 +275,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithApple = useCallback(async (): Promise<Outcome> => {
     try {
       const raw = randomNonce();
-      const apple = await appleIdToken(sha256Hex(raw));
+      const apple = await nativeIdToken('apple', { nonce: sha256Hex(raw) });
       if (apple.error === 'canceled') return { error: 'canceled' };
       if (!apple.token) return { error: "Sign in with Apple didn't work. Try again, or use your email." };
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: apple.token, nonce: raw });
+      return { error: explain(error) };
+    } catch (e) {
+      return fail(e);
+    }
+  }, []);
+
+  const signInWithGoogle = useCallback(async (): Promise<Outcome> => {
+    try {
+      const google = await nativeIdToken('google');
+      if (google.error === 'canceled') return { error: 'canceled' };
+      if (!google.token) return { error: "Sign in with Google didn't work. Try again, or use your email." };
+      const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: google.token });
       return { error: explain(error) };
     } catch (e) {
       return fail(e);
@@ -301,9 +321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyLoginCode,
       setPassword,
       signInWithApple,
+      signInWithGoogle,
       signOut,
     }),
-    [ready, session, signUp, confirmSignUp, resendConfirmation, signIn, sendResetCode, verifyResetCode, sendLoginCode, verifyLoginCode, setPassword, signInWithApple, signOut],
+    [ready, session, signUp, confirmSignUp, resendConfirmation, signIn, sendResetCode, verifyResetCode, sendLoginCode, verifyLoginCode, setPassword, signInWithApple, signInWithGoogle, signOut],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
