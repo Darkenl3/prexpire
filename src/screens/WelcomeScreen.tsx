@@ -81,7 +81,6 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
   const enter = useRef(CARDS.map(() => new Animated.Value(motion ? 0 : 1))).current;
   const copy = useRef(new Animated.Value(motion ? 0 : 1)).current;
   const [step, setStep] = useState(motion ? 0 : STEPS - 1);
-  const flip = useRef(CARDS.map(() => new Animated.Value(1))).current;
   useEffect(() => {
     if (!motion) return;
     Animated.stagger(200, [
@@ -91,18 +90,6 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
     const timers = Array.from({ length: STEPS - 1 }, (_, i) => setTimeout(() => setStep(i + 1), 2600 + i * TICK_MS));
     return () => timers.forEach(clearTimeout);
   }, [motion, enter, copy, native]);
-  // A value that changes drops in from above, like a counter turning.
-  const shown = useRef(CARDS.map((card) => card.frames[0].value));
-  useEffect(() => {
-    CARDS.forEach((card, i) => {
-      const value = card.frames[Math.min(step, card.frames.length - 1)].value;
-      if (value === shown.current[i]) return;
-      shown.current[i] = value;
-      flip[i].setValue(0);
-      Animated.timing(flip[i], { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
-    });
-  }, [step, flip, native]);
-
   const column = Math.min(width - 48, 420);
 
   return (
@@ -120,36 +107,16 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
         />
 
         <View style={[s.cards, { marginTop: compact ? 22 : 44 }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {CARDS.map((card, i) => {
-            const v = enter[i];
-            const shift = i === 1 ? 26 : i === 2 ? -10 : 0; // a loose stack, not a grid
-            const f = card.frames[Math.min(step, card.frames.length - 1)];
-            return (
-              <Animated.View
-                key={card.name}
-                style={[
-                  s.card,
-                  { marginLeft: shift, opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }, { scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] },
-                ]}
-              >
-                <View style={[s.tile, { backgroundColor: TONE[f.tone].tile }]}>
-                  <Ionicons name={card.icon} size={21} color={TONE[f.tone].fg} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.cardName}>{card.name}</Text>
-                  <Text style={s.cardLabel}>{f.label}</Text>
-                </View>
-                <Animated.Text
-                  style={[
-                    s.cardValue,
-                    { color: TONE[f.tone].fg, opacity: flip[i], transform: [{ translateY: flip[i].interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] },
-                  ]}
-                >
-                  {f.value}
-                </Animated.Text>
-              </Animated.View>
-            );
-          })}
+          {CARDS.map((card, i) => (
+            <CountdownCard
+              key={card.name}
+              card={card}
+              frame={card.frames[Math.min(step, card.frames.length - 1)]}
+              enter={enter[i]}
+              shift={i === 1 ? 26 : i === 2 ? -10 : 0} // a loose stack, not a grid
+              native={native}
+            />
+          ))}
         </View>
 
         <Animated.View style={[s.copy, { opacity: copy, transform: [{ translateY: copy.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }]}>
@@ -179,7 +146,71 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
   );
 }
 
+// One card of the countdown. When its frame changes, the old state and the
+// new one are both on screen for a moment: the old value rolls up and out
+// while the new one rolls up into place (like a counter), and the label and
+// the coloured tile cross-fade with it, so the whole row changes as one
+// smooth movement instead of the text snapping.
+const ROLL_MS = 700;
+const ROLL_PX = 12;
+function CountdownCard({ card, frame, enter, shift, native }: { card: Card; frame: Frame; enter: Animated.Value; shift: number; native: boolean }) {
+  const [cur, setCur] = useState(frame);
+  const [prev, setPrev] = useState<Frame | null>(null);
+  const t = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (frame === cur) return;
+    setPrev(cur);
+    setCur(frame);
+    t.setValue(0);
+    Animated.timing(t, { toValue: 1, duration: ROLL_MS, easing: Easing.inOut(Easing.cubic), useNativeDriver: native }).start(({ finished }) => {
+      if (finished) setPrev(null);
+    });
+  }, [frame, cur, t, native]);
+
+  const out = { opacity: t.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 0, 0] }), transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, -ROLL_PX] }) }] };
+  const into = { opacity: t.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 0, 1] }), transform: [{ translateY: t.interpolate({ inputRange: [0, 1], outputRange: [ROLL_PX, 0] }) }] };
+  const fadeOut = { opacity: t.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) };
+  const valueChanged = !!prev && prev.value !== cur.value;
+  const labelChanged = !!prev && prev.label !== cur.label;
+  const toneChanged = !!prev && prev.tone !== cur.tone;
+
+  return (
+    <Animated.View
+      style={[
+        s.card,
+        { marginLeft: shift, opacity: enter, transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }, { scale: enter.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] },
+      ]}
+    >
+      <View style={[s.tile, { backgroundColor: TONE[cur.tone].tile }]}>
+        <Ionicons name={card.icon} size={21} color={TONE[cur.tone].fg} />
+        {toneChanged && prev ? (
+          <Animated.View style={[StyleSheet.absoluteFill, s.tileOverlay, { backgroundColor: TONE[prev.tone].tile }, fadeOut]}>
+            <Ionicons name={card.icon} size={21} color={TONE[prev.tone].fg} />
+          </Animated.View>
+        ) : null}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.cardName}>{card.name}</Text>
+        <View style={s.rollBox}>
+          <Animated.Text style={[s.cardLabel, labelChanged ? into : null]}>{cur.label}</Animated.Text>
+          {labelChanged && prev ? <Animated.Text style={[s.cardLabel, s.rollPrevLeft, out]}>{prev.label}</Animated.Text> : null}
+        </View>
+      </View>
+      <View style={[s.rollBox, { alignItems: 'flex-end' }]}>
+        <Animated.Text style={[s.cardValue, { color: TONE[cur.tone].fg }, valueChanged ? into : null]}>{cur.value}</Animated.Text>
+        {valueChanged && prev ? <Animated.Text style={[s.cardValue, s.rollPrevRight, { color: TONE[prev.tone].fg }, out]}>{prev.value}</Animated.Text> : null}
+      </View>
+    </Animated.View>
+  );
+}
+
 const s = StyleSheet.create({
+  // The rolling text: the new line in the flow, the old one on top of it,
+  // clipped so the roll stays inside the row.
+  rollBox: { position: 'relative', overflow: 'hidden' },
+  rollPrevLeft: { position: 'absolute', left: 0, top: 0 },
+  rollPrevRight: { position: 'absolute', right: 0, top: 0 },
+  tileOverlay: { borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1, backgroundColor: '#081A13', alignItems: 'center', overflow: 'hidden' },
   glow: {
     position: 'absolute',
