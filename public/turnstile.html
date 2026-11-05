@@ -5,9 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Prexpire security check</title>
+<meta name="color-scheme" content="light dark">
+<script>
+  // Match the app's theme so the frame stays transparent (a colour scheme
+  // different from the app's makes browsers paint the frame white).
+  document.documentElement.style.colorScheme = new URLSearchParams(location.search).get('theme') === 'light' ? 'light' : 'dark';
+</script>
 <style>
   html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
-  #box { display: flex; justify-content: center; }
+  #box, #box > div { width: 100%; }
 </style>
 </head>
 <body>
