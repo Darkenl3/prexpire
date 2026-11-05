@@ -9,6 +9,7 @@ import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import { SignInSheet } from './src/components/SignInSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
 import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
@@ -100,6 +101,7 @@ function Shell() {
   // 'unknown' for the moment it takes to read storage. Anyone who already has
   // items is an existing user: marked done without ever seeing it.
   const [welcome, setWelcome] = useState<'unknown' | 'show' | 'done'>('unknown');
+  const [welcomeSignIn, setWelcomeSignIn] = useState(false);
   useEffect(() => {
     if (!itemsReady || welcome !== 'unknown') return;
     let cancelled = false;
@@ -398,14 +400,19 @@ function Shell() {
   if (welcome === 'unknown') return <View style={{ flex: 1 }} />;
   if (welcome === 'show')
     return (
-      <WelcomeScreen
-        onStart={finishWelcome}
-        onSignIn={() => {
-          finishWelcome();
-          setRoute({ tab: 'settings', settingsPage: 'signin' });
-          setLastTab('settings');
-        }}
-      />
+      <>
+        <WelcomeScreen onStart={finishWelcome} onSignIn={() => setWelcomeSignIn(true)} />
+        {/* Sign-in opens ON the get-started screen: backing out (or cancelling
+            Apple/Google) returns here; only a finished sign-in goes in. */}
+        <SignInSheet
+          visible={welcomeSignIn}
+          onClose={() => setWelcomeSignIn(false)}
+          onSignedIn={() => {
+            setWelcomeSignIn(false);
+            finishWelcome();
+          }}
+        />
+      </>
     );
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera

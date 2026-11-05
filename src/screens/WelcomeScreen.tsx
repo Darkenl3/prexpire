@@ -26,9 +26,10 @@ const INK_MUTED = 'rgba(237,243,238,0.68)';
 const LIME = '#A6DF6B';
 
 // The memorable moment: the cards COUNT DOWN once, the way the app does over
-// days — milk goes 4 → 3 → 2 days and turns amber, the yogurt runs out and
-// flips to Expired. Each card lists its states; the screen steps through
-// them once after the entrance, then holds the last one.
+// days — milk goes 4 → 3 → 2 days and turns amber, and only then, on a beat
+// of its own, the yogurt runs out and flips to Expired (never two cards
+// changing at once). Each card lists its state per step; the screen steps
+// through them once after the entrance, then holds the last one.
 type Tone = 'ok' | 'soon' | 'gone';
 type Frame = { label: string; value: string; tone: Tone };
 type Card = { icon: keyof typeof Ionicons.glyphMap; name: string; frames: Frame[] };
@@ -40,6 +41,7 @@ const CARDS: Card[] = [
       { label: 'Expires in', value: '4 days', tone: 'ok' },
       { label: 'Expires in', value: '3 days', tone: 'ok' },
       { label: 'Use it soon', value: '2 days', tone: 'soon' },
+      { label: 'Use it soon', value: '2 days', tone: 'soon' },
     ],
   },
   { icon: 'medkit-outline', name: 'Ibuprofen', frames: [{ label: 'Expires in', value: '7 months', tone: 'ok' }] },
@@ -49,11 +51,12 @@ const CARDS: Card[] = [
     frames: [
       { label: 'Use it today', value: '1 day', tone: 'soon' },
       { label: 'Use it today', value: '1 day', tone: 'soon' },
+      { label: 'Use it today', value: '1 day', tone: 'soon' },
       { label: 'Past its date', value: 'Expired', tone: 'gone' },
     ],
   },
 ];
-const STEPS = 3;
+const STEPS = 4;
 const TICK_MS = 1500;
 const TONE = {
   ok: { fg: '#8FDB9C', tile: 'rgba(108,194,126,0.16)' },
