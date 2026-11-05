@@ -15,6 +15,7 @@ import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
+import { AuthProvider } from './src/auth';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue, dayOrderForFormat } from './src/preferences';
@@ -22,7 +23,7 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
-type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPage?: 'categories' } | { tab: 'scan'; manual?: boolean };
+type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPage?: 'categories' | 'signin' } | { tab: 'scan'; manual?: boolean };
 
 const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
@@ -392,6 +393,11 @@ function Shell() {
           onNavigate('scan');
         }}
         onExplore={finishWelcome}
+        onSignIn={() => {
+          finishWelcome();
+          setRoute({ tab: 'settings', settingsPage: 'signin' });
+          setLastTab('settings');
+        }}
       />
     );
 
@@ -509,7 +515,9 @@ export default function App() {
           <ItemsProvider>
             <ShoppingProvider>
               <ThemeProvider>
-                <ThemedApp />
+                <AuthProvider>
+                  <ThemedApp />
+                </AuthProvider>
               </ThemeProvider>
             </ShoppingProvider>
           </ItemsProvider>

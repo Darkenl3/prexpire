@@ -36,6 +36,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKUP_PREFIX, backupFileName, buildBackup, parseBackup } from '../backup';
 import { byCategory, byMonth, tally, usedInTime, type Tally } from '../stats';
 import appConfig from '../../app.json';
+import { useAuth } from '../auth';
+import { ChangePasswordSheet, SignInSheet } from '../components/SignInSheet';
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
@@ -48,6 +50,7 @@ type IconName = keyof typeof Ionicons.glyphMap;
 // The root list stays one glanceable screen.
 
 type PageId =
+  | 'account'
   | 'profile'
   | 'privacy'
   | 'notifications'
@@ -59,6 +62,7 @@ type PageId =
   | 'terms';
 
 const PAGE_TITLES: Record<PageId, string> = {
+  account: 'Account',
   profile: 'Profile',
   privacy: 'Privacy & Security',
   notifications: 'Notifications',
@@ -70,7 +74,9 @@ const PAGE_TITLES: Record<PageId, string> = {
   terms: 'Terms & Privacy',
 };
 
-type Props = { badge: number; onNavigate: (route: string) => void; initialPage?: 'categories' };
+// 'signin' opens Settings with the sign-in sheet already up (from the
+// get-started screen's "Have an account? Sign in").
+type Props = { badge: number; onNavigate: (route: string) => void; initialPage?: 'categories' | 'signin' };
 
 export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const t = useTheme();
@@ -82,7 +88,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const { all, clearAll: clearCategories } = useCategories();
   const { items: shoppingItems, clearAll: clearShopping } = useShopping();
   const [confirmClear, setConfirmClear] = useState(false);
-  const [page, setPage] = useState<PageId | null>(initialPage ?? null);
+  const [page, setPage] = useState<PageId | null>(initialPage === 'categories' ? 'categories' : null);
+  const { email } = useAuth();
+  const [signInOpen, setSignInOpen] = useState(initialPage === 'signin');
   // The settings search sheet, opened from the magnifier in the header.
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -143,20 +151,26 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         </View>
       )}
 
+      {/* Account: signed out it invites a sign-in (optional, the app works
+          without one); signed in it shows who, and opens the Account page. */}
       <PressScale
-        onPress={() => open('profile')}
+        onPress={() => (email ? open('account') : setSignInOpen(true))}
         accessibilityRole="button"
-        accessibilityLabel="Profile"
+        accessibilityLabel={email ? `Account, signed in as ${email}` : 'Sign in to back up your items'}
         style={s.profileCard}
         scaleTo={0.99}
       >
         <View style={s.avatar}>
-          <Ionicons name="person" size={30} color={t.pills.green.text} />
+          {email ? (
+            <Text style={s.avatarLetter}>{email[0].toUpperCase()}</Text>
+          ) : (
+            <Ionicons name="cloud-upload-outline" size={28} color={t.pills.green.text} />
+          )}
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.profileTitle}>Preferences</Text>
+          <Text style={s.profileTitle} numberOfLines={1}>{email ? email : 'Sign in'}</Text>
           <Text style={s.profileSub} numberOfLines={1}>
-            {WEB ? 'Saved in this browser' : 'Saved on this device'}
+            {email ? 'Signed in' : 'Back up your items to an account'}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
@@ -297,7 +311,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
               </View>
             </View>
             <ScrollViewLike bottomPad={bottomPad}>
-              <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate)}</View>
+              <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate, closePage)}</View>
             </ScrollViewLike>
           </View>
         </Animated.View>
@@ -317,6 +331,8 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           setConfirmClear(false);
         }}
       />
+
+      <SignInSheet visible={signInOpen} onClose={() => setSignInOpen(false)} />
 
       <SettingsSearch
         visible={searchOpen}
@@ -460,8 +476,10 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
   );
 }
 
-function renderDetail(page: PageId, onNavigate: (route: string) => void) {
+function renderDetail(page: PageId, onNavigate: (route: string) => void, closePage: () => void) {
   switch (page) {
+    case 'account':
+      return <AccountDetail onSignedOut={closePage} />;
     case 'profile':
       return <ProfileDetail />;
     case 'privacy':
@@ -483,6 +501,53 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void) {
     default:
       return null;
   }
+}
+
+// Account: who is signed in, and signing out. Signing out keeps every item on
+// this phone; it only disconnects the account.
+function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
+  const s = useStyles();
+  const { email, session, signOut } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [changePw, setChangePw] = useState(false);
+  const since = session?.user?.created_at ? new Date(session.user.created_at) : null;
+  return (
+    <>
+      <View style={s.heroCard}>
+        <View style={s.heroAvatar}>
+          <Text style={s.avatarLetter}>{(email ?? '?')[0].toUpperCase()}</Text>
+        </View>
+        <Text style={s.heroTitle} numberOfLines={1}>{email ?? 'Signed out'}</Text>
+        <Text style={s.heroSub}>{since ? `Account since ${since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}` : 'Signed in'}</Text>
+      </View>
+      <SettingsSection title="Backup">
+        <SettingsCard>
+          <SettingRow icon="phone-portrait-outline" accent="teal" title="Your items" value="On this phone" />
+          <SettingRow icon="cloud-outline" accent="mint" title="Account backup" value="Next update" />
+        </SettingsCard>
+        <Note>Your items stay on this phone and work offline. Backing them up to your account comes in the next update.</Note>
+      </SettingsSection>
+      <SettingsSection title="Session">
+        <SettingsCard>
+          <SettingRow icon="key-outline" accent="blue" title="Change password" description="Choose a new password for this account" onPress={() => setChangePw(true)} />
+          <SettingRow
+            icon="log-out-outline"
+            accent="amber"
+            title="Sign out"
+            description="Your items stay on this phone"
+            onPress={async () => {
+              if (busy) return;
+              setBusy(true);
+              await signOut();
+              setBusy(false);
+              onSignedOut();
+            }}
+          />
+        </SettingsCard>
+      </SettingsSection>
+      <ChangePasswordSheet visible={changePw} onClose={() => setChangePw(false)} />
+    </>
+  );
 }
 
 function ProfileDetail() {
@@ -1111,6 +1176,7 @@ const useStyles = makeStyles((t) => ({
   avatar: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', backgroundColor: t.pills.green.bg },
   profileTitle: { color: t.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.2 },
   profileSub: { color: t.textSub, fontSize: 13.5, marginTop: 2 },
+  avatarLetter: { color: t.pills.green.text, fontSize: 24, fontWeight: '800' },
   heroCard: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 16, marginBottom: 24, borderRadius: 20, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, ...(t === LIGHT ? CARD_SHADOW_LIFTED : null) },
   heroAvatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: t.pills.green.bg, marginBottom: 12 },
   heroTitle: { color: t.text, fontSize: 21, fontWeight: '700', letterSpacing: -0.3 },
