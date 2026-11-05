@@ -553,13 +553,13 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
           <SettingRow icon={status === 'offline' ? 'cloud-offline-outline' : 'cloud-done-outline'} accent="mint" title="Last backed up" value={backupValue} />
           <SettingRow icon="refresh-outline" accent="teal" title="Back up now" description="Also brings in changes from your other phones" onPress={() => syncNow()} />
         </SettingsCard>
-        <Note>
-          {status === 'offline'
-            ? "You're offline. Your items are safe on this phone, and they'll back up when you're connected."
-            : status === 'error'
-              ? "The last backup didn't finish. It tries again on its own; you can also tap Back up now."
-              : 'Your items, shopping list and categories back up to your account and stay the same on every phone you sign in on.'}
-        </Note>
+        {status === 'offline' || status === 'error' ? (
+          <Note>
+            {status === 'offline'
+              ? "You're offline. Your items are safe on this phone, and they'll back up when you're connected."
+              : "The last backup didn't finish. It tries again on its own; you can also tap Back up now."}
+          </Note>
+        ) : null}
       </SettingsSection>
       <SettingsSection title="Session">
         <SettingsCard>
