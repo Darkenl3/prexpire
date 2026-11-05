@@ -456,7 +456,9 @@ const useStyles = makeStyles((c) => ({
   boxActive: { borderColor: c.mint, borderWidth: 2 },
   boxBad: { borderColor: c.red },
   boxDigit: { color: c.text, fontSize: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  hiddenInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.011, color: 'transparent', fontSize: 1 },
+  // 16 pt at least: iOS zooms the page into any field with smaller text when
+  // it's tapped. The field is invisible anyway; the boxes show the digits.
+  hiddenInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.011, color: 'transparent', fontSize: 16 },
   lede: { color: c.textMuted, fontSize: 15, lineHeight: 21 },
   input: {
     height: 54,
