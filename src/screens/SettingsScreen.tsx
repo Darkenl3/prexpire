@@ -37,7 +37,8 @@ import { BACKUP_PREFIX, backupFileName, buildBackup, parseBackup } from '../back
 import { byCategory, byMonth, tally, usedInTime, type Tally } from '../stats';
 import appConfig from '../../app.json';
 import { useAuth } from '../auth';
-import { ChangePasswordSheet, SignInSheet } from '../components/SignInSheet';
+import { ChangePasswordSheet, DeleteAccountSheet, SignInSheet } from '../components/SignInSheet';
+import { useSync } from '../sync';
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
@@ -507,10 +508,23 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
 // this phone; it only disconnects the account.
 function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
   const s = useStyles();
+  const t = useTheme();
   const { email, session, signOut } = useAuth();
+  const { status, lastSyncAt, syncNow } = useSync();
+  const { formatDate } = useSettings();
   const [busy, setBusy] = useState(false);
   const [changePw, setChangePw] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const since = session?.user?.created_at ? new Date(session.user.created_at) : null;
+  const synced = lastSyncAt ? new Date(lastSyncAt) : null;
+  const ago = synced
+    ? Date.now() - synced.getTime() < 60000
+      ? 'Just now'
+      : synced.toDateString() === new Date().toDateString()
+        ? synced.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        : formatDate(synced.toISOString().slice(0, 10))
+    : 'Not yet';
+  const backupValue = status === 'syncing' ? 'Backing up…' : status === 'offline' ? 'Offline' : status === 'error' ? "Didn't finish" : ago;
   return (
     <>
       <View style={s.heroCard}>
@@ -520,12 +534,18 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
         <Text style={s.heroTitle} numberOfLines={1}>{email ?? 'Signed out'}</Text>
         <Text style={s.heroSub}>{since ? `Account since ${since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}` : 'Signed in'}</Text>
       </View>
-      <SettingsSection title="Backup">
+      <SettingsSection title="Backup and sync">
         <SettingsCard>
-          <SettingRow icon="phone-portrait-outline" accent="teal" title="Your items" value="On this phone" />
-          <SettingRow icon="cloud-outline" accent="mint" title="Account backup" value="Next update" />
+          <SettingRow icon={status === 'offline' ? 'cloud-offline-outline' : 'cloud-done-outline'} accent="mint" title="Last backed up" value={backupValue} />
+          <SettingRow icon="refresh-outline" accent="teal" title="Back up now" description="Also brings in changes from your other phones" onPress={() => syncNow()} />
         </SettingsCard>
-        <Note>Your items stay on this phone and work offline. Backing them up to your account comes in the next update.</Note>
+        <Note>
+          {status === 'offline'
+            ? "You're offline. Your items are safe on this phone, and they'll back up when you're connected."
+            : status === 'error'
+              ? "The last backup didn't finish. It tries again on its own; you can also tap Back up now."
+              : 'Your items, shopping list and categories back up to your account and stay the same on every phone you sign in on.'}
+        </Note>
       </SettingsSection>
       <SettingsSection title="Session">
         <SettingsCard>
@@ -545,7 +565,13 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
           />
         </SettingsCard>
       </SettingsSection>
+      <SettingsSection title="Delete account">
+        <SettingsCard>
+          <SettingRow icon="trash-outline" accent="red" title="Delete account" titleColor={t.red} description="Removes the account and its online copy" onPress={() => setDeleting(true)} />
+        </SettingsCard>
+      </SettingsSection>
       <ChangePasswordSheet visible={changePw} onClose={() => setChangePw(false)} />
+      <DeleteAccountSheet visible={deleting} onClose={() => setDeleting(false)} onDeleted={onSignedOut} />
     </>
   );
 }

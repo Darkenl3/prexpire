@@ -3,8 +3,8 @@ import { ActivityIndicator, Platform, Text, TextInput, View } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet } from './BottomSheet';
 import { PressScale } from './Press';
-import { makeStyles, useTheme } from '../theme';
-import { MIN_PASSWORD, useAuth, type Outcome } from '../auth';
+import { makeStyles, useTheme, LIGHT } from '../theme';
+import { MIN_PASSWORD, appleSignInAvailable, useAuth, type Outcome } from '../auth';
 import { TurnstileFrame } from './TurnstileFrame';
 
 // Signing in, creating an account, and resetting a password, in one sheet.
@@ -270,10 +270,41 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     />
   ) : null;
 
+  // Sign in with Apple (inside the iPhone app): first, as Apple asks, and
+  // the same button whether signing in or creating an account.
+  const apple = appleSignInAvailable() ? (
+    <>
+      <PressScale
+        onPress={async () => {
+          if (busy) return;
+          setBusy(true);
+          setError(null);
+          const out = await auth.signInWithApple();
+          setBusy(false);
+          if (!out.error) return done();
+          if (out.error !== 'canceled') setError(out.error);
+        }}
+        scaleTo={0.97}
+        accessibilityRole="button"
+        accessibilityLabel="Continue with Apple"
+        style={[s.apple, { backgroundColor: c === LIGHT ? '#000' : '#fff' }]}
+      >
+        <Ionicons name="logo-apple" size={20} color={c === LIGHT ? '#fff' : '#000'} />
+        <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>Continue with Apple</Text>
+      </PressScale>
+      <View style={s.orRow}>
+        <View style={s.orLine} />
+        <Text style={s.orText}>or with email</Text>
+        <View style={s.orLine} />
+      </View>
+    </>
+  ) : null;
+
   let body: ReactNode;
   if (step === 'start') {
     body = (
       <View style={s.body}>
+        {apple}
         <Text style={s.lede}>
           {mode === 'signup'
             ? "Optional. An account keeps a copy of your items. We'll email you a code to confirm it."
@@ -386,6 +417,47 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   );
 }
 
+// Deleting the account (Settings → Account). Apple requires that an app which
+// creates accounts lets people delete them inside the app. The items on this
+// phone stay; the account and its online copy are removed for good.
+export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: boolean; onClose: () => void; onDeleted: () => void }) {
+  const c = useTheme();
+  const s = useStyles();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (visible) setError(null);
+  }, [visible]);
+  const remove = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const { deleteAccount } = await import('../sync');
+    const problem = await deleteAccount();
+    setBusy(false);
+    if (problem) return setError(problem);
+    onClose();
+    onDeleted();
+  };
+  return (
+    <BottomSheet visible={visible} onClose={onClose} title="Delete your account?" scrollable={false} maxWidth={460}>
+      <View style={s.body}>
+        <Text style={s.lede}>
+          This permanently deletes your Prexpire account and the copy of your items stored with it. It can't be undone.
+        </Text>
+        <Text style={s.lede}>The items on this phone stay, and the app keeps working without an account.</Text>
+        {error ? <Text style={s.error}>{error}</Text> : null}
+        <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Delete account permanently" style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.primaryText, { color: '#fff' }]}>Delete account</Text>}
+        </PressScale>
+        <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep my account" style={[s.linkBtn, { alignSelf: 'center' }]}>
+          <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep my account</Text>
+        </PressScale>
+      </View>
+    </BottomSheet>
+  );
+}
+
 // Changing the password of the signed-in account (Settings → Account).
 export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const c = useTheme();
@@ -448,6 +520,11 @@ export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; on
 
 const useStyles = makeStyles((c) => ({
   body: { gap: 12, paddingTop: 4, paddingBottom: 8 },
+  apple: { height: 54, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  appleText: { fontSize: 17, fontWeight: '600' },
+  orRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 2 },
+  orLine: { flex: 1, height: 1, backgroundColor: c.surfaceBorder },
+  orText: { color: c.textMuted, fontSize: 13 },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, marginTop: 2 },
   switchText: { color: c.textMuted, fontSize: 14.5 },
   boxes: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, position: 'relative' },

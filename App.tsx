@@ -16,6 +16,7 @@ import { CategoriesProvider, readCustomCategories, useCategories } from './src/c
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
 import { AuthProvider } from './src/auth';
+import { SyncProvider } from './src/sync';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue, dayOrderForFormat } from './src/preferences';
@@ -520,19 +521,26 @@ function ThemedApp() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <CategoriesProvider>
-        <SettingsProvider>
-          <ItemsProvider>
-            <ShoppingProvider>
-              <ThemeProvider>
-                <AuthProvider>
-                  <ThemedApp />
-                </AuthProvider>
-              </ThemeProvider>
-            </ShoppingProvider>
-          </ItemsProvider>
-        </SettingsProvider>
-      </CategoriesProvider>
+      {/* The account sits above the data: sync reads and writes the same
+          storage the providers below use, and when changes from another
+          phone arrive it bumps `generation`, so they reload from storage. */}
+      <AuthProvider>
+        <SyncProvider>
+          {(generation) => (
+            <CategoriesProvider key={generation}>
+              <SettingsProvider>
+                <ItemsProvider>
+                  <ShoppingProvider>
+                    <ThemeProvider>
+                      <ThemedApp />
+                    </ThemeProvider>
+                  </ShoppingProvider>
+                </ItemsProvider>
+              </SettingsProvider>
+            </CategoriesProvider>
+          )}
+        </SyncProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }
