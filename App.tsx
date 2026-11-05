@@ -8,6 +8,8 @@ import { ItemsScreen } from './src/screens/ItemsScreen';
 import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import WelcomeScreen from './src/screens/WelcomeScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
 import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
@@ -24,6 +26,10 @@ type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPa
 
 const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
 const WEB = Platform.OS === 'web';
+
+// Set once the get-started screen has been answered (or skipped because the
+// person already had items), so it shows on a fresh install only.
+const WELCOME_KEY = 'prexpire.welcomed.v1';
 
 // On the web the open tab is kept in the address (#settings), so a refresh stays on it.
 // The Shopping List is a VIEW of the Lists tab (#items/shopping), and the
@@ -76,8 +82,32 @@ function useFocusStyles() {
 function Shell() {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
-  const { items, defaultCategory, addItem } = useItems();
+  const { items, ready: itemsReady, defaultCategory, addItem } = useItems();
   const { settings, formatDate } = useSettings();
+  // The get-started screen: 'show' on a fresh install, 'done' once answered,
+  // 'unknown' for the moment it takes to read storage. Anyone who already has
+  // items is an existing user: marked done without ever seeing it.
+  const [welcome, setWelcome] = useState<'unknown' | 'show' | 'done'>('unknown');
+  useEffect(() => {
+    if (!itemsReady || welcome !== 'unknown') return;
+    let cancelled = false;
+    AsyncStorage.getItem(WELCOME_KEY)
+      .then((seen) => {
+        if (cancelled) return;
+        if (seen || items.length > 0) {
+          if (!seen) AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
+          setWelcome('done');
+        } else setWelcome('show');
+      })
+      .catch(() => !cancelled && setWelcome('done'));
+    return () => {
+      cancelled = true;
+    };
+  }, [itemsReady, items.length, welcome]);
+  const finishWelcome = useCallback(() => {
+    setWelcome('done');
+    AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
+  }, []);
   const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
@@ -342,11 +372,28 @@ function Shell() {
     const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
     if (!shell?.postMessage) return;
     try {
-      shell.postMessage(JSON.stringify({ type: 'route', tab: route.tab }));
+      // While the get-started screen is up it reports the scanner route: the
+      // one route on which the shell hides its glass tab bar and switches the
+      // status bar to light text (the screen is dark green in both themes).
+      shell.postMessage(JSON.stringify({ type: 'route', tab: welcome === 'show' ? 'scan' : route.tab }));
     } catch {
       // The shell went away; navigation still works locally.
     }
-  }, [route]);
+  }, [route, welcome]);
+
+  // First launch: one get-started screen, then straight into the app. Until
+  // storage answers, a plain page (no flash of Home before it).
+  if (welcome === 'unknown') return <View style={{ flex: 1 }} />;
+  if (welcome === 'show')
+    return (
+      <WelcomeScreen
+        onStart={() => {
+          finishWelcome();
+          onNavigate('scan');
+        }}
+        onExplore={finishWelcome}
+      />
+    );
 
   // The scanner replaces the tabs (and the bottom nav) while open, so the camera
   // is only mounted, and only running, while the user is scanning. The manual
