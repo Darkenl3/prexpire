@@ -119,6 +119,14 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dy) > DRAG_CAPTURE && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
+      // Pulling the sheet down while typing: the keyboard goes away at once,
+      // so the sheet follows the finger instead of fighting the keyboard.
+      onPanResponderGrant: () => {
+        if (typeof document !== 'undefined') {
+          const el = document.activeElement as HTMLElement | null;
+          if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) el.blur();
+        }
+      },
       onPanResponderMove: (_e, g) => {
         // Down follows the finger; up meets a rubber band (a few px at most).
         drag.setValue(g.dy > 0 ? g.dy : -18 * (1 - Math.exp(g.dy / 60)));
@@ -171,7 +179,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
     <Modal visible={visible} transparent animationType="none" onRequestClose={requestClose} {...({ 'aria-modal': true } as object)}>
       <View style={[s.wrap, keyboard ? { paddingBottom: keyboard } : null]}>
         <Animated.View style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrim }]} pointerEvents="none" />
-        <Pressable style={StyleSheet.absoluteFill} onPress={requestClose} accessibilityLabel={`Close ${title}`} importantForAccessibility="no" />
+        <Pressable style={[StyleSheet.absoluteFill, { touchAction: 'none' } as object]} onPress={requestClose} accessibilityLabel={`Close ${title}`} importantForAccessibility="no" />
         <Animated.View
           onLayout={(e) => setHeight(Math.round(e.nativeEvent.layout.height))}
           style={[s.sheet, { backgroundColor: c.dialogBg, maxWidth, maxHeight, paddingBottom: bottomPad, transform: [{ translateY: sheetY }] }]}
@@ -215,7 +223,9 @@ const useStyles = makeStyles((c) => ({
     paddingHorizontal: 14,
   },
   // A taller header gives the swipe a generous grip.
-  header: { alignItems: 'center', paddingTop: 2 },
+  // touchAction none: the browser hands this area's swipes to the sheet
+  // instead of scrolling the page (iOS scrolls the page when the keyboard is up).
+  header: { alignItems: 'center', paddingTop: 2, ...({ touchAction: 'none' } as object) },
   grabber: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.separator, alignSelf: 'center', marginTop: 6 },
   title: { color: c.textMuted, fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 12, alignSelf: 'stretch' },
   scroll: { flexShrink: 1 },
