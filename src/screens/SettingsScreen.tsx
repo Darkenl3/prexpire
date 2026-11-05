@@ -39,6 +39,12 @@ import appConfig from '../../app.json';
 import { useAuth } from '../auth';
 import { ChangePasswordSheet, DeleteAccountSheet, SignInSheet } from '../components/SignInSheet';
 import { useSync } from '../sync';
+// The same text as prexpire.com/privacy and /terms (generated from one file
+// in the landing repo, legal/legal.json), shown here as native pages so it
+// reads offline and never sends the app out to a browser.
+import legal from '../legal.json';
+
+type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
@@ -60,7 +66,9 @@ type PageId =
   | 'backup'
   | 'stats'
   | 'help'
-  | 'terms';
+  | 'terms'
+  | 'privacyPolicy'
+  | 'termsOfUse';
 
 const PAGE_TITLES: Record<PageId, string> = {
   account: 'Account',
@@ -73,6 +81,8 @@ const PAGE_TITLES: Record<PageId, string> = {
   stats: 'Waste stats',
   help: 'Help & Support',
   terms: 'Terms & Privacy',
+  privacyPolicy: 'Privacy Policy',
+  termsOfUse: 'Terms of Use',
 };
 
 // 'signin' opens Settings with the sign-in sheet already up (from the
@@ -312,7 +322,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
               </View>
             </View>
             <ScrollViewLike bottomPad={bottomPad}>
-              <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate, closePage)}</View>
+              <View style={[s.frame, s.rootFrame]}>{renderDetail(page, onNavigate, closePage, setPage)}</View>
             </ScrollViewLike>
           </View>
         </Animated.View>
@@ -477,7 +487,7 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
   );
 }
 
-function renderDetail(page: PageId, onNavigate: (route: string) => void, closePage: () => void) {
+function renderDetail(page: PageId, onNavigate: (route: string) => void, closePage: () => void, openPage: (p: PageId) => void) {
   switch (page) {
     case 'account':
       return <AccountDetail onSignedOut={closePage} />;
@@ -498,7 +508,11 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
     case 'help':
       return <HelpDetail />;
     case 'terms':
-      return <TermsDetail />;
+      return <TermsDetail openPage={openPage} />;
+    case 'privacyPolicy':
+      return <LegalDetail doc={legal.privacy as LegalDoc} />;
+    case 'termsOfUse':
+      return <LegalDetail doc={legal.terms as LegalDoc} />;
     default:
       return null;
   }
@@ -1099,20 +1113,27 @@ function HelpDetail() {
   );
 }
 
-function TermsDetail() {
+function TermsDetail({ openPage }: { openPage: (p: PageId) => void }) {
   const s = useStyles();
   return (
     <>
-      <SettingsSection title="Privacy">
+      <SettingsSection title="Documents">
+        <SettingsCard>
+          <SettingRow icon="shield-checkmark-outline" accent="mint" title="Privacy Policy" description={`Last updated ${legal.privacy.updated}`} onPress={() => openPage('privacyPolicy')} />
+          <SettingRow icon="document-text-outline" accent="blue" title="Terms of Use" description={`Last updated ${legal.terms.updated}`} onPress={() => openPage('termsOfUse')} />
+        </SettingsCard>
+      </SettingsSection>
+      <SettingsSection title="In short">
         <SettingsCard>
           <SettingRow
-            icon="lock-closed-outline"
-            accent="mint"
+            icon="phone-portrait-outline"
+            accent="teal"
             title="Your data"
-            description={WEB ? 'Everything is stored only in this browser, on this device: no account, no cloud, no sync, no tracking' : 'Everything is stored only on this device: no account, no cloud, no sync, no tracking'}
+            description="Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones"
           />
-          <SettingRow icon="camera-outline" accent="teal" title="Camera" description="Frames are read locally to find expiry dates and are never uploaded or stored" />
-          <SettingRow icon="share-social-outline" accent="purple" title="Exports" description="Files you export go wherever you choose; nothing is sent otherwise" />
+          <SettingRow icon="camera-outline" accent="teal" title="Camera" description="Labels are read on the phone; images are never uploaded or kept" />
+          <SettingRow icon="barcode-outline" accent="purple" title="Barcodes" description="Only the barcode number is sent to product databases, to find the name" />
+          <SettingRow icon="eye-off-outline" accent="purple" title="No ads, no tracking" description={`Questions: ${legal.contact}`} />
         </SettingsCard>
       </SettingsSection>
       <View style={s.aboutFooter}>
@@ -1120,6 +1141,50 @@ function TermsDetail() {
         <Text style={s.aboutTagline}>Keep track of what matters before it expires.</Text>
         <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
       </View>
+    </>
+  );
+}
+
+// A legal document as a native page: the short version first (on the
+// forest plate, like the website), then the numbered sections.
+function LegalDetail({ doc }: { doc: LegalDoc }) {
+  const t = useTheme();
+  const s = useStyles();
+  return (
+    <>
+      <Text style={s.legalUpdated}>Last updated {doc.updated}</Text>
+      <View style={s.legalShort}>
+        <Text style={s.legalShortTitle}>The short version</Text>
+        {doc.short.map((line) => (
+          <View key={line} style={s.legalShortRow}>
+            <Ionicons name="checkmark-circle" size={18} color="#A6DF6B" style={{ marginTop: 2 }} />
+            <Text style={s.legalShortText}>{line}</Text>
+          </View>
+        ))}
+      </View>
+      {doc.sections.map((section, i) => (
+        <View key={section.title} style={s.legalSection}>
+          <Text style={s.legalHeading} accessibilityRole="header">
+            <Text style={{ color: t.green }}>{i + 1}  </Text>
+            {section.title}
+          </Text>
+          {section.body.map((part, j) =>
+            typeof part === 'string' ? (
+              <Text key={j} style={s.legalText}>{part}</Text>
+            ) : (
+              <View key={j} style={{ gap: 6, marginBottom: 10 }}>
+                {part.list.map((li) => (
+                  <View key={li} style={s.legalBullet}>
+                    <View style={[s.legalDot, { backgroundColor: t.green }]} />
+                    <Text style={[s.legalText, { flex: 1, marginBottom: 0 }]}>{li}</Text>
+                  </View>
+                ))}
+              </View>
+            ),
+          )}
+        </View>
+      ))}
+      <Text style={s.legalFoot}>Also at prexpire.com/{doc === legal.privacy ? 'privacy' : 'terms'}</Text>
     </>
   );
 }
@@ -1208,6 +1273,17 @@ const useStyles = makeStyles((t) => ({
   heroTitle: { color: t.text, fontSize: 21, fontWeight: '700', letterSpacing: -0.3 },
   heroSub: { color: t.textSub, fontSize: 14, marginTop: 4, textAlign: 'center' },
   aboutFooter: { alignItems: 'center', paddingVertical: 26, paddingHorizontal: 16, gap: 8 },
+  legalUpdated: { color: t.textSub, fontSize: 13.5, marginBottom: 12, marginLeft: 4 },
+  legalShort: { backgroundColor: '#0F3A2A', borderRadius: 20, padding: 18, gap: 10, marginBottom: 22 },
+  legalShortTitle: { color: '#EDF3EE', fontSize: 17, fontWeight: '800', marginBottom: 2 },
+  legalShortRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  legalShortText: { flex: 1, color: '#EDF3EE', fontSize: 15, lineHeight: 21 },
+  legalSection: { marginBottom: 18, paddingHorizontal: 4 },
+  legalHeading: { color: t.text, fontSize: 17.5, fontWeight: '800', letterSpacing: -0.2, marginBottom: 8 },
+  legalText: { color: t.text, fontSize: 15.5, lineHeight: 23, marginBottom: 10, opacity: 0.92 },
+  legalBullet: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  legalDot: { width: 6, height: 6, borderRadius: 3, marginTop: 9 },
+  legalFoot: { color: t.textSub, fontSize: 13, textAlign: 'center', marginTop: 4, marginBottom: 8 },
   aboutTagline: { color: t.text, fontSize: 14.5, textAlign: 'center' },
   aboutVersion: { color: t.textMuted, fontSize: 13 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

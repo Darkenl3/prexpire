@@ -1,0 +1,228 @@
+{
+  "contact": "support@prexpire.com",
+  "privacy": {
+    "title": "Privacy Policy",
+    "updated": "November 5, 2026",
+    "short": [
+      "Prexpire works without an account. Your items, lists and settings are stored on your phone.",
+      "Labels and dates are read on your phone. Camera images are never uploaded or kept.",
+      "When a barcode is scanned, only its number is sent to product databases to find the product's name.",
+      "If you create an account, we keep your email and a copy of your items so you can back them up and use them on another phone. You can delete the account at any time in the app.",
+      "No ads, no tracking, and we never sell or share your data for marketing."
+    ],
+    "sections": [
+      {
+        "title": "Who we are",
+        "body": [
+          "Prexpire is an app for keeping track of the expiry dates of products at home. It's made and run by an individual developer living in Romania (\"we\", \"us\"), who is the controller of the personal data described here.",
+          "Questions about this policy or your data: support@prexpire.com."
+        ]
+      },
+      {
+        "title": "What stays on your phone",
+        "body": [
+          "Everything you add to Prexpire is stored on your phone: products, expiry dates, categories, your shopping list, waste stats and settings. The app works fully offline and doesn't need an account.",
+          "The camera is used only while you scan. The images are read on the phone (with Apple's on-device text recognition and an on-device reader) to find barcodes and dates. They are not uploaded, saved or shared.",
+          "Backups you export from Settings are files you save where you choose. We don't receive them."
+        ]
+      },
+      {
+        "title": "What leaves your phone, and why",
+        "body": [
+          { "list": [
+            "Barcode lookups: to fill in a product's name, the barcode number is sent to public product databases (Open Food Facts, UPCitemdb, Go-UPC, barcodestock, Open Library for books, and a DuckDuckGo search as a fallback). Only the number is sent, never your other data.",
+            "App updates: the app checks app.prexpire.com for a newer version of its screens. This request contains no personal data.",
+            "Account and backup, only if you create an account (see below).",
+            "Security checks: when you sign in or create an account, a Cloudflare Turnstile check runs to stop automated abuse. Cloudflare processes technical data such as your IP address and browser details for this."
+          ] }
+        ]
+      },
+      {
+        "title": "Accounts and backup",
+        "body": [
+          "An account is optional. If you create one, we process:",
+          { "list": [
+            "your email address, and your password, which is stored only in hashed form by our account provider;",
+            "if you use Sign in with Apple or Google: the identifier and email address they share with us (with Apple you can choose to hide your email);",
+            "a copy of your items, shopping list, categories, settings and waste stats, so they're backed up and the same on every phone you sign in on;",
+            "technical records our providers keep to run and secure the service, such as sign-in times and IP addresses."
+          ] },
+          "We use this only to provide the account, backup and sync, and to send you the codes needed to confirm your email, sign in or reset your password. We don't read your items for any other purpose."
+        ]
+      },
+      {
+        "title": "The website and the waitlist",
+        "body": [
+          "prexpire.com doesn't use advertising or analytics cookies. If you join the waitlist, we store your email address, the time you joined, the page section you used and your country (derived from the connection), only to email you when Prexpire is available on the App Store.",
+          "After you join, the page may show your Gravatar picture to you. Your own browser requests it from Gravatar using a fingerprint (hash) of your email; nobody else sees it."
+        ]
+      },
+      {
+        "title": "Service providers",
+        "body": [
+          "We use these providers to run Prexpire. They process data only on our instructions:",
+          { "list": [
+            "Supabase: accounts, backup and sync (servers in the EU).",
+            "Resend: sending account emails such as confirmation and sign-in codes (EU, Ireland).",
+            "Cloudflare: the website, the waitlist, the Turnstile security check and our domain.",
+            "Railway: hosting the files the app loads its screens from.",
+            "Apple and Google: Sign in with Apple and Sign in with Google, when you choose them.",
+            "The product databases listed above, which receive barcode numbers only."
+          ] }
+        ]
+      },
+      {
+        "title": "Legal bases",
+        "body": [
+          "Under the GDPR we rely on: performance of a contract, to provide your account, backup and sync; your consent, for the waitlist (you can withdraw it at any time); and our legitimate interests, to keep the service secure and prevent abuse, and to look up product names when you scan."
+        ]
+      },
+      {
+        "title": "How long we keep data",
+        "body": [
+          { "list": [
+            "Data on your phone stays until you delete it or remove the app.",
+            "Your account and its backup are kept until you delete the account. Deleting it in the app removes the account and its backup straight away; copies in our providers' routine backups are overwritten within their normal cycle.",
+            "Waitlist emails are kept until we've sent the launch email, then deleted, or earlier if you ask.",
+            "Security and server logs are kept only for the short periods our providers set."
+          ] }
+        ]
+      },
+      {
+        "title": "Your rights",
+        "body": [
+          "You have the right to access your data, correct it, delete it, receive a copy in a portable format, restrict or object to its processing, and withdraw consent. You can delete your account yourself in Settings, Account, Delete account. For anything else, email support@prexpire.com and we'll reply within one month.",
+          "You can also complain to a data protection authority: in Romania, the ANSPDCP (dataprotection.ro), or the authority where you live."
+        ]
+      },
+      {
+        "title": "International transfers",
+        "body": [
+          "Some providers, such as Cloudflare, Railway, Apple and Google, may process data outside the EU. Where they do, the transfer is covered by the EU-US Data Privacy Framework or the European Commission's Standard Contractual Clauses."
+        ]
+      },
+      {
+        "title": "Security",
+        "body": [
+          "Connections are encrypted (HTTPS). Each account's backup can be read only by that account, enforced in the database. Passwords are never stored in readable form. No system is perfectly secure, but we take reasonable measures to protect your data and will inform you and the authorities of a breach where the law requires it."
+        ]
+      },
+      {
+        "title": "Age",
+        "body": [
+          "You can use Prexpire without an account at any age. To create an account you must be at least 16 years old."
+        ]
+      },
+      {
+        "title": "Changes to this policy",
+        "body": [
+          "If this policy changes, we'll update the date at the top. For important changes, we'll tell you in the app or by email before they apply."
+        ]
+      },
+      {
+        "title": "Contact",
+        "body": ["support@prexpire.com"]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "updated": "November 5, 2026",
+    "short": [
+      "Prexpire helps you keep track of expiry dates. It's free to use, with or without an account.",
+      "Dates read by the scanner can be wrong. Always check the date printed on the pack before you eat, drink or use something.",
+      "Prexpire isn't food-safety, medical or pharmaceutical advice.",
+      "Your items are yours. You can delete your account and data at any time."
+    ],
+    "sections": [
+      {
+        "title": "Agreement",
+        "body": [
+          "These terms apply to the Prexpire app and prexpire.com, provided by an individual developer living in Romania (\"we\", \"us\"). By using Prexpire you agree to them. If you don't agree, don't use the app."
+        ]
+      },
+      {
+        "title": "What Prexpire is",
+        "body": [
+          "Prexpire lets you record products and their expiry dates, sorts them by what expires first, reminds you inside the app, and keeps a shopping list. You can add products by scanning or by hand. An optional account backs up your data and keeps it the same across your phones."
+        ]
+      },
+      {
+        "title": "Check the date on the pack",
+        "body": [
+          "The scanner and product lookups are helpful but not perfect: a date can be misread, and product databases can be incomplete or wrong. Before saving, check what Prexpire read, and before eating, drinking or using something, check the date and condition of the product itself.",
+          "Prexpire doesn't give food-safety, medical or pharmaceutical advice. Follow the instructions on the packaging and, for medicine, your pharmacist or doctor. Reminders appear inside the app and depend on you opening it; don't rely on them alone for anything important."
+        ]
+      },
+      {
+        "title": "Your account",
+        "body": [
+          "An account is optional. To create one you must be at least 16 and give an email address you can access. Keep your password private; you're responsible for what happens in your account. You can delete it at any time in Settings, Account, Delete account."
+        ]
+      },
+      {
+        "title": "Your content",
+        "body": [
+          "What you add to Prexpire stays yours. If you have an account, you allow us to store and copy it only as needed to back it up and sync it to your phones."
+        ]
+      },
+      {
+        "title": "Acceptable use",
+        "body": [
+          { "list": [
+            "Don't try to access other people's accounts or data, or our systems beyond what the app offers.",
+            "Don't disrupt, overload or reverse-engineer the service, or get around its security checks.",
+            "Don't use Prexpire for anything unlawful."
+          ] },
+          "We may suspend accounts that break these rules."
+        ]
+      },
+      {
+        "title": "Availability and changes",
+        "body": [
+          "The app works offline, but backup, sync, barcode lookups and sign-in need an internet connection and our providers. We work to keep them running but can't promise they'll always be available. We may change or discontinue features; if we stop the account service, we'll give reasonable notice so you can keep your data, which also stays on your phone."
+        ]
+      },
+      {
+        "title": "Third-party services",
+        "body": [
+          "Product names come from third-party databases, and sign-in can use Apple or Google. Their own terms apply to them, and we aren't responsible for their content or availability."
+        ]
+      },
+      {
+        "title": "Intellectual property",
+        "body": [
+          "The app, its design and the Prexpire name and logo belong to us. You may use the app for your own personal use; don't copy, resell or redistribute it."
+        ]
+      },
+      {
+        "title": "Liability",
+        "body": [
+          "Prexpire is provided as it is. To the extent the law allows, we aren't liable for losses caused by relying on dates or information shown in the app, for spoiled or wasted products, or for interruptions of the service. Nothing in these terms limits liability that can't be limited by law, such as for intent or gross negligence, or takes away your rights as a consumer."
+        ]
+      },
+      {
+        "title": "Apple App Store",
+        "body": [
+          "If you got Prexpire from the App Store, Apple's standard licence terms also apply. These terms are between you and us, not Apple; Apple isn't responsible for the app or its support, and has no obligation to maintain it."
+        ]
+      },
+      {
+        "title": "Governing law",
+        "body": [
+          "These terms are governed by the laws of Romania. If you live in the EU, EEA, UK or Switzerland, you also keep the protection of the mandatory consumer laws of your country, and you can bring a claim in your local courts."
+        ]
+      },
+      {
+        "title": "Changes to these terms",
+        "body": [
+          "If these terms change, we'll update the date at the top. For important changes, we'll tell you in the app or by email before they apply. If you keep using Prexpire afterwards, the new terms apply."
+        ]
+      },
+      {
+        "title": "Contact",
+        "body": ["support@prexpire.com"]
+      }
+    ]
+  }
+}
