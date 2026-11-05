@@ -257,24 +257,23 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     </PressScale>
   );
 
+  // The security check sits right above the button it protects, so the
+  // sheet reads top to bottom: details, check, action.
+  const check = visible ? (
+    <TurnstileFrame
+      resetKey={resetKey}
+      onToken={(t) => {
+        setCaptcha(t);
+        if (t) setCaptchaBroken(false);
+      }}
+      onError={() => setCaptchaBroken(true)}
+    />
+  ) : null;
+
   let body: ReactNode;
   if (step === 'start') {
     body = (
       <View style={s.body}>
-        <View style={s.tabs} accessibilityRole="tablist">
-          {(['signin', 'signup'] as Mode[]).map((m) => (
-            <PressScale
-              key={m}
-              onPress={() => (setMode(m), setError(null))}
-              scaleTo={0.98}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: mode === m }}
-              style={[s.tab, mode === m && s.tabOn]}
-            >
-              <Text style={[s.tabText, mode === m && s.tabTextOn]}>{m === 'signin' ? 'Sign in' : 'Create account'}</Text>
-            </PressScale>
-          ))}
-        </View>
         <Text style={s.lede}>
           {mode === 'signup'
             ? "Optional. An account keeps a copy of your items. We'll email you a code to confirm it."
@@ -282,16 +281,20 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         </Text>
         {emailField(submitStart)}
         {passwordField(submitStart, mode === 'signup')}
-        {errorLine}
-        {primary(mode === 'signup' ? 'Create account' : 'Sign in', submitStart)}
         {mode === 'signin' ? (
-          <View style={s.row}>
+          <View style={[s.row, { marginTop: -4 }]}>
             {link('Forgot password?', () => (setError(null), setStep('forgot')))}
-            {link('Email me a code', () => (setError(null), setStep('login')))}
+            {link('Email me a code instead', () => (setError(null), setStep('login')))}
           </View>
-        ) : (
-          <Text style={s.fine}>By creating an account you agree to the Terms and Privacy Policy.</Text>
-        )}
+        ) : null}
+        {errorLine}
+        {check}
+        {primary(mode === 'signup' ? 'Create account' : 'Sign in', submitStart)}
+        {mode === 'signup' ? <Text style={s.fine}>By creating an account you agree to the Terms and Privacy Policy.</Text> : null}
+        <View style={s.switchRow}>
+          <Text style={s.switchText}>{mode === 'signin' ? 'New to Prexpire?' : 'Already have an account?'}</Text>
+          {link(mode === 'signin' ? 'Create an account' : 'Sign in', () => (setError(null), setPassword(''), setMode(mode === 'signin' ? 'signup' : 'signin')), true)}
+        </View>
       </View>
     );
   } else if (step === 'code') {
@@ -301,31 +304,44 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         <Text style={s.lede}>
           Enter the 6-digit code we sent to <Text style={{ color: c.text, fontWeight: '700' }}>{email.trim()}</Text> {what}.
         </Text>
-        <TextInput
-          ref={codeRef}
-          value={code}
-          onChangeText={(v) => {
-            const digits = v.replace(/\D/g, '').slice(0, 6);
-            setCode(digits);
-            clear();
-            if (digits.length === 6) submitCode(digits);
-          }}
-          placeholder="000000"
-          placeholderTextColor={c.textMuted}
-          keyboardType="number-pad"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          textContentType="oneTimeCode"
-          maxLength={6}
-          accessibilityLabel="6-digit code"
-          style={[s.input, s.codeInput, error ? s.inputBad : null]}
-        />
+        {/* Six boxes over one invisible field: typing, pasting and iOS's
+            "from Mail" code suggestion all go into the field, and the boxes
+            show it digit by digit. */}
+        <PressScale onPress={() => codeRef.current?.focus()} scaleTo={1} accessibilityRole="none" style={s.boxes}>
+          {Array.from({ length: 6 }, (_, i) => {
+            const active = i === Math.min(code.length, 5) && !busy;
+            return (
+              <View key={i} style={[s.box, active && s.boxActive, error ? s.boxBad : null, code[i] ? s.boxFilled : null]}>
+                <Text style={s.boxDigit}>{code[i] ?? ''}</Text>
+              </View>
+            );
+          })}
+          <TextInput
+            ref={codeRef}
+            value={code}
+            onChangeText={(v) => {
+              const digits = v.replace(/\D/g, '').slice(0, 6);
+              setCode(digits);
+              clear();
+              if (digits.length === 6) submitCode(digits);
+            }}
+            keyboardType="number-pad"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            textContentType="oneTimeCode"
+            maxLength={6}
+            caretHidden
+            accessibilityLabel="6-digit code"
+            style={s.hiddenInput}
+          />
+        </PressScale>
         {errorLine}
         {primary(purpose === 'reset' ? 'Continue' : purpose === 'signup' ? 'Confirm account' : 'Sign in', () => submitCode())}
         <View style={s.row}>
           {back(purpose === 'reset' ? 'forgot' : purpose === 'login' ? 'login' : 'start')}
           {link(wait > 0 ? `New code in ${wait}s` : 'Send a new code', resend, wait <= 0)}
         </View>
+        {wait <= 0 ? check : null}
         <Text style={s.fine}>Can't find it? Check your spam folder.</Text>
       </View>
     );
@@ -335,6 +351,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         <Text style={s.lede}>Enter your account's email. We'll send a code so you can choose a new password.</Text>
         {emailField(submitForgot)}
         {errorLine}
+        {check}
         {primary('Email me a reset code', submitForgot)}
         {back('start')}
       </View>
@@ -345,6 +362,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         <Text style={s.lede}>No password needed. We'll email you a code to sign in to your account.</Text>
         {emailField(submitLogin)}
         {errorLine}
+        {check}
         {primary('Email me a code', submitLogin)}
         {back('start')}
       </View>
@@ -360,22 +378,10 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     );
   }
 
-  const title = step === 'start' ? (mode === 'signup' ? 'Create your account' : 'Sign in') : TITLES[step];
+  const title = step === 'start' ? (mode === 'signup' ? 'Create your account' : 'Welcome back') : TITLES[step];
   return (
     <BottomSheet visible={visible} onClose={onClose} title={title} scrollable maxWidth={460}>
       {body}
-      {/* One widget for the whole sheet, so a passed check carries across
-          steps. Not needed once the code is accepted (the new password step). */}
-      {visible && step !== 'newpass' ? (
-        <TurnstileFrame
-          resetKey={resetKey}
-          onToken={(t) => {
-            setCaptcha(t);
-            if (t) setCaptchaBroken(false);
-          }}
-          onError={() => setCaptchaBroken(true)}
-        />
-      ) : null}
     </BottomSheet>
   );
 }
@@ -442,11 +448,15 @@ export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; on
 
 const useStyles = makeStyles((c) => ({
   body: { gap: 12, paddingTop: 4, paddingBottom: 8 },
-  tabs: { flexDirection: 'row', padding: 4, borderRadius: 14, backgroundColor: c.cardAlt, gap: 4 },
-  tab: { flex: 1, height: 40, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  tabOn: { backgroundColor: c.selBg },
-  tabText: { color: c.textMuted, fontSize: 14.5, fontWeight: '700' },
-  tabTextOn: { color: c.scanInk },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, marginTop: 2 },
+  switchText: { color: c.textMuted, fontSize: 14.5 },
+  boxes: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, position: 'relative' },
+  box: { flex: 1, height: 60, maxWidth: 56, borderRadius: 14, backgroundColor: c.cardAlt, borderWidth: 1.5, borderColor: c.surfaceBorder, alignItems: 'center', justifyContent: 'center' },
+  boxFilled: { borderColor: c.textMuted },
+  boxActive: { borderColor: c.mint, borderWidth: 2 },
+  boxBad: { borderColor: c.red },
+  boxDigit: { color: c.text, fontSize: 26, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  hiddenInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.011, color: 'transparent', fontSize: 1 },
   lede: { color: c.textMuted, fontSize: 15, lineHeight: 21 },
   input: {
     height: 54,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,12 +25,36 @@ const INK = '#EDF3EE';
 const INK_MUTED = 'rgba(237,243,238,0.68)';
 const LIME = '#A6DF6B';
 
-type Card = { icon: keyof typeof Ionicons.glyphMap; name: string; label: string; value: string; tone: 'ok' | 'soon' | 'gone' };
+// The memorable moment: the cards COUNT DOWN once, the way the app does over
+// days — milk goes 4 → 3 → 2 days and turns amber, the yogurt runs out and
+// flips to Expired. Each card lists its states; the screen steps through
+// them once after the entrance, then holds the last one.
+type Tone = 'ok' | 'soon' | 'gone';
+type Frame = { label: string; value: string; tone: Tone };
+type Card = { icon: keyof typeof Ionicons.glyphMap; name: string; frames: Frame[] };
 const CARDS: Card[] = [
-  { icon: 'cafe-outline', name: 'Organic milk', label: 'Expires in', value: '2 days', tone: 'soon' },
-  { icon: 'medkit-outline', name: 'Ibuprofen', label: 'Expires in', value: '7 months', tone: 'ok' },
-  { icon: 'alert-circle-outline', name: 'Greek yogurt', label: 'Past its date', value: 'Expired', tone: 'gone' },
+  {
+    icon: 'cafe-outline',
+    name: 'Organic milk',
+    frames: [
+      { label: 'Expires in', value: '4 days', tone: 'ok' },
+      { label: 'Expires in', value: '3 days', tone: 'ok' },
+      { label: 'Use it soon', value: '2 days', tone: 'soon' },
+    ],
+  },
+  { icon: 'medkit-outline', name: 'Ibuprofen', frames: [{ label: 'Expires in', value: '7 months', tone: 'ok' }] },
+  {
+    icon: 'nutrition-outline',
+    name: 'Greek yogurt',
+    frames: [
+      { label: 'Use it today', value: '1 day', tone: 'soon' },
+      { label: 'Use it today', value: '1 day', tone: 'soon' },
+      { label: 'Past its date', value: 'Expired', tone: 'gone' },
+    ],
+  },
 ];
+const STEPS = 3;
+const TICK_MS = 700;
 const TONE = {
   ok: { fg: '#8FDB9C', tile: 'rgba(108,194,126,0.16)' },
   soon: { fg: '#F4C06A', tile: 'rgba(240,176,74,0.16)' },
@@ -49,16 +73,33 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
   const { motion } = useSettings();
   const compact = height < 700;
 
-  // One entrance: the cards settle in one after another, then the copy.
+  // One sequence: the cards settle in, the copy follows, then the countdown
+  // runs its few steps. With reduced motion, everything starts in its last state.
+  const native = Platform.OS !== 'web';
   const enter = useRef(CARDS.map(() => new Animated.Value(motion ? 0 : 1))).current;
   const copy = useRef(new Animated.Value(motion ? 0 : 1)).current;
+  const [step, setStep] = useState(motion ? 0 : STEPS - 1);
+  const flip = useRef(CARDS.map(() => new Animated.Value(1))).current;
   useEffect(() => {
     if (!motion) return;
     Animated.stagger(110, [
-      ...enter.map((v) => Animated.timing(v, { toValue: 1, duration: 520, easing: Easing.out(Easing.back(1.4)), useNativeDriver: Platform.OS !== 'web' })),
-      Animated.timing(copy, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web' }),
+      ...enter.map((v) => Animated.timing(v, { toValue: 1, duration: 520, easing: Easing.out(Easing.back(1.4)), useNativeDriver: native })),
+      Animated.timing(copy, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: native }),
     ]).start();
-  }, [motion, enter, copy]);
+    const timers = Array.from({ length: STEPS - 1 }, (_, i) => setTimeout(() => setStep(i + 1), 1100 + i * TICK_MS));
+    return () => timers.forEach(clearTimeout);
+  }, [motion, enter, copy, native]);
+  // A value that changes drops in from above, like a counter turning.
+  const shown = useRef(CARDS.map((card) => card.frames[0].value));
+  useEffect(() => {
+    CARDS.forEach((card, i) => {
+      const value = card.frames[Math.min(step, card.frames.length - 1)].value;
+      if (value === shown.current[i]) return;
+      shown.current[i] = value;
+      flip[i].setValue(0);
+      Animated.timing(flip[i], { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
+    });
+  }, [step, flip, native]);
 
   const column = Math.min(width - 48, 420);
 
@@ -75,6 +116,7 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
           {CARDS.map((card, i) => {
             const v = enter[i];
             const shift = i === 1 ? 26 : i === 2 ? -10 : 0; // a loose stack, not a grid
+            const f = card.frames[Math.min(step, card.frames.length - 1)];
             return (
               <Animated.View
                 key={card.name}
@@ -83,14 +125,21 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
                   { marginLeft: shift, opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }, { scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }] },
                 ]}
               >
-                <View style={[s.tile, { backgroundColor: TONE[card.tone].tile }]}>
-                  <Ionicons name={card.icon} size={21} color={TONE[card.tone].fg} />
+                <View style={[s.tile, { backgroundColor: TONE[f.tone].tile }]}>
+                  <Ionicons name={card.icon} size={21} color={TONE[f.tone].fg} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={s.cardName}>{card.name}</Text>
-                  <Text style={s.cardLabel}>{card.label}</Text>
+                  <Text style={s.cardLabel}>{f.label}</Text>
                 </View>
-                <Text style={[s.cardValue, { color: TONE[card.tone].fg }]}>{card.value}</Text>
+                <Animated.Text
+                  style={[
+                    s.cardValue,
+                    { color: TONE[f.tone].fg, opacity: flip[i], transform: [{ translateY: flip[i].interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] },
+                  ]}
+                >
+                  {f.value}
+                </Animated.Text>
               </Animated.View>
             );
           })}
@@ -108,7 +157,7 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
             <Ionicons name="scan-outline" size={20} color="#08130F" />
             <Text style={s.primaryText}>Start scanning</Text>
           </PressScale>
-          <PressScale onPress={onExplore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Explore the app first" style={s.secondary}>
+          <PressScale onPress={onExplore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Explore the app first" style={s.link}>
             <Text style={s.secondaryText}>Explore the app first</Text>
           </PressScale>
           {onSignIn ? (
@@ -151,15 +200,16 @@ const s = StyleSheet.create({
   tile: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   cardName: { color: INK, fontSize: 15, fontWeight: '700' },
   cardLabel: { color: INK_MUTED, fontSize: 12.5, marginTop: 1 },
-  cardValue: { fontSize: 20, fontWeight: '800', letterSpacing: -0.2 },
+  // Tabular digits: the countdown changes value without the row jittering.
+  cardValue: { fontSize: 21, fontWeight: '800', letterSpacing: -0.3, fontVariant: ['tabular-nums'] },
   copy: { gap: 12 },
-  title: { color: INK, fontSize: 38, lineHeight: 41, fontWeight: '800', letterSpacing: -1 },
+  title: { color: INK, fontSize: 40, lineHeight: 42, fontWeight: '800', letterSpacing: -1.3 },
   lede: { color: INK_MUTED, fontSize: 17, lineHeight: 24 },
   primary: { height: 56, borderRadius: 16, backgroundColor: LIME, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
   primaryText: { color: '#08130F', fontSize: 17, fontWeight: '800' },
   secondary: { height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(237,243,238,0.22)' },
   secondaryText: { color: INK, fontSize: 16, fontWeight: '700' },
-  link: { height: 36, alignItems: 'center', justifyContent: 'center' },
+  link: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   linkText: { color: INK_MUTED, fontSize: 14.5 },
   note: { color: 'rgba(237,243,238,0.5)', fontSize: 13, textAlign: 'center', marginTop: 4 },
 });
