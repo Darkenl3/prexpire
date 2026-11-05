@@ -399,11 +399,7 @@ function Shell() {
   if (welcome === 'show')
     return (
       <WelcomeScreen
-        onStart={() => {
-          finishWelcome();
-          onNavigate('scan');
-        }}
-        onExplore={finishWelcome}
+        onStart={finishWelcome}
         onSignIn={() => {
           finishWelcome();
           setRoute({ tab: 'settings', settingsPage: 'signin' });

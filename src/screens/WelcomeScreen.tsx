@@ -54,7 +54,7 @@ const CARDS: Card[] = [
   },
 ];
 const STEPS = 3;
-const TICK_MS = 700;
+const TICK_MS = 1500;
 const TONE = {
   ok: { fg: '#8FDB9C', tile: 'rgba(108,194,126,0.16)' },
   soon: { fg: '#F4C06A', tile: 'rgba(240,176,74,0.16)' },
@@ -63,11 +63,10 @@ const TONE = {
 
 type Props = {
   onStart: () => void;
-  onExplore: () => void;
   onSignIn?: () => void;
 };
 
-export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
+export default function WelcomeScreen({ onStart, onSignIn }: Props) {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { motion } = useSettings();
@@ -82,11 +81,11 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
   const flip = useRef(CARDS.map(() => new Animated.Value(1))).current;
   useEffect(() => {
     if (!motion) return;
-    Animated.stagger(110, [
-      ...enter.map((v) => Animated.timing(v, { toValue: 1, duration: 520, easing: Easing.out(Easing.back(1.4)), useNativeDriver: native })),
-      Animated.timing(copy, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: native }),
+    Animated.stagger(200, [
+      ...enter.map((v) => Animated.timing(v, { toValue: 1, duration: 800, easing: Easing.out(Easing.back(1.2)), useNativeDriver: native })),
+      Animated.timing(copy, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: native }),
     ]).start();
-    const timers = Array.from({ length: STEPS - 1 }, (_, i) => setTimeout(() => setStep(i + 1), 1100 + i * TICK_MS));
+    const timers = Array.from({ length: STEPS - 1 }, (_, i) => setTimeout(() => setStep(i + 1), 2600 + i * TICK_MS));
     return () => timers.forEach(clearTimeout);
   }, [motion, enter, copy, native]);
   // A value that changes drops in from above, like a counter turning.
@@ -97,7 +96,7 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
       if (value === shown.current[i]) return;
       shown.current[i] = value;
       flip[i].setValue(0);
-      Animated.timing(flip[i], { toValue: 1, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
+      Animated.timing(flip[i], { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: native }).start();
     });
   }, [step, flip, native]);
 
@@ -153,12 +152,10 @@ export default function WelcomeScreen({ onStart, onExplore, onSignIn }: Props) {
         </Animated.View>
 
         <Animated.View style={{ opacity: copy, gap: 10 }}>
-          <PressScale onPress={onStart} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Start scanning" style={s.primary}>
-            <Ionicons name="scan-outline" size={20} color="#08130F" />
-            <Text style={s.primaryText}>Start scanning</Text>
-          </PressScale>
-          <PressScale onPress={onExplore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Explore the app first" style={s.link}>
-            <Text style={s.secondaryText}>Explore the app first</Text>
+          {/* One way in. Home's big scan button is right there; a second
+              "explore" option was the same thing in other words. */}
+          <PressScale onPress={onStart} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Get started" style={s.primary}>
+            <Text style={s.primaryText}>Get started</Text>
           </PressScale>
           {onSignIn ? (
             <PressScale onPress={onSignIn} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Sign in to back up and sync" style={s.link}>
