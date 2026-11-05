@@ -112,7 +112,12 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
       <View pointerEvents="none" style={[s.glow, { width: column * 1.3, height: column * 1.3, borderRadius: column, left: width / 2 - column * 0.65, top: insets.top + (compact ? 20 : 60) }]} />
 
       <View style={[s.inner, { paddingTop: insets.top + 18, paddingBottom: Math.max(insets.bottom, 16) + 12, width: column }]}>
-        <Image source={brandWhiteInk} style={{ width: Math.round(28 * BRAND_ASPECT), height: 28, alignSelf: 'center' }} resizeMode="contain" accessibilityLabel="Prexpire" />
+        <Image
+          source={brandWhiteInk}
+          style={{ width: Math.round((compact ? 34 : 40) * BRAND_ASPECT), height: compact ? 34 : 40, alignSelf: 'center' }}
+          resizeMode="contain"
+          accessibilityLabel="Prexpire"
+        />
 
         <View style={[s.cards, { marginTop: compact ? 22 : 44 }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           {CARDS.map((card, i) => {
