@@ -5,6 +5,7 @@ import { BottomSheet } from './BottomSheet';
 import { PressScale } from './Press';
 import { makeStyles, useTheme } from '../theme';
 import { MIN_PASSWORD, useAuth, type Outcome } from '../auth';
+import { TurnstileFrame } from './TurnstileFrame';
 
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
@@ -49,6 +50,11 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   const [error, setError] = useState<string | null>(null);
   const [wait, setWait] = useState(0);
   const codeRef = useRef<TextInput>(null);
+  // Turnstile: a token is needed for every request that emails a code or
+  // signs in, and each token is spent by one request.
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [resetKey, setResetKey] = useState(0);
+  const [captchaBroken, setCaptchaBroken] = useState(false);
 
   // Every opening starts fresh.
   useEffect(() => {
@@ -75,6 +81,18 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     if (out.error) setError(out.error);
     return out;
   };
+  // The same, for requests Turnstile protects: waits for a passed check,
+  // spends the token, and asks the widget for the next one.
+  const guarded = async (work: (token: string) => Promise<Outcome>): Promise<Outcome | null> => {
+    if (!captcha) {
+      setError(captchaBroken ? "The security check couldn't load. Check your connection, then try again." : 'One moment: the security check is still running.');
+      return null;
+    }
+    const token = captcha;
+    const out = await run(() => work(token));
+    setResetKey((k) => k + 1);
+    return out;
+  };
   const goCode = (p: Purpose) => {
     setPurpose(p);
     setStep('code');
@@ -96,17 +114,22 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     if (!emailOk()) return;
     if (mode === 'signup') {
       if (password.length < MIN_PASSWORD) return setError(`Use at least ${MIN_PASSWORD} characters for your password.`);
-      const out = await run(() => auth.signUp(email, password));
+      const out = await guarded((t) => auth.signUp(email, password, t));
+      if (!out) return;
       if (!out.error) goCode('signup');
       else if (out.exists) setMode('signin');
       return;
     }
     if (!password) return setError('Enter your password.');
-    const out = await run(() => auth.signIn(email, password));
+    const out = await guarded((t) => auth.signIn(email, password, t));
+    if (!out) return;
     if (!out.error) return done();
     if (out.unconfirmed) {
-      const again = await run(() => auth.resendConfirmation(email));
-      if (!again.error) goCode('signup');
+      // The account exists but was never confirmed: the code step, with a
+      // new code one tap away (it needs a fresh security check).
+      goCode('signup');
+      setWait(0);
+      setError("This account isn't confirmed yet. Enter the code from your email, or send a new one.");
     }
   };
 
@@ -129,22 +152,22 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
 
   const resend = async () => {
     if (wait > 0 || busy) return;
-    const out = await run(() =>
-      purpose === 'signup' ? auth.resendConfirmation(email) : purpose === 'reset' ? auth.sendResetCode(email) : auth.sendLoginCode(email),
+    const out = await guarded((t) =>
+      purpose === 'signup' ? auth.resendConfirmation(email, t) : purpose === 'reset' ? auth.sendResetCode(email, t) : auth.sendLoginCode(email, t),
     );
-    if (!out.error) setWait(RESEND_AFTER);
+    if (out && !out.error) setWait(RESEND_AFTER);
   };
 
   const submitForgot = async () => {
     if (!emailOk()) return;
-    const out = await run(() => auth.sendResetCode(email));
-    if (!out.error) goCode('reset');
+    const out = await guarded((t) => auth.sendResetCode(email, t));
+    if (out && !out.error) goCode('reset');
   };
 
   const submitLogin = async () => {
     if (!emailOk()) return;
-    const out = await run(() => auth.sendLoginCode(email));
-    if (!out.error) goCode('login');
+    const out = await guarded((t) => auth.sendLoginCode(email, t));
+    if (out && !out.error) goCode('login');
   };
 
   const submitNewPassword = async () => {
@@ -341,6 +364,18 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   return (
     <BottomSheet visible={visible} onClose={onClose} title={title} scrollable maxWidth={460}>
       {body}
+      {/* One widget for the whole sheet, so a passed check carries across
+          steps. Not needed once the code is accepted (the new password step). */}
+      {visible && step !== 'newpass' ? (
+        <TurnstileFrame
+          resetKey={resetKey}
+          onToken={(t) => {
+            setCaptcha(t);
+            if (t) setCaptchaBroken(false);
+          }}
+          onError={() => setCaptchaBroken(true)}
+        />
+      ) : null}
     </BottomSheet>
   );
 }

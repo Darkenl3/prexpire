@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Prexpire security check</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  #box { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+<!--
+  The Turnstile check for Prexpire's sign-in sheet. The app itself runs from a
+  file on the phone (no web address, so Turnstile can't run there); it shows
+  this page in a small frame instead. Turnstile's token comes back to the app
+  through postMessage:
+    { type: 'prexpire-turnstile', token }        passed (token for one request)
+    { type: 'prexpire-turnstile', token: null }  expired or reset
+    { type: 'prexpire-turnstile', error }        couldn't run
+  The app sends { type: 'prexpire-turnstile-reset' } after using a token.
+-->
+<div id="box"></div>
+<script>
+  var SITE_KEY = '0x4AAAAAAF06O-CT4oN6rim9';
+  var params = new URLSearchParams(location.search);
+  var theme = params.get('theme') === 'light' ? 'light' : 'dark';
+  var widget = null;
+  function tell(msg) {
+    msg.type = 'prexpire-turnstile';
+    try { parent.postMessage(msg, '*'); } catch (e) {}
+  }
+  window.onTurnstileReady = function () {
+    widget = turnstile.render('#box', {
+      sitekey: SITE_KEY,
+      theme: theme,
+      size: 'flexible',
+      appearance: 'always',
+      callback: function (token) { tell({ token: token }); },
+      'expired-callback': function () { tell({ token: null }); },
+      'error-callback': function (code) { tell({ error: String(code || 'error') }); return true; },
+    });
+  };
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'prexpire-turnstile-reset' && widget !== null) {
+      try { turnstile.reset(widget); } catch (err) {}
+    }
+  });
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady" async defer></script>
+</body>
+</html>
