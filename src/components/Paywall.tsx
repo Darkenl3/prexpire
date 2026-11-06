@@ -16,6 +16,20 @@ import legal from '../legal.json';
 // row of pips that fill with the items you track today. Pro is simply "no
 // row": everything else in the app stays free.
 
+// Inside the iPhone app the native tab bar floats over the page. A shell
+// that knows full-screen pages (window.__prexpireOverlay) hides it while the
+// paywall is open; an older one keeps it, so the buttons ride above it.
+type Shell = { postMessage?: (data: string) => void };
+const shellOf = (): Shell | undefined => (typeof window !== 'undefined' ? (window as { ReactNativeWebView?: Shell }).ReactNativeWebView : undefined);
+const shellHidesBar = () => typeof window !== 'undefined' && !!(window as { __prexpireOverlay?: number }).__prexpireOverlay;
+const SHELL_NAV_ZONE = 72;
+function tellShell(open: boolean) {
+  if (!shellHidesBar()) return;
+  try {
+    shellOf()?.postMessage?.(JSON.stringify({ type: 'overlay', open }));
+  } catch {}
+}
+
 const LEADS: Record<PaywallReason, (n: number) => string> = {
   welcome: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro tracks every shop, the pantry and the medicine cabinet, with no limit.`,
   limit: () => `You've added this month's ${FREE_ITEM_LIMIT} free items. Everything you track keeps working. Pro lets you keep adding.`,
@@ -26,6 +40,7 @@ const LEADS: Record<PaywallReason, (n: number) => string> = {
 const PERKS: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string }[] = [
   { icon: 'infinite', title: 'Unlimited items', text: 'Add every shop, every week, without counting.' },
   { icon: 'grid-outline', title: 'Unlimited categories', text: 'Make a category for the garage, the baby, the first-aid kit.' },
+  { icon: 'people-outline', title: 'Lifetime is for the whole family', text: 'Buy Lifetime once and share Pro with up to 5 family members.' },
   { icon: 'heart-outline', title: 'Keeps Prexpire independent', text: 'No ads and no tracking, now or later.' },
 ];
 
@@ -46,8 +61,10 @@ export function Paywall() {
   useEffect(() => {
     if (paywall) {
       setShown(paywall);
+      tellShell(true);
       Animated.timing(fade, { toValue: 1, duration: motion ? 260 : 0, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
     } else if (shown) {
+      tellShell(false);
       Animated.timing(fade, { toValue: 0, duration: motion ? 180 : 0, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => setShown(null));
     }
   }, [paywall]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -74,8 +91,10 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const [doc, setDoc] = useState<'terms' | 'privacy' | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
 
+  // Prices fresh from the App Store every time the paywall opens (they follow
+  // the App Store country, which can change); the last ones show meanwhile.
   useEffect(() => {
-    if (!available || plans) return;
+    if (!available) return;
     let live = true;
     loadPlans().then(() => live && setLoadFailed(false));
     const t = setTimeout(() => live && setLoadFailed(true), 12_000);
@@ -83,7 +102,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
       live = false;
       clearTimeout(t);
     };
-  }, [available, plans, loadPlans]);
+  }, [available, loadPlans]);
 
   const ordered = useMemo(() => {
     const rank = { annual: 0, monthly: 1, lifetime: 2, other: 3 } as const;
@@ -99,6 +118,8 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const count = items.length;
   const resets = nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
   const selling = available && !isPro && !!plans;
+  // Room for the shell's tab bar when it stays on screen (older app builds).
+  const navZone = shellOf() && !shellHidesBar() ? SHELL_NAV_ZONE : 0;
   const filled = Math.min(added, FREE_ITEM_LIMIT);
 
   const onBuy = async () => {
@@ -139,7 +160,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <Ionicons name="close" size={20} color={c.text} />
         </PressScale>
       </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.scroll, { paddingBottom: selling ? 20 : insets.bottom + 28 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.scroll, { paddingBottom: selling ? 20 : insets.bottom + 28 + navZone }]} showsVerticalScrollIndicator={false}>
         <View style={s.column}>
           <Text style={s.title} accessibilityRole="header">
             Prexpire Pro
@@ -256,7 +277,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
       </ScrollView>
       {/* The buy button stays in reach, whatever the screen height. */}
       {selling ? (
-        <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+        <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 14) + navZone }]}>
           <View style={s.column}>
             {note ? <Text style={[s.note, note.bad && { color: c.red }]}>{note.text}</Text> : null}
             <PressScale onPress={onBuy} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel={cta} style={[s.cta, busy === 'buy' && { opacity: 0.7 }]}>
