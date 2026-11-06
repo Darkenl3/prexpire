@@ -412,7 +412,7 @@ function SwapText({ text, style, motion, block = false }: { text: string; style:
     setOld(current);
     setCurrent(text);
     v.setValue(0);
-    Animated.timing(v, { toValue: 1, duration: 220, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => setOld(null));
+    Animated.timing(v, { toValue: 1, duration: 180, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => setOld(null));
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   const top = block ? ((style.marginTop as number | undefined) ?? 0) : 0;
   return (
@@ -429,7 +429,7 @@ function SwapText({ text, style, motion, block = false }: { text: string; style:
               right: 0,
               top,
               marginTop: 0,
-              opacity: v.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: 'clamp' }),
+              opacity: v.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
             },
           ]}
         >
@@ -440,7 +440,7 @@ function SwapText({ text, style, motion, block = false }: { text: string; style:
         style={[
           style,
           {
-            opacity: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0, 1] }),
+            opacity: v,
           },
         ]}
       >
