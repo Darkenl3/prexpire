@@ -280,11 +280,6 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
               {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion && picked} />}
             </PressScale>
             <SwapText text={terms} style={s.terms} motion={motion && picked} block />
-            {reason === 'welcome' ? (
-              <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Continue with the free plan" style={s.skip}>
-                <Text style={s.skipText}>Continue free</Text>
-              </PressScale>
-            ) : null}
           </View>
         </View>
       ) : null}
