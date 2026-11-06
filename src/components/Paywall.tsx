@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Modal, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Animated, Easing, Modal, ScrollView, Text, View, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { makeStyles, useTheme } from '../theme';
+import { DARK, ForcedTheme, makeStyles, useTheme } from '../theme';
 import { useSettings } from '../settings';
 import { useItems } from '../items';
 import { useCategories } from '../categories';
@@ -16,13 +16,12 @@ import legal from '../legal.json';
 // row of pips that fill with the items you track today. Pro is simply "no
 // row": everything else in the app stays free.
 
-// Inside the iPhone app the native tab bar floats over the page. A shell
-// that knows full-screen pages (window.__prexpireOverlay) hides it while the
-// paywall is open; an older one keeps it, so the buttons ride above it.
+// Inside the iPhone app the native tab bar floats over the page; while the
+// paywall is open it steps aside (App.tsx reports the full-screen route, and
+// newer shells also take this overlay message).
 type Shell = { postMessage?: (data: string) => void };
 const shellOf = (): Shell | undefined => (typeof window !== 'undefined' ? (window as { ReactNativeWebView?: Shell }).ReactNativeWebView : undefined);
 const shellHidesBar = () => typeof window !== 'undefined' && !!(window as { __prexpireOverlay?: number }).__prexpireOverlay;
-const SHELL_NAV_ZONE = 72;
 function tellShell(open: boolean) {
   if (!shellHidesBar()) return;
   try {
@@ -37,12 +36,14 @@ const LEADS: Record<PaywallReason, (n: number) => string> = {
   settings: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro takes the limit away.`,
 };
 
-const PERKS: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string }[] = [
+type Perk = { icon: keyof typeof Ionicons.glyphMap; title: string; text: string };
+const PERKS: Perk[] = [
   { icon: 'infinite', title: 'Unlimited items', text: 'Add every shop, every week, without counting.' },
   { icon: 'grid-outline', title: 'Unlimited categories', text: 'Make a category for the garage, the baby, the first-aid kit.' },
-  { icon: 'people-outline', title: 'Lifetime is for the whole family', text: 'Buy Lifetime once and share Pro with up to 5 family members.' },
   { icon: 'heart-outline', title: 'Keeps Prexpire independent', text: 'No ads and no tracking, now or later.' },
 ];
+// Shown while Lifetime is the chosen plan, unfolding under the categories.
+const FAMILY: Perk = { icon: 'people-outline', title: 'For the whole family', text: 'Lifetime is shared through Family Sharing, with up to 5 family members.' };
 
 function savingVsMonthly(plans: ProPlan[]): number | null {
   const m = plans.find((p) => p.kind === 'monthly');
@@ -72,7 +73,9 @@ export function Paywall() {
   return (
     <Modal visible transparent animationType="none" onRequestClose={closePaywall}>
       <Animated.View style={{ flex: 1, opacity: fade, transform: [{ translateY: fade.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
-        <PaywallBody reason={shown} onClose={closePaywall} />
+        <ForcedTheme palette={DARK}>
+          <PaywallBody reason={shown} onClose={closePaywall} />
+        </ForcedTheme>
       </Animated.View>
     </Modal>
   );
@@ -118,8 +121,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const count = items.length;
   const resets = nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
   const selling = available && !isPro && !!plans;
-  // Room for the shell's tab bar when it stays on screen (older app builds).
-  const navZone = shellOf() && !shellHidesBar() ? SHELL_NAV_ZONE : 0;
+  const { motion } = useSettings();
   const filled = Math.min(added, FREE_ITEM_LIMIT);
 
   const onBuy = async () => {
@@ -160,7 +162,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <Ionicons name="close" size={20} color={c.text} />
         </PressScale>
       </View>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.scroll, { paddingBottom: selling ? 20 : insets.bottom + 28 + navZone }]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.scroll, { paddingBottom: selling ? 20 : insets.bottom + 28 }]} showsVerticalScrollIndicator={false}>
         <View style={s.column}>
           <Text style={s.title} accessibilityRole="header">
             Prexpire Pro
@@ -183,17 +185,12 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           </View>
 
           <View style={s.perks}>
-            {PERKS.map((p) => (
-              <View key={p.title} style={s.perk}>
-                <View style={s.perkIcon}>
-                  <Ionicons name={p.icon} size={18} color={c.mint} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.perkTitle}>{p.title}</Text>
-                  <Text style={s.perkText}>{p.text}</Text>
-                </View>
-              </View>
-            ))}
+            <PerkRow perk={PERKS[0]} />
+            <PerkRow perk={PERKS[1]} spaced />
+            <Unfold open={!isPro && plan?.kind === 'lifetime'} motion={motion}>
+              <PerkRow perk={FAMILY} highlight />
+            </Unfold>
+            <PerkRow perk={PERKS[2]} spaced />
             <Text style={s.freeLine}>Scanning, reminders and backup stay free for everyone.</Text>
           </View>
 
@@ -231,16 +228,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                         ? 'Billed monthly'
                         : 'Pay once, share with your family';
                   return (
-                    <PressScale
-                      key={p.id}
-                      onPress={() => setSelected(p.id)}
-                      scaleTo={0.98}
-                      accessibilityRole={'radio' as never}
-                      accessibilityState={{ selected: on }}
-                      accessibilityLabel={`${name}, ${p.price}`}
-                      style={[s.plan, on && s.planOn]}
-                    >
-                      <View style={[s.radio, on && s.radioOn]}>{on ? <View style={s.radioDot} /> : null}</View>
+                    <PlanCard key={p.id} on={on} motion={motion} onPress={() => setSelected(p.id)} label={`${name}, ${p.price}`}>
                       <View style={{ flex: 1 }}>
                         <View style={s.planNameRow}>
                           <Text style={s.planName}>{name}</Text>
@@ -253,7 +241,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                         <Text style={s.planSub}>{sub}</Text>
                       </View>
                       <Text style={s.planPrice}>{p.price}</Text>
-                    </PressScale>
+                    </PlanCard>
                   );
                 })}
               </View>
@@ -277,13 +265,13 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
       </ScrollView>
       {/* The buy button stays in reach, whatever the screen height. */}
       {selling ? (
-        <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 14) + navZone }]}>
+        <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 14) }]}>
           <View style={s.column}>
             {note ? <Text style={[s.note, note.bad && { color: c.red }]}>{note.text}</Text> : null}
             <PressScale onPress={onBuy} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel={cta} style={[s.cta, busy === 'buy' && { opacity: 0.7 }]}>
-              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.ctaText}>{cta}</Text>}
+              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion} distance={14} />}
             </PressScale>
-            <Text style={s.terms}>{terms}</Text>
+            <SwapText text={terms} style={s.terms} motion={motion} distance={6} block />
             {reason === 'welcome' ? (
               <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Continue with the free plan" style={s.skip}>
                 <Text style={s.skipText}>Continue free</Text>
@@ -295,6 +283,151 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
       <BottomSheet visible={!!doc} onClose={() => setDoc(null)} title={doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use'} maxHeightRatio={0.9} maxWidth={620}>
         {doc ? <LegalDetail doc={(doc === 'privacy' ? legal.privacy : legal.terms) as LegalDoc} /> : null}
       </BottomSheet>
+    </View>
+  );
+}
+
+function PerkRow({ perk, highlight = false, spaced = false }: { perk: Perk; highlight?: boolean; spaced?: boolean }) {
+  const c = useTheme();
+  const s = useStyles();
+  return (
+    <View style={[s.perk, spaced && { marginTop: 14 }]}>
+      <View style={[s.perkIcon, highlight && s.perkIconHi]}>
+        <Ionicons name={perk.icon} size={18} color={highlight ? c.scanInk : c.mint} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.perkTitle}>{perk.title}</Text>
+        <Text style={s.perkText}>{perk.text}</Text>
+      </View>
+    </View>
+  );
+}
+
+// Folds a row open (its height, a fade, and a short drop into place) and shut.
+function Unfold({ open, motion, children }: { open: boolean; motion: boolean; children: ReactNode }) {
+  const v = useRef(new Animated.Value(open ? 1 : 0)).current;
+  const [h, setH] = useState(0);
+  useEffect(() => {
+    Animated.timing(v, {
+      toValue: open ? 1 : 0,
+      duration: motion ? (open ? 340 : 220) : 0,
+      easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [open, motion, v]);
+  return (
+    <Animated.View
+      pointerEvents={open ? 'auto' : 'none'}
+      aria-hidden={!open}
+      style={{
+        overflow: 'hidden',
+        height: h ? v.interpolate({ inputRange: [0, 1], outputRange: [0, h] }) : 0,
+        opacity: v.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0, 1] }),
+      }}
+    >
+      {/* Measured off-flow so the fold knows the row's full height. */}
+      <Animated.View
+        onLayout={(e) => setH(Math.ceil(e.nativeEvent.layout.height))}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, paddingTop: 14, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }}
+      >
+        {children}
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+// A plan row: the chosen one takes the lime border and a faint lime wash,
+// and its radio dot springs in.
+function PlanCard({ on, motion, onPress, label, children }: { on: boolean; motion: boolean; onPress: () => void; label: string; children: ReactNode }) {
+  const c = useTheme();
+  const s = useStyles();
+  const v = useRef(new Animated.Value(on ? 1 : 0)).current;
+  const dot = useRef(new Animated.Value(on ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: on ? 1 : 0, duration: motion ? 220 : 0, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
+    if (motion && on) {
+      dot.setValue(0);
+      Animated.spring(dot, { toValue: 1, damping: 11, stiffness: 320, mass: 0.6, useNativeDriver: false }).start();
+    } else dot.setValue(on ? 1 : 0);
+  }, [on, motion, v, dot]);
+  return (
+    <PressScale onPress={onPress} scaleTo={0.98} accessibilityRole={'radio' as never} accessibilityState={{ selected: on }} accessibilityLabel={label}>
+      <Animated.View
+        style={[
+          s.plan,
+          {
+            borderColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.surfaceBorder, c.mint] }),
+            backgroundColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.surface, 'rgba(166,223,107,0.07)'] }),
+          },
+        ]}
+      >
+        <Animated.View style={[s.radio, { borderColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.textMuted, c.mint] }) }]}>
+          <Animated.View
+            style={[
+              s.radioDot,
+              {
+                opacity: dot.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1] }),
+                transform: [{ scale: dot.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }],
+              },
+            ]}
+          />
+        </Animated.View>
+        {children}
+      </Animated.View>
+    </PressScale>
+  );
+}
+
+// Text that rolls to new wording: the old line lifts and fades while the new
+// one rises into place.
+function SwapText({ text, style, motion, distance, block = false }: { text: string; style: TextStyle; motion: boolean; distance: number; block?: boolean }) {
+  const [current, setCurrent] = useState(text);
+  const [old, setOld] = useState<string | null>(null);
+  const v = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (text === current) return;
+    if (!motion) {
+      setCurrent(text);
+      return;
+    }
+    setOld(current);
+    setCurrent(text);
+    v.setValue(0);
+    Animated.timing(v, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => setOld(null));
+  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
+  const top = block ? ((style.marginTop as number | undefined) ?? 0) : 0;
+  return (
+    <View style={block ? undefined : { alignSelf: 'stretch', alignItems: 'center' }}>
+      {old !== null ? (
+        <Animated.Text
+          aria-hidden
+          style={[
+            style,
+            {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top,
+              marginTop: 0,
+              opacity: v.interpolate({ inputRange: [0, 0.6], outputRange: [1, 0], extrapolate: 'clamp' }),
+              transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -distance] }) }],
+            },
+          ]}
+        >
+          {old}
+        </Animated.Text>
+      ) : null}
+      <Animated.Text
+        style={[
+          style,
+          {
+            opacity: v.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 0, 1] }),
+            transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }],
+          },
+        ]}
+      >
+        {current}
+      </Animated.Text>
     </View>
   );
 }
@@ -316,12 +449,13 @@ const useStyles = makeStyles((c) => ({
   pipInf: { width: 30, alignItems: 'flex-end' },
   meterText: { color: c.textMuted, fontSize: 13.5, fontWeight: '600' },
 
-  perks: { marginTop: 22, gap: 14 },
+  perks: { marginTop: 22 },
   perk: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+  perkIconHi: { backgroundColor: c.mint, borderColor: c.mint },
   perkIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: c.btnMintBg, borderWidth: 1, borderColor: c.btnMintBorder, alignItems: 'center', justifyContent: 'center' },
   perkTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
   perkText: { color: c.textMuted, fontSize: 14, lineHeight: 20, marginTop: 2 },
-  freeLine: { color: c.textMuted, fontSize: 13.5, lineHeight: 19, marginTop: 2 },
+  freeLine: { color: c.textMuted, fontSize: 13.5, lineHeight: 19, marginTop: 16 },
 
   plans: { marginTop: 22, gap: 10 },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderWidth: 1.5, borderColor: c.surfaceBorder, backgroundColor: c.surface },

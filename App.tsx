@@ -123,7 +123,7 @@ function Shell() {
     };
   }, [itemsReady, items.length, welcome]);
   const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
-  const { openPaywall } = usePro();
+  const { openPaywall, paywall } = usePro();
   const addedThisMonth = useMonthlyAdds();
   const { itemsLocked } = useProLimits(addedThisMonth, customCategories.length);
   const finishWelcome = useCallback(() => {
@@ -430,11 +430,13 @@ function Shell() {
       // While the get-started screen is up it reports the scanner route: the
       // one route on which the shell hides its glass tab bar and switches the
       // status bar to light text (the screen is dark green in both themes).
-      shell.postMessage(JSON.stringify({ type: 'route', tab: welcome === 'show' ? 'scan' : route.tab }));
+      // The Pro paywall does the same: it's full screen and dark in both
+      // themes, so the shell's tab bar steps aside (any app build).
+      shell.postMessage(JSON.stringify({ type: 'route', tab: welcome === 'show' || paywall ? 'scan' : route.tab }));
     } catch {
       // The shell went away; navigation still works locally.
     }
-  }, [route, welcome]);
+  }, [route, welcome, paywall]);
 
   // First launch: one get-started screen, then straight into the app. Until
   // storage answers, a plain page (no flash of Home before it).

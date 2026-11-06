@@ -371,6 +371,12 @@ export type Accent = keyof typeof accents;
 
 const ThemeCtx = createContext<Palette>(DARK);
 
+// One subtree in a fixed palette whatever the Theme setting (the Pro
+// paywall, dark green in both themes like the get-started screen).
+export function ForcedTheme({ palette, children }: { palette: Palette; children: ReactNode }) {
+  return <ThemeCtx.Provider value={palette}>{children}</ThemeCtx.Provider>;
+}
+
 export function useTheme(): Palette {
   return useContext(ThemeCtx);
 }
