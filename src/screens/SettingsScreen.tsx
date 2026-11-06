@@ -30,7 +30,7 @@ import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, S
 import { SearchField } from '../components/SearchField';
 import { useShopping } from '../shopping';
 import { AlertSpacer } from '../components/ExpiryAlert';
-import { notificationStatus, requestNotificationPermission, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
+import { nativeReminders, notificationStatus, openNotificationSettings, requestNotificationPermission, sendTestNotification, watchNotificationStatus, type NotificationStatus } from '../platform/notifications';
 import { saveTextFile } from '../platform/saveFile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKUP_PREFIX, backupFileName, buildBackup, parseBackup } from '../backup';
@@ -702,6 +702,8 @@ function BrowserNotificationsRow() {
   const s = useStyles();
   const [status, setStatus] = useState<NotificationStatus>(notificationStatus);
   const [asking, setAsking] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testSent, setTestSent] = useState(false);
   const refresh = useCallback(() => setStatus(notificationStatus()), []);
   useEffect(() => watchNotificationStatus(refresh), [refresh]);
 
@@ -727,6 +729,46 @@ function BrowserNotificationsRow() {
   };
 
   const badgeTone = status === 'granted' ? 'green' : status === 'denied' ? 'amber' : 'muted';
+
+  // Inside the iPhone app: real reminders, delivered even when it's closed.
+  if (nativeReminders()) {
+    const appNote: Record<NotificationStatus, { text: string; tone: 'ok' | 'warn' | 'muted' }> = {
+      granted: { text: 'Reminders are set automatically from your items and arrive even when Prexpire is closed', tone: 'ok' },
+      denied: { text: 'Notifications are off for Prexpire. Turn them on in iPhone Settings, then come back', tone: 'warn' },
+      default: { text: 'Allow notifications to get reminded before your items expire, even when Prexpire is closed', tone: 'muted' },
+      unsupported: { text: '', tone: 'muted' },
+      insecure: { text: '', tone: 'muted' },
+    };
+    const test = async () => {
+      setTesting(true);
+      setTestSent(false);
+      const s = await sendTestNotification();
+      setStatus(s);
+      setTesting(false);
+      setTestSent(s === 'granted');
+    };
+    return (
+      <SettingRow
+        icon="notifications-outline"
+        accent="amber"
+        title="Notifications"
+        description="Expiry reminders on this iPhone"
+        right={<StatusBadge key={status} label={label[status]} tone={badgeTone} check={status === 'granted'} />}
+        below={
+          <>
+            <FadeIn key={status}>
+              <Note tone={appNote[status].tone}>{testSent ? 'Test sent. It arrives in a few seconds, even if you close the app now' : appNote[status].text}</Note>
+            </FadeIn>
+            <View style={s.buttons}>
+              {status === 'default' && <SmallButton label={asking ? 'Waiting…' : 'Allow notifications'} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />}
+              {status === 'denied' && <SmallButton label="Open iPhone Settings" icon="settings-outline" tone="mint" onPress={openNotificationSettings} />}
+              {status !== 'denied' && <SmallButton label={testing ? 'Sending…' : 'Send a test notification'} icon="paper-plane-outline" disabled={testing} onPress={test} />}
+            </View>
+          </>
+        }
+      />
+    );
+  }
 
   return (
     <SettingRow

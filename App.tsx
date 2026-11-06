@@ -17,6 +17,8 @@ import { CategoriesProvider, readCustomCategories, useCategories } from './src/c
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
 import { AuthProvider } from './src/auth';
+import { planReminders } from './src/reminderPlan';
+import { nativeReminders, notificationStatus, requestNotificationPermission, scheduleReminders } from './src/platform/notifications';
 import { SyncProvider } from './src/sync';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
@@ -282,6 +284,29 @@ function Shell() {
   }, [addItem, categoryIds, fallbackCategory, savedFromShell]);
 
   useEffect(() => writeHash(route), [route]);
+
+  // Expiry reminders, automatically: whenever items or reminder settings
+  // change (and every time the app opens), the iPhone app gets the full plan
+  // and reschedules. The first saved item asks for permission once.
+  useEffect(() => {
+    if (!nativeReminders()) return;
+    const t = setTimeout(() => scheduleReminders(planReminders(items, settings)), 800);
+    return () => clearTimeout(t);
+  }, [items, settings]);
+  useEffect(() => {
+    if (!nativeReminders() || items.length === 0) return;
+    let asked = false;
+    try {
+      asked = localStorage.getItem('prexpire.notifAsked.v1') === '1';
+      if (!asked) localStorage.setItem('prexpire.notifAsked.v1', '1');
+    } catch {}
+    if (asked || notificationStatus() !== 'default') return;
+    // A moment after the save confirmation, then reschedule with permission.
+    const t = setTimeout(() => {
+      requestNotificationPermission().then((s) => s === 'granted' && scheduleReminders(planReminders(items, settings)));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [items.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const badge = useMemo(
     () => (settings.reminders ? remindersDue(items, settings.reminderLead).length : 0),
