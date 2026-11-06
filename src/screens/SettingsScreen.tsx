@@ -523,10 +523,11 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
 function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
   const s = useStyles();
   const t = useTheme();
-  const { email, session, signOut } = useAuth();
-  const { status, lastSyncAt, syncNow } = useSync();
+  const { email, session } = useAuth();
+  const { status, lastSyncAt, syncNow, signOutAndClear } = useSync();
   const { formatDate } = useSettings();
   const [busy, setBusy] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
   const [changePw, setChangePw] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const since = session?.user?.created_at ? new Date(session.user.created_at) : null;
@@ -567,17 +568,20 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
           <SettingRow
             icon="log-out-outline"
             accent="amber"
-            title="Sign out"
-            description="Your items stay on this phone"
+            title={busy ? 'Signing out…' : 'Sign out'}
+            description="Removes your items from this phone. They stay in your account"
             onPress={async () => {
               if (busy) return;
               setBusy(true);
-              await signOut();
+              setSignOutError(null);
+              const problem = await signOutAndClear();
               setBusy(false);
+              if (problem) return setSignOutError(problem);
               onSignedOut();
             }}
           />
         </SettingsCard>
+        {signOutError ? <Note tone="warn">{signOutError}</Note> : null}
       </SettingsSection>
       <SettingsSection title="Delete account">
         <SettingsCard>

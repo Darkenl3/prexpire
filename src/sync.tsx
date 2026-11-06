@@ -157,8 +157,21 @@ const watching = { paused: false, listeners: new Set<() => void>() };
 })();
 
 export type SyncStatus = 'off' | 'idle' | 'syncing' | 'offline' | 'error';
-type SyncContext = { status: SyncStatus; lastSyncAt: string | null; syncNow: () => Promise<void>; generation: number };
-const Ctx = createContext<SyncContext>({ status: 'off', lastSyncAt: null, syncNow: async () => {}, generation: 0 });
+type SyncContext = {
+  status: SyncStatus;
+  lastSyncAt: string | null;
+  syncNow: () => Promise<void>;
+  generation: number;
+  // Signs out and takes the account's data off this phone (it stays in the
+  // account and comes back on the next sign-in). Backs up first; resolves
+  // with a sentence when that couldn't happen, and then nothing is removed.
+  signOutAndClear: () => Promise<string | null>;
+};
+const Ctx = createContext<SyncContext>({ status: 'off', lastSyncAt: null, syncNow: async () => {}, generation: 0, signOutAndClear: async () => null });
+
+// What belongs to the account, removed from the phone on sign-out. Settings
+// (theme, date format…) are this phone's preferences and stay.
+const ACCOUNT_KEYS = [ITEMS_KEY, SHOPPING_KEY, HISTORY_KEY, ...DOC_KEYS.filter((k) => k !== 'prexpire.settings.v1'), 'prexpire.lastCategory.v1'];
 
 export function SyncProvider({ children }: { children: (generation: number) => ReactNode }) {
   const { session } = useAuth();
@@ -318,7 +331,35 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     };
   }, [userId, syncNow]);
 
-  const value = useMemo(() => ({ status, lastSyncAt, syncNow, generation }), [status, lastSyncAt, syncNow, generation]);
+  const signOutAndClear = useCallback(async (): Promise<string | null> => {
+    if (!userId) return null;
+    if (timer.current) clearTimeout(timer.current);
+    // 1. Back up whatever hasn't been sent yet, so signing out never loses it.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false)
+      return "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out.";
+    try {
+      if (running.current) await running.current;
+      await runOnce(userId);
+    } catch (e) {
+      const msg = String((e as { message?: string })?.message ?? e).toLowerCase();
+      return msg.includes('fetch') || msg.includes('network')
+        ? "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out."
+        : "Your latest changes couldn't be backed up just now. Try signing out again in a minute.";
+    }
+    // 2. Sign out, then 3. clear the account's data from this phone (with the
+    //    storage watcher paused, so the clearing is never synced as deletions).
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+    watching.paused = true;
+    try {
+      await AsyncStorage.multiRemove([...ACCOUNT_KEYS, stateKey(userId)]);
+    } finally {
+      watching.paused = false;
+    }
+    setGeneration((g) => g + 1);
+    return null;
+  }, [userId, runOnce]);
+
+  const value = useMemo(() => ({ status, lastSyncAt, syncNow, generation, signOutAndClear }), [status, lastSyncAt, syncNow, generation, signOutAndClear]);
   return <Ctx.Provider value={value}>{children(generation)}</Ctx.Provider>;
 }
 

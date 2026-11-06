@@ -197,6 +197,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
             style={s.scroll}
             contentContainerStyle={s.scrollContent}
             scrollEnabled={scrollable}
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled
           >
