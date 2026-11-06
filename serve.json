@@ -3,7 +3,22 @@
   "headers": [
     {
       "source": "offline.html",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "delete-account",
+      "destination": "/delete-account.html"
+    },
+    {
+      "source": "delete-account/",
+      "destination": "/delete-account.html"
     }
   ]
 }

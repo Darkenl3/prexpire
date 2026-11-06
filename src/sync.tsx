@@ -166,8 +166,41 @@ type SyncContext = {
   // account and comes back on the next sign-in). Backs up first; resolves
   // with a sentence when that couldn't happen, and then nothing is removed.
   signOutAndClear: () => Promise<string | null>;
+  // Set when the signed-in account is scheduled for deletion: the date (ISO)
+  // it goes for good. Sync stays off until the person restores it.
+  pendingDeletion: string | null;
+  // Schedules deletion (30 days), then signs out and clears this phone.
+  deleteAccount: () => Promise<string | null>;
+  // Cancels the scheduled deletion; sync carries on as before.
+  restoreAccount: () => Promise<string | null>;
+  // Leaves the scheduled deletion in place and signs out.
+  keepDeleted: () => Promise<void>;
 };
-const Ctx = createContext<SyncContext>({ status: 'off', lastSyncAt: null, syncNow: async () => {}, generation: 0, signOutAndClear: async () => null });
+const Ctx = createContext<SyncContext>({
+  status: 'off',
+  lastSyncAt: null,
+  syncNow: async () => {},
+  generation: 0,
+  signOutAndClear: async () => null,
+  pendingDeletion: null,
+  deleteAccount: async () => null,
+  restoreAccount: async () => null,
+  keepDeleted: async () => {},
+});
+
+const OFFLINE_DELETE = "You're offline. Connect to the internet to delete your account.";
+const isNetwork = (e: unknown) => /fetch|network|load failed/i.test(String((e as { message?: string })?.message ?? e));
+
+// When the signed-in account will be deleted for good, or null. A server
+// without the deletion functions yet (002 not run) counts as "not scheduled".
+async function deletionStatus(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('account_deletion_status');
+  if (error) {
+    if (isNetwork(error)) throw error;
+    return null;
+  }
+  return typeof data === 'string' ? data : null;
+}
 
 // What belongs to the account, removed from the phone on sign-out. Settings
 // (theme, date format…) are this phone's preferences and stay.
@@ -179,6 +212,7 @@ export function SyncProvider({ children }: { children: (generation: number) => R
   const [status, setStatus] = useState<SyncStatus>('off');
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
+  const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
   const running = useRef<Promise<void> | null>(null);
   const again = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -280,6 +314,14 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     const job = (async () => {
       setStatus('syncing');
       try {
+        // An account waiting to be deleted is never synced: the person first
+        // chooses to restore it or leave it deleted.
+        const purge = await deletionStatus();
+        setPendingDeletion(purge);
+        if (purge) {
+          setStatus('off');
+          return;
+        }
         do {
           again.current = false;
           await runOnce(userId);
@@ -302,6 +344,7 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     if (!userId) {
       setStatus('off');
       setLastSyncAt(null);
+      setPendingDeletion(null);
       return;
     }
     AsyncStorage.getItem(stateKey(userId))
@@ -346,32 +389,73 @@ export function SyncProvider({ children }: { children: (generation: number) => R
         ? "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out."
         : "Your latest changes couldn't be backed up just now. Try signing out again in a minute.";
     }
-    // 2. Sign out, then 3. clear the account's data from this phone (with the
-    //    storage watcher paused, so the clearing is never synced as deletions).
+    // 2. Sign out, then 3. clear the account's data from this phone.
+    await signOutClearing(userId);
+    return null;
+  }, [userId, runOnce]);
+
+  // Signs out and removes the account's data from this phone, with the
+  // storage watcher paused so the clearing is never synced as deletions.
+  const signOutClearing = useCallback(async (uid: string) => {
+    if (timer.current) clearTimeout(timer.current);
     await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
     watching.paused = true;
     try {
-      await AsyncStorage.multiRemove([...ACCOUNT_KEYS, stateKey(userId)]);
+      await AsyncStorage.multiRemove([...ACCOUNT_KEYS, stateKey(uid)]);
     } finally {
       watching.paused = false;
     }
     setGeneration((g) => g + 1);
-    return null;
-  }, [userId, runOnce]);
+  }, []);
 
-  const value = useMemo(() => ({ status, lastSyncAt, syncNow, generation, signOutAndClear }), [status, lastSyncAt, syncNow, generation, signOutAndClear]);
+  const deleteAccount = useCallback(async (): Promise<string | null> => {
+    if (!userId) return null;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return OFFLINE_DELETE;
+    if (timer.current) clearTimeout(timer.current);
+    // Back up the latest changes first, so restoring within the 30 days
+    // brings back everything. A failed backup (other than being offline)
+    // doesn't stop the deletion.
+    try {
+      if (running.current) await running.current;
+      if (!pendingDeletion) await runOnce(userId);
+    } catch (e) {
+      if (isNetwork(e)) return OFFLINE_DELETE;
+    }
+    let { error } = await supabase.rpc('request_account_deletion');
+    // A server that doesn't have the 30-day functions yet (002 not run).
+    if (error && !isNetwork(error) && /request_account_deletion|PGRST202|does not exist/i.test(`${error.code} ${error.message}`)) ({ error } = await supabase.rpc('delete_account'));
+    if (error) return isNetwork(error) ? OFFLINE_DELETE : "Your account couldn't be deleted just now. Try again in a minute.";
+    setPendingDeletion(null);
+    await signOutClearing(userId);
+    return null;
+  }, [userId, runOnce, pendingDeletion, signOutClearing]);
+
+  const restoreAccount = useCallback(async (): Promise<string | null> => {
+    const { error } = await supabase.rpc('cancel_account_deletion');
+    if (error) return isNetwork(error) ? "You're offline. Connect to the internet to restore your account." : "Your account couldn't be restored just now. Try again in a minute.";
+    setPendingDeletion(null);
+    syncNow();
+    return null;
+  }, [syncNow]);
+
+  const keepDeleted = useCallback(async () => {
+    if (!userId) return;
+    setPendingDeletion(null);
+    // This phone never synced with the account in this sign-in, so what's on
+    // it was there before signing in: clear only if the phone had synced
+    // this account earlier (its items are the account's).
+    const synced = await AsyncStorage.getItem(stateKey(userId)).catch(() => null);
+    if (synced) await signOutClearing(userId);
+    else await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+  }, [userId, signOutClearing]);
+
+  const value = useMemo(
+    () => ({ status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted }),
+    [status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted],
+  );
   return <Ctx.Provider value={value}>{children(generation)}</Ctx.Provider>;
 }
 
 export function useSync() {
   return useContext(Ctx);
-}
-
-// Deletes the signed-in account and everything stored under it (the
-// public.delete_account() function in Supabase). Items on this phone stay.
-export async function deleteAccount(): Promise<string | null> {
-  const { error } = await supabase.rpc('delete_account');
-  if (error) return /fetch|network/i.test(error.message) ? "You're offline. Connect to the internet to delete your account." : "Your account couldn't be deleted just now. Try again in a minute.";
-  await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
-  return null;
 }

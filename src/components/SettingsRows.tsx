@@ -366,6 +366,10 @@ export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled =
     <PressScale
       onPress={onPress}
       disabled={disabled}
+      // A clear press: the button dips (6%) and dims while held, like the
+      // app's other buttons, so a tap always visibly registers.
+      scaleTo={0.94}
+      pressedStyle={{ opacity: 0.8 }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       aria-disabled={disabled}

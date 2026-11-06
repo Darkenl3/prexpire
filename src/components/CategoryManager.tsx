@@ -102,8 +102,13 @@ export function CategoryManager() {
     resetPending.current = false;
     dragY.setValue(0);
     shifts.forEach((v) => v.setValue(0));
+    settling.current = false;
   }, [all, dragging, dragY, shifts]);
   const drag = useRef<{ id: string; from: number; to: number } | null>(null);
+  // True from a drop until the new order is in place. A second drag started
+  // in that window began from the old positions: rows landed on top of each
+  // other, then jumped when the first move finished. It waits instead.
+  const settling = useRef(false);
   const responders = useRef(new Map<string, PanResponderInstance>()).current;
   const responderFor = (id: string) => {
     let r = responders.get(id);
@@ -119,6 +124,7 @@ export function CategoryManager() {
       const d = drag.current;
       if (!d) return;
       drag.current = null;
+      settling.current = true;
       Animated.spring(dragY, { toValue: (d.to - d.from) * pitch.current, damping: 26, stiffness: 340, useNativeDriver: true }).start(() => {
         // The new order and the cleared offsets must land in the SAME frame:
         // the offsets are cleared by the layout effect below, after the list
@@ -130,10 +136,11 @@ export function CategoryManager() {
       });
     };
     r = PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => !settling.current && !drag.current,
+      onMoveShouldSetPanResponder: () => !settling.current && !drag.current,
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
+        if (settling.current || drag.current) return;
         const from = allRef.current.findIndex((x) => x.id === id);
         if (from < 0) return;
         drag.current = { id, from, to: from };

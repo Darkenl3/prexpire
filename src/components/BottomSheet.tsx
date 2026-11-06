@@ -52,6 +52,9 @@ type Props = {
   // Fraction of the window height the sheet may occupy at most.
   maxHeightRatio?: number;
   maxWidth?: number;
+  // A choice the person must make: no swipe, scrim tap or back gesture
+  // closes it (the account-deletion notice).
+  locked?: boolean;
 };
 
 // Drag-to-dismiss tuning: how far down (px) or how fast (px/ms) a release
@@ -70,7 +73,7 @@ function shellEmbedded(): boolean {
   return typeof window !== 'undefined' && !!(window as { ReactNativeWebView?: unknown }).ReactNativeWebView;
 }
 
-export function BottomSheet({ visible, onClose, title, accessibilityLabel, children, footer, scrollable = true, maxHeightRatio = 0.8, maxWidth = 480 }: Props) {
+export function BottomSheet({ visible, onClose, title, accessibilityLabel, children, footer, scrollable = true, maxHeightRatio = 0.8, maxWidth = 480, locked = false }: Props) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const win = useWindowDimensions();
@@ -100,7 +103,10 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
     }
   }, [visible, rise, drag]);
 
+  const lockedRef = useRef(locked);
+  lockedRef.current = locked;
   const requestClose = useCallback(() => {
+    if (lockedRef.current) return;
     // From wherever the sheet is (dragged or not), all the way down.
     Animated.timing(rise, { toValue: 0, duration: motionRef.current ? 240 : 0, easing: Easing.bezier(0.32, 0, 0.67, 0), useNativeDriver: true }).start(() => {
       drag.setValue(0);
@@ -118,7 +124,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
   const pan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dy) > DRAG_CAPTURE && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
+      onMoveShouldSetPanResponder: (_e, g) => !lockedRef.current && Math.abs(g.dy) > DRAG_CAPTURE && Math.abs(g.dy) > Math.abs(g.dx) * 1.5,
       // Pulling the sheet down while typing: the keyboard goes away at once,
       // so the sheet follows the finger instead of fighting the keyboard.
       onPanResponderGrant: () => {

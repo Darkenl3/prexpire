@@ -2,12 +2,12 @@
   "contact": "support@prexpire.com",
   "privacy": {
     "title": "Privacy Policy",
-    "updated": "November 5, 2026",
+    "updated": "November 6, 2026",
     "short": [
       "Prexpire works without an account. Your items, lists and settings are stored on your phone.",
       "Labels and dates are read on your phone. Camera images are never uploaded or kept.",
       "When a barcode is scanned, only its number is sent to product databases to find the product's name.",
-      "If you create an account, we keep your email and a copy of your items so you can back them up and use them on another phone. You can delete the account at any time in the app.",
+      "If you create an account, we keep your email and a copy of your items so you can back them up and use them on another phone. You can delete the account at any time in the app or at app.prexpire.com/delete-account.",
       "No ads, no tracking, and we never sell or share your data for marketing."
     ],
     "sections": [
@@ -82,7 +82,7 @@
         "body": [
           { "list": [
             "Data on your phone stays until you delete it or remove the app.",
-            "Your account and its backup are kept until you delete the account. Deleting it in the app removes the account and its backup straight away; copies in our providers' routine backups are overwritten within their normal cycle.",
+            "Your account and its backup are kept until you delete the account. When you delete it (in the app or at app.prexpire.com/delete-account), you are signed out and it is deleted for good, with its backup, 30 days later. Until then you can restore it by signing back in. Copies in our providers' routine backups are overwritten within their normal cycle.",
             "Waitlist emails are kept until we've sent the launch email, then deleted, or earlier if you ask.",
             "Security and server logs are kept only for the short periods our providers set."
           ] }
@@ -91,7 +91,7 @@
       {
         "title": "Your rights",
         "body": [
-          "You have the right to access your data, correct it, delete it, receive a copy in a portable format, restrict or object to its processing, and withdraw consent. You can delete your account yourself in Settings, Account, Delete account. For anything else, email support@prexpire.com and we'll reply within one month.",
+          "You have the right to access your data, correct it, delete it, receive a copy in a portable format, restrict or object to its processing, and withdraw consent. You can delete your account yourself in Settings, Account, Delete account, or at app.prexpire.com/delete-account. For anything else, email support@prexpire.com and we'll reply within one month.",
           "You can also complain to a data protection authority: in Romania, the ANSPDCP (dataprotection.ro), or the authority where you live."
         ]
       },
@@ -127,7 +127,7 @@
   },
   "terms": {
     "title": "Terms of Use",
-    "updated": "November 5, 2026",
+    "updated": "November 6, 2026",
     "short": [
       "Prexpire helps you keep track of expiry dates. It's free to use, with or without an account.",
       "Dates read by the scanner can be wrong. Always check the date printed on the pack before you eat, drink or use something.",
@@ -157,7 +157,7 @@
       {
         "title": "Your account",
         "body": [
-          "An account is optional. To create one you must be at least 16 and give an email address you can access. Keep your password private; you're responsible for what happens in your account. You can delete it at any time in Settings, Account, Delete account."
+          "An account is optional. To create one you must be at least 16 and give an email address you can access. Keep your password private; you're responsible for what happens in your account. You can delete it at any time in Settings, Account, Delete account, or at app.prexpire.com/delete-account; it is deleted for good 30 days later, and until then signing back in lets you restore it."
         ]
       },
       {

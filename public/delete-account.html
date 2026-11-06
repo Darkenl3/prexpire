@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delete your Prexpire account</title>
+<meta name="description" content="Delete your Prexpire account and everything saved in it. Confirm with a code sent to your email.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#08130F">
+<link rel="icon" href="https://prexpire.com/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Doto:wght@800;900&display=swap">
+<style>
+  :root {
+    --bg: #08130F; --surface: #0F2019; --line: #1E3529; --line-2: #2B4A3A;
+    --text: #EDF3EE; --muted: #93A89B; --leaf: #A6DF6B; --gone: #F06A60; --gone-ink: #1A0806;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 400 16px/1.55 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--leaf); text-underline-offset: 3px; }
+  header { padding: 22px 20px 0; max-width: 520px; width: 100%; margin: 0 auto; }
+  header a { display: inline-flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 800; font-size: 18px; letter-spacing: -0.01em; }
+  header img { display: block; width: 122px; height: auto; }
+  main { flex: 1; width: 100%; max-width: 520px; margin: 0 auto; padding: 48px 20px 40px; }
+  .step-count { color: var(--muted); font-size: 14px; font-weight: 600; margin: 0 0 10px; }
+  h1 { font-size: clamp(30px, 8vw, 40px); line-height: 1.08; letter-spacing: -0.025em; font-weight: 800; margin: 0 0 14px; }
+  p { margin: 0 0 14px; color: var(--muted); max-width: 44ch; }
+  p strong { color: var(--text); font-weight: 600; }
+  form { margin-top: 26px; display: grid; gap: 14px; }
+  label { font-size: 14px; font-weight: 600; color: var(--text); }
+  input {
+    width: 100%; height: 54px; padding: 0 16px; border-radius: 14px;
+    border: 1.5px solid var(--line-2); background: var(--surface); color: var(--text);
+    font: 500 17px 'Schibsted Grotesk', system-ui, sans-serif;
+  }
+  input:focus { outline: none; border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(166,223,107,.18); }
+  input.code { font-size: 26px; letter-spacing: 0.4em; font-weight: 700; text-align: center; padding-left: calc(16px + 0.4em); }
+  button {
+    height: 54px; border: 0; border-radius: 14px; cursor: pointer;
+    font: 800 16.5px 'Schibsted Grotesk', system-ui, sans-serif;
+    background: var(--leaf); color: var(--bg);
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  button:active { transform: scale(.97); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--leaf); outline-offset: 3px; }
+  button[disabled] { opacity: .55; cursor: default; transform: none; }
+  button.danger { background: var(--gone); color: var(--gone-ink); }
+  button.quiet { background: transparent; color: var(--text); height: 44px; font-weight: 700; }
+  .error { color: var(--gone); font-size: 15px; margin: 0; min-height: 0; }
+  .error:empty { display: none; }
+  .note { font-size: 14px; }
+  #turnstile { min-height: 65px; }
+  .list { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+  .list li { padding-left: 22px; position: relative; color: var(--muted); }
+  .list li::before { content: ''; position: absolute; left: 4px; top: .68em; width: 7px; height: 7px; border-radius: 50%; background: var(--gone); }
+
+  /* The last screen: the account's own "expiry date", printed like the
+     dot-matrix date on a food package. */
+  .stamp {
+    margin: 30px 0 26px; padding: 22px 22px 18px; border-radius: 18px;
+    border: 1.5px dashed var(--line-2); background: var(--surface);
+  }
+  .stamp small { display: block; color: var(--muted); font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .stamp time {
+    display: block; font-family: 'Doto', ui-monospace, monospace; font-weight: 900;
+    font-size: clamp(30px, 9.5vw, 54px); line-height: 1; letter-spacing: 0.02em; color: var(--gone); white-space: nowrap;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .stamp time { animation: print 900ms steps(9, end) both; }
+    @keyframes print { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  }
+
+  [hidden] { display: none !important; }
+  footer { padding: 0 20px 28px; max-width: 520px; width: 100%; margin: 0 auto; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <a href="https://prexpire.com"><img src="https://prexpire.com/img/wordmark-white.webp" alt="Prexpire" width="122" height="30"></a>
+</header>
+
+<main>
+  <!-- 1. Email -->
+  <section id="s-email">
+    <p class="step-count">Step 1 of 3</p>
+    <h1>Delete your account</h1>
+    <p>Enter the email you use with Prexpire. We'll send a 6-digit code to confirm it's you.</p>
+    <p>You can also delete it in the app: <strong>Settings, Account, Delete account</strong>.</p>
+    <form id="f-email" novalidate>
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" required>
+      <div id="turnstile"></div>
+      <p class="error" id="e-email" role="alert"></p>
+      <button type="submit" id="b-email">Send code</button>
+    </form>
+  </section>
+
+  <!-- 2. Code -->
+  <section id="s-code" hidden>
+    <p class="step-count">Step 2 of 3</p>
+    <h1>Check your email</h1>
+    <p>If there's a Prexpire account for <strong id="sent-to"></strong>, we sent it a 6-digit code.</p>
+    <form id="f-code" novalidate>
+      <label for="code">Code</label>
+      <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required>
+      <p class="error" id="e-code" role="alert"></p>
+      <button type="submit" id="b-code">Continue</button>
+      <button type="button" class="quiet" id="b-back">Use a different email</button>
+    </form>
+  </section>
+
+  <!-- 3. Confirm -->
+  <section id="s-confirm" hidden>
+    <p class="step-count">Step 3 of 3</p>
+    <h1>Delete this account?</h1>
+    <p>Signed in as <strong id="who"></strong>.</p>
+    <ul class="list">
+      <li>Your account, items, shopping list and categories are deleted for good after 30 days.</li>
+      <li>Until then, signing in to the app lets you restore everything.</li>
+      <li>Items saved only on a phone, without an account, aren't affected.</li>
+    </ul>
+    <form id="f-confirm" novalidate>
+      <p class="error" id="e-confirm" role="alert"></p>
+      <button type="submit" class="danger" id="b-confirm">Delete my account</button>
+      <button type="button" class="quiet" id="b-cancel">Keep my account</button>
+    </form>
+  </section>
+
+  <!-- Done -->
+  <section id="s-done" hidden>
+    <h1 id="done-title">Your account will be deleted</h1>
+    <div class="stamp">
+      <small>Deleted for good on</small>
+      <time id="purge"></time>
+    </div>
+    <p>Everything saved in it goes on that date. Changed your mind? Sign in to the Prexpire app before then and choose <strong>Restore my account</strong>.</p>
+    <p class="note">Questions: <a href="mailto:support@prexpire.com">support@prexpire.com</a></p>
+  </section>
+
+  <!-- Kept -->
+  <section id="s-kept" hidden>
+    <h1>Your account is kept</h1>
+    <p>Nothing was deleted. You can close this page.</p>
+  </section>
+</main>
+
+<footer>
+  <a href="https://prexpire.com/privacy">Privacy Policy</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  var SUPABASE_URL = 'https://whzvmflojzrcorfoqipl.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_bmvmL7EXhHcy2HvbpafP2g_ktaE60ws';
+  var SITE_KEY = '0x4AAAAAAF06O-CT4oN6rim9';
+  // The session lives only in this page: nothing is stored in the browser.
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+
+  var $ = function (id) { return document.getElementById(id); };
+  var email = '';
+  var captcha = null;
+  var widget = null;
+
+  function show(id) {
+    ['s-email', 's-code', 's-confirm', 's-done', 's-kept'].forEach(function (s) { $(s).hidden = s !== id; });
+    var first = $(id).querySelector('input');
+    if (first) setTimeout(function () { first.focus(); }, 30);
+    window.scrollTo(0, 0);
+  }
+  function busy(btn, on, text) {
+    btn.disabled = on;
+    if (text) btn.textContent = text;
+  }
+  function friendly(err, fallback) {
+    var m = String((err && err.message) || err || '').toLowerCase();
+    if (m.indexOf('fetch') >= 0 || m.indexOf('network') >= 0) return "You're offline. Connect to the internet and try again.";
+    if (m.indexOf('captcha') >= 0) return 'The security check failed. Try again.';
+    if (m.indexOf('rate') >= 0 || m.indexOf('too many') >= 0 || m.indexOf('seconds') >= 0) return 'Too many tries. Wait a minute, then try again.';
+    if (m.indexOf('expired') >= 0 || m.indexOf('invalid') >= 0) return "That code didn't work. Check it, or go back and send a new one.";
+    return fallback;
+  }
+  function fmt(iso) {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  window.onTurnstileReady = function () {
+    widget = turnstile.render('#turnstile', {
+      sitekey: SITE_KEY, theme: 'dark', size: 'flexible',
+      callback: function (t) { captcha = t; },
+      'expired-callback': function () { captcha = null; },
+      'error-callback': function () { captcha = null; }
+    });
+  };
+  var ts = document.createElement('script');
+  ts.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileReady&render=explicit';
+  ts.async = true;
+  document.head.appendChild(ts);
+  function resetCaptcha() {
+    captcha = null;
+    try { if (widget !== null) turnstile.reset(widget); } catch (e) {}
+  }
+
+  // 1. Email -> code
+  $('f-email').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    var v = $('email').value.trim().toLowerCase();
+    $('e-email').textContent = '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { $('e-email').textContent = 'Enter the email address you use with Prexpire.'; return; }
+    if (!captcha) { $('e-email').textContent = 'Wait for the security check to finish, then try again.'; return; }
+    busy($('b-email'), true, 'Sending…');
+    var out = await sb.auth.signInWithOtp({ email: v, options: { shouldCreateUser: false, captchaToken: captcha } });
+    resetCaptcha();
+    busy($('b-email'), false, 'Send code');
+    var m = String((out.error && out.error.message) || '').toLowerCase();
+    // No account with this email: carry on as if sent, so this page never
+    // reveals which emails have accounts.
+    if (out.error && m.indexOf('signup') < 0 && m.indexOf('not found') < 0) {
+      $('e-email').textContent = friendly(out.error, "The code couldn't be sent just now. Try again in a minute.");
+      return;
+    }
+    email = v;
+    $('sent-to').textContent = v;
+    $('code').value = '';
+    $('e-code').textContent = '';
+    show('s-code');
+  });
+
+  $('b-back').addEventListener('click', function () { show('s-email'); });
+  $('code').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    if (this.value.length === 6) $('f-code').requestSubmit ? $('f-code').requestSubmit() : $('b-code').click();
+  });
+
+  // 2. Code -> signed in (this page only)
+  $('f-code').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    var token = $('code').value;
+    $('e-code').textContent = '';
+    if (!/^\d{6}$/.test(token)) { $('e-code').textContent = 'Enter the 6-digit code from the email.'; return; }
+    if ($('b-code').disabled) return;
+    busy($('b-code'), true, 'Checking…');
+    var out = await sb.auth.verifyOtp({ email: email, token: token, type: 'email' });
+    busy($('b-code'), false, 'Continue');
+    if (out.error) { $('e-code').textContent = friendly(out.error, "That code didn't work. Check it, or go back and send a new one."); return; }
+    // Already scheduled? Show its date.
+    var st = await sb.rpc('account_deletion_status');
+    if (!st.error && st.data) return done(st.data, true);
+    $('who').textContent = email;
+    $('e-confirm').textContent = '';
+    show('s-confirm');
+  });
+
+  // 3. Confirm -> scheduled
+  $('f-confirm').addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    if ($('b-confirm').disabled) return;
+    $('e-confirm').textContent = '';
+    busy($('b-confirm'), true, 'Deleting…');
+    var out = await sb.rpc('request_account_deletion');
+    busy($('b-confirm'), false, 'Delete my account');
+    if (out.error) { $('e-confirm').textContent = friendly(out.error, "Your account couldn't be deleted just now. Try again in a minute."); return; }
+    done(out.data, false);
+  });
+
+  $('b-cancel').addEventListener('click', async function () {
+    await sb.auth.signOut({ scope: 'local' }).catch(function () {});
+    show('s-kept');
+  });
+
+  function done(iso, already) {
+    $('done-title').textContent = already ? 'Your account is already being deleted' : 'Your account will be deleted';
+    var t = $('purge');
+    t.dateTime = iso;
+    t.textContent = fmt(iso);
+    sb.auth.signOut({ scope: 'local' }).catch(function () {});
+    show('s-done');
+  }
+})();
+</script>
+</body>
+</html>

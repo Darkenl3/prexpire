@@ -9,7 +9,7 @@ import { RemindersScreen } from './src/screens/RemindersScreen';
 import { ScannerScreen } from './src/screens/ScannerScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
-import { SignInSheet } from './src/components/SignInSheet';
+import { DeletionPendingSheet, SignInSheet } from './src/components/SignInSheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
 import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
@@ -542,6 +542,8 @@ function ThemedApp() {
           dark theme, dark text on the light one. */}
       <StatusBar style={light ? 'dark' : 'light'} />
       <Shell />
+      {/* Signed in to an account scheduled for deletion: restore it or leave. */}
+      <DeletionPendingSheet />
     </View>
   );
 }

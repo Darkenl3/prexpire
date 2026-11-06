@@ -6,6 +6,7 @@ import { PressScale } from './Press';
 import { makeStyles, useTheme, LIGHT } from '../theme';
 import { MIN_PASSWORD, appleSignInAvailable, googleSignInAvailable, useAuth, type Outcome } from '../auth';
 import { TurnstileFrame } from './TurnstileFrame';
+import { useSync } from '../sync';
 
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
@@ -441,6 +442,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
 export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: boolean; onClose: () => void; onDeleted: () => void }) {
   const c = useTheme();
   const s = useStyles();
+  const { deleteAccount } = useSync();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -450,7 +452,6 @@ export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: b
     if (busy) return;
     setBusy(true);
     setError(null);
-    const { deleteAccount } = await import('../sync');
     const problem = await deleteAccount();
     setBusy(false);
     if (problem) return setError(problem);
@@ -461,15 +462,62 @@ export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: b
     <BottomSheet visible={visible} onClose={onClose} title="Delete your account?" scrollable={false} maxWidth={460}>
       <View style={s.body}>
         <Text style={s.lede}>
-          This permanently deletes your Prexpire account and the copy of your items stored with it. It can't be undone.
+          Your account and everything saved in it (items, shopping list, categories) will be deleted for good after 30 days.
         </Text>
-        <Text style={s.lede}>The items on this phone stay, and the app keeps working without an account.</Text>
+        <Text style={s.lede}>
+          You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.
+        </Text>
         {error ? <Text style={s.error}>{error}</Text> : null}
-        <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Delete account permanently" style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
+        <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Delete account" style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.primaryText, { color: '#fff' }]}>Delete account</Text>}
         </PressScale>
         <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep my account" style={[s.linkBtn, { alignSelf: 'center' }]}>
           <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep my account</Text>
+        </PressScale>
+      </View>
+    </BottomSheet>
+  );
+}
+
+// Shown on signing in to an account that is scheduled for deletion (from the
+// app or from app.prexpire.com/delete-account). It can't be swiped away: the
+// person restores the account or leaves it to be deleted (and is signed out).
+export function DeletionPendingSheet() {
+  const c = useTheme();
+  const s = useStyles();
+  const { pendingDeletion, restoreAccount, keepDeleted } = useSync();
+  const [busy, setBusy] = useState<'restore' | 'keep' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const when = pendingDeletion ? new Date(pendingDeletion) : null;
+  const days = when ? Math.max(0, Math.ceil((when.getTime() - Date.now()) / 86_400_000)) : 0;
+  const date = when ? when.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const restore = async () => {
+    if (busy) return;
+    setBusy('restore');
+    setError(null);
+    const problem = await restoreAccount();
+    setBusy(null);
+    if (problem) setError(problem);
+  };
+  const keep = async () => {
+    if (busy) return;
+    setBusy('keep');
+    await keepDeleted();
+    setBusy(null);
+  };
+  return (
+    <BottomSheet visible={!!pendingDeletion} onClose={() => {}} locked title="Your account is being deleted" scrollable={false} maxWidth={460}>
+      <View style={s.body}>
+        <Text style={s.lede}>
+          {days <= 1 ? 'It will be deleted for good tomorrow' : `It will be deleted for good in ${days} days`}, on {date}, with everything saved in it.
+        </Text>
+        <Text style={s.lede}>Restore it to keep using your account and get your items back.</Text>
+        {error ? <Text style={s.error}>{error}</Text> : null}
+        <PressScale onPress={restore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Restore my account" style={[s.primary, busy === 'restore' && { opacity: 0.7 }]}>
+          {busy === 'restore' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>Restore my account</Text>}
+        </PressScale>
+        <PressScale onPress={keep} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep it deleted and sign out" style={[s.linkBtn, { alignSelf: 'center' }]}>
+          {busy === 'keep' ? <ActivityIndicator color={c.textMuted} /> : <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep it deleted and sign out</Text>}
         </PressScale>
       </View>
     </BottomSheet>

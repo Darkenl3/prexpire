@@ -585,7 +585,7 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
       </SettingsSection>
       <SettingsSection title="Delete account">
         <SettingsCard>
-          <SettingRow icon="trash-outline" accent="red" title="Delete account" titleColor={t.red} description="Removes the account and its online copy" onPress={() => setDeleting(true)} />
+          <SettingRow icon="trash-outline" accent="red" title="Delete account" titleColor={t.red} description="Deleted for good after 30 days" onPress={() => setDeleting(true)} />
         </SettingsCard>
       </SettingsSection>
       <ChangePasswordSheet visible={changePw} onClose={() => setChangePw(false)} />
