@@ -175,6 +175,10 @@ type SyncContext = {
   restoreAccount: () => Promise<string | null>;
   // Leaves the scheduled deletion in place and signs out.
   keepDeleted: () => Promise<void>;
+  // Just deleted on this phone: the date (ISO) it goes for good, for the
+  // confirmation shown after signing out. Cleared by dismissing it.
+  deletedNotice: string | null;
+  dismissDeletedNotice: () => void;
 };
 const Ctx = createContext<SyncContext>({
   status: 'off',
@@ -186,6 +190,8 @@ const Ctx = createContext<SyncContext>({
   deleteAccount: async () => null,
   restoreAccount: async () => null,
   keepDeleted: async () => {},
+  deletedNotice: null,
+  dismissDeletedNotice: () => {},
 });
 
 const OFFLINE_DELETE = "You're offline. Connect to the internet to delete your account.";
@@ -213,6 +219,8 @@ export function SyncProvider({ children }: { children: (generation: number) => R
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
   const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
+  const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+  const dismissDeletedNotice = useCallback(() => setDeletedNotice(null), []);
   const running = useRef<Promise<void> | null>(null);
   const again = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -421,11 +429,12 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     } catch (e) {
       if (isNetwork(e)) return OFFLINE_DELETE;
     }
-    let { error } = await supabase.rpc('request_account_deletion');
+    let { data: purge, error } = await supabase.rpc('request_account_deletion');
     // A server that doesn't have the 30-day functions yet (002 not run).
-    if (error && !isNetwork(error) && /request_account_deletion|PGRST202|does not exist/i.test(`${error.code} ${error.message}`)) ({ error } = await supabase.rpc('delete_account'));
+    if (error && !isNetwork(error) && /request_account_deletion|PGRST202|does not exist/i.test(`${error.code} ${error.message}`)) ({ error } = await supabase.rpc('delete_account')), (purge = null);
     if (error) return isNetwork(error) ? OFFLINE_DELETE : "Your account couldn't be deleted just now. Try again in a minute.";
     setPendingDeletion(null);
+    setDeletedNotice(typeof purge === 'string' ? purge : new Date(Date.now() + 30 * 86_400_000).toISOString());
     await signOutClearing(userId);
     return null;
   }, [userId, runOnce, pendingDeletion, signOutClearing]);
@@ -450,8 +459,8 @@ export function SyncProvider({ children }: { children: (generation: number) => R
   }, [userId, signOutClearing]);
 
   const value = useMemo(
-    () => ({ status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted }),
-    [status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted],
+    () => ({ status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted, deletedNotice, dismissDeletedNotice }),
+    [status, lastSyncAt, syncNow, generation, signOutAndClear, pendingDeletion, deleteAccount, restoreAccount, keepDeleted, deletedNotice, dismissDeletedNotice],
   );
   return <Ctx.Provider value={value}>{children(generation)}</Ctx.Provider>;
 }

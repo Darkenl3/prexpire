@@ -152,19 +152,26 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
   // typed in stays in view. iOS also shoves the whole page up to reveal a
   // focused field; with the sheet already above the keys that shove is only
   // a jump, so it's undone.
-  const keyboard = useWebKeyboardInset();
+  const keyboard = useWebKeyboardInset(true);
   useEffect(() => {
     if (!visible || typeof window === 'undefined') return;
     const vv = (window as unknown as { visualViewport?: { offsetTop: number; addEventListener: (t: string, f: () => void) => void; removeEventListener: (t: string, f: () => void) => void } }).visualViewport;
     if (!vv) return;
+    // Once per frame at most, so undoing the shove never fights iOS.
+    let frame = 0;
     const settle = () => {
-      if (vv.offsetTop > 0) window.scrollTo(0, 0);
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        if (vv.offsetTop > 0 || window.scrollY > 0) window.scrollTo(0, 0);
+      });
     };
     vv.addEventListener('scroll', settle);
     vv.addEventListener('resize', settle);
     return () => {
       vv.removeEventListener('scroll', settle);
       vv.removeEventListener('resize', settle);
+      if (frame) cancelAnimationFrame(frame);
     };
   }, [visible]);
   // The full page height minus the keyboard. (On the web the window size React

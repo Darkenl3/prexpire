@@ -16,14 +16,19 @@ type VisualViewportLike = {
   removeEventListener: (type: string, listener: () => void) => void;
 };
 
-export function useWebKeyboardInset() {
+// keyboardOnly: the keyboard's own height, for a view that undoes iOS's
+// page shove itself (BottomSheet). Others subtract the shove (offsetTop).
+export function useWebKeyboardInset(keyboardOnly = false) {
   const [inset, setInset] = useState(0);
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const vv = (window as unknown as { visualViewport?: VisualViewportLike }).visualViewport;
     if (!vv) return;
     const measure = () => {
-      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      // The keyboard's height only, not minus iOS's page shove (offsetTop):
+      // counting the shove moved the sheet, which made iOS shove again, which
+      // moved the sheet back (the jumping while typing a code).
+      const kb = Math.max(0, Math.round(window.innerHeight - vv.height - (keyboardOnly ? 0 : vv.offsetTop)));
       setInset((prev) => (Math.abs(prev - kb) < 1 ? prev : kb));
     };
     measure();
@@ -33,6 +38,6 @@ export function useWebKeyboardInset() {
       vv.removeEventListener('resize', measure);
       vv.removeEventListener('scroll', measure);
     };
-  }, []);
+  }, [keyboardOnly]);
   return inset;
 }

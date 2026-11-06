@@ -239,6 +239,27 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     </PressScale>
   );
 
+  // Pasting the code from the email. The six boxes sit over an invisible
+  // field, so iOS's own long-press Paste is hard to reach: this reads the
+  // clipboard directly (iOS shows its small "Paste" bubble to allow it).
+  const pasteCode = async () => {
+    let text = '';
+    try {
+      text = (await navigator.clipboard?.readText?.()) ?? '';
+    } catch {
+      text = '';
+    }
+    const digits = (text.match(/d{6}/)?.[0] ?? text.replace(/D/g, '')).slice(0, 6);
+    if (digits.length !== 6) {
+      setError("There's no 6-digit code to paste. Copy the code from the email, then tap Paste code.");
+      codeRef.current?.focus();
+      return;
+    }
+    setCode(digits);
+    clear();
+    submitCode(digits);
+  };
+
   const link = (label: string, onPress: () => void, strong = false) => (
     <PressScale onPress={onPress} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={label} style={s.linkBtn}>
       <Text style={[s.link, strong && { color: c.green, fontWeight: '700' }]}>{label}</Text>
@@ -385,6 +406,10 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
             style={s.hiddenInput}
           />
         </PressScale>
+        <PressScale onPress={pasteCode} scaleTo={0.94} accessibilityRole="button" accessibilityLabel="Paste code" style={[s.linkBtn, { alignSelf: 'center', marginTop: -4 }]}>
+          <Ionicons name="clipboard-outline" size={15} color={c.green} />
+          <Text style={[s.link, { color: c.green, fontWeight: '700' }]}>Paste code</Text>
+        </PressScale>
         {errorLine}
         {primary(purpose === 'reset' ? 'Continue' : purpose === 'signup' ? 'Confirm account' : 'Sign in', () => submitCode())}
         <View style={s.row}>
@@ -518,6 +543,32 @@ export function DeletionPendingSheet() {
         </PressScale>
         <PressScale onPress={keep} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep it deleted and sign out" style={[s.linkBtn, { alignSelf: 'center' }]}>
           {busy === 'keep' ? <ActivityIndicator color={c.textMuted} /> : <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep it deleted and sign out</Text>}
+        </PressScale>
+      </View>
+    </BottomSheet>
+  );
+}
+
+// The confirmation after deleting the account on this phone: it is signed
+// out, and this says when the account goes for good and how to undo it.
+export function AccountDeletedSheet() {
+  const c = useTheme();
+  const s = useStyles();
+  const { deletedNotice, dismissDeletedNotice } = useSync();
+  const date = deletedNotice ? new Date(deletedNotice).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  return (
+    <BottomSheet visible={!!deletedNotice} onClose={dismissDeletedNotice} title="Account deleted" scrollable={false} maxWidth={460}>
+      <View style={s.body}>
+        <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+          <Ionicons name="checkmark-circle" size={44} color={c.green} />
+        </View>
+        <Text style={[s.lede, { textAlign: 'center' }]}>
+          You're signed out. Your account and everything in it will be deleted for good on{' '}
+          <Text style={{ color: c.text, fontWeight: '700' }}>{date}</Text>.
+        </Text>
+        <Text style={[s.lede, { textAlign: 'center' }]}>Changed your mind? Sign in before then and choose Restore my account.</Text>
+        <PressScale onPress={dismissDeletedNotice} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Done" style={s.primary}>
+          <Text style={s.primaryText}>Done</Text>
         </PressScale>
       </View>
     </BottomSheet>
