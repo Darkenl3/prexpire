@@ -90,6 +90,9 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const { custom } = useCategories();
   const { available, isPro, plans, loadPlans, buy, restore, manage, state } = usePro();
   const [selected, setSelected] = useState<string | null>(null);
+  // The labels only animate once the person picks a plan themselves; the
+  // first fill-in as prices arrive is instant (it used to flash in).
+  const [picked, setPicked] = useState(false);
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
   const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
   const [doc, setDoc] = useState<'terms' | 'privacy' | null>(null);
@@ -230,7 +233,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                       key={p.id}
                       on={on}
                       motion={motion}
-                      onPress={() => setSelected(p.id)}
+                      onPress={() => (setSelected(p.id), setPicked(true))}
                       label={`${name}, ${p.price}`}
                       extra={p.kind === 'lifetime' ? <PerkRow perk={FAMILY} compact /> : undefined}
                     >
@@ -274,9 +277,9 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <View style={s.column}>
             {note ? <Text style={[s.note, note.bad && { color: c.red }]}>{note.text}</Text> : null}
             <PressScale onPress={onBuy} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel={cta} style={[s.cta, busy === 'buy' && { opacity: 0.7 }]}>
-              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion} />}
+              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion && picked} />}
             </PressScale>
-            <SwapText text={terms} style={s.terms} motion={motion} block />
+            <SwapText text={terms} style={s.terms} motion={motion && picked} block />
             {reason === 'welcome' ? (
               <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Continue with the free plan" style={s.skip}>
                 <Text style={s.skipText}>Continue free</Text>
@@ -421,6 +424,7 @@ function SwapText({ text, style, motion, block = false }: { text: string; style:
             style,
             {
               position: 'absolute',
+              textAlign: 'center',
               left: 0,
               right: 0,
               top,
