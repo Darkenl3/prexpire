@@ -11,7 +11,7 @@ import { useSettings } from '../settings';
 import { categories } from '../data';
 import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
-import { GlassIconButton } from './HomeComponents';
+import { CategoryTile, GlassIconButton } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 import { ChoicePill, type PillColors } from './ChoicePill';
 import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
@@ -373,6 +373,33 @@ export function CategoryManager() {
 // keyboard opens (iOS padding) so the actions are never covered.
 type Editing = { id: string; name: string; icon?: string; tint?: Tint; builtin: boolean };
 
+// How the category's tile will look on Home, live: the chosen colour, the
+// chosen icon's picture and the name as it's typed. Changing the colour or
+// icon gives the tile a soft settle so the change is easy to see.
+function TilePreview({ tint, icon, name }: { tint: Tint; icon: string; name: string }) {
+  const s = useStyles();
+  const { motion } = useSettings();
+  const bump = useRef(new Animated.Value(1)).current;
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (!motion) return;
+    bump.setValue(0.95);
+    Animated.spring(bump, { toValue: 1, damping: 14, stiffness: 260, mass: 0.7, useNativeDriver: true }).start();
+  }, [tint, icon, motion, bump]);
+  return (
+    <View style={s.previewWrap} accessible accessibilityLabel={`Preview of the ${name} tile on Home`}>
+      <Animated.View style={{ transform: [{ scale: bump }] }} pointerEvents="none">
+        <CategoryTile tint={tint} art={<IconArt icon={icon} size={64} />} name={name} sub="0 items" status={{ label: 'All good', tone: 'green' }} width={150} onPress={() => {}} />
+      </Animated.View>
+      <Text style={s.previewCaption}>How it looks on Home</Text>
+    </View>
+  );
+}
+
 // The page's choice pills: the app's own (the Items filters, the save sheet).
 function pagePills(c: ReturnType<typeof useTheme>): PillColors {
   return { offBg: c.cardAlt, offBorder: c.surfaceBorder, offText: c.textMuted, onBg: c.mint, onBorder: c.mint, onText: c.scanInk };
@@ -454,6 +481,7 @@ function CategoryPage({
           <ScrollView
             style={s.pageScroll}
             contentContainerStyle={[s.pageBody, { paddingBottom: Math.max(insets.bottom, 20) + (SHELL ? 96 : 16) }]}
+            showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -464,6 +492,7 @@ function CategoryPage({
                   ? 'Give this category your own name. Its picture and colour stay as they are, and every item in it keeps its place.'
                   : 'Change the name, icon or colour. Every item in this folder stays in it.'}
             </Text>
+            {!builtin && <TilePreview tint={tint} icon={icon} name={trimmed || 'New category'} />}
             <Text style={s.label}>Name</Text>
             {/* Deliberately NOT autofocused: the keyboard opens only when the
                 user taps this field. Typed text survives keyboard dismissals
@@ -497,9 +526,9 @@ function CategoryPage({
                     accessibilityRole="radio"
                     aria-checked={on}
                     accessibilityLabel={`Icon: ${CATEGORY_ICON_LABELS[ic]}`}
-                    style={[s.iconCell, on && { borderColor: c.chipOnBorder, backgroundColor: c.chipOnBg }]}
+                    style={[s.iconCell, on && { borderColor: c.tints[tint].border, backgroundColor: c === LIGHT ? c.tints[tint].top : `${c.tints[tint].top}55` }]}
                   >
-                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? c.scanInk : c.textMuted} />
+                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? (c === LIGHT ? TINT_ICON[tint] : c.text) : c.textMuted} />
                   </PressScale>
                 );
               })}
@@ -641,6 +670,8 @@ const useStyles = makeStyles((c) => ({
   pageScroll: { flex: 1 },
   pageBody: { paddingHorizontal: 20, gap: 10, paddingTop: 4 },
   pageIntro: { color: c.textMuted, fontSize: 13.5, lineHeight: 18, marginBottom: 6 },
+  previewWrap: { alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 4 },
+  previewCaption: { color: c.textMuted, fontSize: 12.5, fontWeight: '600' },
   input: {
     color: c.text,
     fontSize: 17,

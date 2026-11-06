@@ -42,8 +42,9 @@ const PERKS: Perk[] = [
   { icon: 'grid-outline', title: 'Unlimited categories', text: 'Make a category for the garage, the baby, the first-aid kit.' },
   { icon: 'heart-outline', title: 'Keeps Prexpire independent', text: 'No ads and no tracking, now or later.' },
 ];
-// Shown while Lifetime is the chosen plan, unfolding under the categories.
-const FAMILY: Perk = { icon: 'people-outline', title: 'For the whole family', text: 'Lifetime is shared through Family Sharing, with up to 5 family members.' };
+// Opens inside the Lifetime card while it's the chosen plan (the card grows
+// downward, so nothing above it moves).
+const FAMILY: Perk = { icon: 'people-outline', title: 'Shared with your family', text: 'Up to 5 family members get Pro too, through Family Sharing.' };
 
 function savingVsMonthly(plans: ProPlan[]): number | null {
   const m = plans.find((p) => p.kind === 'monthly');
@@ -187,9 +188,6 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <View style={s.perks}>
             <PerkRow perk={PERKS[0]} />
             <PerkRow perk={PERKS[1]} spaced />
-            <Unfold open={!isPro && plan?.kind === 'lifetime'} motion={motion}>
-              <PerkRow perk={FAMILY} highlight />
-            </Unfold>
             <PerkRow perk={PERKS[2]} spaced />
             <Text style={s.freeLine}>Scanning, reminders and backup stay free for everyone.</Text>
           </View>
@@ -228,7 +226,14 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                         ? 'Billed monthly'
                         : 'Pay once, share with your family';
                   return (
-                    <PlanCard key={p.id} on={on} motion={motion} onPress={() => setSelected(p.id)} label={`${name}, ${p.price}`}>
+                    <PlanCard
+                      key={p.id}
+                      on={on}
+                      motion={motion}
+                      onPress={() => setSelected(p.id)}
+                      label={`${name}, ${p.price}`}
+                      extra={p.kind === 'lifetime' ? <PerkRow perk={FAMILY} compact /> : undefined}
+                    >
                       <View style={{ flex: 1 }}>
                         <View style={s.planNameRow}>
                           <Text style={s.planName}>{name}</Text>
@@ -269,9 +274,9 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <View style={s.column}>
             {note ? <Text style={[s.note, note.bad && { color: c.red }]}>{note.text}</Text> : null}
             <PressScale onPress={onBuy} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel={cta} style={[s.cta, busy === 'buy' && { opacity: 0.7 }]}>
-              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion} distance={14} />}
+              {busy === 'buy' ? <ActivityIndicator color={c.scanInk} /> : <SwapText text={cta} style={s.ctaText} motion={motion} />}
             </PressScale>
-            <SwapText text={terms} style={s.terms} motion={motion} distance={6} block />
+            <SwapText text={terms} style={s.terms} motion={motion} block />
             {reason === 'welcome' ? (
               <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Continue with the free plan" style={s.skip}>
                 <Text style={s.skipText}>Continue free</Text>
@@ -287,17 +292,17 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   );
 }
 
-function PerkRow({ perk, highlight = false, spaced = false }: { perk: Perk; highlight?: boolean; spaced?: boolean }) {
+function PerkRow({ perk, spaced = false, compact = false }: { perk: Perk; spaced?: boolean; compact?: boolean }) {
   const c = useTheme();
   const s = useStyles();
   return (
     <View style={[s.perk, spaced && { marginTop: 14 }]}>
-      <View style={[s.perkIcon, highlight && s.perkIconHi]}>
-        <Ionicons name={perk.icon} size={18} color={highlight ? c.scanInk : c.mint} />
+      <View style={[s.perkIcon, compact && s.perkIconSmall]}>
+        <Ionicons name={perk.icon} size={compact ? 16 : 18} color={c.mint} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={s.perkTitle}>{perk.title}</Text>
-        <Text style={s.perkText}>{perk.text}</Text>
+        <Text style={[s.perkTitle, compact && { fontSize: 14.5 }]}>{perk.title}</Text>
+        <Text style={[s.perkText, compact && { fontSize: 13, lineHeight: 18 }]}>{perk.text}</Text>
       </View>
     </View>
   );
@@ -328,7 +333,7 @@ function Unfold({ open, motion, children }: { open: boolean; motion: boolean; ch
       {/* Measured off-flow so the fold knows the row's full height. */}
       <Animated.View
         onLayout={(e) => setH(Math.ceil(e.nativeEvent.layout.height))}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, paddingTop: 14, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] }}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, paddingTop: 12, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) }] }}
       >
         {children}
       </Animated.View>
@@ -338,7 +343,7 @@ function Unfold({ open, motion, children }: { open: boolean; motion: boolean; ch
 
 // A plan row: the chosen one takes the lime border and a faint lime wash,
 // and its radio dot springs in.
-function PlanCard({ on, motion, onPress, label, children }: { on: boolean; motion: boolean; onPress: () => void; label: string; children: ReactNode }) {
+function PlanCard({ on, motion, onPress, label, extra, children }: { on: boolean; motion: boolean; onPress: () => void; label: string; extra?: ReactNode; children: ReactNode }) {
   const c = useTheme();
   const s = useStyles();
   const v = useRef(new Animated.Value(on ? 1 : 0)).current;
@@ -347,20 +352,23 @@ function PlanCard({ on, motion, onPress, label, children }: { on: boolean; motio
     Animated.timing(v, { toValue: on ? 1 : 0, duration: motion ? 220 : 0, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
     if (motion && on) {
       dot.setValue(0);
-      Animated.spring(dot, { toValue: 1, damping: 11, stiffness: 320, mass: 0.6, useNativeDriver: false }).start();
+      Animated.spring(dot, { toValue: 1, damping: 16, stiffness: 300, mass: 0.6, useNativeDriver: false }).start();
     } else dot.setValue(on ? 1 : 0);
   }, [on, motion, v, dot]);
   return (
     <PressScale onPress={onPress} scaleTo={0.98} accessibilityRole={'radio' as never} accessibilityState={{ selected: on }} accessibilityLabel={label}>
       <Animated.View
         style={[
-          s.plan,
+          s.planBox,
           {
             borderColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.surfaceBorder, c.mint] }),
-            backgroundColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.surface, 'rgba(166,223,107,0.07)'] }),
+            // Both ends opaque: blending into a see-through lime passed
+            // through a bright half-lime on the way.
+            backgroundColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.surface, SELECTED_BG] }),
           },
         ]}
       >
+        <View style={s.plan}>
         <Animated.View style={[s.radio, { borderColor: v.interpolate({ inputRange: [0, 1], outputRange: [c.textMuted, c.mint] }) }]}>
           <Animated.View
             style={[
@@ -373,14 +381,22 @@ function PlanCard({ on, motion, onPress, label, children }: { on: boolean; motio
           />
         </Animated.View>
         {children}
+        </View>
+        {extra ? (
+          <Unfold open={on} motion={motion}>
+            <View style={s.planExtra}>{extra}</View>
+          </Unfold>
+        ) : null}
       </Animated.View>
     </PressScale>
   );
 }
 
-// Text that rolls to new wording: the old line lifts and fades while the new
-// one rises into place.
-function SwapText({ text, style, motion, distance, block = false }: { text: string; style: TextStyle; motion: boolean; distance: number; block?: boolean }) {
+// The surface with a 7% lime wash, as one solid colour.
+const SELECTED_BG = '#13221A';
+
+// Text that changes wording with a short crossfade (nothing moves).
+function SwapText({ text, style, motion, block = false }: { text: string; style: TextStyle; motion: boolean; block?: boolean }) {
   const [current, setCurrent] = useState(text);
   const [old, setOld] = useState<string | null>(null);
   const v = useRef(new Animated.Value(1)).current;
@@ -393,7 +409,7 @@ function SwapText({ text, style, motion, distance, block = false }: { text: stri
     setOld(current);
     setCurrent(text);
     v.setValue(0);
-    Animated.timing(v, { toValue: 1, duration: 280, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(() => setOld(null));
+    Animated.timing(v, { toValue: 1, duration: 220, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => setOld(null));
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   const top = block ? ((style.marginTop as number | undefined) ?? 0) : 0;
   return (
@@ -409,8 +425,7 @@ function SwapText({ text, style, motion, distance, block = false }: { text: stri
               right: 0,
               top,
               marginTop: 0,
-              opacity: v.interpolate({ inputRange: [0, 0.6], outputRange: [1, 0], extrapolate: 'clamp' }),
-              transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -distance] }) }],
+              opacity: v.interpolate({ inputRange: [0, 0.5], outputRange: [1, 0], extrapolate: 'clamp' }),
             },
           ]}
         >
@@ -421,8 +436,7 @@ function SwapText({ text, style, motion, distance, block = false }: { text: stri
         style={[
           style,
           {
-            opacity: v.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 0, 1] }),
-            transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }],
+            opacity: v.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 0, 1] }),
           },
         ]}
       >
@@ -451,14 +465,16 @@ const useStyles = makeStyles((c) => ({
 
   perks: { marginTop: 22 },
   perk: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
-  perkIconHi: { backgroundColor: c.mint, borderColor: c.mint },
+  perkIconSmall: { width: 30, height: 30, borderRadius: 9 },
   perkIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: c.btnMintBg, borderWidth: 1, borderColor: c.btnMintBorder, alignItems: 'center', justifyContent: 'center' },
   perkTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
   perkText: { color: c.textMuted, fontSize: 14, lineHeight: 20, marginTop: 2 },
   freeLine: { color: c.textMuted, fontSize: 13.5, lineHeight: 19, marginTop: 16 },
 
   plans: { marginTop: 22, gap: 10 },
-  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderWidth: 1.5, borderColor: c.surfaceBorder, backgroundColor: c.surface },
+  planBox: { borderRadius: 16, borderWidth: 1.5, borderColor: c.surfaceBorder, backgroundColor: c.surface, paddingHorizontal: 16 },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 61, paddingVertical: 12 },
+  planExtra: { borderTopWidth: 1, borderTopColor: 'rgba(166,223,107,0.16)', paddingTop: 12, paddingBottom: 14 },
   planOn: { borderColor: c.mint },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: c.textMuted, alignItems: 'center', justifyContent: 'center' },
   radioOn: { borderColor: c.mint },
@@ -474,7 +490,7 @@ const useStyles = makeStyles((c) => ({
   footer: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.surfaceBorder, backgroundColor: c.bg },
   cta: { marginTop: 4, height: 56, borderRadius: 16, backgroundColor: c.mint, alignItems: 'center', justifyContent: 'center' },
   ctaText: { color: c.scanInk, fontSize: 17, fontWeight: '800' },
-  terms: { color: c.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 10, textAlign: 'center' },
+  terms: { color: c.textMuted, fontSize: 12.5, lineHeight: 17, marginTop: 10, textAlign: 'center', minHeight: 51 },
   skip: { alignSelf: 'center', marginTop: 10, paddingHorizontal: 14, height: 40, justifyContent: 'center' },
   skipText: { color: c.text, fontSize: 15, fontWeight: '700' },
   secondary: { marginTop: 28, height: 50, borderRadius: 16, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' },
