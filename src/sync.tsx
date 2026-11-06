@@ -31,6 +31,9 @@ const DOC_KEYS = [
   'prexpire.categoryOrder.v1',
   'prexpire.settings.v1',
   'prexpire.expevents.v1',
+  // The free plan's monthly count (src/pro.tsx): backed up, so reinstalling
+  // doesn't reset it.
+  'prexpire.proUsage.v1',
   HISTORY_KEY,
 ];
 const LIST_KEYS: Record<string, 'item' | 'shopping'> = { [ITEMS_KEY]: 'item', [SHOPPING_KEY]: 'shopping' };

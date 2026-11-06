@@ -6,7 +6,7 @@ import { makeStyles, useTheme } from '../theme';
 import { useSettings } from '../settings';
 import { useItems } from '../items';
 import { useCategories } from '../categories';
-import { FREE_CUSTOM_CATEGORIES, FREE_ITEM_LIMIT, usePro, type PaywallReason, type ProPlan } from '../pro';
+import { FREE_CUSTOM_CATEGORIES, FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro, type PaywallReason, type ProPlan } from '../pro';
 import { PressScale } from './Press';
 import { BottomSheet } from './BottomSheet';
 import { LegalDetail, type LegalDoc } from '../screens/SettingsScreen';
@@ -17,14 +17,14 @@ import legal from '../legal.json';
 // row": everything else in the app stays free.
 
 const LEADS: Record<PaywallReason, (n: number) => string> = {
-  welcome: () => `Free for up to ${FREE_ITEM_LIMIT} items at a time. Pro keeps your whole kitchen, bathroom cabinet and pantry in one place.`,
-  limit: (n) => `You're tracking ${n} items, the most the free plan holds. Pro takes the limit away.`,
-  categories: () => `The free plan includes ${FREE_CUSTOM_CATEGORIES} categories of your own. Pro lets you add as many as you need.`,
-  settings: () => `Free for up to ${FREE_ITEM_LIMIT} items at a time. Pro takes the limit away.`,
+  welcome: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro tracks every shop, the pantry and the medicine cabinet, with no limit.`,
+  limit: () => `You've added this month's ${FREE_ITEM_LIMIT} free items. Everything you track keeps working. Pro lets you keep adding.`,
+  categories: () => `The free plan includes ${FREE_CUSTOM_CATEGORIES} category of your own. Pro lets you add as many as you need.`,
+  settings: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro takes the limit away.`,
 };
 
 const PERKS: { icon: keyof typeof Ionicons.glyphMap; title: string; text: string }[] = [
-  { icon: 'infinite', title: 'Unlimited items', text: 'Track everything with a date on it, not just 20 things.' },
+  { icon: 'infinite', title: 'Unlimited items', text: 'Add every shop, every week, without counting.' },
   { icon: 'grid-outline', title: 'Unlimited categories', text: 'Make a category for the garage, the baby, the first-aid kit.' },
   { icon: 'heart-outline', title: 'Keeps Prexpire independent', text: 'No ads and no tracking, now or later.' },
 ];
@@ -95,9 +95,11 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const plan = ordered.find((p) => p.id === selected) ?? null;
   const saving = savingVsMonthly(ordered);
 
+  const added = useMonthlyAdds();
   const count = items.length;
+  const resets = nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
   const selling = available && !isPro && !!plans;
-  const filled = Math.min(count, FREE_ITEM_LIMIT);
+  const filled = Math.min(added, FREE_ITEM_LIMIT);
 
   const onBuy = async () => {
     if (!plan || busy) return;
@@ -145,7 +147,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           <Text style={s.lead}>{isPro ? 'Thank you. Pro is on: no limits on items or categories.' : LEADS[reason](count)}</Text>
 
           {/* The free plan's places. */}
-          <View style={s.meter} accessible accessibilityLabel={`${count} of ${FREE_ITEM_LIMIT} free items used`}>
+          <View style={s.meter} accessible accessibilityLabel={`${added} of ${FREE_ITEM_LIMIT} free items used this month`}>
             <View style={s.pips}>
               {Array.from({ length: FREE_ITEM_LIMIT }, (_, i) => (
                 <View key={i} style={[s.pip, i < filled && (filled >= FREE_ITEM_LIMIT && !isPro ? s.pipFull : s.pipOn)]} />
@@ -155,7 +157,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
               </View>
             </View>
             <Text style={s.meterText}>
-              {isPro ? `${count} ${count === 1 ? 'item' : 'items'}, no limit` : `${Math.min(count, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} free items`}
+              {isPro ? `${count} ${count === 1 ? 'item' : 'items'}, no limit` : `${filled} of ${FREE_ITEM_LIMIT} free items this month. Resets on ${resets}`}
             </Text>
           </View>
 

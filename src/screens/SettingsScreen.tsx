@@ -43,7 +43,7 @@ import { useSync } from '../sync';
 // in the landing repo, legal/legal.json), shown here as native pages so it
 // reads offline and never sends the app out to a browser.
 import legal from '../legal.json';
-import { FREE_ITEM_LIMIT, usePro } from '../pro';
+import { FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro } from '../pro';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
@@ -525,13 +525,13 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
 // installed app can sell Pro.
 function ProRow() {
   const { available, isPro, state, openPaywall } = usePro();
-  const { saved } = useItems();
+  const added = useMonthlyAdds();
   if (!available) return null;
   const description = isPro
     ? state?.lifetime
       ? 'Lifetime. Thank you for your support'
       : 'Active. No limits on items or categories'
-    : `${Math.min(saved.length, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} free items. Unlimited with Pro`;
+    : `${Math.min(added, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} free items this month. Resets ${nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
   return (
     <SettingsSection title="Plan">
       <SettingsCard>

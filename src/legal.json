@@ -139,7 +139,7 @@
     "title": "Terms of Use",
     "updated": "November 6, 2026",
     "short": [
-      "Prexpire helps you keep track of expiry dates. It's free for up to 20 items at a time, with or without an account; Prexpire Pro removes the limits.",
+      "Prexpire helps you keep track of expiry dates. It's free with 20 new items a month, with or without an account; Prexpire Pro removes the limits.",
       "Dates read by the scanner can be wrong. Always check the date printed on the pack before you eat, drink or use something.",
       "Prexpire isn't food-safety, medical or pharmaceutical advice.",
       "Your items are yours. You can delete your account and data at any time."
@@ -216,14 +216,14 @@
       {
         "title": "Prexpire Pro",
         "body": [
-          "Prexpire is free to use for up to 20 items at a time and 2 categories of your own. Prexpire Pro removes those limits. Everything else in the app stays free.",
+          "Prexpire is free to use with 20 new items each calendar month and 1 category of your own. The count starts again on the 1st of each month; items you use up or delete don't give their place back. Prexpire Pro removes those limits. Everything else in the app stays free.",
           {
             "list": [
               "Pro is sold in the iPhone app through Apple, as a monthly or yearly subscription or a one-time lifetime purchase. Prices are shown in the app before you buy, in your local currency.",
               "Payment is charged to your Apple ID when you confirm the purchase. A free trial, when offered, turns into a paid subscription at its end unless you cancel at least 24 hours before.",
               "Subscriptions renew automatically at the same price and length unless you cancel at least 24 hours before the end of the current period. Cancel or manage them in your Apple ID settings (Settings, your name, Subscriptions) or in Prexpire, Settings, Prexpire Pro.",
               "Refunds are handled by Apple under its policies (reportaproblem.apple.com).",
-              "If you're signed in, Pro belongs to your Prexpire account and works on your other iPhone or iPad signed in to it. If you stop paying, nothing is deleted: items over the free limit stay, and you can't add new ones until you're under it again."
+              "If you're signed in, Pro belongs to your Prexpire account and works on your other iPhone or iPad signed in to it. If you stop paying, nothing is deleted: everything you added stays and keeps working, and the free monthly limit applies again to new items."
             ]
           }
         ]

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from './settings';
+import { noteItemAdded } from './pro';
 
 // Items the user tracks. Every item is real: items added in the app are saved
 // on the device with AsyncStorage, and a fresh install or an emptied storage
@@ -175,6 +176,7 @@ export function ItemsProvider({ children }: { children: ReactNode }) {
     savedRef.current = next;
     setSaved(next);
     setLastCategory(item.category);
+    noteItemAdded();
     return item;
   }, []);
 

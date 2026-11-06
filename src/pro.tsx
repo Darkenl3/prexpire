@@ -4,9 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './auth';
 
 // Prexpire Pro. Free forever: scanning, reminders, backup, everything —
-// for up to FREE_ITEM_LIMIT items at a time (used and thrown-away items don't
-// count) and FREE_CUSTOM_CATEGORIES of your own categories. Pro removes both
-// limits. Purchases go through Apple, in the iPhone app's shell (RevenueCat,
+// with FREE_ITEM_LIMIT new items a month and FREE_CUSTOM_CATEGORIES of your
+// own categories. Pro removes both limits. Purchases go through Apple, in the iPhone app's shell (RevenueCat,
 // src/purchases/proStore.ts there); this side asks over the bridge.
 //
 // Until the installed app can sell Pro (window.__prexpirePurchases, set by a
@@ -43,8 +42,58 @@ if (__DEV__ && Platform.OS === 'web' && typeof window !== 'undefined') {
   } catch {}
 }
 
+// Free: FREE_ITEM_LIMIT new items each calendar month (the count starts
+// again on the 1st; using up or deleting an item doesn't give it back), and
+// FREE_CUSTOM_CATEGORIES categories of your own. Items already in the app
+// are never touched: only adding is paused until the month turns.
 export const FREE_ITEM_LIMIT = 20;
-export const FREE_CUSTOM_CATEGORIES = 2;
+export const FREE_CUSTOM_CATEGORIES = 1;
+
+const USAGE_KEY = 'prexpire.proUsage.v1';
+type Usage = { month: string; added: number };
+const monthOf = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+const usageListeners = new Set<(n: number) => void>();
+
+async function readUsage(): Promise<number> {
+  try {
+    const u = JSON.parse((await AsyncStorage.getItem(USAGE_KEY)) ?? 'null') as Usage | null;
+    return u && u.month === monthOf() && Number.isFinite(u.added) ? u.added : 0;
+  } catch {
+    return 0;
+  }
+}
+
+// Called by ItemsProvider after every item added on this phone (items that
+// arrive from a backup or another phone don't count again).
+export async function noteItemAdded() {
+  const n = (await readUsage()) + 1;
+  usageListeners.forEach((f) => f(n));
+  AsyncStorage.setItem(USAGE_KEY, JSON.stringify({ month: monthOf(), added: n } satisfies Usage)).catch(() => {});
+}
+
+// Items added this month, kept current.
+export function useMonthlyAdds(): number {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let live = true;
+    readUsage().then((v) => live && setN(v));
+    usageListeners.add(setN);
+    // The month turning while the app stays open.
+    const t = setInterval(() => readUsage().then((v) => live && setN(v)), 60_000);
+    return () => {
+      live = false;
+      usageListeners.delete(setN);
+      clearInterval(t);
+    };
+  }, []);
+  return n;
+}
+
+// The 1st of next month, for "Resets on …".
+export function nextReset(): Date {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+}
 
 export type ProPlan = {
   id: string;
@@ -217,7 +266,8 @@ export function usePro() {
   return useContext(Ctx);
 }
 
-// The free plan's limits, for the screens that add things.
+// The free plan's limits, for the screens that add things. itemCount is
+// items added this month (useMonthlyAdds).
 export function useProLimits(itemCount: number, customCount: number) {
   const { available, isPro } = usePro();
   const limited = available && !isPro;

@@ -20,7 +20,7 @@ import { AuthProvider } from './src/auth';
 import { planReminders } from './src/reminderPlan';
 import { nativeReminders, notificationStatus, requestNotificationPermission, scheduleReminders } from './src/platform/notifications';
 import { SyncProvider } from './src/sync';
-import { ProProvider, takeWelcomeOffer, usePro, useProLimits } from './src/pro';
+import { ProProvider, takeWelcomeOffer, useMonthlyAdds, usePro, useProLimits } from './src/pro';
 import { Paywall } from './src/components/Paywall';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
@@ -124,7 +124,8 @@ function Shell() {
   }, [itemsReady, items.length, welcome]);
   const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
   const { openPaywall } = usePro();
-  const { itemsLocked } = useProLimits(items.length, customCategories.length);
+  const addedThisMonth = useMonthlyAdds();
+  const { itemsLocked } = useProLimits(addedThisMonth, customCategories.length);
   const finishWelcome = useCallback(() => {
     setWelcome('done');
     AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
