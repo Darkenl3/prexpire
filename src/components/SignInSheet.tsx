@@ -27,7 +27,8 @@ type Step = 'start' | 'code' | 'forgot' | 'newpass' | 'login';
 type Purpose = 'signup' | 'reset' | 'login';
 
 // intro: replaces the opening line and title (the "keep your items safe"
-// prompt after setup, the backup card on Home), with a Not now link.
+// prompt after setup, the backup card on Home). Closing it is the usual
+// swipe down or tap outside.
 type Props = { visible: boolean; onClose: () => void; onSignedIn?: () => void; initialMode?: Mode; intro?: { title: string; text: string } };
 
 const TITLES: Record<Step, string> = {
@@ -459,21 +460,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
 
   const title = step === 'start' ? (mode === 'signup' ? (intro?.title ?? 'Create your account') : 'Welcome back') : TITLES[step];
   return (
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      title={title}
-      scrollable
-      maxWidth={460}
-      footer={
-        intro && step === 'start' ? (
-          // Pinned under the form, so skipping is always in sight.
-          <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Not now" style={[s.linkBtn, { alignSelf: 'center' }]}>
-            <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Not now</Text>
-          </PressScale>
-        ) : undefined
-      }
-    >
+    <BottomSheet visible={visible} onClose={onClose} title={title} scrollable maxWidth={460}>
       {body}
     </BottomSheet>
   );
