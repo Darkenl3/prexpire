@@ -15,6 +15,7 @@ import { GlassIconButton } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 import { ChoicePill, type PillColors } from './ChoicePill';
 import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
+import { usePro, useProLimits } from '../pro';
 
 // Managing the user's categories: the unified list (the built-ins they keep
 // plus the folders they added, in the user's order, all removable), a
@@ -51,6 +52,8 @@ export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
   const { all, custom, removed, add, edit, move, moveTo, remove, restore, saveError } = useCategories();
+  const { openPaywall } = usePro();
+  const { categoriesLocked } = useProLimits(0, custom.length);
   const { saved, moveCategory } = useItems();
   const { settings, update } = useSettings();
   const [adding, setAdding] = useState(false);
@@ -292,7 +295,7 @@ export function CategoryManager() {
           })}
         </View>
       )}
-      <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => setAdding(true)} />
+      <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => (categoriesLocked ? openPaywall('categories') : setAdding(true))} />
       {(() => {
         const from = all.find((x) => x.id === moving);
         if (!from) return null;

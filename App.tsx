@@ -20,6 +20,8 @@ import { AuthProvider } from './src/auth';
 import { planReminders } from './src/reminderPlan';
 import { nativeReminders, notificationStatus, requestNotificationPermission, scheduleReminders } from './src/platform/notifications';
 import { SyncProvider } from './src/sync';
+import { ProProvider, takeWelcomeOffer, usePro, useProLimits } from './src/pro';
+import { Paywall } from './src/components/Paywall';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue, dayOrderForFormat } from './src/preferences';
@@ -120,11 +122,22 @@ function Shell() {
       cancelled = true;
     };
   }, [itemsReady, items.length, welcome]);
+  const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
+  const { openPaywall } = usePro();
+  const { itemsLocked } = useProLimits(items.length, customCategories.length);
   const finishWelcome = useCallback(() => {
     setWelcome('done');
     AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
-  }, []);
-  const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
+    // The Pro offer, once, as setup ends (with "Continue free" right there).
+    takeWelcomeOffer().then((offer) => offer && setTimeout(() => openPaywall('welcome'), 450));
+  }, [openPaywall]);
+  // The free plan is full: the shell's scan button opens the offer instead.
+  useEffect(() => {
+    const shell = WEB && typeof window !== 'undefined' ? (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView : undefined;
+    try {
+      shell?.postMessage?.(JSON.stringify({ type: 'scan-lock', locked: itemsLocked }));
+    } catch {}
+  }, [itemsLocked]);
   const [route, setRoute] = useState<Route>(routeFromHash);
   const [lastTab, setLastTab] = useState<TabId>(route.tab === 'scan' ? 'home' : route.tab);
   const [notice, setNotice] = useState<string | null>(null);
@@ -315,6 +328,8 @@ function Shell() {
 
   const onNavigate = useCallback(
     (to: string) => {
+      if (to === 'paywall' || to.startsWith('paywall:')) return openPaywall(to === 'paywall:limit' ? 'limit' : 'settings');
+      if ((to === 'scan' || to === 'manual') && itemsLocked) return openPaywall('limit');
       if (to === 'scan') {
         // Inside a native WebView shell (docs/native-shell.md) let the shell scan with its
         // native camera + OCR (Apple Vision / ML Kit). The shell hands the reading back
@@ -369,7 +384,7 @@ function Shell() {
         }
       }
     },
-    [categoryIds],
+    [categoryIds, itemsLocked, openPaywall],
   );
   const closeScanner = useCallback(() => {
     setNativeScan(null);
@@ -545,6 +560,7 @@ function ThemedApp() {
       {/* Signed in to an account scheduled for deletion: restore it or leave. */}
       <DeletionPendingSheet />
       <AccountDeletedSheet />
+      <Paywall />
     </View>
   );
 }
@@ -556,6 +572,7 @@ export default function App() {
           storage the providers below use, and when changes from another
           phone arrive it bumps `generation`, so they reload from storage. */}
       <AuthProvider>
+        <ProProvider>
         <SyncProvider>
           {(generation) => (
             <CategoriesProvider key={generation}>
@@ -571,6 +588,7 @@ export default function App() {
             </CategoriesProvider>
           )}
         </SyncProvider>
+        </ProProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

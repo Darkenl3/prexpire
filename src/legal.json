@@ -29,24 +29,28 @@
       {
         "title": "What leaves your phone, and why",
         "body": [
-          { "list": [
-            "Barcode lookups: to fill in a product's name, the barcode number is sent to public product databases (Open Food Facts, UPCitemdb, Go-UPC, barcodestock, Open Library for books, and a DuckDuckGo search as a fallback). Only the number is sent, never your other data.",
-            "App updates: the app checks app.prexpire.com for a newer version of its screens. This request contains no personal data.",
-            "Account and backup, only if you create an account (see below).",
-            "Security checks: when you sign in or create an account, a Cloudflare Turnstile check runs to stop automated abuse. Cloudflare processes technical data such as your IP address and browser details for this."
-          ] }
+          {
+            "list": [
+              "Barcode lookups: to fill in a product's name, the barcode number is sent to public product databases (Open Food Facts, UPCitemdb, Go-UPC, barcodestock, Open Library for books, and a DuckDuckGo search as a fallback). Only the number is sent, never your other data.",
+              "App updates: the app checks app.prexpire.com for a newer version of its screens. This request contains no personal data.",
+              "Account and backup, only if you create an account (see below).",
+              "Security checks: when you sign in or create an account, a Cloudflare Turnstile check runs to stop automated abuse. Cloudflare processes technical data such as your IP address and browser details for this."
+            ]
+          }
         ]
       },
       {
         "title": "Accounts and backup",
         "body": [
           "An account is optional. If you create one, we process:",
-          { "list": [
-            "your email address, and your password, which is stored only in hashed form by our account provider;",
-            "if you use Sign in with Apple or Google: the identifier and email address they share with us (with Apple you can choose to hide your email);",
-            "a copy of your items, shopping list, categories, settings and waste stats, so they're backed up and the same on every phone you sign in on;",
-            "technical records our providers keep to run and secure the service, such as sign-in times and IP addresses."
-          ] },
+          {
+            "list": [
+              "your email address, and your password, which is stored only in hashed form by our account provider;",
+              "if you use Sign in with Apple or Google: the identifier and email address they share with us (with Apple you can choose to hide your email);",
+              "a copy of your items, shopping list, categories, settings and waste stats, so they're backed up and the same on every phone you sign in on;",
+              "technical records our providers keep to run and secure the service, such as sign-in times and IP addresses."
+            ]
+          },
           "We use this only to provide the account, backup and sync, and to send you the codes needed to confirm your email, sign in or reset your password. We don't read your items for any other purpose."
         ]
       },
@@ -61,14 +65,16 @@
         "title": "Service providers",
         "body": [
           "We use these providers to run Prexpire. They process data only on our instructions:",
-          { "list": [
-            "Supabase: accounts, backup and sync (servers in the EU).",
-            "Resend: sending account emails such as confirmation and sign-in codes (EU, Ireland).",
-            "Cloudflare: the website, the waitlist, the Turnstile security check and our domain.",
-            "Railway: hosting the files the app loads its screens from.",
-            "Apple and Google: Sign in with Apple and Sign in with Google, when you choose them.",
-            "The product databases listed above, which receive barcode numbers only."
-          ] }
+          {
+            "list": [
+              "Supabase: accounts, backup and sync (servers in the EU).",
+              "Resend: sending account emails such as confirmation and sign-in codes (EU, Ireland).",
+              "Cloudflare: the website, the waitlist, the Turnstile security check and our domain.",
+              "Railway: hosting the files the app loads its screens from.",
+              "Apple and Google: Sign in with Apple and Sign in with Google, when you choose them.",
+              "The product databases listed above, which receive barcode numbers only."
+            ]
+          }
         ]
       },
       {
@@ -80,12 +86,14 @@
       {
         "title": "How long we keep data",
         "body": [
-          { "list": [
-            "Data on your phone stays until you delete it or remove the app.",
-            "Your account and its backup are kept until you delete the account. When you delete it (in the app or at app.prexpire.com/delete-account), you are signed out and it is deleted for good, with its backup, 30 days later. Until then you can restore it by signing back in. Copies in our providers' routine backups are overwritten within their normal cycle.",
-            "Waitlist emails are kept until we've sent the launch email, then deleted, or earlier if you ask.",
-            "Security and server logs are kept only for the short periods our providers set."
-          ] }
+          {
+            "list": [
+              "Data on your phone stays until you delete it or remove the app.",
+              "Your account and its backup are kept until you delete the account. When you delete it (in the app or at app.prexpire.com/delete-account), you are signed out and it is deleted for good, with its backup, 30 days later. Until then you can restore it by signing back in. Copies in our providers' routine backups are overwritten within their normal cycle.",
+              "Waitlist emails are kept until we've sent the launch email, then deleted, or earlier if you ask.",
+              "Security and server logs are kept only for the short periods our providers set."
+            ]
+          }
         ]
       },
       {
@@ -121,7 +129,9 @@
       },
       {
         "title": "Contact",
-        "body": ["support@prexpire.com"]
+        "body": [
+          "support@prexpire.com"
+        ]
       }
     ]
   },
@@ -129,7 +139,7 @@
     "title": "Terms of Use",
     "updated": "November 6, 2026",
     "short": [
-      "Prexpire helps you keep track of expiry dates. It's free to use, with or without an account.",
+      "Prexpire helps you keep track of expiry dates. It's free for up to 20 items at a time, with or without an account; Prexpire Pro removes the limits.",
       "Dates read by the scanner can be wrong. Always check the date printed on the pack before you eat, drink or use something.",
       "Prexpire isn't food-safety, medical or pharmaceutical advice.",
       "Your items are yours. You can delete your account and data at any time."
@@ -169,11 +179,13 @@
       {
         "title": "Acceptable use",
         "body": [
-          { "list": [
-            "Don't try to access other people's accounts or data, or our systems beyond what the app offers.",
-            "Don't disrupt, overload or reverse-engineer the service, or get around its security checks.",
-            "Don't use Prexpire for anything unlawful."
-          ] },
+          {
+            "list": [
+              "Don't try to access other people's accounts or data, or our systems beyond what the app offers.",
+              "Don't disrupt, overload or reverse-engineer the service, or get around its security checks.",
+              "Don't use Prexpire for anything unlawful."
+            ]
+          },
           "We may suspend accounts that break these rules."
         ]
       },
@@ -202,6 +214,21 @@
         ]
       },
       {
+        "title": "Prexpire Pro",
+        "body": [
+          "Prexpire is free to use for up to 20 items at a time and 2 categories of your own. Prexpire Pro removes those limits. Everything else in the app stays free.",
+          {
+            "list": [
+              "Pro is sold in the iPhone app through Apple, as a monthly or yearly subscription or a one-time lifetime purchase. Prices are shown in the app before you buy, in your local currency.",
+              "Payment is charged to your Apple ID when you confirm the purchase. A free trial, when offered, turns into a paid subscription at its end unless you cancel at least 24 hours before.",
+              "Subscriptions renew automatically at the same price and length unless you cancel at least 24 hours before the end of the current period. Cancel or manage them in your Apple ID settings (Settings, your name, Subscriptions) or in Prexpire, Settings, Prexpire Pro.",
+              "Refunds are handled by Apple under its policies (reportaproblem.apple.com).",
+              "If you're signed in, Pro belongs to your Prexpire account and works on your other iPhone or iPad signed in to it. If you stop paying, nothing is deleted: items over the free limit stay, and you can't add new ones until you're under it again."
+            ]
+          }
+        ]
+      },
+      {
         "title": "Apple App Store",
         "body": [
           "If you got Prexpire from the App Store, Apple's standard licence terms also apply. These terms are between you and us, not Apple; Apple isn't responsible for the app or its support, and has no obligation to maintain it."
@@ -221,7 +248,9 @@
       },
       {
         "title": "Contact",
-        "body": ["support@prexpire.com"]
+        "body": [
+          "support@prexpire.com"
+        ]
       }
     ]
   }

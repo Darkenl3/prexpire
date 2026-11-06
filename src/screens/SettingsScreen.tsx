@@ -43,8 +43,9 @@ import { useSync } from '../sync';
 // in the landing repo, legal/legal.json), shown here as native pages so it
 // reads offline and never sends the app out to a browser.
 import legal from '../legal.json';
+import { FREE_ITEM_LIMIT, usePro } from '../pro';
 
-type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
+export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
 const APP_VERSION: string = appConfig.expo.version;
 const WEB = Platform.OS === 'web';
@@ -186,6 +187,8 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
       </PressScale>
+
+      <ProRow />
 
       <SettingsSection title="General">
         <SettingsCard>
@@ -516,6 +519,26 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
     default:
       return null;
   }
+}
+
+// Prexpire Pro: the free plan's count, or Pro's status. Shown once the
+// installed app can sell Pro.
+function ProRow() {
+  const { available, isPro, state, openPaywall } = usePro();
+  const { saved } = useItems();
+  if (!available) return null;
+  const description = isPro
+    ? state?.lifetime
+      ? 'Lifetime. Thank you for your support'
+      : 'Active. No limits on items or categories'
+    : `${Math.min(saved.length, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} free items. Unlimited with Pro`;
+  return (
+    <SettingsSection title="Plan">
+      <SettingsCard>
+        <SettingRow icon={isPro ? 'checkmark-circle' : 'sparkles-outline'} accent="mint" title="Prexpire Pro" description={description} onPress={() => openPaywall('settings')} />
+      </SettingsCard>
+    </SettingsSection>
+  );
 }
 
 // Account: who is signed in, and signing out. Signing out keeps every item on
@@ -1193,7 +1216,7 @@ function TermsDetail({ openPage }: { openPage: (p: PageId) => void }) {
 
 // A legal document as a native page: the short version first (on the
 // forest plate, like the website), then the numbered sections.
-function LegalDetail({ doc }: { doc: LegalDoc }) {
+export function LegalDetail({ doc }: { doc: LegalDoc }) {
   const t = useTheme();
   const s = useStyles();
   return (
