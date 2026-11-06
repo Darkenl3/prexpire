@@ -42,11 +42,13 @@ if (typeof window !== 'undefined') {
   });
   if (shell()) send('notif-status');
 }
-const ask = (type: string) =>
+// The permission prompt waits for the person (up to 2 minutes); the status
+// checks answer at once.
+const ask = (type: string, timeoutMs = 15000) =>
   new Promise<NotificationStatus>((resolve) => {
     waiting.push(resolve);
     send(type);
-    setTimeout(() => resolve(appStatus), 15000);
+    setTimeout(() => resolve(appStatus), timeoutMs);
   });
 
 export function notificationStatus(): NotificationStatus {
@@ -57,7 +59,7 @@ export function notificationStatus(): NotificationStatus {
 }
 
 export async function requestNotificationPermission(): Promise<NotificationStatus> {
-  if (shell()) return ask('notif-request');
+  if (shell()) return ask('notif-request', 120_000);
   const status = notificationStatus();
   if (status !== 'default') return status;
   try {

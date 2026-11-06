@@ -135,11 +135,23 @@ function Shell() {
   const finishWelcome = useCallback(() => {
     setWelcome('done');
     AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
-    // The Pro offer, once, as setup ends (with "Continue free" right there).
-    takeWelcomeOffer().then((offer) => {
-      if (offer) setTimeout(() => openPaywall('welcome'), 450);
-      else if (!signedInRef.current) setTimeout(() => setAskSignup(true), 600);
-    });
+    (async () => {
+      // 1. Reminders are the point of the app: iPhone's "Allow
+      //    notifications?" comes first, right as setup ends. Its answer is
+      //    awaited, so nothing opens underneath it.
+      if (nativeReminders() && notificationStatus() === 'default') {
+        try {
+          localStorage.setItem('prexpire.notifAsked.v1', '1');
+        } catch {}
+        await new Promise((r) => setTimeout(r, 400));
+        await requestNotificationPermission();
+      }
+      // 2. The Pro offer, once. 3. Then (closed, or no offer) the account
+      //    invitation.
+      const offer = await takeWelcomeOffer();
+      if (offer) setTimeout(() => openPaywall('welcome'), 350);
+      else if (!signedInRef.current) setTimeout(() => setAskSignup(true), 500);
+    })();
   }, [openPaywall]);
   // The setup offer closed (bought or skipped): next, the account invitation.
   const lastPaywall = useRef(paywall);
@@ -316,7 +328,8 @@ function Shell() {
 
   // Expiry reminders, automatically: whenever items or reminder settings
   // change (and every time the app opens), the iPhone app gets the full plan
-  // and reschedules. The first saved item asks for permission once.
+  // and reschedules. Permission is asked when setup ends (finishWelcome);
+  // anyone who set up before that is asked once at their first item.
   useEffect(() => {
     if (!nativeReminders()) return;
     const t = setTimeout(() => scheduleReminders(planReminders(items, settings)), 800);
