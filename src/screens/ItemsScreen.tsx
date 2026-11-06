@@ -15,6 +15,7 @@ import { SearchField } from '../components/SearchField';
 import { FadeIn, PressScale } from '../components/Press';
 import { BottomSheet } from '../components/BottomSheet';
 import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
+import { useLayout } from '../layout';
 
 type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
 
@@ -32,6 +33,8 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'R
 // no new dependencies, and every list behaviour (search, category filtering,
 // sorting, item management) unchanged.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
+  const layout = useLayout();
+  const twoUp = layout.mode === 'split' && layout.width >= 960;
   const { items } = useItems();
   const { settings, update, warning } = useSettings();
   const { all, custom } = useCategories();
@@ -90,7 +93,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
         title={shopping ? 'Shopping List' : 'Items'}
         subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
         badge={badge}
-        maxWidth={shopping ? 640 : undefined}
+        maxWidth={shopping ? 640 : twoUp ? 1120 : undefined}
         dense
         headerAction={headerAction}
         onNavigate={onNavigate}
@@ -177,10 +180,17 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 </Note>
               </View>
             )}
-            <View style={[s.list, settings.compact && s.listCompact]}>
-              {shown.map((item) => (
-                <ItemCard key={item.id} item={item} compact={settings.compact} onToast={setShopToast} />
-              ))}
+            {/* iPad landscape (and wide windows): two columns of cards. */}
+            <View style={[s.list, settings.compact && s.listCompact, twoUp && s.listTwoUp]}>
+              {shown.map((item) =>
+                twoUp ? (
+                  <View key={item.id} style={s.twoUpCell}>
+                    <ItemCard item={item} compact={settings.compact} onToast={setShopToast} />
+                  </View>
+                ) : (
+                  <ItemCard key={item.id} item={item} compact={settings.compact} onToast={setShopToast} />
+                ),
+              )}
             </View>
             {shown.length === 0 && !!needle && (
               <View style={s.empty}>
@@ -394,6 +404,8 @@ const useStyles = makeStyles((t) => ({
   hidden: { marginBottom: 10 },
   list: { gap: 12 },
   listCompact: { gap: 9 },
+  listTwoUp: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12 },
+  twoUpCell: { width: 'calc(50% - 6px)' as unknown as number },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 32 },
   emptyTitle: { color: t.text, fontSize: 17, fontWeight: '600' },
   emptyText: { color: t.textMuted, fontSize: 14, marginBottom: 6 },

@@ -63,13 +63,15 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const t = useTheme();
   const c = useStyles();
   const { showExpired } = settings;
+  // Tall screens (iPad, either way up) have room for more of the list.
+  const upcomingCount = layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
   const upcoming = useMemo(
     () =>
       items
         .filter((i) => showExpired || expiryStatus(i.expiresOn, warning(i.category)) !== 'expired')
         .sort((a, b) => a.expiresOn.localeCompare(b.expiresOn))
-        .slice(0, UPCOMING_COUNT),
-    [items, showExpired, warning],
+        .slice(0, upcomingCount),
+    [items, showExpired, warning, upcomingCount],
   );
   // Expired items, and items expiring within the warning period chosen in Settings.
   const attention = useMemo(() => {
