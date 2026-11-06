@@ -129,7 +129,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   const terms = !plan
     ? ''
     : plan.kind === 'lifetime'
-      ? 'One payment. Pro is yours for good, on every device signed in to your account.'
+      ? 'One payment. Pro is yours for good, and Family Sharing gives it to up to 5 family members too.'
       : `${plan.trialDays > 0 ? `${plan.trialDays} days free, then ` : ''}${plan.price} a ${plan.kind === 'annual' ? 'year' : 'month'}. Renews automatically until you cancel, at least 24 hours before the end of the period, in your Apple ID's subscriptions.`;
 
   return (
@@ -208,7 +208,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                       ? `${p.perMonth ? `${p.perMonth} a month` : 'Billed yearly'}${p.trialDays ? `, ${p.trialDays} days free` : ''}`
                       : p.kind === 'monthly'
                         ? 'Billed monthly'
-                        : 'Pay once, keep Pro';
+                        : 'Pay once, share with your family';
                   return (
                     <PressScale
                       key={p.id}
