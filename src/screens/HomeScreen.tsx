@@ -17,7 +17,10 @@ import { gridFor, useLayout } from '../layout';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
 import { IconArt } from '../components/IconArt';
 import { SmallButton } from '../components/SettingsRows';
-import { FadeIn } from '../components/Press';
+import { FadeIn, PressScale } from '../components/Press';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../auth';
+import { SignInSheet } from '../components/SignInSheet';
 
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
@@ -274,6 +277,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
               <View style={[c.columns, { columnGap }]}>
                 <View style={{ width: leftWidth }}>
                   {summary}
+                  <BackupCard count={items.length} />
                   {categorySection}
                 </View>
                 <View style={c.rightColumn}>{upcomingSection(true)}</View>
@@ -281,6 +285,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
             ) : (
               <>
                 {summary}
+                <BackupCard count={items.length} />
                 {categorySection}
                 {upcomingSection(false)}
               </>
@@ -324,8 +329,77 @@ function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number;
   );
 }
 
+// Once there's something worth keeping (BACKUP_AT items) and no account,
+// one quiet card: the items live only on this phone. Tap to create a free
+// account; the cross hides it for good.
+const BACKUP_AT = 10;
+const BACKUP_DISMISSED_KEY = 'prexpire.backupNudge.v1';
+
+function BackupCard({ count }: { count: number }) {
+  const t = useTheme();
+  const c = useStyles();
+  const { session } = useAuth();
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(BACKUP_DISMISSED_KEY)
+      .then((v) => setDismissed(v === '1'))
+      .catch(() => setDismissed(false));
+  }, []);
+  const show = !session && dismissed === false && count >= BACKUP_AT;
+  const hide = () => {
+    setDismissed(true);
+    AsyncStorage.setItem(BACKUP_DISMISSED_KEY, '1').catch(() => {});
+  };
+  return (
+    <>
+      {show ? (
+        <FadeIn>
+          <PressScale onPress={() => setOpen(true)} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={`Back up your ${count} items`} style={c.backup}>
+            <View style={c.backupIcon}>
+              <Ionicons name="cloud-upload-outline" size={20} color={t.mint} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={c.backupTitle}>Back up your {count} items</Text>
+              <Text style={c.backupSub}>They're only on this phone. A free account keeps them safe.</Text>
+            </View>
+            <PressScale onPress={hide} scaleTo={0.9} accessibilityRole="button" accessibilityLabel="Hide this" hitSlop={10} style={c.backupClose}>
+              <Ionicons name="close" size={16} color={t.textMuted} />
+            </PressScale>
+          </PressScale>
+        </FadeIn>
+      ) : null}
+      <SignInSheet
+        visible={open && !session}
+        onClose={() => setOpen(false)}
+        onSignedIn={() => setOpen(false)}
+        initialMode="signup"
+        intro={{ title: 'Keep your items safe', text: `Your ${count} items live only on this phone. Create a free account and a lost, broken or new phone never loses them.` }}
+      />
+    </>
+  );
+}
+
 const useStyles = makeStyles((t) => ({
   root: { flex: 1, backgroundColor: t.bg },
+  backup: {
+    marginTop: 10,
+    minHeight: 58,
+    paddingVertical: 9,
+    paddingLeft: 9,
+    paddingRight: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: t.surfaceBorder,
+    backgroundColor: t.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backupIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: t.btnMintBg, borderWidth: 1, borderColor: t.btnMintBorder },
+  backupTitle: { color: t.text, fontSize: 15.5, fontWeight: '700' },
+  backupSub: { color: t.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 },
+  backupClose: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   frame: { width: '100%', alignSelf: 'center' },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },

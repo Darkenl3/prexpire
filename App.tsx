@@ -16,7 +16,7 @@ import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
 import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
-import { AuthProvider } from './src/auth';
+import { AuthProvider, useAuth } from './src/auth';
 import { planReminders } from './src/reminderPlan';
 import { nativeReminders, notificationStatus, requestNotificationPermission, scheduleReminders } from './src/platform/notifications';
 import { SyncProvider } from './src/sync';
@@ -106,6 +106,9 @@ function Shell() {
   // items is an existing user: marked done without ever seeing it.
   const [welcome, setWelcome] = useState<'unknown' | 'show' | 'done'>('unknown');
   const [welcomeSignIn, setWelcomeSignIn] = useState(false);
+  // After setup (and its Pro offer), an invitation to keep the items safe in
+  // a free account: without one they live only on this phone.
+  const [askSignup, setAskSignup] = useState(false);
   useEffect(() => {
     if (!itemsReady || welcome !== 'unknown') return;
     let cancelled = false;
@@ -124,14 +127,26 @@ function Shell() {
   }, [itemsReady, items.length, welcome]);
   const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
   const { openPaywall, paywall } = usePro();
+  const { session } = useAuth();
+  const signedInRef = useRef(!!session);
+  signedInRef.current = !!session;
   const addedThisMonth = useMonthlyAdds();
   const { itemsLocked } = useProLimits(addedThisMonth, customCategories.length);
   const finishWelcome = useCallback(() => {
     setWelcome('done');
     AsyncStorage.setItem(WELCOME_KEY, '1').catch(() => {});
     // The Pro offer, once, as setup ends (with "Continue free" right there).
-    takeWelcomeOffer().then((offer) => offer && setTimeout(() => openPaywall('welcome'), 450));
+    takeWelcomeOffer().then((offer) => {
+      if (offer) setTimeout(() => openPaywall('welcome'), 450);
+      else if (!signedInRef.current) setTimeout(() => setAskSignup(true), 600);
+    });
   }, [openPaywall]);
+  // The setup offer closed (bought or skipped): next, the account invitation.
+  const lastPaywall = useRef(paywall);
+  useEffect(() => {
+    if (lastPaywall.current === 'welcome' && !paywall && !signedInRef.current) setTimeout(() => setAskSignup(true), 450);
+    lastPaywall.current = paywall;
+  }, [paywall]);
   // The free plan is full: the shell's scan button opens the offer instead.
   useEffect(() => {
     const shell = WEB && typeof window !== 'undefined' ? (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView : undefined;
@@ -506,9 +521,15 @@ function Shell() {
           onScan={() => onNavigate('scan')}
         />
       )}
+      <SignInSheet visible={askSignup && !session} onClose={() => setAskSignup(false)} onSignedIn={() => setAskSignup(false)} initialMode="signup" intro={KEEP_SAFE} />
     </>
   );
 }
+
+const KEEP_SAFE = {
+  title: 'Keep your items safe',
+  text: "Without an account, your items live only on this phone. Create a free account and a lost, broken or new phone never loses them.",
+};
 
 // Themed chrome: the page background and the status-bar style follow the theme.
 function ThemedApp() {

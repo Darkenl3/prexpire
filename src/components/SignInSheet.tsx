@@ -26,7 +26,9 @@ type Mode = 'signin' | 'signup';
 type Step = 'start' | 'code' | 'forgot' | 'newpass' | 'login';
 type Purpose = 'signup' | 'reset' | 'login';
 
-type Props = { visible: boolean; onClose: () => void; onSignedIn?: () => void; initialMode?: Mode };
+// intro: replaces the opening line and title (the "keep your items safe"
+// prompt after setup, the backup card on Home), with a Not now link.
+type Props = { visible: boolean; onClose: () => void; onSignedIn?: () => void; initialMode?: Mode; intro?: { title: string; text: string } };
 
 const TITLES: Record<Step, string> = {
   start: '',
@@ -36,7 +38,7 @@ const TITLES: Record<Step, string> = {
   login: 'Sign in with a code',
 };
 
-export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signin' }: Props) {
+export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signin', intro }: Props) {
   const c = useTheme();
   const s = useStyles();
   const auth = useAuth();
@@ -346,9 +348,11 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
       <View style={s.body}>
         {apple}
         <Text style={s.lede}>
-          {mode === 'signup'
-            ? "Optional. An account keeps a copy of your items. We'll email you a code to confirm it."
-            : 'Your items stay on this phone either way.'}
+          {intro && mode === 'signup'
+            ? intro.text
+            : mode === 'signup'
+              ? "Optional. An account keeps a copy of your items. We'll email you a code to confirm it."
+              : 'Your items stay on this phone either way.'}
         </Text>
         {emailField(submitStart)}
         {passwordField(submitStart, mode === 'signup')}
@@ -453,9 +457,23 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     );
   }
 
-  const title = step === 'start' ? (mode === 'signup' ? 'Create your account' : 'Welcome back') : TITLES[step];
+  const title = step === 'start' ? (mode === 'signup' ? (intro?.title ?? 'Create your account') : 'Welcome back') : TITLES[step];
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={title} scrollable maxWidth={460}>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      scrollable
+      maxWidth={460}
+      footer={
+        intro && step === 'start' ? (
+          // Pinned under the form, so skipping is always in sight.
+          <PressScale onPress={onClose} scaleTo={0.96} accessibilityRole="button" accessibilityLabel="Not now" style={[s.linkBtn, { alignSelf: 'center' }]}>
+            <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Not now</Text>
+          </PressScale>
+        ) : undefined
+      }
+    >
       {body}
     </BottomSheet>
   );
