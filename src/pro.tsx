@@ -31,8 +31,8 @@ if (__DEV__ && Platform.OS === 'web' && typeof window !== 'undefined') {
               requestId: m.requestId,
               plans: [
                 { id: '$rc_monthly', kind: 'monthly', price: '$2.99', priceValue: 2.99, currency: 'USD', perMonth: null, trialDays: 0 },
-                { id: '$rc_annual', kind: 'annual', price: '$14.99', priceValue: 14.99, currency: 'USD', perMonth: '$1.25', trialDays: 7 },
-                { id: '$rc_lifetime', kind: 'lifetime', price: '$29.99', priceValue: 29.99, currency: 'USD', perMonth: null, trialDays: 0 },
+                { id: '$rc_annual', kind: 'annual', price: '$9.99', priceValue: 9.99, currency: 'USD', perMonth: '$0.83', trialDays: 7 },
+                { id: '$rc_lifetime', kind: 'lifetime', price: '$24.99', priceValue: 24.99, currency: 'USD', perMonth: null, trialDays: 0 },
               ],
             });
           else if (m.type === 'iap-buy') (active = true), reply({ requestId: m.requestId, state: state() });
