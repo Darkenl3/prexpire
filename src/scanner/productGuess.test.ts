@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatProductName, looksLikeTechnicalTitle, guessProduct, guessProductFromBlocks, type TextBlock } from './productGuess.ts';
+import { formatProductName, shortProductName, looksLikeTechnicalTitle, guessProduct, guessProductFromBlocks, type TextBlock } from './productGuess.ts';
 
 // Furniture guard for product names: internal lookup/search labels ("Search
 // Barcodestock", "Lookup & ISBN Search") must NEVER become product names on
@@ -128,4 +128,28 @@ test('short or uncertain fragments never become names ("Ons")', () => {
   assert.equal(guessProductFromBlocks(guessed), null);
   // The same name read cleanly is.
   assert.equal(guessProductFromBlocks([{ ...guessed[0], confidence: 1 }])?.name, 'Cottage');
+});
+
+test('shortProductName keeps what people call the product', () => {
+  const cases: [string, string][] = [
+    ['Coca-Cola Original Taste Soft Drink 330ml Can', 'Coca-Cola'],
+    ['Coca-Cola', 'Coca-Cola'],
+    ['Coca-Cola Zero Sugar 1.5 L', 'Coca-Cola Zero Sugar'],
+    ['Nutella - Hazelnut spread with cocoa, 750g', 'Nutella'],
+    ['Heinz Tomato Ketchup Squeezy Bottle 460g', 'Heinz Tomato Ketchup'],
+    ['Fage Total Greek Yoghurt 0% Fat 500g', 'Fage Total Greek Yoghurt'],
+    ['Ibuprofen 200mg Tablets 16 pack', 'Ibuprofen 200mg Tablets'],
+    ['Alpro Soya Drink Original 1L', 'Alpro Soya Drink'],
+    ['Pepsi Max Cherry 6 x 330ml Cans', 'Pepsi Max Cherry'],
+    ['Barilla Spaghetti n.5 500 g', 'Barilla Spaghetti n.5'],
+    ['Vitamin D3 1000 IU Softgels (90 count)', 'Vitamin D3 1000IU Softgels'],
+    ['Dove Original Beauty Cream Bar Soap 2 x 90g', 'Dove Beauty Cream Bar'],
+    ['Lindt Excellence 70% Cocoa Dark Chocolate 100g', 'Lindt Excellence Cocoa Dark'],
+  ];
+  for (const [raw, want] of cases) assert.equal(shortProductName(raw), want, raw);
+});
+
+test('shortProductName never empties a name', () => {
+  assert.equal(shortProductName('Original'), 'Original');
+  assert.equal(shortProductName('330ml'), '330ml');
 });

@@ -300,3 +300,47 @@ export function formatProductName(raw: string, max = 64): string {
   }
   return t;
 }
+
+// Barcode databases store the full shelf title ("Coca-Cola Original Taste Soft
+// Drink 330ml Can", "Nutella - Hazelnut spread with cocoa, 750g"). A tracked
+// item only needs what people call it: "Coca-Cola", "Nutella". This keeps the
+// brand and product, and drops what follows a separator (the description),
+// pack sizes and counts, and packaging or marketing words, capped at a few
+// words. Medicine strengths (200 mg, 1000 IU) are kept: they tell two packs
+// apart. Nothing is invented: the words kept are the database's own.
+const SHELF_WORDS = new Set([
+  'original', 'originals', 'taste', 'classic', 'regular', 'carbonated', 'sparkling', 'still',
+  'can', 'cans', 'bottle', 'bottles', 'pet', 'glass', 'tin', 'tins', 'jar', 'jars', 'carton', 'cartons',
+  'pack', 'packs', 'multipack', 'multi-pack', 'sachet', 'sachets', 'pouch', 'pouches', 'tub', 'box',
+  'squeezy', 'value', 'family', 'size', 'edition', 'new', 'improved', 'recipe', 'flavour', 'flavor', 'flavoured', 'flavored',
+]);
+const SIZE = /^(\d+([.,]\d+)?)?(x|×)?\d*([.,]\d+)?(ml|cl|dl|l|ltr|litre|liter|litres|liters|g|gr|gm|kg|oz|floz|lb|lbs|pcs|pc|ct|x|×|%|cans?|bottles?|pack)?$/i;
+const STRENGTH = /^\d+([.,]\d+)?(mg|mcg|µg|iu)$/i;
+
+export function shortProductName(raw: string, maxWords = 4, maxChars = 30): string {
+  const full = formatProductName(raw);
+  if (!full) return '';
+  // 1. The part before the first separator: the rest is description.
+  let head = full.split(/\s[-–—|/]\s|\s?[,(;:]\s?|\s·\s/)[0].trim();
+  // 2. "soft drink(s)" as one phrase; "330 ml" written apart joins its unit.
+  head = head.replace(/\bsoft\s+drinks?\b/gi, ' ').replace(/(\d)\s+(ml|cl|dl|l|g|kg|oz|mg|mcg|iu|x)\b/gi, '$1$2').replace(/\bfl\.?\s?oz\b/gi, 'floz');
+  const kept: string[] = [];
+  for (const w of head.split(/\s+/)) {
+    const bare = w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}%×.,]+$/gu, '');
+    if (!bare) continue;
+    if (STRENGTH.test(bare)) {
+      kept.push(bare);
+      continue;
+    }
+    if (/\d/.test(bare) && SIZE.test(bare.replace(/[.,]$/, ''))) continue; // 330ml, 1.5l, 6x330ml, 0%, 16pcs
+    if (/^\d+$/.test(bare) && kept.length) continue; // a bare count left over ("12")
+    if (SHELF_WORDS.has(bare.toLowerCase())) continue;
+    kept.push(w);
+  }
+  // 3. Cap, at a word boundary; never cut to nothing.
+  const words = kept.slice(0, maxWords);
+  while (words.length > 1 && words.join(' ').length > maxChars) words.pop();
+  while (words.length > 1 && DANGLING_TAILS.has(words[words.length - 1].toLowerCase())) words.pop();
+  const out = words.join(' ').trim();
+  return out || full;
+}

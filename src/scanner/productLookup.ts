@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { guessCategory } from './categoryGuess';
-import { formatProductName, looksLikeTechnicalTitle } from './productGuess';
+import { formatProductName, looksLikeTechnicalTitle, shortProductName } from './productGuess';
 import { parseOpenLibrary } from './webSearchBarcode';
 
 // Barcode → product lookup across the free, keyless PUBLIC barcode databases —
@@ -228,7 +228,8 @@ export async function lookupBarcode(code: string): Promise<BarcodeOutcome> {
     const best = hits[0];
     const image = best.image ?? hits.find((h) => h.image)?.image;
     const categoryHint = best.categoryHint ?? hits.find((h) => h.categoryHint)?.categoryHint ?? null;
-    return { kind: 'hit', hit: { ...best, image, categoryHint } };
+    // The item is saved under its short name ("Coca-Cola"), not the shelf title.
+    return { kind: 'hit', hit: { ...best, name: shortProductName(best.name), image, categoryHint } };
   }
   const errored = answers.filter((a) => a === 'error').length;
   // Nobody answered at all (offline, total timeout): unknown, not absent —

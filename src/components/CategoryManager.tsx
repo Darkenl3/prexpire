@@ -466,7 +466,9 @@ function CategoryPage({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    // Fades in like Settings' own pages: a slide made the back button (drawn
+    // natively in the iPhone app, at the page's position) travel up with it.
+    <Modal visible={visible} animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[s.page, { paddingTop: Math.max(insets.top, 10) }]}>
           <View style={s.pageHeader}>
