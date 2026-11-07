@@ -49,12 +49,14 @@ export const GLASS_STRIP_FX = {
 // (the open web, older app builds): kept as plain as the scanner's own
 // fallback circle — a see-through fill, a hairline edge and the backdrop
 // blur, nothing else.
+// The top buttons wear the dark-mode glass in both themes (matching the
+// iPhone app's native glass buttons): on the light page a smoked dark green.
 export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
   const light = c === LIGHT;
   return {
-    backgroundColor: light ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.08)',
+    backgroundColor: light ? 'rgba(12,24,27,0.72)' : 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: light ? 'rgba(16,35,30,0.10)' : 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(255,255,255,0.14)',
     ...(GLASS_FX as ViewStyle),
   } as ViewStyle;
 }
@@ -122,7 +124,7 @@ export function GlassIconButton({
         style,
       ]}
     >
-      {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c.text} />}
+      {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c === LIGHT ? '#F2F7F5' : c.text} />}
     </PressScale>
   );
 }
