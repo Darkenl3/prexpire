@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, KeyboardAvoidingView, Modal, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, View, type PanResponderInstance } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
-import { CATEGORY_ICONS, CATEGORY_ICON_LABELS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
+import { CATEGORY_ICONS, CATEGORY_ICON_LABELS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, presetTint, useCategories } from '../categories';
 import { IconArt } from './IconArt';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
@@ -12,7 +12,7 @@ import { categories } from '../data';
 import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
 import { CategoryTile, GlassIconButton } from './HomeComponents';
-import { categoryArt } from './ResultSheet';
+import { categoryArt, originalArt } from './ResultSheet';
 import { ChoicePill, type PillColors } from './ChoicePill';
 import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
 import { usePro, useProLimits } from '../pro';
@@ -51,7 +51,7 @@ const SHELL = Platform.OS === 'web' && typeof window !== 'undefined' && !!(windo
 export function CategoryManager() {
   const c = useTheme();
   const s = useStyles();
-  const { all, custom, removed, add, edit, move, moveTo, remove, restore, saveError } = useCategories();
+  const { all, custom, removed, add, edit, move, moveTo, remove, restore, saveError, lookOf } = useCategories();
   const { openPaywall } = usePro();
   const { categoriesLocked } = useProLimits(0, custom.length);
   const { saved, moveCategory } = useItems();
@@ -179,7 +179,7 @@ export function CategoryManager() {
   const renderRow = (id: string, name: string, isCustom: boolean, index: number) => {
     const folder = custom.find((x) => x.id === id);
     const def = BUILTINS.find((x) => x.id === id);
-    const tint: Tint = isCustom && folder ? folder.tint : def ? def.tint : 'add';
+    const tint: Tint = isCustom && folder ? folder.tint : def ? (lookOf(id).tint ?? def.tint) : 'add';
     const g = c.tints[tint];
     const iconBg = c === LIGHT ? g.top : `${g.top}33`;
     const iconBorder = c === LIGHT ? g.border : `${g.top}66`;
@@ -352,7 +352,13 @@ export function CategoryManager() {
         return (
           <CategoryPage
             visible={!!cat}
-            editing={cat ? { id: cat.id, name: cat.name, icon: folder?.icon, tint: folder?.tint, builtin: !folder } : undefined}
+            editing={
+              cat
+                ? folder
+                  ? { id: cat.id, name: cat.name, icon: folder.icon, tint: folder.tint, builtin: false }
+                  : { id: cat.id, name: cat.name, icon: lookOf(cat.id).icon ?? '', tint: lookOf(cat.id).tint ?? presetTint(cat.id), builtin: true }
+                : undefined
+            }
             onClose={() => setEditing(null)}
             onSave={(name, icon, tint) => (editing && edit(editing, { name, icon, tint }) ? editing : null)}
           />
@@ -376,7 +382,7 @@ type Editing = { id: string; name: string; icon?: string; tint?: Tint; builtin: 
 // How the category's tile will look on Home, live: the chosen colour, the
 // chosen icon's picture and the name as it's typed. Changing the colour or
 // icon gives the tile a soft settle so the change is easy to see.
-function TilePreview({ tint, icon, name }: { tint: Tint; icon: string; name: string }) {
+function TilePreview({ tint, icon, name, art }: { tint: Tint; icon: string; name: string; art?: ReactNode }) {
   const s = useStyles();
   const { motion } = useSettings();
   const bump = useRef(new Animated.Value(1)).current;
@@ -393,7 +399,7 @@ function TilePreview({ tint, icon, name }: { tint: Tint; icon: string; name: str
   return (
     <View style={s.previewWrap} accessible accessibilityLabel={`Preview of the ${name} tile on Home`}>
       <Animated.View style={{ transform: [{ scale: bump }] }} pointerEvents="none">
-        <CategoryTile tint={tint} art={<IconArt icon={icon} size={64} />} name={name} sub="0 items" status={{ label: 'All good', tone: 'green' }} width={150} onPress={() => {}} />
+        <CategoryTile tint={tint} art={art ?? <IconArt icon={icon || DEFAULT_CATEGORY_ICON} size={64} />} name={name} sub="0 items" status={{ label: 'All good', tone: 'green' }} width={150} onPress={() => {}} />
       </Animated.View>
       <Text style={s.previewCaption}>How it looks on Home</Text>
     </View>
@@ -436,7 +442,7 @@ function CategoryPage({
   useEffect(() => {
     if (visible) {
       setName(editing?.name ?? '');
-      setIcon(editing?.icon ?? DEFAULT_CATEGORY_ICON);
+      setIcon(editing ? (editing.icon ?? (editing.builtin ? '' : DEFAULT_CATEGORY_ICON)) : DEFAULT_CATEGORY_ICON);
       setTint(editing?.tint ?? CUSTOM_TINTS[0]);
       setRejected(false);
       setWarn((editing && settings.categoryWarning[editing.id]) ?? 'general');
@@ -491,10 +497,10 @@ function CategoryPage({
               {!editing
                 ? 'A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.'
                 : builtin
-                  ? 'Give this category your own name. Its picture and colour stay as they are, and every item in it keeps its place.'
+                  ? 'Choose a different icon or colour for this category. Its name stays the same, and every item in it keeps its place.'
                   : 'Change the name, icon or colour. Every item in this folder stays in it.'}
             </Text>
-            {!builtin && <TilePreview tint={tint} icon={icon} name={trimmed || 'New category'} />}
+            <TilePreview tint={tint} icon={icon} art={builtin && !icon && editing ? originalArt(editing.id, 64) : undefined} name={trimmed || 'New category'} />
             <Text style={s.label}>Name</Text>
             {/* Deliberately NOT autofocused: the keyboard opens only when the
                 user taps this field. Typed text survives keyboard dismissals
@@ -510,14 +516,29 @@ function CategoryPage({
               // The box itself shows it is active (lime edge), not a ring inside it.
               onFocus={() => setNameFocused(true)}
               onBlur={() => setNameFocused(false)}
-              style={[s.input, nameFocused && { borderColor: c.chipOnBorder }, rejected && !trimmed && s.inputWarn]}
+              style={[s.input, nameFocused && { borderColor: c.chipOnBorder }, rejected && !trimmed && s.inputWarn, builtin && s.inputLocked]}
+              // A preset's name is fixed.
+              editable={!builtin}
               maxLength={24}
               returnKeyType="done"
               accessibilityLabel="Category name"
             />
             {rejected && !trimmed && <Text style={s.warn}>Give the category a name first.</Text>}
-            {!builtin && <Text style={s.label}>Icon</Text>}
-            {!builtin && <View style={s.iconGrid}>
+            {builtin && <Text style={s.hint}>Preset categories keep their name.</Text>}
+            <Text style={s.label}>Icon</Text>
+            <View style={s.iconGrid}>
+              {builtin && editing ? (
+                <PressScale
+                  onPress={() => setIcon('')}
+                  scaleTo={0.97}
+                  accessibilityRole="radio"
+                  aria-checked={!icon}
+                  accessibilityLabel="Icon: Original"
+                  style={[s.iconCell, !icon && { borderColor: c.tints[tint].border, backgroundColor: c === LIGHT ? c.tints[tint].top : `${c.tints[tint].top}55` }]}
+                >
+                  {originalArt(editing.id, 26)}
+                </PressScale>
+              ) : null}
               {CATEGORY_ICONS.map((ic) => {
                 const on = ic === icon;
                 return (
@@ -534,9 +555,9 @@ function CategoryPage({
                   </PressScale>
                 );
               })}
-            </View>}
-            {!builtin && <Text style={s.label}>Colour</Text>}
-            {!builtin && <View style={s.tintRow}>
+            </View>
+            <Text style={s.label}>Colour</Text>
+            <View style={s.tintRow}>
               {CUSTOM_TINTS.map((t) => {
                 const on = t === tint;
                 const g = c.tints[t];
@@ -556,7 +577,7 @@ function CategoryPage({
                   </PressScale>
                 );
               })}
-            </View>}
+            </View>
             <Text style={s.label}>Warning period</Text>
             <Text style={s.hint}>How early items here show as expiring and join your Shopping List.</Text>
             <View style={s.pillRow}>
@@ -672,6 +693,7 @@ const useStyles = makeStyles((c) => ({
   pageScroll: { flex: 1 },
   pageBody: { paddingHorizontal: 20, gap: 10, paddingTop: 4 },
   pageIntro: { color: c.textMuted, fontSize: 13.5, lineHeight: 18, marginBottom: 6 },
+  inputLocked: { opacity: 0.6 },
   previewWrap: { alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 4 },
   previewCaption: { color: c.textMuted, fontSize: 12.5, fontWeight: '600' },
   input: {

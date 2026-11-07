@@ -29,6 +29,7 @@ const DOC_KEYS = [
   'prexpire.categoriesRemoved.v1',
   'prexpire.categoryNames.v1',
   'prexpire.categoryOrder.v1',
+  'prexpire.categoryLooks.v1',
   'prexpire.settings.v1',
   'prexpire.expevents.v1',
   // The free plan's monthly count (src/pro.tsx): backed up, so reinstalling

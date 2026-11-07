@@ -62,7 +62,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const layout = useLayout();
   const { items, saved } = useItems();
   const { settings, motion, warning } = useSettings();
-  const { all, custom } = useCategories();
+  const { all, custom, lookOf } = useCategories();
   const t = useTheme();
   const c = useStyles();
   const { showExpired } = settings;
@@ -128,13 +128,17 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     return [
       {
         key: cat.id,
-        tint: (builtin ? builtin.tint : folder!.tint) as Tint,
+        tint: (builtin ? (lookOf(cat.id).tint ?? builtin.tint) : folder!.tint) as Tint,
         name: cat.name,
         sub: ((n) => (n === 1 ? '1 item' : `${n} items`))(saved.filter((i) => i.category === cat.id).length),
         status: tileStatus(attention.byCategory(cat.id)),
         // A folder's illustration is in the built-ins' style (an unknown or
         // old icon identifier shows the folder picture, never a blank).
-        art: builtin ? categoryArt(builtin.art, compact ? 56 : 64) : <IconArt icon={folder!.icon} size={compact ? 56 : 64} />,
+        art: builtin
+          ? lookOf(cat.id).icon
+            ? <IconArt icon={lookOf(cat.id).icon!} size={compact ? 56 : 64} />
+            : categoryArt(builtin.art, compact ? 56 : 64)
+          : <IconArt icon={folder!.icon} size={compact ? 56 : 64} />,
         onPress: () => go(`category:${cat.id}`),
       },
     ];

@@ -342,5 +342,25 @@ export function shortProductName(raw: string, maxWords = 4, maxChars = 30): stri
   while (words.length > 1 && words.join(' ').length > maxChars) words.pop();
   while (words.length > 1 && DANGLING_TAILS.has(words[words.length - 1].toLowerCase())) words.pop();
   const out = words.join(' ').trim();
-  return out || full;
+  return normalCase(out || full);
+}
+
+// Databases often shout ("COCA-COLA ZERO"): an all-capitals word becomes
+// Title Case ("Coca-Cola Zero"), each part of a hyphenated word too. Short
+// all-consonant codes stay as they are (BBQ, XL), and units read lower case
+// (200MG -> 200mg). Words already in mixed case are left alone.
+function normalCase(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => {
+      if (STRENGTH.test(w)) return w.toLowerCase().replace(/iu$/, 'IU');
+      const letters = w.replace(/[^\p{L}]/gu, '');
+      if (letters.length < 2 || letters !== letters.toUpperCase()) return w;
+      if (letters.length <= 3 && !/[AEIOUY]/i.test(letters)) return w;
+      return w
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join('-');
+    })
+    .join(' ');
 }

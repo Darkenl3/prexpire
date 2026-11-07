@@ -125,7 +125,7 @@ function Shell() {
       cancelled = true;
     };
   }, [itemsReady, items.length, welcome]);
-  const { ids: categoryIds, all: allCategories, custom: customCategories } = useCategories();
+  const { ids: categoryIds, all: allCategories, custom: customCategories, lookOf } = useCategories();
   const { openPaywall, paywall } = usePro();
   const { session } = useAuth();
   const signedInRef = useRef(!!session);
@@ -207,8 +207,8 @@ function Shell() {
   // plus custom folders with their Ionicons glyph for the panel's chips).
   const shellCategories = useMemo(() => {
     const iconById = new Map(customCategories.map((c) => [c.id, c.icon] as const));
-    return allCategories.map((c) => ({ id: c.id, name: c.name, icon: iconById.get(c.id) }));
-  }, [allCategories, customCategories]);
+    return allCategories.map((c) => ({ id: c.id, name: c.name, icon: iconById.get(c.id) ?? lookOf(c.id).icon }));
+  }, [allCategories, customCategories, lookOf]);
   useEffect(() => {
     if (!inShell || typeof window === 'undefined') return;
     const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;

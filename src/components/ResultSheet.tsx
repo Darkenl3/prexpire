@@ -28,6 +28,19 @@ function sheetPills(t: ReturnType<typeof useTheme>): PillColors {
 }
 
 export function categoryArt(id: CategoryId, size: number) {
+  return <PresetOrFolderArt id={id} size={size} />;
+}
+
+// A preset shows the icon the user chose for it, or its original art.
+function PresetOrFolderArt({ id, size }: { id: CategoryId; size: number }) {
+  const { lookOf } = useCategories();
+  const icon = lookOf(id).icon;
+  if (icon) return <IconArt icon={icon} size={size} />;
+  return originalArt(id, size);
+}
+
+// The presets' original illustrations.
+export function originalArt(id: CategoryId, size: number) {
   switch (id) {
     case 'food':
       return <AppleArt size={size} />;

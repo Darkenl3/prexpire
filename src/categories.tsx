@@ -19,6 +19,11 @@ export const REMOVED_KEY = 'prexpire.categoriesRemoved.v1';
 // every category they keep (ids; unlisted ones follow in the default order).
 export const NAMES_KEY = 'prexpire.categoryNames.v1';
 export const ORDER_KEY = 'prexpire.categoryOrder.v1';
+// A preset's own look ({ food: { icon: 'paw-outline', tint: 'ocean' } }): the
+// icon and colour can change, the name can't. No entry = the original art
+// and colour.
+export const LOOKS_KEY = 'prexpire.categoryLooks.v1';
+export type PresetLook = { icon?: string; tint?: Tint };
 
 export type CustomCategory = {
   // Generated: "cat-<base36 time><random>".
@@ -141,6 +146,22 @@ function isNameMap(x: unknown): x is Record<string, string> {
   return !!x && typeof x === 'object' && !Array.isArray(x) && Object.entries(x).every(([k, v]) => CATEGORY_IDS.includes(k) && typeof v === 'string' && v.length > 0);
 }
 
+function isLookMap(x: unknown): x is Record<string, PresetLook> {
+  return (
+    !!x &&
+    typeof x === 'object' &&
+    !Array.isArray(x) &&
+    Object.entries(x).every(
+      ([k, v]) =>
+        CATEGORY_IDS.includes(k) &&
+        !!v &&
+        typeof v === 'object' &&
+        (v.icon === undefined || typeof v.icon === 'string') &&
+        (v.tint === undefined || (CUSTOM_TINTS as string[]).includes(v.tint)),
+    )
+  );
+}
+
 function isIdList(x: unknown): x is string[] {
   return Array.isArray(x) && x.every((id) => typeof id === 'string');
 }
@@ -164,6 +185,12 @@ export function readCustomCategories(): CustomCategory[] {
 
 export type CategoryDef = { id: string; name: string; custom: boolean };
 
+// Each preset's original tile colour (data.ts), for "back to the original".
+const PRESET_TINT: Record<string, Tint> = { food: 'food', medicine: 'medicine', household: 'household', skincare: 'skincare', pantry: 'pantry' };
+export function presetTint(id: string): Tint | undefined {
+  return PRESET_TINT[id];
+}
+
 type CategoriesContext = {
   custom: CustomCategory[];
   // Built-in ids the user removed (they can be restored at any time).
@@ -178,6 +205,8 @@ type CategoriesContext = {
   // Display name for any category id. Built-in names are known even while
   // removed (their items keep their label); unknown ids fall back to "Other".
   nameOf: (id: string) => string;
+  // A preset's chosen icon and colour (undefined = its original look).
+  lookOf: (id: string) => PresetLook;
   add: (name: string, icon: string, tint: Tint) => CustomCategory | null;
   // Changes a category the user keeps: a folder's name, icon and colour, or
   // a built-in's name (its artwork and colour stay). False for an empty name.
@@ -203,6 +232,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [saveError, setSaveError] = useState(false);
   const [names, setNames] = useState<Record<string, string>>({});
   const [order, setOrder] = useState<string[]>([]);
+  const [looks, setLooks] = useState<Record<string, PresetLook>>({});
+  const looksRef = useRef<Record<string, PresetLook>>({});
   // Writes go through these refs so two quick changes never overwrite each other.
   const customRef = useRef<CustomCategory[]>([]);
   const removedRef = useRef<string[]>([]);
@@ -213,7 +244,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [rawCustom, rawRemoved, rawNames, rawOrder] = await AsyncStorage.multiGet([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY]);
+        const [rawCustom, rawRemoved, rawNames, rawOrder, rawLooks] = await AsyncStorage.multiGet([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY, LOOKS_KEY]);
         const parse = (raw: string | null, fallback: unknown): unknown => {
           try {
             return raw ? JSON.parse(raw) : fallback;
@@ -225,11 +256,15 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
         const parsedRemoved = parse(rawRemoved[1], []);
         const parsedNames = parse(rawNames[1], {});
         const parsedOrder = parse(rawOrder[1], []);
+        const parsedLooks = parse(rawLooks[1], {});
         const list = Array.isArray(parsedCustom) ? parsedCustom.filter(isCustomCategory) : [];
         const gone = isRemovedList(parsedRemoved) ? parsedRemoved : [];
         const renamed = isNameMap(parsedNames) ? parsedNames : {};
         const ordered = isIdList(parsedOrder) ? parsedOrder : [];
+        const styled = isLookMap(parsedLooks) ? parsedLooks : {};
         if (cancelled) return;
+        looksRef.current = styled;
+        setLooks(styled);
         customRef.current = list;
         removedRef.current = gone;
         namesRef.current = renamed;
@@ -317,15 +352,25 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
 
   const edit = useCallback(
     (id: string, change: { name: string; icon?: string; tint?: Tint }) => {
-      const clean = change.name.trim().slice(0, 24);
-      if (!clean) return false;
       if (CATEGORY_IDS.includes(id)) {
-        // Back to the original name: the override is dropped.
-        const rest = { ...namesRef.current };
-        delete rest[id];
-        void persist(customRef.current, removedRef.current, clean === CATEGORY_NAMES[id] ? rest : { ...rest, [id]: clean });
+        // A preset: only its look changes (its name is fixed, so a preset
+        // can never stand in for a category of your own). An empty icon or
+        // the preset's own colour means "original", and drops the entry.
+        const look: PresetLook = {};
+        if (change.icon) look.icon = change.icon;
+        if (change.tint && (CUSTOM_TINTS as string[]).includes(change.tint) && change.tint !== PRESET_TINT[id]) look.tint = change.tint;
+        const next = { ...looksRef.current };
+        if (look.icon || look.tint) next[id] = look;
+        else delete next[id];
+        looksRef.current = next;
+        setLooks(next);
+        AsyncStorage.setItem(LOOKS_KEY, JSON.stringify(next))
+          .then(() => setSaveError(false))
+          .catch(() => setSaveError(true));
         return true;
       }
+      const clean = change.name.trim().slice(0, 24);
+      if (!clean) return false;
       if (!customRef.current.some((c) => c.id === id)) return false;
       const tint = change.tint && (CUSTOM_TINTS as string[]).includes(change.tint) ? change.tint : undefined;
       void persist(
@@ -365,7 +410,9 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   );
 
   const clearAll = useCallback(async () => {
-    await AsyncStorage.multiRemove([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY]);
+    await AsyncStorage.multiRemove([CATEGORIES_KEY, REMOVED_KEY, NAMES_KEY, ORDER_KEY, LOOKS_KEY]);
+    looksRef.current = {};
+    setLooks({});
     customRef.current = [];
     removedRef.current = [];
     namesRef.current = {};
@@ -381,9 +428,9 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     // Built-in names stay known even while removed, so items filed in a
     // removed built-in keep showing their real category label (the user's
     // own name for it when they gave one).
+    // Preset names are fixed (only their icon and colour can change).
     const nameMap = new Map<string, string>([
       ...Object.entries(CATEGORY_NAMES),
-      ...Object.entries(names),
       ...custom.map((c) => [c.id, c.name] as [string, string]),
     ]);
     const all: CategoryDef[] = orderedIds(custom, removed, order).map((id) => ({
@@ -399,6 +446,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       all,
       ids: all.map((c) => c.id),
       nameOf: (id: string) => nameMap.get(id) ?? 'Other',
+      lookOf: (id: string) => looks[id] ?? {},
       add,
       edit,
       move,
@@ -407,7 +455,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       restore,
       clearAll,
     };
-  }, [custom, removed, names, order, ready, saveError, add, edit, move, moveTo, remove, restore, clearAll]);
+  }, [custom, removed, order, looks, ready, saveError, add, edit, move, moveTo, remove, restore, clearAll]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

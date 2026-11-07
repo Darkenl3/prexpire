@@ -153,3 +153,15 @@ test('shortProductName never empties a name', () => {
   assert.equal(shortProductName('Original'), 'Original');
   assert.equal(shortProductName('330ml'), '330ml');
 });
+
+test('shortProductName turns shouting names into normal case', () => {
+  const cases: [string, string][] = [
+    ['COCA-COLA ZERO SUGAR 330ML', 'Coca-Cola Zero Sugar'],
+    ['NIVEA Creme 150ml', 'Nivea Creme'],
+    ['HEINZ BBQ SAUCE', 'Heinz BBQ Sauce'],
+    ['IBUPROFEN 200MG TABLETS', 'Ibuprofen 200mg Tablets'],
+    ['Coca-Cola', 'Coca-Cola'],
+    ['iPhone Charger', 'iPhone Charger'],
+  ];
+  for (const [raw, want] of cases) assert.equal(shortProductName(raw), want, raw);
+});
