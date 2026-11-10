@@ -569,7 +569,7 @@ function CategoryPage({
               })}
             </View>
             <Text style={s.label}>Warning period</Text>
-            <Text style={s.hint}>How early items here show as expiring and join your Shopping List.</Text>
+            <Text style={s.hint}>How early items here show as expiring, get their first reminder, and join your Shopping List.</Text>
             <View style={s.pillRow}>
               {(['general', ...WARNING_DAYS] as const).map((w) => (
                 <ChoicePill

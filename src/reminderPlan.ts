@@ -4,8 +4,10 @@ import { warningFor, type Settings } from './preferences.ts';
 // sets a reminder by hand. Re-run whenever items or settings change; the
 // iPhone app replaces what it had scheduled with the new plan.
 //
-//   • A reminder "Reminder timing" days before each expiry (default 1 day),
-//     and one on the expiry day itself. Items due the same day share ONE
+//   • Per item, up to three reminders: a heads-up as early as its category's
+//     own warning period (Medicine set to 30 days: a month ahead), one
+//     "Reminder timing" days before (default the day before), and one on
+//     the expiry day itself. Items due the same day share ONE
 //     notification, so a full fridge never means a pile of alerts.
 //   • With "Daily summary" on: a morning summary on each of the next 14 days
 //     that has something inside its category's warning period.
@@ -57,10 +59,15 @@ export function planReminders(items: PlanItem[], settings: PlanSettings, now = n
   const out: PlannedReminder[] = [];
 
   // Reminders: group by (the day it fires, how far ahead of expiry it is).
-  const leads = settings.reminderLead > 0 ? [settings.reminderLead, 0] : [0];
   const groups = new Map<string, { fire: string; lead: number; items: PlanItem[] }>();
   for (const item of items) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(item.expiresOn) || item.expiresOn < today) continue;
+    // The category's own warning period (only when one is set for it) gives
+    // an early heads-up; Reminder timing the follow-up; then the day itself.
+    const leads = new Set<number>([0]);
+    if (settings.reminderLead > 0) leads.add(settings.reminderLead);
+    const own = settings.categoryWarning[item.category];
+    if (typeof own === 'number' && own > 0) leads.add(own);
     for (const lead of leads) {
       const fire = addDays(item.expiresOn, -lead);
       if (fire < today) continue;

@@ -54,3 +54,13 @@ test('daily summary lists what is inside its warning period', () => {
   assert.equal(s[0].body, 'Milk.');
   assert.ok(s.every((r) => !r.body.includes('Pills')));
 });
+
+test('a category with its own warning period gets an early heads-up too', () => {
+  const settings = { ...base, categoryWarning: { medicine: 30 as const } };
+  const plan = planReminders([item('p', 'Ibuprofen', '2026-12-20', 'medicine'), item('m', 'Milk', '2026-12-20')], settings, now);
+  assert.deepEqual(plan.map((r) => [r.title, new Date(r.at).getMonth() + 1, new Date(r.at).getDate()]), [
+    ['Ibuprofen expires in 30 days', 11, 20],
+    ['2 items expire tomorrow', 12, 19],
+    ['2 items expire today', 12, 20],
+  ]);
+});
