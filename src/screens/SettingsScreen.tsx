@@ -48,7 +48,10 @@ import { FeedbackSheet } from '../components/FeedbackSheet';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
-const APP_VERSION: string = appConfig.expo.version;
+// Inside the iPhone app: the installed app's own version and build, as the
+// App Store shows it ("1.0.3 (114)"). In a browser: this web app's version.
+const APP_VERSION: string =
+  (typeof window !== 'undefined' && (window as { __prexpireAppVersion?: string }).__prexpireAppVersion) || appConfig.expo.version;
 const WEB = Platform.OS === 'web';
 type IconName = keyof typeof Ionicons.glyphMap;
 
