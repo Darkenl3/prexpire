@@ -1,5 +1,5 @@
 import { Children, Fragment, useCallback, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, type Accent } from '../theme';
 import { FadeIn, PressScale } from './Press';
@@ -141,16 +141,26 @@ export function SettingRow({ icon, accent, title, description, value, right, bel
 export function Toggle({ value, onChange, label, disabled = false }: { value: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean }) {
   const c = useTheme();
   const sw = c.switchColors;
+  // The switch itself is small; the whole 44 pt slot around it toggles it.
   return (
-    <Switch
-      value={value}
-      onValueChange={onChange}
+    <Pressable
+      onPress={() => !disabled && onChange(!value)}
       disabled={disabled}
+      accessibilityRole="switch"
       accessibilityLabel={label}
-      trackColor={{ false: sw.track, true: sw.trackOn }}
-      thumbColor={value ? sw.thumbOn : sw.thumb}
-      {...({ activeThumbColor: sw.thumbOn } as object)}
-    />
+      accessibilityState={{ checked: value, disabled }}
+      style={{ minHeight: 44, minWidth: 52, alignItems: 'center', justifyContent: 'center', marginVertical: -12 }}
+    >
+      <View pointerEvents="none">
+        <Switch
+          value={value}
+          disabled={disabled}
+          trackColor={{ false: sw.track, true: sw.trackOn }}
+          thumbColor={value ? sw.thumbOn : sw.thumb}
+          {...({ activeThumbColor: sw.thumbOn } as object)}
+        />
+      </View>
+    </Pressable>
   );
 }
 

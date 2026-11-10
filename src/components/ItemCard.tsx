@@ -503,7 +503,8 @@ const useStyles = makeStyles((t) => ({
   pillCompact: { height: 22, paddingHorizontal: 8 },
   pillText: { fontSize: 12.5, fontWeight: '700' },
   pillTextCompact: { fontSize: 12 },
-  dots: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  // A full 44 pt tap area that still takes the old 30 pt footprint.
+  dots: { width: 44, height: 44, borderRadius: 22, margin: -7, alignItems: 'center', justifyContent: 'center' },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   menu: {

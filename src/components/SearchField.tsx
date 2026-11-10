@@ -56,6 +56,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.surface,
     paddingHorizontal: 14,
   },
-  input: { flex: 1, color: c.text, fontSize: 15.5, paddingVertical: 0 },
+  // Fills the whole box, so a tap anywhere in it lands in the field.
+  input: { flex: 1, alignSelf: 'stretch', color: c.text, fontSize: 16, paddingVertical: 0 },
   clear: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: c.cardAlt },
 }));

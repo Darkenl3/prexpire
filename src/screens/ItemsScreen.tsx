@@ -365,7 +365,7 @@ const useStyles = makeStyles((t) => ({
   // Compact internal spacing: icon and label stay vertically centred with a
   // tight gap; 40pt keeps the control quiet while the touch target stays real
   // (the row has generous margin around it).
-  seg: { flex: 1, height: 40, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
+  seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
   segOn: { backgroundColor: t.selBg },
   segText: { color: t.textMuted, fontSize: 14, fontWeight: '600' },
   segTextOn: { color: t.scanInk, fontWeight: '700' },

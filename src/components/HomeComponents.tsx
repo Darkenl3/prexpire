@@ -755,7 +755,8 @@ const useStyles = makeStyles((c) => ({
   },
   sectionFirst: { marginTop: 4 },
   sectionTitle: { color: c.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
-  sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  // 44 pt tall to tap, without moving the heading.
+  sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 12, marginVertical: -12, paddingLeft: 8 },
   sectionLink: { color: c.mint, fontSize: 14.5, fontWeight: '600' },
   tile: {
     height: 156,

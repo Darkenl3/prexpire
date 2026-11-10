@@ -170,14 +170,16 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           onPress={cycleSort}
           scaleTo={0.96}
           hitSlop={6}
-          style={s.sortBtn}
+          style={s.sortHit}
           accessibilityRole="button"
           accessibilityLabel={`Sort order: ${SORT_SHORT[settings.sort]}. Tap to change.`}
         >
-          <Text style={s.sortText} numberOfLines={1}>
-            {SORT_SHORT[settings.sort]}
-          </Text>
-          <Ionicons name="chevron-expand" size={14} color={t.textMuted} />
+          <View style={s.sortBtn}>
+            <Text style={s.sortText} numberOfLines={1}>
+              {SORT_SHORT[settings.sort]}
+            </Text>
+            <Ionicons name="chevron-expand" size={14} color={t.textMuted} />
+          </View>
         </PressScale>
       </View>
       {upcoming.length > 0 ? (
@@ -255,6 +257,8 @@ const useStyles = makeStyles((t) => ({
   sectionFirst: { marginTop: 2 },
   sectionTitle: { color: t.text, fontSize: 20, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
   sectionMeta: { color: t.textMuted, fontSize: 13, textAlign: 'right' },
+  // The pill keeps its size; the tap area around it is a full 44 pt.
+  sortHit: { paddingVertical: 6, marginVertical: -6 },
   sortBtn: {
     flexDirection: 'row',
     alignItems: 'center',
