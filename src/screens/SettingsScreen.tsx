@@ -49,10 +49,13 @@ import { openStore, useStoreUpdate } from '../appStore';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
-// Inside the iPhone app: the installed app's own version and build, as the
-// App Store shows it ("1.0.3 (114)"). In a browser: this web app's version.
+// Inside the iPhone app: the installed app's own version and build
+// ("1.0.3 (114)"), sent with feedback and backups so a report pins the exact
+// build. People see just the version (APP_VERSION_SHOWN, "1.0.3"). In a
+// browser: this web app's version.
 const APP_VERSION: string =
   (typeof window !== 'undefined' && (window as { __prexpireAppVersion?: string }).__prexpireAppVersion) || appConfig.expo.version;
+const APP_VERSION_SHOWN = APP_VERSION.split(' ')[0];
 const WEB = Platform.OS === 'web';
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -281,7 +284,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
 
       <SettingsSection title="About">
         <SettingsCard>
-          <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION} />
+          <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION_SHOWN} />
           <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" onPress={() => open('help')} />
           <SettingRow icon="chatbubble-ellipses-outline" accent="mint" title="Send feedback" description="Report a bug, or share feedback or an idea" onPress={() => setFeedbackOpen(true)} />
           <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
@@ -1232,7 +1235,7 @@ function TermsDetail({ openPage }: { openPage: (p: PageId) => void }) {
       <View style={s.aboutFooter}>
         <Brandmark height={35} />
         <Text style={s.aboutTagline}>Keep track of what matters before it expires.</Text>
-        <Text style={s.aboutVersion}>Version {APP_VERSION}</Text>
+        <Text style={s.aboutVersion}>Version {APP_VERSION_SHOWN}</Text>
       </View>
     </>
   );

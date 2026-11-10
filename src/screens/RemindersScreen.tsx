@@ -12,6 +12,7 @@ import { PressScale } from '../components/Press';
 import { categoryArt } from '../components/ResultSheet';
 import { SmallButton } from '../components/SettingsRows';
 import { StatusMedallion } from '../components/HomeComponents';
+import { nativeReminders } from '../platform/notifications';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
@@ -201,10 +202,15 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
       ) : (
         <Text style={s.noneText}>No upcoming reminders.</Text>
       )}
-      {/* What notifications are here, honestly: in-app alerts only. */}
+      {/* What notifications do here, honestly: real reminders in the iPhone
+          app; in a browser, alerts only while the page is open. */}
       <View style={s.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={t.textMuted} />
-        <Text style={s.footnoteText}>Expiry alerts appear while the app is open. Nothing is sent in the background yet.</Text>
+        <Text style={s.footnoteText}>
+          {nativeReminders()
+            ? 'You get a notification before things expire, even when Prexpire is closed. Change when in Settings, Notifications.'
+            : 'Expiry alerts appear while this page is open. For reminders when it\x27s closed, use the iPhone app.'}
+        </Text>
       </View>
     </Page>
   );
