@@ -10,13 +10,18 @@ import { warningFor, type Settings } from './preferences.ts';
 //   • With "Daily summary" on: a morning summary on each of the next 14 days
 //     that has something inside its category's warning period.
 //
-// Times are local: reminders at 9:00, summaries at 8:30.
+// Times are local: reminders at 9:00, summaries at 8:30. A reminder whose
+// 9:00 has already gone by today (an item added in the afternoon that expires
+// today or tomorrow) moves to the next fixed slot, 13:00 or 18:00, instead of
+// being dropped. Fixed slots mean re-planning (every app open) never sends
+// the same reminder twice.
 
 export type PlannedReminder = { id: string; title: string; body: string; at: number };
 type PlanItem = { id: string; name: string; category: string; expiresOn: string };
 type PlanSettings = Pick<Settings, 'reminders' | 'reminderLead' | 'dailySummary' | 'warningDays' | 'categoryWarning'>;
 
 const REMIND_HOUR = 9;
+const CATCH_UP_HOURS = [13, 18];
 const SUMMARY_HOUR = 8;
 const SUMMARY_MINUTE = 30;
 const SUMMARY_DAYS = 14;
@@ -66,8 +71,13 @@ export function planReminders(items: PlanItem[], settings: PlanSettings, now = n
     }
   }
   for (const g of groups.values()) {
-    const at = atLocal(g.fire, REMIND_HOUR).getTime();
-    if (at <= now.getTime()) continue;
+    let at = atLocal(g.fire, REMIND_HOUR).getTime();
+    if (at <= now.getTime()) {
+      // Only today's reminders can have passed; give them the next slot.
+      const next = CATCH_UP_HOURS.map((h) => atLocal(g.fire, h).getTime()).find((t) => t > now.getTime());
+      if (next === undefined) continue;
+      at = next;
+    }
     const list = [...g.items].sort((a, b) => a.name.localeCompare(b.name));
     const one = list.length === 1;
     out.push({
