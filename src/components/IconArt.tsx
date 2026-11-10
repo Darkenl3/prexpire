@@ -224,16 +224,30 @@ const ART: Record<string, (p: ArtProps) => ReactElement> = {
   ),
   // ── Home and care ──
   'home-outline': (p) => <HouseArt size={0.95 * (p.size ?? 56)} />,
+  // Food: a white plate with golden cutlery, drawn like the other presets
+  // (filled shapes, two-stop gradients, a soft highlight, no outlines).
   'restaurant-outline': (p) => (
     <Canvas {...p}>
-      <Defs>{grad('rsP', '#FFFFFF', '#CFD8E2', true)}</Defs>
-      <Circle cx="50" cy="54" r="30" fill="url(#rsP)" />
-      <Circle cx="50" cy="54" r="20" fill="#EEF2F6" />
-      <G stroke="#8A97A6" strokeWidth={5} strokeLinecap="round" fill="none">
-        <Path d="M12 14 V40 M8 14 V28 C8 34 16 34 16 28 V14" />
-        <Path d="M12 40 V88" />
-        <Path d="M88 88 V14 C80 20 80 40 88 46" />
-      </G>
+      <Defs>
+        {grad('rsRim', '#FFFFFF', '#C9D5E1', true)}
+        {grad('rsWell', '#E4EBF2', '#FBFDFF', true)}
+        {grad('rsGold', '#FFD98A', '#F09A2A')}
+      </Defs>
+      {/* Plate: shadow, rim, well, highlight */}
+      <Ellipse cx="50" cy="60" rx="27" ry="26" fill="#000000" opacity={0.16} />
+      <Circle cx="50" cy="54" r="28" fill="url(#rsRim)" />
+      <Circle cx="50" cy="54" r="19.5" fill="url(#rsWell)" />
+      <Path d="M31 44 C35 34 44 29 53 29" stroke="#FFFFFF" strokeOpacity={0.9} strokeWidth={3.5} strokeLinecap="round" fill="none" />
+      {/* Fork */}
+      <Rect x="4.5" y="12" width="3.6" height="22" rx="1.8" fill="url(#rsGold)" />
+      <Rect x="10.2" y="12" width="3.6" height="22" rx="1.8" fill="url(#rsGold)" />
+      <Rect x="15.9" y="12" width="3.6" height="22" rx="1.8" fill="url(#rsGold)" />
+      <Path d="M4.5 30 H19.5 V35 C19.5 41 15.5 43 15 46 H9 C8.5 43 4.5 41 4.5 35 Z" fill="url(#rsGold)" />
+      <Rect x="9" y="44" width="6" height="46" rx="3" fill="url(#rsGold)" />
+      {/* Knife */}
+      <Path d="M89 12 C82 17 79.5 32 80.5 50 H89 Z" fill="url(#rsGold)" />
+      <Rect x="83" y="47" width="6" height="43" rx="3" fill="url(#rsGold)" />
+      <Path d="M86.5 17 C83.5 23 82.5 33 82.8 44" stroke="#FFFFFF" strokeOpacity={0.5} strokeWidth={1.6} strokeLinecap="round" fill="none" />
     </Canvas>
   ),
   'brush-outline': (p) => (
