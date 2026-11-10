@@ -65,6 +65,7 @@ export const CUSTOM_TINTS: Tint[] = [
 // Folders saved with an icon that is no longer offered keep it (and its art).
 export const CATEGORY_ICONS = [
   // Food and drink
+  'restaurant-outline',
   'nutrition-outline',
   'apple',
   'snow-outline',
@@ -75,7 +76,6 @@ export const CATEGORY_ICONS = [
   'jar',
   // Home and care
   'home-outline',
-  'restaurant-outline',
   'sparkles-outline',
   'color-fill-outline',
   'leaf-outline',
@@ -99,7 +99,7 @@ export const CATEGORY_ICONS = [
 
 // What each choice means, read out by screen readers in the picker.
 export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], string> = {
-  'nutrition-outline': 'Food',
+  'nutrition-outline': 'Vegetables',
   apple: 'Fruit',
   jar: 'Pantry',
   pump: 'Skincare',
@@ -110,7 +110,7 @@ export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], strin
   'fast-food-outline': 'Ready meals',
   'basket-outline': 'Groceries',
   'home-outline': 'Home',
-  'restaurant-outline': 'Kitchen',
+  'restaurant-outline': 'Food',
   'sparkles-outline': 'Cleaning',
   'color-fill-outline': 'DIY and paint',
   'leaf-outline': 'Garden and plants',
@@ -200,9 +200,9 @@ export function presetTint(id: string): Tint | undefined {
 }
 
 // Each preset's own picture: an ordinary icon from CATEGORY_ICONS, so the
-// picker shows it chosen like any other (Food is the carrot, food in
-// general; the apple is free for a Fruit category).
-const PRESET_ICON: Record<string, string> = { food: 'nutrition-outline', medicine: 'capsule', household: 'home-outline', skincare: 'pump', pantry: 'jar' };
+// picker shows it chosen like any other (Food is a plate with cutlery, food
+// of any kind; the carrot and apple are free for Vegetables and Fruit).
+const PRESET_ICON: Record<string, string> = { food: 'restaurant-outline', medicine: 'capsule', household: 'home-outline', skincare: 'pump', pantry: 'jar' };
 export function presetIcon(id: string): string | undefined {
   return PRESET_ICON[id];
 }
