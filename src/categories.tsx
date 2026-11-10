@@ -53,11 +53,19 @@ export const CUSTOM_TINTS: Tint[] = [
   'coral',
   'sand',
   'slate',
+  'sky',
+  'mint',
+  'lime',
+  'sunflower',
+  'cherry',
+  'plum',
+  'indigo',
+  'graphite',
 ];
 
 // The icon menu for new categories. Every choice stands for a WHOLE group of
-// things people track (Pets, Clothes, Car…), never a single product (an egg,
-// a pizza): a category is a folder, and its picture should say what kind of
+// things people track (Pets, Clothes, Car…): an egg stands for dairy and eggs,
+// a pizza for snacks. A category is a folder, and its picture should say what kind of
 // folder it is. Clean outline glyphs from Ionicons in the picker; the folder's
 // tile shows the matching illustration (components/IconArt.tsx). Grouped as
 // food and drink, home and care, then everything else. Every name is verified
@@ -74,6 +82,12 @@ export const CATEGORY_ICONS = [
   'fast-food-outline',
   'basket-outline',
   'jar',
+  'egg-outline',
+  'fish-outline',
+  'pizza-outline',
+  'ice-cream-outline',
+  'wine-outline',
+  'water-outline',
   // Home and care
   'home-outline',
   'sparkles-outline',
@@ -85,6 +99,11 @@ export const CATEGORY_ICONS = [
   'eyedrop-outline',
   'capsule',
   'medkit-outline',
+  'flower-outline',
+  'brush-outline',
+  'bandage-outline',
+  'thermometer-outline',
+  'bulb-outline',
   // Everything else
   'car-outline',
   'battery-charging-outline',
@@ -93,6 +112,13 @@ export const CATEGORY_ICONS = [
   'pricetag-outline',
   'gift-outline',
   'globe-outline',
+  'tv-outline',
+  'headset-outline',
+  'hardware-chip-outline',
+  'watch-outline',
+  'key-outline',
+  'balloon-outline',
+  'cube-outline',
   'archive-outline',
   'folder-outline',
 ] as const;
@@ -127,6 +153,24 @@ export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], strin
   'globe-outline': 'Travel',
   'archive-outline': 'Storage',
   'folder-outline': 'Other',
+  'egg-outline': 'Dairy and eggs',
+  'fish-outline': 'Meat and fish',
+  'pizza-outline': 'Snacks',
+  'ice-cream-outline': 'Desserts',
+  'wine-outline': 'Wine and spirits',
+  'water-outline': 'Water',
+  'flower-outline': 'Flowers',
+  'brush-outline': 'Art supplies',
+  'bandage-outline': 'Plasters',
+  'thermometer-outline': 'Health',
+  'bulb-outline': 'Light bulbs',
+  'tv-outline': 'Appliances',
+  'headset-outline': 'Audio',
+  'hardware-chip-outline': 'Tech parts',
+  'watch-outline': 'Accessories',
+  'key-outline': 'Keys and passes',
+  'balloon-outline': 'Party',
+  'cube-outline': 'Packages',
 };
 
 // The default pick for a new category: a neutral folder.

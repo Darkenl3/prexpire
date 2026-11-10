@@ -414,8 +414,8 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
         </Text>
         {manual ? (
           // Typing a product in has no camera, so no flashlight: an empty
-          // slot keeps the title centred.
-          <View style={s.roundBtn} />
+          // invisible slot (no circle) keeps the title centred.
+          <View style={{ width: 46, height: 46 }} />
         ) : (
         <PressScale
           onPress={() => setTorch((v) => !v)}

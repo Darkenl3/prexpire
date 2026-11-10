@@ -231,7 +231,7 @@ const ART: Record<string, (p: ArtProps) => ReactElement> = {
       <Defs>
         {grad('rsRim', '#FFFFFF', '#C9D5E1', true)}
         {grad('rsWell', '#E4EBF2', '#FBFDFF', true)}
-        {grad('rsGold', '#FFD98A', '#F09A2A')}
+        {grad('rsGold', '#DCE3EA', '#76838F')}
       </Defs>
       {/* Plate: shadow, rim, well, highlight */}
       <Ellipse cx="50" cy="60" rx="27" ry="26" fill="#000000" opacity={0.16} />

@@ -176,6 +176,14 @@ export const DARK: Palette = {
     coral: { top: '#643323', bottom: '#1E1511', border: '#78402C' },
     sand: { top: '#52412A', bottom: '#191610', border: '#665238' },
     slate: { top: '#2C3830', bottom: '#121814', border: '#3B4A40' },
+    sky: { top: '#164E78', bottom: '#081A28', border: '#22618F' },
+    mint: { top: '#16594C', bottom: '#081B17', border: '#226D5E' },
+    lime: { top: '#43561A', bottom: '#151B0A', border: '#556B24' },
+    sunflower: { top: '#5E4C12', bottom: '#1E1907', border: '#74601C' },
+    cherry: { top: '#6A1F28', bottom: '#1F0D10', border: '#802A34' },
+    plum: { top: '#4F2357', bottom: '#1A0E1C', border: '#632E6C' },
+    indigo: { top: '#2A3378', bottom: '#0E1128', border: '#36418F' },
+    graphite: { top: '#30363D', bottom: '#111417', border: '#3F464E' },
     add: { top: '#223028', bottom: '#101813', border: '#2E4034' },
   },
   addTile: { bg: 'rgba(255,255,255,0.03)', line: 'rgba(255,255,255,0.09)' },
@@ -278,6 +286,14 @@ export const LIGHT: Palette = {
     coral: { top: '#FCEBE2', bottom: '#F7D9C8', border: '#EFC7AD' },
     sand: { top: '#F7F0E2', bottom: '#EFE4CB', border: '#E1D2B0' },
     slate: { top: '#EAF0EA', bottom: '#D9E4DA', border: '#C4D4C6' },
+    sky: { top: '#E2F1FC', bottom: '#C7E4F8', border: '#A9D4F1' },
+    mint: { top: '#DFF6EF', bottom: '#C3EDE0', border: '#A5E1CF' },
+    lime: { top: '#EEF7D8', bottom: '#DDEFB5', border: '#C9E393' },
+    sunflower: { top: '#FDF5D2', bottom: '#F9EAA8', border: '#F1DC80' },
+    cherry: { top: '#FBE3E5', bottom: '#F5C9CD', border: '#ECADB3' },
+    plum: { top: '#F3E4F5', bottom: '#E6CBEA', border: '#D7AFDD' },
+    indigo: { top: '#E5E8FB', bottom: '#CDD3F5', border: '#B3BCED' },
+    graphite: { top: '#EDEFF1', bottom: '#DCE0E4', border: '#C8CED4' },
     add: { top: '#F4F9F4', bottom: '#EDF4ED', border: '#D5E4D6' },
   },
   // The Add-category tile: a borderless soft card with fine diagonal lines.
@@ -307,6 +323,14 @@ export type Tint =
   | 'coral'
   | 'sand'
   | 'slate'
+  | 'sky'
+  | 'mint'
+  | 'lime'
+  | 'sunflower'
+  | 'cherry'
+  | 'plum'
+  | 'indigo'
+  | 'graphite'
   | 'add';
 
 export type Tone = 'amber' | 'green' | 'red';

@@ -38,6 +38,14 @@ const TINT_ICON: Record<Tint, string> = {
   coral: '#C05E2D',
   sand: '#96803F',
   slate: '#5B6B77',
+  sky: '#2A86C9',
+  mint: '#1C9A7C',
+  lime: '#6E9A1F',
+  sunflower: '#B58A0A',
+  cherry: '#C8323F',
+  plum: '#8E3E9C',
+  indigo: '#4352C2',
+  graphite: '#56606B',
   add: '#5C6E6A',
 };
 
