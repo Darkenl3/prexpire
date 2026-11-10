@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme, LIGHT, type Tint } from '../theme';
-import { CATEGORY_ICONS, CATEGORY_ICON_LABELS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, presetTint, useCategories } from '../categories';
+import { CATEGORY_ICONS, CATEGORY_ICON_LABELS, CUSTOM_TINTS, DEFAULT_CATEGORY_ICON, presetIcon, presetTint, useCategories } from '../categories';
 import { IconArt } from './IconArt';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
@@ -12,7 +12,7 @@ import { categories } from '../data';
 import { Note, SmallButton } from './SettingsRows';
 import { PressScale } from './Press';
 import { CategoryTile, GlassIconButton } from './HomeComponents';
-import { categoryArt, originalArt } from './ResultSheet';
+import { categoryArt } from './ResultSheet';
 import { ChoicePill, type PillColors } from './ChoicePill';
 import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
 import { usePro, useProLimits } from '../pro';
@@ -356,7 +356,7 @@ export function CategoryManager() {
               cat
                 ? folder
                   ? { id: cat.id, name: cat.name, icon: folder.icon, tint: folder.tint, builtin: false }
-                  : { id: cat.id, name: cat.name, icon: lookOf(cat.id).icon ?? '', tint: lookOf(cat.id).tint ?? presetTint(cat.id), builtin: true }
+                  : { id: cat.id, name: cat.name, icon: lookOf(cat.id).icon ?? presetIcon(cat.id), tint: lookOf(cat.id).tint ?? presetTint(cat.id), builtin: true }
                 : undefined
             }
             onClose={() => setEditing(null)}
@@ -442,7 +442,7 @@ function CategoryPage({
   useEffect(() => {
     if (visible) {
       setName(editing?.name ?? '');
-      setIcon(editing ? (editing.icon ?? (editing.builtin ? '' : DEFAULT_CATEGORY_ICON)) : DEFAULT_CATEGORY_ICON);
+      setIcon(editing?.icon ?? DEFAULT_CATEGORY_ICON);
       setTint(editing?.tint ?? CUSTOM_TINTS[0]);
       setRejected(false);
       setWarn((editing && settings.categoryWarning[editing.id]) ?? 'general');
@@ -500,7 +500,7 @@ function CategoryPage({
                   ? 'Choose a different icon or colour for this category. Its name stays the same, and every item in it keeps its place.'
                   : 'Change the name, icon or colour. Every item in this folder stays in it.'}
             </Text>
-            <TilePreview tint={tint} icon={icon} art={builtin && !icon && editing ? originalArt(editing.id, 64) : undefined} name={trimmed || 'New category'} />
+            <TilePreview tint={tint} icon={icon} name={trimmed || 'New category'} />
             <Text style={s.label}>Name</Text>
             {/* Deliberately NOT autofocused: the keyboard opens only when the
                 user taps this field. Typed text survives keyboard dismissals
@@ -527,18 +527,6 @@ function CategoryPage({
             {builtin && <Text style={s.hint}>Preset categories keep their name.</Text>}
             <Text style={s.label}>Icon</Text>
             <View style={s.iconGrid}>
-              {builtin && editing ? (
-                <PressScale
-                  onPress={() => setIcon('')}
-                  scaleTo={0.97}
-                  accessibilityRole="radio"
-                  aria-checked={!icon}
-                  accessibilityLabel="Icon: Original"
-                  style={[s.iconCell, !icon && { borderColor: c.tints[tint].border, backgroundColor: c === LIGHT ? c.tints[tint].top : `${c.tints[tint].top}55` }]}
-                >
-                  {originalArt(editing.id, 26)}
-                </PressScale>
-              ) : null}
               {CATEGORY_ICONS.map((ic) => {
                 const on = ic === icon;
                 return (
@@ -551,7 +539,9 @@ function CategoryPage({
                     accessibilityLabel={`Icon: ${CATEGORY_ICON_LABELS[ic]}`}
                     style={[s.iconCell, on && { borderColor: c.tints[tint].border, backgroundColor: c === LIGHT ? c.tints[tint].top : `${c.tints[tint].top}55` }]}
                   >
-                    <Ionicons name={ic as keyof typeof Ionicons.glyphMap} size={22} color={on ? (c === LIGHT ? TINT_ICON[tint] : c.text) : c.textMuted} />
+                    <View style={{ opacity: on ? 1 : 0.78 }}>
+                      <IconArt icon={ic} size={30} />
+                    </View>
                   </PressScale>
                 );
               })}

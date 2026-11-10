@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { DEFAULT_CATEGORY_ICON } from '../categories';
-import { HouseArt } from './Art';
+import { AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from './Art';
 
 // Illustrated artwork for the categories people add themselves — one picture
 // per icon in the New category picker (categories.CATEGORY_ICONS), drawn in
@@ -40,6 +40,11 @@ function Canvas({ size = 56, children }: ArtProps & { children: ReactNode }) {
 }
 
 const ART: Record<string, (p: ArtProps) => ReactElement> = {
+  // The preset categories' own pictures, now choices like every other icon.
+  apple: (p) => <AppleArt size={p.size ?? 56} />,
+  capsule: (p) => <CapsuleArt size={p.size ?? 56} />,
+  pump: (p) => <PumpBottleArt size={p.size ?? 56} />,
+  jar: (p) => <JarArt size={p.size ?? 56} />,
   // ── Groceries and food ──
   'nutrition-outline': (p) => (
     <Canvas {...p}>

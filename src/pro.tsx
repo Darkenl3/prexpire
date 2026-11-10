@@ -54,7 +54,7 @@ type Usage = { month: string; added: number };
 const monthOf = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 const usageListeners = new Set<(n: number) => void>();
 
-async function readUsage(): Promise<number> {
+async function readLocalUsage(): Promise<number> {
   try {
     const u = JSON.parse((await AsyncStorage.getItem(USAGE_KEY)) ?? 'null') as Usage | null;
     return u && u.month === monthOf() && Number.isFinite(u.added) ? u.added : 0;
@@ -63,12 +63,48 @@ async function readUsage(): Promise<number> {
   }
 }
 
+// The iPhone app also keeps the count in the Keychain, which normally
+// survives deleting and reinstalling Prexpire (window.__prexpireUsage).
+const keychainUsage = () =>
+  Platform.OS === 'web' && typeof window !== 'undefined' && !!(window as { __prexpireUsage?: number }).__prexpireUsage && !!shell()?.postMessage;
+function askKeychain(type: 'usage-get' | 'usage-set', usage?: Usage): Promise<number> {
+  if (!keychainUsage()) return Promise.resolve(0);
+  return new Promise((resolve) => {
+    const done = (n: number) => {
+      window.removeEventListener('prexpire:usage', on);
+      clearTimeout(timer);
+      resolve(n);
+    };
+    const on = (e: Event) => {
+      const u = (e as CustomEvent<{ usage?: Usage | null }>).detail?.usage;
+      done(u && u.month === monthOf() && Number.isFinite(u.added) ? u.added : 0);
+    };
+    const timer = setTimeout(() => done(0), 1500);
+    window.addEventListener('prexpire:usage', on);
+    try {
+      shell()?.postMessage?.(JSON.stringify({ type, ...(usage ?? {}) }));
+    } catch {
+      done(0);
+    }
+  });
+}
+
+// This month's count: the highest of this app's storage and the Keychain
+// (a reinstall starts the app's storage empty, the Keychain doesn't).
+async function readUsage(): Promise<number> {
+  const [local, kept] = await Promise.all([readLocalUsage(), askKeychain('usage-get')]);
+  if (kept > local) AsyncStorage.setItem(USAGE_KEY, JSON.stringify({ month: monthOf(), added: kept } satisfies Usage)).catch(() => {});
+  return Math.max(local, kept);
+}
+
 // Called by ItemsProvider after every item added on this phone (items that
 // arrive from a backup or another phone don't count again).
 export async function noteItemAdded() {
   const n = (await readUsage()) + 1;
   usageListeners.forEach((f) => f(n));
-  AsyncStorage.setItem(USAGE_KEY, JSON.stringify({ month: monthOf(), added: n } satisfies Usage)).catch(() => {});
+  const usage: Usage = { month: monthOf(), added: n };
+  AsyncStorage.setItem(USAGE_KEY, JSON.stringify(usage)).catch(() => {});
+  void askKeychain('usage-set', usage);
 }
 
 // Items added this month, kept current.

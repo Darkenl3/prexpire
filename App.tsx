@@ -207,7 +207,10 @@ function Shell() {
   // plus custom folders with their Ionicons glyph for the panel's chips).
   const shellCategories = useMemo(() => {
     const iconById = new Map(customCategories.map((c) => [c.id, c.icon] as const));
-    return allCategories.map((c) => ({ id: c.id, name: c.name, icon: iconById.get(c.id) ?? lookOf(c.id).icon }));
+    // The iPhone scanner's chips draw outline glyphs: picture-only names
+    // (apple, capsule, pump, jar) leave it to the scanner's own glyph.
+    const glyph = (icon?: string) => (icon && icon.endsWith('-outline') ? icon : undefined);
+    return allCategories.map((c) => ({ id: c.id, name: c.name, icon: glyph(iconById.get(c.id) ?? lookOf(c.id).icon) }));
   }, [allCategories, customCategories, lookOf]);
   useEffect(() => {
     if (!inShell || typeof window === 'undefined') return;

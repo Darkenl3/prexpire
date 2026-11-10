@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, space, useTheme, LIGHT, type Tint } from '../theme';
 import { categories, type ArtKey } from '../data';
-import { useCategories } from '../categories';
+import { presetIcon, useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
@@ -135,9 +135,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         // A folder's illustration is in the built-ins' style (an unknown or
         // old icon identifier shows the folder picture, never a blank).
         art: builtin
-          ? lookOf(cat.id).icon
-            ? <IconArt icon={lookOf(cat.id).icon!} size={compact ? 56 : 64} />
-            : categoryArt(builtin.art, compact ? 56 : 64)
+          ? <IconArt icon={lookOf(cat.id).icon ?? presetIcon(cat.id) ?? 'folder-outline'} size={compact ? 56 : 64} />
           : <IconArt icon={folder!.icon} size={compact ? 56 : 64} />,
         onPress: () => go(`category:${cat.id}`),
       },

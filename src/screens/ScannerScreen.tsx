@@ -412,6 +412,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
         <Text style={s.title} accessibilityRole="header">
           {manual ? 'Add item' : 'Live Scan'}
         </Text>
+        {manual ? (
+          // Typing a product in has no camera, so no flashlight: an empty
+          // slot keeps the title centred.
+          <View style={s.roundBtn} />
+        ) : (
         <PressScale
           onPress={() => setTorch((v) => !v)}
           disabled={!torchAvailable}
@@ -424,6 +429,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
         >
           <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? t.scanInk : colors.text} />
         </PressScale>
+        )}
       </View>
       <Text style={s.instruction}>
         {manual ? 'Type the product details.' : 'Point at an expiry date or barcode.'}

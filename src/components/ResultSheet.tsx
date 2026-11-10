@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SCANNER_COLORS as colors, useTheme, withAlpha, radius } from '../theme';
-import { DEFAULT_CATEGORY_ICON, useCategories } from '../categories';
+import { DEFAULT_CATEGORY_ICON, presetIcon, useCategories } from '../categories';
 import { type CategoryId } from '../items';
 import { formatDate, isoToday, type ConfirmReason, type DayOrder, type Interpretation } from '../scanner/dateParser';
 import type { Detection } from '../scanner/useExpiryScanner';
@@ -12,6 +12,7 @@ import { PressScale } from './Press';
 import { ChoicePill, useScrollSelectedIntoView, type PillColors } from './ChoicePill';
 import { useSettings } from '../settings';
 import { nativeDatePicker, pickNativeDate } from '../platform/nativeDate';
+import { tap } from '../platform/haptics';
 
 // The sheet's category pills: the same solid "selected" language as the
 // Items filters and sort row — the ACTIVE theme's lime fill with its ink on
@@ -34,7 +35,7 @@ export function categoryArt(id: CategoryId, size: number) {
 // A preset shows the icon the user chose for it, or its original art.
 function PresetOrFolderArt({ id, size }: { id: CategoryId; size: number }) {
   const { lookOf } = useCategories();
-  const icon = lookOf(id).icon;
+  const icon = lookOf(id).icon ?? presetIcon(id);
   if (icon) return <IconArt icon={icon} size={size} />;
   return originalArt(id, size);
 }
@@ -126,6 +127,13 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
   const [nameFocused, setNameFocused] = useState(false);
   const nameRef = useRef<TextInput>(null);
   const [category, setCategory] = useState<CategoryId>(initialCategory);
+  // The category picked for the product leads the chip row (fixed when the
+  // sheet opens, so tapping another chip never reshuffles it).
+  const [leadCategory] = useState<CategoryId | null>(categoryGuessed ? initialCategory : null);
+  const chipOrder = useMemo(() => {
+    const lead = leadCategory ? all.find((c) => c.id === leadCategory) : undefined;
+    return lead ? [lead, ...all.filter((c) => c.id !== leadCategory)] : all;
+  }, [all, leadCategory]);
   const readings = useMemo(() => (detection ? [detection.primary, ...detection.alternatives] : []), [detection]);
   const ambiguous = readings.length > 1;
   // The Date format setting resolved the day/month order: the reading that
@@ -244,7 +252,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
         </View>
 
         <ScrollView ref={chipsScroll} horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled contentContainerStyle={s.chips} keyboardShouldPersistTaps="handled">
-          {all.map((cat) => (
+          {chipOrder.map((cat) => (
             <View key={cat.id} onLayout={(e) => noteChip(cat.id, e)}>
               <ChoicePill
                 label={cat.name}
@@ -345,7 +353,10 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
 
       {save === 'error' && <Text style={s.error}>Couldn't save the item. Please try again.</Text>}
       <PressScale
-        onPress={submit}
+        onPress={() => {
+          if (canSave) tap('light');
+          void submit();
+        }}
         disabled={!canSave}
         scaleTo={0.98}
         style={[s.primary, { backgroundColor: t.mint }, !canSave && save !== 'saved' && s.disabled]}

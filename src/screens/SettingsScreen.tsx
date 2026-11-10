@@ -44,6 +44,7 @@ import { useSync } from '../sync';
 // reads offline and never sends the app out to a browser.
 import legal from '../legal.json';
 import { FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro } from '../pro';
+import { FeedbackSheet } from '../components/FeedbackSheet';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
@@ -103,6 +104,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const [page, setPage] = useState<PageId | null>(initialPage === 'categories' ? 'categories' : null);
   const { email } = useAuth();
   const [signInOpen, setSignInOpen] = useState(initialPage === 'signin');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   // The settings search sheet, opened from the magnifier in the header.
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -276,6 +278,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         <SettingsCard>
           <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION} />
           <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" onPress={() => open('help')} />
+          <SettingRow icon="chatbubble-ellipses-outline" accent="mint" title="Send feedback" description="Report a bug, or share feedback or an idea" onPress={() => setFeedbackOpen(true)} />
           <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
         </SettingsCard>
       </SettingsSection>
@@ -347,6 +350,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       />
 
       <SignInSheet visible={signInOpen} onClose={() => setSignInOpen(false)} />
+      <FeedbackSheet visible={feedbackOpen} onClose={() => setFeedbackOpen(false)} appVersion={APP_VERSION} />
 
       <SettingsSearch
         visible={searchOpen}

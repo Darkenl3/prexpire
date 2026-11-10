@@ -3,7 +3,34 @@ type ClaudeHost = { use: (name: 'downloads') => Promise<Downloads | null> };
 
 // Downloads text as a file. Inside a claude.ai artifact (where plain downloads are blocked)
 // the viewer's download prompt is used instead; declining it is not an error.
+// Inside the iPhone app (window.__prexpireShareFile) the app writes the file
+// and opens iPhone's share sheet: its web view can't download files, and
+// its support for sharing files from the page is unreliable.
+function shareThroughApp(fileName: string, text: string): Promise<void> | null {
+  const w = window as { __prexpireShareFile?: number; ReactNativeWebView?: { postMessage?: (d: string) => void } };
+  if (!w.__prexpireShareFile || !w.ReactNativeWebView?.postMessage) return null;
+  return new Promise((resolve, reject) => {
+    const requestId = `share-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ requestId?: string; error?: string }>).detail;
+      if (d?.requestId !== requestId) return;
+      window.removeEventListener('prexpire:share-file', on);
+      if (d.error) reject(new Error(d.error));
+      else resolve();
+    };
+    window.addEventListener('prexpire:share-file', on);
+    try {
+      w.ReactNativeWebView!.postMessage!(JSON.stringify({ type: 'share-file', requestId, name: fileName, text }));
+    } catch (err) {
+      window.removeEventListener('prexpire:share-file', on);
+      reject(err);
+    }
+  });
+}
+
 export async function saveTextFile(fileName: string, mimeType: string, text: string) {
+  const viaApp = typeof window !== 'undefined' ? shareThroughApp(fileName, text) : null;
+  if (viaApp) return viaApp;
   const host = (window as unknown as { claude?: ClaudeHost }).claude;
   const downloads = host?.use ? await host.use('downloads') : null;
   if (downloads) {

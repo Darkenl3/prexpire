@@ -66,11 +66,13 @@ export const CUSTOM_TINTS: Tint[] = [
 export const CATEGORY_ICONS = [
   // Food and drink
   'nutrition-outline',
+  'apple',
   'snow-outline',
   'pint-outline',
   'cafe-outline',
   'fast-food-outline',
   'basket-outline',
+  'jar',
   // Home and care
   'home-outline',
   'restaurant-outline',
@@ -79,7 +81,9 @@ export const CATEGORY_ICONS = [
   'leaf-outline',
   'paw-outline',
   'shirt-outline',
+  'pump',
   'eyedrop-outline',
+  'capsule',
   'medkit-outline',
   // Everything else
   'car-outline',
@@ -95,7 +99,11 @@ export const CATEGORY_ICONS = [
 
 // What each choice means, read out by screen readers in the picker.
 export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], string> = {
-  'nutrition-outline': 'Fruit and vegetables',
+  'nutrition-outline': 'Food',
+  apple: 'Fruit',
+  jar: 'Pantry',
+  pump: 'Skincare',
+  capsule: 'Medicine',
   'snow-outline': 'Frozen',
   'pint-outline': 'Drinks',
   'cafe-outline': 'Coffee and tea',
@@ -189,6 +197,14 @@ export type CategoryDef = { id: string; name: string; custom: boolean };
 const PRESET_TINT: Record<string, Tint> = { food: 'food', medicine: 'medicine', household: 'household', skincare: 'skincare', pantry: 'pantry' };
 export function presetTint(id: string): Tint | undefined {
   return PRESET_TINT[id];
+}
+
+// Each preset's own picture: an ordinary icon from CATEGORY_ICONS, so the
+// picker shows it chosen like any other (Food is the carrot, food in
+// general; the apple is free for a Fruit category).
+const PRESET_ICON: Record<string, string> = { food: 'nutrition-outline', medicine: 'capsule', household: 'home-outline', skincare: 'pump', pantry: 'jar' };
+export function presetIcon(id: string): string | undefined {
+  return PRESET_ICON[id];
 }
 
 type CategoriesContext = {
@@ -357,7 +373,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
         // can never stand in for a category of your own). An empty icon or
         // the preset's own colour means "original", and drops the entry.
         const look: PresetLook = {};
-        if (change.icon) look.icon = change.icon;
+        if (change.icon && change.icon !== PRESET_ICON[id]) look.icon = change.icon;
         if (change.tint && (CUSTOM_TINTS as string[]).includes(change.tint) && change.tint !== PRESET_TINT[id]) look.tint = change.tint;
         const next = { ...looksRef.current };
         if (look.icon || look.tint) next[id] = look;
