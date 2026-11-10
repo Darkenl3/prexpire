@@ -729,7 +729,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 4,
     minHeight: 58,
     paddingVertical: 7,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.alertBorder,
     backgroundColor: c.alertBg,
@@ -790,7 +790,7 @@ const useStyles = makeStyles((c) => ({
   row: {
     minHeight: 58,
     paddingVertical: 8,
-    borderRadius: 13,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 9,
@@ -805,7 +805,7 @@ const useStyles = makeStyles((c) => ({
   },
   rowIcon: { width: 44, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   rowCompact: { minHeight: 48, paddingVertical: 5, gap: 9 },
-  rowIconCompact: { width: 36, height: 32, borderRadius: 10 },
+  rowIconCompact: { width: 36, height: 32, borderRadius: 12 },
   rowTitle: { color: c.text, fontSize: 15.5, fontWeight: '600', lineHeight: 20 },
   rowTitleCompact: { fontSize: 14.5, lineHeight: 18 },
   rowSub: { color: c.textMuted, fontSize: 12.5, fontWeight: '400', marginTop: 1 },
@@ -843,7 +843,7 @@ const useStyles = makeStyles((c) => ({
   // The selected chip's lime pill (the reference's active-tab green, the
   // theme's own selected surface): an absolute layer behind the icon + label,
   // so it can glide between tab positions without ever touching the layout.
-  tabChipPill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 14, backgroundColor: c.selBg },
+  tabChipPill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12, backgroundColor: c.selBg },
   tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
   scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },

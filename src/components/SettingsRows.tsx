@@ -425,7 +425,7 @@ const useStyles = makeStyles((c) => ({
   rowTitle: { color: c.text, fontSize: 16.5, fontWeight: '600' },
   // Subtexts carry a breath of cyan (theme.textSub) instead of pure gray, so
   // the secondary line reads as part of the app's teal world.
-  rowDesc: { color: c.textSub, fontSize: 14, marginTop: 2, lineHeight: 19 },
+  rowDesc: { color: c.textBody, fontSize: 14, marginTop: 2, lineHeight: 19 },
   rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8 },
   chevron: { marginLeft: 2, opacity: 0.75 },
   // Gentle press feedback: a whisper of tint behind the row (the scale-down
@@ -450,7 +450,7 @@ const useStyles = makeStyles((c) => ({
   // checkmark) carry the deep selected ink.
   chipTextOn: { color: c.scanInk, fontWeight: '600' },
   chipTextDisabled: { color: c.textMuted },
-  optionList: { borderRadius: 14, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.surface, overflow: 'hidden' },
+  optionList: { borderRadius: 16, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.surface, overflow: 'hidden' },
   optionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 16, gap: 12 },
   optionText: { color: c.text, fontSize: 15.5, fontWeight: '500', flex: 1 },
   // The picker sheet: a floating card anchored to the bottom of the screen.
@@ -467,7 +467,7 @@ const useStyles = makeStyles((c) => ({
   },
   grabber: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.separator, alignSelf: 'center', marginTop: 6 },
   sheetTitle: { color: c.textMuted, fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 12 },
-  sheetOptions: { borderRadius: 14, overflow: 'hidden' },
+  sheetOptions: { borderRadius: 16, overflow: 'hidden' },
   sheetOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 54, paddingHorizontal: 16, gap: 12 },
   sheetOptionText: { color: c.text, fontSize: 16.5, fontWeight: '500', flex: 1 },
   sheetOptionTextOn: { color: c.green, fontWeight: '600' },

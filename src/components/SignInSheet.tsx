@@ -416,7 +416,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
           <Text style={[s.link, { color: c.green, fontWeight: '700' }]}>Paste code</Text>
         </PressScale>
         {errorLine}
-        {primary(purpose === 'reset' ? 'Continue' : purpose === 'signup' ? 'Confirm account' : 'Sign in', () => submitCode())}
+        {primary(purpose === 'reset' ? 'Check code' : purpose === 'signup' ? 'Confirm account' : 'Sign in', () => submitCode())}
         <View style={s.row}>
           {back(purpose === 'reset' ? 'forgot' : purpose === 'login' ? 'login' : 'start')}
           {link(wait > 0 ? `New code in ${wait}s` : 'Send a new code', resend, wait <= 0)}
@@ -572,8 +572,8 @@ export function AccountDeletedSheet() {
           <Text style={{ color: c.text, fontWeight: '700' }}>{date}</Text>.
         </Text>
         <Text style={[s.lede, { textAlign: 'center' }]}>Changed your mind? Sign in before then and choose Restore my account.</Text>
-        <PressScale onPress={dismissDeletedNotice} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Done" style={s.primary}>
-          <Text style={s.primaryText}>Done</Text>
+        <PressScale onPress={dismissDeletedNotice} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Back to Prexpire" style={s.primary}>
+          <Text style={s.primaryText}>Back to Prexpire</Text>
         </PressScale>
       </View>
     </BottomSheet>
@@ -651,7 +651,7 @@ const useStyles = makeStyles((c) => ({
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, marginTop: 2 },
   switchText: { color: c.textMuted, fontSize: 14.5 },
   boxes: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, position: 'relative' },
-  box: { flex: 1, height: 60, maxWidth: 56, borderRadius: 14, backgroundColor: c.cardAlt, borderWidth: 1.5, borderColor: c.surfaceBorder, alignItems: 'center', justifyContent: 'center' },
+  box: { flex: 1, height: 60, maxWidth: 56, borderRadius: 12, backgroundColor: c.cardAlt, borderWidth: 1.5, borderColor: c.surfaceBorder, alignItems: 'center', justifyContent: 'center' },
   boxFilled: { borderColor: c.textMuted },
   boxActive: { borderColor: c.mint, borderWidth: 2 },
   boxBad: { borderColor: c.red },
@@ -659,10 +659,10 @@ const useStyles = makeStyles((c) => ({
   // 16 pt at least: iOS zooms the page into any field with smaller text when
   // it's tapped. The field is invisible anyway; the boxes show the digits.
   hiddenInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, opacity: 0.011, color: 'transparent', fontSize: 16 },
-  lede: { color: c.textMuted, fontSize: 15, lineHeight: 21 },
+  lede: { color: c.textBody, fontSize: 15, lineHeight: 21 },
   input: {
     height: 54,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     fontSize: 17,
     color: c.text,

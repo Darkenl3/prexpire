@@ -53,7 +53,7 @@ export function TurnstileFrame({ onToken, resetKey, onError }: Props) {
   if (Platform.OS !== 'web') return null;
   const theme = c === LIGHT ? 'light' : 'dark';
   return (
-    <View style={{ height: 68, borderRadius: 12, overflow: 'hidden' }} accessibilityLabel="Security check">
+    <View style={{ height: 68, borderRadius: 16, overflow: 'hidden' }} accessibilityLabel="Security check">
       {createElement('iframe', {
         ref: frame,
         src: `${TURNSTILE_ORIGIN}/turnstile.html?theme=${theme}`,

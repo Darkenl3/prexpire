@@ -26,6 +26,9 @@ export type Palette = {
   surfaceBorder: string;
   text: string;
   textMuted: string;
+  // Paragraphs people read (intros, descriptions, empty states): brighter
+  // than captions, so running text is never faint grey.
+  textBody: string;
   // Settings subtexts and item-card meta rows: a teal-gray that sits in the
   // app's world rather than neutral slate — slightly lighter than the
   // muted secondary on dark, slightly deeper on light (contrast where the
@@ -108,6 +111,7 @@ export const DARK: Palette = {
   surfaceBorder: '#1B3032',
   text: '#F3F6F5',
   textMuted: '#91A6A8',
+  textBody: '#B9C8C9',
   textSub: '#9FB3B5',
   mint: '#A6DF6B',
   green: '#70B85B',
@@ -199,7 +203,9 @@ export const LIGHT: Palette = {
   surface: '#FFFFFF',
   surfaceBorder: '#E1EFEC',
   text: '#123B36',
-  textMuted: '#6C8989',
+  // 4.8:1 on the page (was 3.6:1, under the 4.5:1 body-text minimum).
+  textMuted: '#577676',
+  textBody: '#33504D',
   textSub: '#547373',
   mint: '#A5E86B',
   green: '#4E8F2B',
@@ -305,7 +311,11 @@ export type Tint =
 
 export type Tone = 'amber' | 'green' | 'red';
 
-export const radius = { card: 13, row: 13, alert: 14, tile: 16, pill: 999 };
+// The app's one corner scale: small 12 (icon tiles, thumbnails, small
+// controls), medium 16 (buttons, fields, rows, cards, tiles), large 20
+// (grouped cards, dialogs, menus). Circles and pills are fully round.
+export const radii = { sm: 12, md: 16, lg: 20 } as const;
+export const radius = { card: radii.md, row: radii.md, alert: radii.md, tile: radii.md, pill: 999 };
 
 // The reference's airy depth: soft, diffuse teal-gray shadows that let white
 // cards float gently above the mint-white page. Applied on the LIGHT theme

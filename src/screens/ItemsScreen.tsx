@@ -385,7 +385,7 @@ const useStyles = makeStyles((t) => ({
     gap: 6,
     height: 46,
     paddingHorizontal: 14,
-    borderRadius: 15,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: t.surfaceBorder,
     backgroundColor: t === LIGHT ? t.surface : t.cardAlt,
@@ -408,7 +408,7 @@ const useStyles = makeStyles((t) => ({
   twoUpCell: { width: 'calc(50% - 6px)' as unknown as number },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 32 },
   emptyTitle: { color: t.text, fontSize: 17, fontWeight: '600' },
-  emptyText: { color: t.textMuted, fontSize: 14, marginBottom: 6 },
+  emptyText: { color: t.textBody, fontSize: 14, marginBottom: 6 },
   // Empty-state action pairs (scan + manual entry).
   emptyButtons: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'center' },
 }));
@@ -428,7 +428,7 @@ const useSheetStyles = makeStyles((c) => ({
   grabber: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.separator, alignSelf: 'center', marginTop: 6 },
   title: { color: c.textMuted, fontSize: 15, fontWeight: '600', textAlign: 'center', paddingVertical: 12 },
   section: { color: c.textSub, fontSize: 12.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 16, marginTop: 8, marginBottom: 4 },
-  options: { borderRadius: 14, overflow: 'hidden', backgroundColor: c === LIGHT ? c.cardAlt : 'rgba(255,255,255,0.02)' },
+  options: { borderRadius: 16, overflow: 'hidden', backgroundColor: c === LIGHT ? c.cardAlt : 'rgba(255,255,255,0.02)' },
   option: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 50, paddingHorizontal: 16 },
   optionOn: { backgroundColor: c.pills.green.bg },
   optionPressed: { opacity: 0.7 },
@@ -437,6 +437,6 @@ const useSheetStyles = makeStyles((c) => ({
   optionIconBlank: { width: 17, height: 17 },
   optionText: { color: c.text, fontSize: 15.5, fontWeight: '500', flex: 1 },
   optionTextOn: { color: c.green, fontWeight: '600' },
-  cancel: { borderRadius: 14, minHeight: 52, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  cancel: { borderRadius: 16, minHeight: 52, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
   cancelText: { color: c.textMuted, fontSize: 16, fontWeight: '600' },
 }));

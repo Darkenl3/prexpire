@@ -204,7 +204,7 @@ function AlertButton({ label, icon, tone = 'neutral', onPress }: { label: string
 const useStyles = makeStyles((c) => ({
   wrap: { width: '100%', maxWidth: 440, paddingHorizontal: 16 },
   card: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.surface,
@@ -221,7 +221,7 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
   },
   title: { color: c.text, fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
-  body: { color: c.textMuted, fontSize: 13.5, lineHeight: 18.5, marginTop: 2 },
+  body: { color: c.textBody, fontSize: 13.5, lineHeight: 18.5, marginTop: 2 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 8 },
   button: {
     flexDirection: 'row',

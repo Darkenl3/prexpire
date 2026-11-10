@@ -362,7 +362,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
               />
               <View style={s.renameButtons}>
                 <SmallButton label="Cancel" onPress={() => setRenameOpen(false)} />
-                <SmallButton label="Save" icon="checkmark" tone="mint" onPress={() => void saveName()} />
+                <SmallButton label="Save name" icon="checkmark" tone="mint" onPress={() => void saveName()} />
               </View>
             </View>
           </FadeIn>
@@ -474,13 +474,13 @@ const useStyles = makeStyles((t) => ({
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: t.iconTile,
     overflow: 'hidden',
   },
-  thumbCompact: { width: 52, height: 52, borderRadius: 13 },
+  thumbCompact: { width: 52, height: 52, borderRadius: 12 },
   // The scanned product's retrieved photo fills the art tile.
   thumbImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   body: { flex: 1, minWidth: 0, gap: 4 },
@@ -523,13 +523,13 @@ const useStyles = makeStyles((t) => ({
     gap: 12,
     paddingVertical: 13,
     paddingHorizontal: 12,
-    borderRadius: 13,
+    borderRadius: 12,
     backgroundColor: t.cardAlt,
   },
   menuRowText: { fontSize: 15, fontWeight: '600' },
   menuClose: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
   // The Rename dialog's field (the shopping list's input box) and buttons.
-  nameInput: { borderWidth: 1, borderRadius: 12, fontSize: 16, paddingHorizontal: 14, minHeight: 52 },
+  nameInput: { borderWidth: 1, borderRadius: 16, fontSize: 16, paddingHorizontal: 14, minHeight: 52 },
   renameButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 6 },
   // The Change category dialog: a scrolling list of menu rows, art first.
   categoryMenu: { maxHeight: '80%' },

@@ -50,7 +50,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     height: 46,
-    borderRadius: 15,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.surface,

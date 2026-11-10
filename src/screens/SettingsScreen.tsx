@@ -1372,7 +1372,7 @@ const useStyles = makeStyles((t) => ({
   chartLabel: { color: t.textMuted, fontSize: 11.5, fontWeight: '600' },
   legend: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14 },
   legendDot: { width: 9, height: 9, borderRadius: 5 },
-  banner: { borderRadius: 14, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
+  banner: { borderRadius: 16, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: t.bg, zIndex: 10, elevation: 6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
   dialog: {

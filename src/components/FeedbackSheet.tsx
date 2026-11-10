@@ -17,10 +17,10 @@ const ENDPOINT = 'https://prexpire.com/api/feedback';
 const EMAIL_OK = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 
 type Kind = 'bug' | 'feedback' | 'idea';
-const KINDS: { id: Kind; label: string; icon: 'bug-outline' | 'chatbubble-ellipses-outline' | 'bulb-outline'; prompt: string }[] = [
-  { id: 'bug', label: 'Bug', icon: 'bug-outline', prompt: 'What happened, and what did you expect? Steps to repeat it help a lot.' },
-  { id: 'feedback', label: 'Feedback', icon: 'chatbubble-ellipses-outline', prompt: 'What works for you, and what could be better?' },
-  { id: 'idea', label: 'Idea', icon: 'bulb-outline', prompt: 'What would you like Prexpire to do?' },
+const KINDS: { id: Kind; label: string; send: string; icon: 'bug-outline' | 'chatbubble-ellipses-outline' | 'bulb-outline'; prompt: string }[] = [
+  { id: 'bug', label: 'Bug', send: 'Send report', icon: 'bug-outline', prompt: 'What happened, and what did you expect? Steps to repeat it help a lot.' },
+  { id: 'feedback', label: 'Feedback', send: 'Send feedback', icon: 'chatbubble-ellipses-outline', prompt: 'What works for you, and what could be better?' },
+  { id: 'idea', label: 'Idea', send: 'Send idea', icon: 'bulb-outline', prompt: 'What would you like Prexpire to do?' },
 ];
 
 export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boolean; onClose: () => void; appVersion: string }) {
@@ -127,8 +127,8 @@ export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boole
             accessibilityLabel="Your email, optional"
           />
           {error ? <Text style={s.error}>{error}</Text> : null}
-          <PressScale onPress={send} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Send" style={[s.primary, state === 'sending' && { opacity: 0.7 }]}>
-            {state === 'sending' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>Send</Text>}
+          <PressScale onPress={send} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={current.send} style={[s.primary, state === 'sending' && { opacity: 0.7 }]}>
+            {state === 'sending' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>{current.send}</Text>}
           </PressScale>
         </View>
       )}
@@ -140,12 +140,12 @@ const mail = (v: string) => EMAIL_OK.test(v.trim());
 
 const useStyles = makeStyles((c) => ({
   body: { gap: 12, paddingTop: 4, paddingBottom: 8 },
-  lede: { color: c.textMuted, fontSize: 15, lineHeight: 21, textAlign: 'left' },
+  lede: { color: c.textBody, fontSize: 15, lineHeight: 21, textAlign: 'left' },
   kinds: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   label: { color: c.textMuted, fontSize: 13, fontWeight: '600', marginTop: 2 },
   input: {
     minHeight: 50,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.surface,

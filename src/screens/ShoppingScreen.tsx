@@ -476,7 +476,7 @@ export function ShoppingToast({ text, onDone }: { text: string; onDone: () => vo
 }
 
 const useStyles = makeStyles((t) => ({
-  banner: { borderRadius: 14, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
+  banner: { borderRadius: 16, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   loading: { alignItems: 'center', paddingVertical: 48 },
   list: {},
   empty: {
@@ -500,7 +500,7 @@ const useStyles = makeStyles((t) => ({
     marginBottom: 4,
   },
   emptyTitle: { color: t.text, fontSize: 17.5, fontWeight: '700' },
-  emptyText: { color: t.textMuted, fontSize: 14, lineHeight: 19, textAlign: 'center', marginBottom: 8 },
+  emptyText: { color: t.textBody, fontSize: 14, lineHeight: 19, textAlign: 'center', marginBottom: 8 },
   allDone: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14 },
   allDoneText: { color: t.textMuted, fontSize: 14, fontWeight: '500' },
 
@@ -511,7 +511,7 @@ const useStyles = makeStyles((t) => ({
     minHeight: 62,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     backgroundColor: t.surface,
     // The item cards' language: a fine hairline on both themes so the white
     // rows stay visible on the near-white page, plus the soft light shadow
@@ -561,7 +561,7 @@ const useStyles = makeStyles((t) => ({
   input: {
     borderWidth: 1,
     borderColor: t.surfaceBorder,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: t === LIGHT ? '#FFFFFF' : t.cardAlt,
     color: t.text,
     fontSize: 16,

@@ -599,7 +599,7 @@ function CategoryPage({
             <View style={s.pageActions}>
               <SmallButton label="Cancel" onPress={onClose} />
               {editing ? (
-                <SmallButton label="Save" icon="checkmark-circle-outline" tone="mint" onPress={submit} />
+                <SmallButton label="Save changes" icon="checkmark-circle-outline" tone="mint" onPress={submit} />
               ) : (
                 <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
               )}
@@ -649,7 +649,7 @@ const useStyles = makeStyles((c) => ({
   rowIcon: {
     width: 38,
     height: 38,
-    borderRadius: 11,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -682,7 +682,7 @@ const useStyles = makeStyles((c) => ({
   pageTitle: { color: c.text, fontSize: 17, fontWeight: '700' },
   pageScroll: { flex: 1 },
   pageBody: { paddingHorizontal: 20, gap: 10, paddingTop: 4 },
-  pageIntro: { color: c.textMuted, fontSize: 13.5, lineHeight: 18, marginBottom: 6 },
+  pageIntro: { color: c.textBody, fontSize: 13.5, lineHeight: 18, marginBottom: 6 },
   inputLocked: { opacity: 0.6 },
   previewWrap: { alignItems: 'center', gap: 8, marginTop: 10, marginBottom: 4 },
   previewCaption: { color: c.textMuted, fontSize: 12.5, fontWeight: '600' },
@@ -690,7 +690,7 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 17,
     fontWeight: '600',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     backgroundColor: c.cardAlt,
@@ -704,7 +704,7 @@ const useStyles = makeStyles((c) => ({
   iconCell: {
     width: 52,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: c.surfaceBorder,
     alignItems: 'center',

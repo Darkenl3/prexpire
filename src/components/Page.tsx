@@ -110,5 +110,5 @@ const useStyles = makeStyles((c) => ({
   // The subtitle hugs the header (one visual group above the content), so
   // the pair reads as a single block before the gap that separates it from
   // the content below.
-  subtitle: { color: c.textMuted, fontSize: 15, marginTop: 2 },
+  subtitle: { color: c.textBody, fontSize: 15, marginTop: 2 },
 }));

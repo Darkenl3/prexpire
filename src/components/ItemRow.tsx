@@ -23,7 +23,7 @@ export function itemRowArt(item: Item, compact: boolean) {
     return (
       <Image
         source={{ uri: item.image }}
-        style={compact ? { width: 36, height: 32, borderRadius: 10 } : { width: 44, height: 42, borderRadius: 12 }}
+        style={compact ? { width: 36, height: 32, borderRadius: 12 } : { width: 44, height: 42, borderRadius: 12 }}
         resizeMode="cover"
         accessibilityLabel={`${item.name} product photo`}
         accessibilityRole="image"

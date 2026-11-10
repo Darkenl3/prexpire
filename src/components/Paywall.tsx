@@ -147,7 +147,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
   };
 
   const cta = !plan
-    ? 'Continue'
+    ? 'Choose a plan'
     : plan.trialDays > 0
       ? `Try ${plan.trialDays} days free`
       : plan.kind === 'lifetime'
@@ -202,8 +202,8 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                   <Text style={s.secondaryText}>Manage subscription</Text>
                 </PressScale>
               )}
-              <PressScale onPress={onClose} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel="Done" style={s.cta}>
-                <Text style={s.ctaText}>Done</Text>
+              <PressScale onPress={onClose} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel="Back to Prexpire" style={s.cta}>
+                <Text style={s.ctaText}>Back to Prexpire</Text>
               </PressScale>
             </>
           ) : !available ? (
@@ -452,9 +452,9 @@ const useStyles = makeStyles((c) => ({
   scroll: { paddingHorizontal: 20, paddingTop: 4 },
   column: { width: '100%', maxWidth: 480, alignSelf: 'center' },
   title: { color: c.text, fontSize: 36, lineHeight: 40, fontWeight: '800', letterSpacing: -1 },
-  lead: { color: c.textMuted, fontSize: 16, lineHeight: 23, marginTop: 10, maxWidth: 420 },
+  lead: { color: c.textBody, fontSize: 16, lineHeight: 23, marginTop: 10, maxWidth: 420 },
 
-  meter: { marginTop: 20, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder, gap: 12 },
+  meter: { marginTop: 20, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 16, backgroundColor: c.surface, borderWidth: 1, borderColor: c.surfaceBorder, gap: 12 },
   pips: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   pip: { flex: 1, height: 14, borderRadius: 4, backgroundColor: c.surfaceBorder },
   pipOn: { backgroundColor: c.mint },
@@ -464,10 +464,10 @@ const useStyles = makeStyles((c) => ({
 
   perks: { marginTop: 22 },
   perk: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
-  perkIconSmall: { width: 30, height: 30, borderRadius: 9 },
-  perkIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: c.btnMintBg, borderWidth: 1, borderColor: c.btnMintBorder, alignItems: 'center', justifyContent: 'center' },
+  perkIconSmall: { width: 30, height: 30, borderRadius: 12 },
+  perkIcon: { width: 34, height: 34, borderRadius: 12, backgroundColor: c.btnMintBg, borderWidth: 1, borderColor: c.btnMintBorder, alignItems: 'center', justifyContent: 'center' },
   perkTitle: { color: c.text, fontSize: 16, fontWeight: '700' },
-  perkText: { color: c.textMuted, fontSize: 14, lineHeight: 20, marginTop: 2 },
+  perkText: { color: c.textBody, fontSize: 14, lineHeight: 20, marginTop: 2 },
   freeLine: { color: c.textMuted, fontSize: 13.5, lineHeight: 19, marginTop: 16 },
 
   plans: { marginTop: 22, gap: 10 },
