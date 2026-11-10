@@ -1087,7 +1087,6 @@ function StatsDetail() {
   const thisMonth = byMonth(entries, now, 1)[0].tally;
   const total = tally(entries);
   const months = byMonth(entries, now, 6);
-  const peak = Math.max(1, ...months.map((m) => m.tally.used + m.tally.expired));
   const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const soon = saved.filter((i) => {
     const d = Math.round((new Date(i.expiresOn).getTime() - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
@@ -1097,43 +1096,58 @@ function StatsDetail() {
     const p = usedInTime(t);
     return p === null ? '–' : `${Math.round(p * 100)}%`;
   };
-  const stat = (label: string, value: string, color: string) => (
-    <View style={s.statBox}>
-      <Text style={[s.statValue, { color }]}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-    </View>
-  );
+  // One split bar: the used share in green, the expired share in red.
+  const split = (tl: Tally, height = 10) => {
+    const judged = tl.used + tl.expired;
+    return (
+      <View style={[s.split, { height, borderRadius: height / 2 }]}>
+        {judged > 0 && tl.used > 0 ? <View style={{ flex: tl.used, backgroundColor: c.green, borderRadius: height / 2 }} /> : null}
+        {judged > 0 && tl.expired > 0 ? <View style={{ flex: tl.expired, backgroundColor: c.red, borderRadius: height / 2 }} /> : null}
+      </View>
+    );
+  };
+  const rates = months.map((m) => usedInTime(m.tally));
+  const first = rates.find((r) => r !== null);
+  const last = rates[rates.length - 1];
+  const firstMonth = months[rates.findIndex((r) => r !== null)];
+  const trend =
+    first != null && last != null && firstMonth && firstMonth.key !== months[months.length - 1].key && Math.round(first * 100) !== Math.round(last * 100)
+      ? `${last > first ? 'Up' : 'Down'} from ${Math.round(first * 100)}% in ${MONTH[firstMonth.month]}`
+      : null;
   return (
     <>
       <SettingsSection title="This month">
-        <View style={s.statGrid}>
-          {stat('Used in time', pct(thisMonth), c.green)}
-          {stat('Used', String(thisMonth.used), c.text)}
-          {stat('Expired', String(thisMonth.expired), c.red)}
+        <View style={s.wsHero} accessible accessibilityLabel={`${pct(thisMonth)} used in time this month. ${thisMonth.used} used, ${thisMonth.expired} expired.`}>
+          <View style={s.wsHeroRow}>
+            <Text style={[s.wsHeroValue, { color: usedInTime(thisMonth) === null ? c.textMuted : c.green }]}>{pct(thisMonth)}</Text>
+            <Text style={s.wsHeroLabel}>used in time</Text>
+          </View>
+          {split(thisMonth, 12)}
+          <Text style={s.wsHeroSub}>
+            {thisMonth.used + thisMonth.expired > 0 ? `${thisMonth.used} used  ·  ${thisMonth.expired} expired` : 'Nothing used or expired yet this month.'}
+          </Text>
         </View>
       </SettingsSection>
-      <SettingsSection title="Last 6 months">
+      <SettingsSection title="Used in time, last 6 months">
         <SettingsCard>
-          <View style={s.chart} accessibilityLabel="Used and expired items per month">
-            {months.map((m) => {
-              const used = (m.tally.used / peak) * 100;
-              const expired = (m.tally.expired / peak) * 100;
+          {/* One child, so the card draws no divider inside the chart. */}
+          <View>
+          <View style={s.chart} accessibilityLabel="Share of items used in time, per month">
+            {months.map((m, i) => {
+              const r = rates[i];
+              const current = i === months.length - 1;
               return (
                 <View key={m.key} style={s.chartCol}>
-                  <View style={s.chartBarArea}>
-                    <View style={[s.chartBar, { height: `${expired}%`, backgroundColor: c.red, borderTopLeftRadius: 6, borderTopRightRadius: 6 }]} />
-                    <View style={[s.chartBar, { height: `${used}%`, backgroundColor: c.green, ...(expired ? null : { borderTopLeftRadius: 6, borderTopRightRadius: 6 }) }]} />
+                  <Text style={[s.chartValue, current && { color: c.text }]}>{r === null ? '–' : `${Math.round(r * 100)}%`}</Text>
+                  <View style={s.chartTrack}>
+                    {r !== null ? <View style={[s.chartFill, { height: `${Math.max(4, r * 100)}%`, backgroundColor: current ? c.mint : c.green, opacity: current ? 1 : 0.55 }]} /> : null}
                   </View>
-                  <Text style={s.chartLabel}>{MONTH[m.month]}</Text>
+                  <Text style={[s.chartLabel, current && { color: c.text }]}>{MONTH[m.month]}</Text>
                 </View>
               );
             })}
           </View>
-          <View style={s.legend}>
-            <View style={[s.legendDot, { backgroundColor: c.green }]} />
-            <Text style={s.statLabel}>Used</Text>
-            <View style={[s.legendDot, { backgroundColor: c.red, marginLeft: 12 }]} />
-            <Text style={s.statLabel}>Expired</Text>
+          {trend ? <Text style={s.trend}>{trend}</Text> : <View style={{ height: 14 }} />}
           </View>
         </SettingsCard>
       </SettingsSection>
@@ -1148,15 +1162,15 @@ function StatsDetail() {
       {entries.length > 0 && (
         <SettingsSection title="By category">
           <SettingsCard>
-            {byCategory(entries).map((row) => (
-              <SettingRow
-                key={row.category}
-                icon="folder-open-outline"
-                accent="blue"
-                title={nameOf(row.category)}
-                description={`${row.tally.used} used · ${row.tally.expired} expired`}
-                value={pct(row.tally)}
-              />
+            {byCategory(entries).map((row, i) => (
+              <View key={row.category} style={[s.catRow, i > 0 && s.catRowLine]}>
+                <View style={s.catHead}>
+                  <Text style={s.catName} numberOfLines={1}>{nameOf(row.category)}</Text>
+                  <Text style={s.catPct}>{pct(row.tally)}</Text>
+                </View>
+                {split(row.tally, 6)}
+                <Text style={s.catSub}>{`${row.tally.used} used  ·  ${row.tally.expired} expired`}</Text>
+              </View>
             ))}
           </SettingsCard>
         </SettingsSection>
@@ -1384,17 +1398,27 @@ const useStyles = makeStyles((t) => ({
   aboutVersion: { color: t.textMuted, fontSize: 13 },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   // Waste stats.
-  statGrid: { flexDirection: 'row', gap: 10 },
-  statBox: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, paddingVertical: 14, paddingHorizontal: 10, alignItems: 'center', gap: 2 },
-  statValue: { fontSize: 24, fontWeight: '800' },
+  // Waste stats: one headline number, one split bar, one chart series.
+  wsHero: { borderRadius: 20, borderWidth: 1, borderColor: t.surfaceBorder, backgroundColor: t.surface, padding: 18, gap: 12 },
+  wsHeroRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+  wsHeroValue: { fontSize: 52, lineHeight: 56, fontWeight: '800', letterSpacing: -1.5 },
+  wsHeroLabel: { color: t.textBody, fontSize: 16, fontWeight: '600' },
+  wsHeroSub: { color: t.textMuted, fontSize: 14, fontWeight: '600' },
+  split: { flexDirection: 'row', gap: 3, backgroundColor: t.surfaceBorder, overflow: 'hidden' },
   statLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600' },
-  chart: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 150, paddingHorizontal: 14, paddingTop: 14 },
-  chartCol: { flex: 1, alignItems: 'center', gap: 6, height: '100%' },
-  chartBarArea: { flex: 1, width: '70%', justifyContent: 'flex-end' },
-  chartBar: { width: '100%' },
-  chartLabel: { color: t.textMuted, fontSize: 11.5, fontWeight: '600' },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 14 },
-  legendDot: { width: 9, height: 9, borderRadius: 5 },
+  chart: { flexDirection: 'row', alignItems: 'stretch', gap: 10, height: 190, paddingHorizontal: 16, paddingTop: 16 },
+  chartCol: { flex: 1, alignItems: 'center', gap: 7 },
+  chartValue: { color: t.textMuted, fontSize: 12, fontWeight: '700' },
+  chartTrack: { flex: 1, alignSelf: 'stretch', borderRadius: 8, backgroundColor: t.cardAlt, justifyContent: 'flex-end', overflow: 'hidden' },
+  chartFill: { width: '100%', borderRadius: 8 },
+  chartLabel: { color: t.textMuted, fontSize: 12, fontWeight: '600' },
+  trend: { color: t.textMuted, fontSize: 13.5, fontWeight: '600', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14 },
+  catRow: { paddingHorizontal: 16, paddingVertical: 14, gap: 8 },
+  catRowLine: { borderTopWidth: 1, borderTopColor: t.separator },
+  catHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  catName: { color: t.text, fontSize: 16, fontWeight: '700', flexShrink: 1 },
+  catPct: { color: t.text, fontSize: 16, fontWeight: '800' },
+  catSub: { color: t.textMuted, fontSize: 13, fontWeight: '600' },
   banner: { borderRadius: 16, borderWidth: 1, borderColor: t.dangerBorder, backgroundColor: t.dangerBg, padding: 12, marginBottom: 16 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: t.bg, zIndex: 10, elevation: 6 },
   backdrop: { flex: 1, backgroundColor: 'rgba(3,7,9,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
