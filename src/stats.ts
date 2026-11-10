@@ -1,5 +1,6 @@
 // Waste stats: what happened to the items that left the list (used up, thrown
-// away expired, or removed), from the history kept by src/items.tsx. Pure
+// away expired, or removed), from the history kept by src/items.tsx, plus the
+// items that have expired but are still in the list (withExpiredInList). Pure
 // logic, no React Native imports, so it is tested with Node on its own.
 
 import type { HistoryEntry } from './items';
@@ -38,4 +39,19 @@ export function byCategory(entries: readonly HistoryEntry[]): { category: string
   return [...map.entries()]
     .map(([category, list]) => ({ category, tally: tally(list) }))
     .sort((a, b) => b.tally.expired - a.tally.expired || b.tally.used - a.tally.used);
+}
+
+// The history plus every item that has expired but is still in the list,
+// counted as expired on its expiry day. Removing such an item later records
+// it in the history (as expired) and it leaves the list, so it is never
+// counted twice. todayIso is the local date, YYYY-MM-DD.
+export function withExpiredInList(
+  history: readonly HistoryEntry[],
+  items: readonly { expiresOn: string; category: string; name: string }[],
+  todayIso: string,
+): HistoryEntry[] {
+  const lapsed = items
+    .filter((i) => /^\d{4}-\d{2}-\d{2}$/.test(i.expiresOn) && i.expiresOn < todayIso)
+    .map((i): HistoryEntry => ({ at: new Date(`${i.expiresOn}T12:00:00`).toISOString(), kind: 'expired', category: i.category as HistoryEntry['category'], name: i.name }));
+  return lapsed.length ? [...history, ...lapsed] : [...history];
 }

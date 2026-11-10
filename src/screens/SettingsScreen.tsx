@@ -34,7 +34,7 @@ import { nativeReminders, notificationStatus, openNotificationSettings, requestN
 import { saveTextFile } from '../platform/saveFile';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BACKUP_PREFIX, backupFileName, buildBackup, parseBackup } from '../backup';
-import { byCategory, byMonth, tally, usedInTime, type Tally } from '../stats';
+import { byCategory, byMonth, tally, usedInTime, withExpiredInList, type Tally } from '../stats';
 import appConfig from '../../app.json';
 import { useAuth } from '../auth';
 import { ChangePasswordSheet, DeleteAccountSheet, SignInSheet } from '../components/SignInSheet';
@@ -1051,9 +1051,9 @@ function BackupDetail() {
   );
 }
 
-// Waste stats: from the history of items that left the list (Mark as
-// consumed counts as used; removing an item after its date counts as thrown
-// away). History starts when this version is installed.
+// Waste stats: the history of items that left the list (Mark as consumed
+// counts as used; removing an item after its date counts as expired) plus the
+// items that have expired but are still in the list.
 function StatsDetail() {
   const c = useTheme();
   const s = useStyles();
@@ -1061,9 +1061,11 @@ function StatsDetail() {
   const { nameOf } = useCategories();
   const { warning } = useSettings();
   const now = new Date();
-  const thisMonth = byMonth(history, now, 1)[0].tally;
-  const total = tally(history);
-  const months = byMonth(history, now, 6);
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const entries = withExpiredInList(history, saved, todayIso);
+  const thisMonth = byMonth(entries, now, 1)[0].tally;
+  const total = tally(entries);
+  const months = byMonth(entries, now, 6);
   const peak = Math.max(1, ...months.map((m) => m.tally.used + m.tally.expired));
   const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const soon = saved.filter((i) => {
@@ -1118,14 +1120,14 @@ function StatsDetail() {
         <SettingsCard>
           <SettingRow icon="checkmark-done" accent="mint" title="Used in time" value={pct(total)} />
           <SettingRow icon="restaurant-outline" accent="teal" title="Items used" value={String(total.used)} />
-          <SettingRow icon="trash-outline" accent="red" title="Thrown away expired" value={String(total.expired)} />
+          <SettingRow icon="trash-outline" accent="red" title="Expired before use" value={String(total.expired)} />
           <SettingRow icon="time-outline" accent="amber" title="Expiring soon now" value={String(soon)} />
         </SettingsCard>
       </SettingsSection>
-      {history.length > 0 && (
+      {entries.length > 0 && (
         <SettingsSection title="By category">
           <SettingsCard>
-            {byCategory(history).map((row) => (
+            {byCategory(entries).map((row) => (
               <SettingRow
                 key={row.category}
                 icon="folder-open-outline"
@@ -1139,9 +1141,9 @@ function StatsDetail() {
         </SettingsSection>
       )}
       <Note>
-        {history.length
-          ? 'Use "Mark as consumed" when you finish something: it counts as used. Removing an item after its date counts as thrown away.'
-          : 'Nothing yet. Use "Mark as consumed" in an item\'s menu when you finish it; removing an item after its date counts as thrown away.'}
+        {entries.length
+          ? 'Use "Mark as consumed" when you finish something: it counts as used. Anything past its date counts as expired, whether it\'s still in your list or removed.'
+          : 'Nothing yet. Use "Mark as consumed" in an item\'s menu when you finish it; anything past its date counts as expired.'}
       </Note>
     </>
   );
