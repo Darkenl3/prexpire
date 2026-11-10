@@ -13,6 +13,7 @@ import { categoryArt } from './ResultSheet';
 import { FadeIn, PressScale } from './Press';
 import { SmallButton } from './SettingsRows';
 import { useWebKeyboardInset } from './WebKeyboardInset';
+import { maybeAskForRating } from '../appStore';
 
 // The redesigned item card for the Lists tab (the reference's compact card): a
 // rounded pale-green art square carrying the category's art on the left, the
@@ -63,7 +64,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const s = useStyles();
   const { settings, formatDate, warning, openDays } = useSettings();
   const { nameOf, custom, all } = useCategories();
-  const { removeItem, setItemCategory, renameItem, openItem, unopenItem } = useItems();
+  const { removeItem, setItemCategory, renameItem, openItem, unopenItem, items: allItems, history } = useItems();
   const { addManual } = useShopping();
   const [menuOpen, setMenuOpen] = useState(false);
   // Removing asks twice, exactly like the app's other destructive actions
@@ -113,6 +114,8 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     setConsumeOpen(false);
     Haptics.selectionAsync().catch(() => {});
     await removeItem(item.id, 'consumed');
+    // Used in time: a good moment for Apple's rating prompt (when earned).
+    maybeAskForRating(allItems.length + history.length);
     if (!restock) {
       onToast(`${item.name} marked as consumed`);
       return;

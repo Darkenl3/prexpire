@@ -22,6 +22,7 @@ import { nativeReminders, notificationStatus, requestNotificationPermission, sch
 import { SyncProvider } from './src/sync';
 import { ProProvider, takeWelcomeOffer, useMonthlyAdds, usePro, useProLimits } from './src/pro';
 import { Paywall } from './src/components/Paywall';
+import { UpdateNotice, checkForUpdate, maybeAskForRating, noteAppUsed } from './src/appStore';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
 import { remindersDue, dayOrderForFormat } from './src/preferences';
@@ -99,7 +100,13 @@ function useFocusStyles() {
 function Shell() {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
-  const { items, ready: itemsReady, defaultCategory, addItem } = useItems();
+  const { items, ready: itemsReady, defaultCategory, addItem, history } = useItems();
+  // The App Store: remember the days the app is used (for a well-timed rating
+  // request) and check for a newer version once a day.
+  useEffect(() => {
+    noteAppUsed();
+    checkForUpdate();
+  }, []);
   const { settings, formatDate } = useSettings();
   // The get-started screen: 'show' on a fresh install, 'done' once answered,
   // 'unknown' for the moment it takes to read storage. Anyone who already has
@@ -265,6 +272,7 @@ function Shell() {
   // route the app's own save flow shows, so a bridge save feels identical.
   const savedFromShell = useCallback(
     (item: Item) => {
+      maybeAskForRating(items.length + 1 + history.length);
       setNativeScan(null);
       setTimeout(
         () => {
@@ -275,7 +283,7 @@ function Shell() {
         650,
       );
     },
-    [formatDate],
+    [formatDate, items.length, history.length],
   );
   // Completed save request ids, kept across listener re-subscriptions so a
   // re-delivered event can never save twice.
@@ -424,12 +432,13 @@ function Shell() {
   }, [lastTab]);
   const onSaved = useCallback(
     (item: Item) => {
+      maybeAskForRating(items.length + 1 + history.length);
       setNativeScan(null);
       setNotice(`${item.name} added · expires ${formatDate(item.expiresOn, item.datePrecision)}`);
       setRoute({ tab: 'home' });
       setLastTab('home');
     },
-    [formatDate],
+    [formatDate, items.length, history.length],
   );
   const clearNotice = useCallback(() => setNotice(null), []);
 
@@ -600,6 +609,7 @@ function ThemedApp() {
       {/* Signed in to an account scheduled for deletion: restore it or leave. */}
       <DeletionPendingSheet />
       <AccountDeletedSheet />
+      <UpdateNotice />
       <Paywall />
     </View>
   );

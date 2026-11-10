@@ -45,6 +45,7 @@ import { useSync } from '../sync';
 import legal from '../legal.json';
 import { FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro } from '../pro';
 import { FeedbackSheet } from '../components/FeedbackSheet';
+import { openStore, useStoreUpdate } from '../appStore';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
@@ -193,6 +194,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
       </PressScale>
 
+      <UpdateRow />
       <ProRow />
 
       <SettingsSection title="General">
@@ -526,6 +528,19 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
     default:
       return null;
   }
+}
+
+// A newer Prexpire is on the App Store: one tap opens its page to update.
+function UpdateRow() {
+  const update = useStoreUpdate();
+  if (!update) return null;
+  return (
+    <SettingsSection title="Update">
+      <SettingsCard>
+        <SettingRow icon="arrow-up-circle-outline" accent="mint" title="Update available" description={`Prexpire ${update.version} is on the App Store`} value="Update" onPress={() => openStore(update.url)} />
+      </SettingsCard>
+    </SettingsSection>
+  );
 }
 
 // Prexpire Pro: the free plan's count, or Pro's status. Shown once the
