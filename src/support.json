@@ -1,0 +1,97 @@
+{
+  "updated": "2026-11-11",
+  "email": "support@prexpire.com",
+  "topics": [
+    {
+      "id": "scanning",
+      "title": "Scanning",
+      "icon": "scan-outline",
+      "questions": [
+        {
+          "q": "The scanner can't read my date",
+          "a": "Fill the frame with just the date line and hold still for a second. In dim light, turn on the flashlight. Dates printed in dots, or on curved and shiny packs, are the hardest to read. If it still won't read, tap Enter date and set it with the wheels."
+        },
+        {
+          "q": "Can I scan the barcode and the date?",
+          "a": "Yes, in either order. Point at the barcode and the name fills in, then point at the date. If the date was found first, tap Scan barcode on the Add product screen. Your date is kept."
+        },
+        {
+          "q": "Why is the product name empty?",
+          "a": "Names come from public product databases, looked up by barcode. Some products aren't listed, and without internet the lookup can't run. Type the name once: the next time you scan that barcode, Prexpire remembers it."
+        }
+      ]
+    },
+    {
+      "id": "reminders",
+      "title": "Reminders",
+      "icon": "notifications-outline",
+      "questions": [
+        {
+          "q": "I'm not getting reminders",
+          "a": "Check that notifications are on in iPhone Settings, Prexpire, Notifications. Reminders arrive at 9:00 when an item enters its warning period, with a catch-up at 13:00 and 18:00 if you add it later in the day. To check they work, use Send a test notification in Settings, Notifications."
+        },
+        {
+          "q": "Can some things warn me earlier?",
+          "a": "Yes. Every category has its own warning period. Change it in Settings, Categories: open a category and pick how early its items should warn you."
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "title": "Account and backup",
+      "icon": "person-circle-outline",
+      "questions": [
+        {
+          "q": "Do I need an account?",
+          "a": "No. Everything works on your phone without one. An account backs up your items and keeps them the same on all your devices."
+        },
+        {
+          "q": "How do I move to a new phone?",
+          "a": "Sign in with the same account on the new phone and your items come back. Without an account, save a backup in Settings, Data & Storage, and open it on the new phone."
+        },
+        {
+          "q": "How do I delete my account?",
+          "a": "In Settings, Account, Delete account, or at app.prexpire.com/delete-account. You have 30 days to change your mind: sign in again in that time and it's restored. After that, the account and its backup are deleted for good. Items on your phone stay."
+        }
+      ]
+    },
+    {
+      "id": "pro",
+      "title": "Prexpire Pro",
+      "icon": "sparkles-outline",
+      "questions": [
+        {
+          "q": "What's free, and what does Pro add?",
+          "a": "Free includes 20 new items a month and one category of your own. Pro removes both limits. It's monthly, yearly with a one-week free trial, or a one-time lifetime purchase."
+        },
+        {
+          "q": "I bought Pro but it isn't showing",
+          "a": "Open Settings, Prexpire Pro, and tap Restore purchases. Use the same Apple ID you bought it with."
+        },
+        {
+          "q": "How do I cancel or get a refund?",
+          "a": "Apple handles payments. Cancel in iPhone Settings, your name, Subscriptions. For a refund, ask Apple at reportaproblem.apple.com."
+        },
+        {
+          "q": "Does Family Sharing work?",
+          "a": "Yes, for the lifetime purchase. Monthly and yearly plans are for one Apple ID."
+        }
+      ]
+    },
+    {
+      "id": "privacy",
+      "title": "Privacy and offline use",
+      "icon": "shield-checkmark-outline",
+      "questions": [
+        {
+          "q": "Are my photos uploaded?",
+          "a": "No. Labels are read on your phone, and camera images are never uploaded or kept. When you scan a barcode, only its number is sent, to look up the product's name."
+        },
+        {
+          "q": "Does Prexpire work offline?",
+          "a": "Yes. Scanning dates, your items, lists and reminders all work offline. Only name lookups and account sync need internet."
+        }
+      ]
+    }
+  ]
+}

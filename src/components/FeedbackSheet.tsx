@@ -16,14 +16,16 @@ import { tap } from '../platform/haptics';
 const ENDPOINT = 'https://prexpire.com/api/feedback';
 const EMAIL_OK = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 
-type Kind = 'bug' | 'feedback' | 'idea';
-const KINDS: { id: Kind; label: string; send: string; icon: 'bug-outline' | 'chatbubble-ellipses-outline' | 'bulb-outline'; prompt: string }[] = [
+export type FeedbackKind = 'question' | 'bug' | 'feedback' | 'idea';
+type Kind = FeedbackKind;
+const KINDS: { id: Kind; label: string; send: string; icon: 'help-circle-outline' | 'bug-outline' | 'chatbubble-ellipses-outline' | 'bulb-outline'; prompt: string }[] = [
+  { id: 'question', label: 'Question', send: 'Send question', icon: 'help-circle-outline', prompt: 'What do you need help with? Add your email below so we can answer.' },
   { id: 'bug', label: 'Bug', send: 'Send report', icon: 'bug-outline', prompt: 'What happened, and what did you expect? Steps to repeat it help a lot.' },
   { id: 'feedback', label: 'Feedback', send: 'Send feedback', icon: 'chatbubble-ellipses-outline', prompt: 'What works for you, and what could be better?' },
   { id: 'idea', label: 'Idea', send: 'Send idea', icon: 'bulb-outline', prompt: 'What would you like Prexpire to do?' },
 ];
 
-export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boolean; onClose: () => void; appVersion: string }) {
+export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug', title = 'Send feedback' }: { visible: boolean; onClose: () => void; appVersion: string; initialKind?: Kind; title?: string }) {
   const c = useTheme();
   const s = useStyles();
   const { email: accountEmail } = useAuth();
@@ -36,7 +38,7 @@ export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boole
 
   useEffect(() => {
     if (!visible) return;
-    setKind('bug');
+    setKind(initialKind);
     setMessage('');
     setEmail(accountEmail ?? '');
     setState('idle');
@@ -81,7 +83,7 @@ export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boole
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Send feedback" maxWidth={520}>
+    <BottomSheet visible={visible} onClose={onClose} title={title} maxWidth={520}>
       {state === 'sent' ? (
         <View style={s.done}>
           <Ionicons name="checkmark-circle" size={46} color={c.green} />
@@ -90,7 +92,7 @@ export function FeedbackSheet({ visible, onClose, appVersion }: { visible: boole
         </View>
       ) : (
         <View style={s.body}>
-          <Text style={s.lede}>Found a bug, or have feedback or an idea? It goes straight to the developer.</Text>
+          <Text style={s.lede}>A question, a bug, feedback or an idea: it comes straight to us at support@prexpire.com.</Text>
           <View style={s.kinds} accessibilityRole={'radiogroup' as never}>
             {KINDS.map((k) => (
               <ChoicePill key={k.id} label={k.label} icon={k.icon} selected={kind === k.id} onPress={() => setKind(k.id)} colors={pills} size="small" />

@@ -45,6 +45,7 @@ import { useSync } from '../sync';
 import legal from '../legal.json';
 import { FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro } from '../pro';
 import { FeedbackSheet } from '../components/FeedbackSheet';
+import { SupportPage } from '../components/SupportPage';
 import { openStore, useStoreUpdate } from '../appStore';
 
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
@@ -285,7 +286,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <SettingsSection title="About">
         <SettingsCard>
           <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION_SHOWN} />
-          <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" onPress={() => open('help')} />
+          <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" description="Answers, and how to reach us" onPress={() => open('help')} />
           <SettingRow icon="chatbubble-ellipses-outline" accent="mint" title="Send feedback" description="Report a bug, or share feedback or an idea" onPress={() => setFeedbackOpen(true)} />
           <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
         </SettingsCard>
@@ -425,7 +426,7 @@ function searchIndex(): SearchEntry[] {
     { key: 'backup', title: 'Backup & Restore', description: 'Save everything to a file, or restore one', icon: 'cloud-upload-outline', accent: 'mint', page: 'backup' },
     { key: 'stats', title: 'Waste stats', description: 'What you used in time and what expired', icon: 'leaf-outline', accent: 'mint', page: 'stats' },
     { key: 'export', title: 'Export data', description: 'Download your items as JSON or CSV', icon: 'download-outline', accent: 'teal', page: 'backup' },
-    { key: 'help', title: 'Help & Support', description: 'How PREXPIRE works', icon: 'help-circle-outline', accent: 'teal', page: 'help' },
+    { key: 'help', title: 'Help & Support', description: 'Answers, and how to reach us', icon: 'help-circle-outline', accent: 'teal', page: 'help' },
     { key: 'terms', title: 'Terms & Privacy', description: 'Your data, camera and exports', icon: 'document-text-outline', accent: 'purple', page: 'terms' },
     { key: 'clear-data', title: 'Clear all data', description: 'Delete everything stored here', icon: 'trash-outline', accent: 'red', page: null },
   ];
@@ -521,7 +522,7 @@ function renderDetail(page: PageId, onNavigate: (route: string) => void, closePa
     case 'stats':
       return <StatsDetail />;
     case 'help':
-      return <HelpDetail />;
+      return <SupportPage appVersion={APP_VERSION} />;
     case 'terms':
       return <TermsDetail openPage={openPage} />;
     case 'privacyPolicy':
@@ -1184,44 +1185,6 @@ function StatsDetail() {
   );
 }
 
-function HelpDetail() {
-  return (
-    <SettingsSection title="How PREXPIRE works">
-      <SettingsCard>
-        <SettingRow
-          icon="scan-outline"
-          accent="teal"
-          title="Scan a label"
-          description="Open the scanner from the middle button in the bottom bar and point at a date. The frame is read on your device; nothing is ever uploaded"
-        />
-        <SettingRow
-          icon="cube-outline"
-          accent="mint"
-          title="Track items"
-          description="A scan becomes an item with its category, expiry date and a reminder. Home shows what needs attention first"
-        />
-        <SettingRow
-          icon="folder-open-outline"
-          accent="blue"
-          title="Organise"
-          description="Add your own category folders in Settings → Categories. Their tiles appear on Home, in lists and in the scanner"
-        />
-        <SettingRow
-          icon="notifications-outline"
-          accent="amber"
-          title="Reminders"
-          description="The Reminders tab lists what's due soon, and the bell shows how many items need attention"
-        />
-        <SettingRow
-          icon="download-outline"
-          accent="purple"
-          title="Keep a copy"
-          description="Export your items as JSON or CSV from Settings → Data & Storage"
-        />
-      </SettingsCard>
-    </SettingsSection>
-  );
-}
 
 function TermsDetail({ openPage }: { openPage: (p: PageId) => void }) {
   const s = useStyles();
