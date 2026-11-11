@@ -23,7 +23,7 @@
         "body": [
           "Everything you add to Prexpire is stored on your phone: products, expiry dates, categories, your shopping list, waste stats and settings. The app works fully offline and doesn't need an account.",
           "The camera is used only while you scan. The images are read on the phone (with Apple's on-device text recognition and an on-device reader) to find barcodes and dates. They are not uploaded, saved or shared.",
-          "Reminders are worked out and scheduled on your phone, including the earlier reminders for categories you often throw away, which use your waste stats on the phone. Home Screen widgets read a copy of your upcoming items from a folder shared between the app and its widgets, which also stays on your phone.",
+          "Reminders are worked out and scheduled on your phone, including the earlier reminders for categories you often throw away, which use your waste stats on the phone.",
           "Backups you export from Settings are files you save where you choose. We don't receive them."
         ]
       },
@@ -175,7 +175,7 @@
       {
         "title": "What Prexpire is",
         "body": [
-          "Prexpire lets you record products and their expiry dates, sorts them by what expires first, reminds you with notifications on your iPhone, shows what's next on Home Screen widgets, and keeps a shopping list. You can add products by scanning or by hand. An optional account backs up your data and keeps it the same across your phones."
+          "Prexpire lets you record products and their expiry dates, sorts them by what expires first, reminds you with notifications on your iPhone, and keeps a shopping list. You can add products by scanning or by hand. An optional account backs up your data and keeps it the same across your phones."
         ]
       },
       {
