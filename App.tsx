@@ -13,7 +13,7 @@ import { AccountDeletedSheet, DeletionPendingSheet, SignInSheet } from './src/co
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BottomNav, type TabId } from './src/components/HomeComponents';
 import { ExpiryAlertLayer } from './src/components/ExpiryAlert';
-import { CategoriesProvider, readCustomCategories, useCategories } from './src/categories';
+import { CategoriesProvider, presetIcon, readCustomCategories, useCategories } from './src/categories';
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
 import { AuthProvider, useAuth } from './src/auth';
@@ -25,7 +25,8 @@ import { Paywall } from './src/components/Paywall';
 import { UpdateNotice, checkForUpdate, maybeAskForRating, noteAppUsed } from './src/appStore';
 import { ShoppingProvider } from './src/shopping';
 import { LIGHT, ThemeProvider, useTheme } from './src/theme';
-import { remindersDue, dayOrderForFormat } from './src/preferences';
+import { remindersDue, dayOrderForFormat, warningFor } from './src/preferences';
+import { buildWidgetReport } from './src/widgetReport';
 import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
@@ -229,6 +230,30 @@ function Shell() {
       // The shell went away; the next change reports again.
     }
   }, [inShell, shellCategories]);
+
+  // The iPhone home-screen widgets: the shell gets the raw facts whenever
+  // items, history or categories change (src/widgetReport.ts).
+  useEffect(() => {
+    if (!inShell || !itemsReady || typeof window === 'undefined') return;
+    const w = window as { __prexpireWidgets?: number; ReactNativeWebView?: { postMessage?: (data: string) => void } };
+    if (!w.__prexpireWidgets || !w.ReactNativeWebView?.postMessage) return;
+    const t = setTimeout(() => {
+      const iconById = new Map(customCategories.map((c) => [c.id, c.icon] as const));
+      const report = buildWidgetReport(
+        items,
+        history,
+        (category) => warningFor(settings, category),
+        (category) => iconById.get(category) ?? lookOf(category).icon ?? presetIcon(category) ?? 'folder-outline',
+        new Date(),
+      );
+      try {
+        w.ReactNativeWebView?.postMessage?.(JSON.stringify({ type: 'widgets', report }));
+      } catch {
+        // The shell went away; the next change reports again.
+      }
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [inShell, itemsReady, items, history, settings, customCategories, lookOf]);
 
   // The Date format setting, reported so the shell's scanner reads ambiguous
   // numeric dates (03/04/2026) in the order the user chose — and its result
