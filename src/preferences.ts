@@ -5,6 +5,7 @@ import type { DayOrder } from './scanner/dateParser';
 import type { CategoryId, Item } from './items';
 
 export type ReminderLead = 0 | 1 | 3 | 7;
+export type ReminderHour = 7 | 8 | 9 | 10 | 12 | 17 | 19 | 21;
 export type WarningDays = 3 | 7 | 14 | 30;
 export type DateFormat = 'DMY' | 'MDY' | 'YMD';
 export type SortOrder = 'expiry' | 'added' | 'name';
@@ -17,7 +18,13 @@ export type Settings = {
   // in the background).
   reminders: boolean;
   reminderLead: ReminderLead;
+  // The hour reminders arrive (local time); the daily summary comes half an
+  // hour before it.
+  reminderHour: ReminderHour;
   dailySummary: boolean;
+  // An extra, earlier heads-up for categories you often throw away (from the
+  // waste stats: see wasteRisk in reminderPlan.ts).
+  wasteAware: boolean;
   // Appearance
   theme: ThemeMode;
   compact: boolean;
@@ -45,6 +52,10 @@ export type Settings = {
 };
 
 export const REMINDER_LEADS: ReminderLead[] = [0, 1, 3, 7];
+export const REMINDER_HOURS: ReminderHour[] = [7, 8, 9, 10, 12, 17, 19, 21];
+export function reminderHourLabel(hour: number) {
+  return new Date(2026, 0, 1, hour, 0).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
 export const WARNING_DAYS: WarningDays[] = [3, 7, 14, 30];
 // "Use within" choices after opening, in days.
 export const OPEN_DAY_CHOICES = [1, 2, 3, 5, 7, 14, 30, 60, 90];
@@ -87,7 +98,9 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
   return {
     reminders: true,
     reminderLead: 1,
+    reminderHour: 9,
     dailySummary: false,
+    wasteAware: true,
     theme: 'dark',
     compact: false,
     animations: true,
@@ -112,7 +125,9 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
   return {
     reminders: bool('reminders'),
     reminderLead: oneOf('reminderLead', REMINDER_LEADS),
+    reminderHour: oneOf('reminderHour', REMINDER_HOURS),
     dailySummary: bool('dailySummary'),
+    wasteAware: bool('wasteAware'),
     theme: oneOf('theme', THEME_MODES),
     compact: bool('compact'),
     animations: bool('animations'),

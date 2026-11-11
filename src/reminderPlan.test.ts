@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planReminders } from './reminderPlan.ts';
+import { planReminders, wasteRisk } from './reminderPlan.ts';
 
 const base = { reminders: true, reminderLead: 1 as const, dailySummary: false, warningDays: 3 as const, categoryWarning: {} };
 const now = new Date(2026, 10, 6, 10, 0); // 6 Nov 2026, 10:00
@@ -63,4 +63,43 @@ test('a category with its own warning period gets an early heads-up too', () => 
     ['2 items expire tomorrow', 12, 19],
     ['2 items expire today', 12, 20],
   ]);
+});
+
+test('reminder time: reminders at the chosen hour, catch-ups 4 and 9 hours later', () => {
+  const plan = planReminders([item('a', 'Milk', '2026-11-10')], { ...base, reminderHour: 19 }, now);
+  assert.deepEqual(plan.map((r) => new Date(r.at).getHours()), [19, 19]);
+  // At 7:00 and it's already 10:00: the catch-up is 11:00 (7 + 4).
+  const early = planReminders([item('a', 'Milk', '2026-11-06')], { ...base, reminderHour: 7 }, now);
+  assert.deepEqual(early.map((r) => new Date(r.at).getHours()), [11]);
+  // The daily summary comes half an hour before.
+  const summary = planReminders([item('a', 'Milk', '2026-11-08')], { ...base, reminderHour: 19, dailySummary: true }, now).find((r) => r.id.startsWith('s-'))!;
+  assert.deepEqual([new Date(summary.at).getHours(), new Date(summary.at).getMinutes()], [18, 30]);
+});
+
+test('waste-aware: a category often thrown away gets an earlier heads-up that says why', () => {
+  const at = (d: number) => new Date(2026, 9, d).toISOString();
+  const history = [
+    { at: at(1), kind: 'expired' as const, category: 'dairy', name: 'Yogurt' },
+    { at: at(5), kind: 'expired' as const, category: 'dairy', name: 'Milk' },
+    { at: at(9), kind: 'used' as const, category: 'dairy', name: 'Cheese' },
+    { at: at(9), kind: 'used' as const, category: 'food', name: 'Bread' },
+    { at: at(10), kind: 'used' as const, category: 'food', name: 'Rice' },
+    { at: at(11), kind: 'expired' as const, category: 'food', name: 'Soup' },
+  ];
+  const risk = wasteRisk(history, [], (id) => (id === 'dairy' ? 'Dairy' : 'Food'), now);
+  assert.deepEqual(Object.keys(risk), ['dairy']);
+  assert.equal(Math.round(risk.dairy.share * 100), 67);
+  const plan = planReminders([item('a', 'Milk', '2026-11-12', 'dairy'), item('b', 'Bread', '2026-11-12')], base, now, risk);
+  const early = plan.filter((r) => r.id.startsWith('w-'));
+  assert.equal(early.length, 1);
+  assert.equal(early[0].id, 'w-2026-11-09-3');
+  assert.equal(early[0].title, 'Milk expires in 3 days');
+  assert.match(early[0].body, /67% of your Dairy/);
+  // Turned off: no extra reminder.
+  assert.equal(planReminders([item('a', 'Milk', '2026-11-12', 'dairy')], { ...base, wasteAware: false }, now, risk).filter((r) => r.id.startsWith('w-')).length, 0);
+});
+
+test('waste-aware: fewer than 3 finished is not a pattern', () => {
+  const history = [{ at: new Date(2026, 10, 1).toISOString(), kind: 'expired' as const, category: 'dairy', name: 'Milk' }];
+  assert.deepEqual(wasteRisk(history, [], () => 'Dairy', now), {});
 });

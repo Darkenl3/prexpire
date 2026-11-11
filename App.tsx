@@ -17,7 +17,7 @@ import { CategoriesProvider, presetIcon, readCustomCategories, useCategories } f
 import { CATEGORY_IDS, ItemsProvider, useItems, type CategoryId, type Item } from './src/items';
 import { SettingsProvider, useSettings } from './src/settings';
 import { AuthProvider, useAuth } from './src/auth';
-import { planReminders } from './src/reminderPlan';
+import { planReminders, wasteRisk } from './src/reminderPlan';
 import { nativeReminders, notificationStatus, requestNotificationPermission, scheduleReminders } from './src/platform/notifications';
 import { SyncProvider } from './src/sync';
 import { ProProvider, takeWelcomeOffer, useMonthlyAdds, usePro, useProLimits } from './src/pro';
@@ -366,11 +366,16 @@ function Shell() {
   // change (and every time the app opens), the iPhone app gets the full plan
   // and reschedules. Permission is asked when setup ends (finishWelcome);
   // anyone who set up before that is asked once at their first item.
+  // Categories you often throw away get an earlier heads-up (Waste stats).
+  const risk = useMemo(() => {
+    const nameById = new Map(allCategories.map((c) => [c.id, c.name] as const));
+    return wasteRisk(history, items, (id) => nameById.get(id) ?? 'items');
+  }, [history, items, allCategories]);
   useEffect(() => {
     if (!nativeReminders()) return;
-    const t = setTimeout(() => scheduleReminders(planReminders(items, settings)), 800);
+    const t = setTimeout(() => scheduleReminders(planReminders(items, settings, new Date(), risk)), 800);
     return () => clearTimeout(t);
-  }, [items, settings]);
+  }, [items, settings, risk]);
   useEffect(() => {
     if (!nativeReminders() || items.length === 0) return;
     let asked = false;
@@ -381,7 +386,7 @@ function Shell() {
     if (asked || notificationStatus() !== 'default') return;
     // A moment after the save confirmation, then reschedule with permission.
     const t = setTimeout(() => {
-      requestNotificationPermission().then((s) => s === 'granted' && scheduleReminders(planReminders(items, settings)));
+      requestNotificationPermission().then((s) => s === 'granted' && scheduleReminders(planReminders(items, settings, new Date(), risk)));
     }, 1500);
     return () => clearTimeout(t);
   }, [items.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps

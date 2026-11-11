@@ -14,6 +14,8 @@ import {
   itemsToCsv,
   REMINDER_LEADS,
   reminderLeadLabel,
+  reminderHourLabel,
+  REMINDER_HOURS,
   SORT_LABELS,
   SORT_ORDERS,
   THEME_LABELS,
@@ -727,6 +729,23 @@ function NotificationsDetail() {
             value={settings.reminderLead}
             options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l) }))}
             onChange={(v) => update({ reminderLead: v })}
+          />
+          <PickerRow
+            icon="alarm-outline"
+            accent="amber"
+            title="Reminder time"
+            label="Reminder time"
+            description="When reminders arrive on the day"
+            value={settings.reminderHour}
+            options={REMINDER_HOURS.map((h) => ({ value: h, label: reminderHourLabel(h) }))}
+            onChange={(v) => update({ reminderHour: v })}
+          />
+          <SettingRow
+            icon="trending-down-outline"
+            accent="amber"
+            title="Earlier for what you waste"
+            description="An extra heads-up for categories you often throw away, from your waste stats"
+            right={<Toggle label="Earlier for what you waste" value={settings.wasteAware} onChange={(v) => update({ wasteAware: v })} />}
           />
           <SettingRow
             icon="today-outline"
