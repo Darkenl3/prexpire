@@ -2,7 +2,7 @@
   "contact": "support@prexpire.com",
   "privacy": {
     "title": "Privacy Policy",
-    "updated": "November 6, 2026",
+    "updated": "November 11, 2026",
     "short": [
       "Prexpire works without an account. Your items, lists and settings are stored on your phone.",
       "Labels and dates are read on your phone. Camera images are never uploaded or kept.",
@@ -23,6 +23,7 @@
         "body": [
           "Everything you add to Prexpire is stored on your phone: products, expiry dates, categories, your shopping list, waste stats and settings. The app works fully offline and doesn't need an account.",
           "The camera is used only while you scan. The images are read on the phone (with Apple's on-device text recognition and an on-device reader) to find barcodes and dates. They are not uploaded, saved or shared.",
+          "Reminders are worked out and scheduled on your phone, including the earlier reminders for categories you often throw away, which use your waste stats on the phone. Home Screen widgets read a copy of your upcoming items from a folder shared between the app and its widgets, which also stays on your phone.",
           "Backups you export from Settings are files you save where you choose. We don't receive them."
         ]
       },
@@ -32,9 +33,12 @@
           {
             "list": [
               "Barcode lookups: to fill in a product's name, the barcode number is sent to public product databases (Open Food Facts, UPCitemdb, Go-UPC, barcodestock, Open Library for books, and a DuckDuckGo search as a fallback). Only the number is sent, never your other data.",
-              "App updates: the app checks app.prexpire.com for a newer version of its screens. This request contains no personal data.",
+              "App updates: the app checks app.prexpire.com for a newer version of its screens, and the App Store for a newer version of the app. These requests contain no personal data, though the servers see your IP address, like any connection.",
+              "Product photos: when a database has a photo of a scanned product, the app downloads it from that database's server.",
               "Account and backup, only if you create an account (see below).",
-              "Security checks: when you sign in or create an account, a Cloudflare Turnstile check runs to stop automated abuse. Cloudflare processes technical data such as your IP address and browser details for this."
+              "Security checks: when you sign in or create an account, a Cloudflare Turnstile check runs to stop automated abuse. Cloudflare processes technical data such as your IP address and browser details for this.",
+              "Purchases, only if you buy Prexpire Pro (see Prexpire Pro below).",
+              "Messages you send us from Help & Support, Send feedback or prexpire.com/support (see Messages to us below)."
             ]
           }
         ]
@@ -55,10 +59,23 @@
         ]
       },
       {
+        "title": "Prexpire Pro",
+        "body": [
+          "Purchases are made through Apple, so we never see your payment details. We use RevenueCat to check what you've bought and to keep Pro working on your devices. RevenueCat receives a random user ID (linked to your Prexpire account if you're signed in), your purchase and subscription history, and technical details such as the app version and your device's country and language."
+        ]
+      },
+      {
+        "title": "Messages to us",
+        "body": [
+          "When you send a question, bug report, feedback or idea, we store the message, the type you chose, your email if you give one, the app version and platform, the country of your connection and a scrambled (hashed) form of your IP address, which we use only to limit abuse. Messages are stored with Cloudflare and emailed to us through Resend, so we can read and answer them."
+        ]
+      },
+      {
         "title": "The website and the waitlist",
         "body": [
           "prexpire.com doesn't use advertising or analytics cookies. If you join the waitlist, we store your email address, the time you joined, the page section you used and your country (derived from the connection), only to email you when Prexpire is available on the App Store.",
-          "After you join, the page may show your Gravatar picture to you. Your own browser requests it from Gravatar using a fingerprint (hash) of your email; nobody else sees it."
+          "After you join, the page may show your Gravatar picture to you. Your own browser requests it from Gravatar using a fingerprint (hash) of your email; nobody else sees it.",
+          "Our website doesn't track you across sites, so it responds the same way to \"Do Not Track\" signals as to any other visit."
         ]
       },
       {
@@ -68,9 +85,10 @@
           {
             "list": [
               "Supabase: accounts, backup and sync (servers in the EU).",
-              "Resend: sending account emails such as confirmation and sign-in codes (EU, Ireland).",
-              "Cloudflare: the website, the waitlist, the Turnstile security check and our domain.",
+              "Resend: sending account emails such as confirmation and sign-in codes, and delivering your messages to us (EU, Ireland).",
+              "Cloudflare: the website, the waitlist, the Turnstile security check, storing your messages to us, and our domain.",
               "Railway: hosting the files the app loads its screens from.",
+              "RevenueCat: checking Prexpire Pro purchases and subscriptions (United States).",
               "Apple and Google: Sign in with Apple and Sign in with Google, when you choose them.",
               "The product databases listed above, which receive barcode numbers only."
             ]
@@ -80,7 +98,8 @@
       {
         "title": "Legal bases",
         "body": [
-          "Under the GDPR we rely on: performance of a contract, to provide your account, backup and sync; your consent, for the waitlist (you can withdraw it at any time); and our legitimate interests, to keep the service secure and prevent abuse, and to look up product names when you scan."
+          "Under the GDPR we rely on: performance of a contract, to provide your account, backup and sync, and Prexpire Pro; your consent, for the waitlist (you can withdraw it at any time); and our legitimate interests, to keep the service secure and prevent abuse, to look up product names when you scan, and to read and answer the messages you send us.",
+          "We don't make decisions about you by automated means that have legal or similarly significant effects. The earlier reminders based on your waste stats are worked out on your phone and only change when you're reminded."
         ]
       },
       {
@@ -90,6 +109,8 @@
             "list": [
               "Data on your phone stays until you delete it or remove the app.",
               "Your account and its backup are kept until you delete the account. When you delete it (in the app or at app.prexpire.com/delete-account), you are signed out and it is deleted for good, with its backup, 30 days later. Until then you can restore it by signing back in. Copies in our providers' routine backups are overwritten within their normal cycle.",
+              "Purchase records are kept by RevenueCat for as long as you have an account or a purchase with us, and as Apple's and tax rules require.",
+              "Messages to us are kept for up to 2 years after we last replied, then deleted, or earlier if you ask.",
               "Waitlist emails are kept until we've sent the launch email, then deleted, or earlier if you ask.",
               "Security and server logs are kept only for the short periods our providers set."
             ]
@@ -106,7 +127,7 @@
       {
         "title": "International transfers",
         "body": [
-          "Some providers, such as Cloudflare, Railway, Apple and Google, may process data outside the EU. Where they do, the transfer is covered by the EU-US Data Privacy Framework or the European Commission's Standard Contractual Clauses."
+          "Some providers, such as RevenueCat, Cloudflare, Railway, Apple and Google, may process data outside the EU, including in the United States. Where they do, the transfer is covered by the EU-US Data Privacy Framework or the European Commission's Standard Contractual Clauses."
         ]
       },
       {
@@ -137,7 +158,7 @@
   },
   "terms": {
     "title": "Terms of Use",
-    "updated": "November 6, 2026",
+    "updated": "November 11, 2026",
     "short": [
       "Prexpire helps you keep track of expiry dates. It's free with 20 new items a month, with or without an account; Prexpire Pro removes the limits.",
       "Dates read by the scanner can be wrong. Always check the date printed on the pack before you eat, drink or use something.",
@@ -154,14 +175,14 @@
       {
         "title": "What Prexpire is",
         "body": [
-          "Prexpire lets you record products and their expiry dates, sorts them by what expires first, reminds you inside the app, and keeps a shopping list. You can add products by scanning or by hand. An optional account backs up your data and keeps it the same across your phones."
+          "Prexpire lets you record products and their expiry dates, sorts them by what expires first, reminds you with notifications on your iPhone, shows what's next on Home Screen widgets, and keeps a shopping list. You can add products by scanning or by hand. An optional account backs up your data and keeps it the same across your phones."
         ]
       },
       {
         "title": "Check the date on the pack",
         "body": [
           "The scanner and product lookups are helpful but not perfect: a date can be misread, and product databases can be incomplete or wrong. Before saving, check what Prexpire read, and before eating, drinking or using something, check the date and condition of the product itself.",
-          "Prexpire doesn't give food-safety, medical or pharmaceutical advice. Follow the instructions on the packaging and, for medicine, your pharmacist or doctor. Reminders appear inside the app and depend on you opening it; don't rely on them alone for anything important."
+          "Prexpire doesn't give food-safety, medical or pharmaceutical advice. Follow the instructions on the packaging and, for medicine, your pharmacist or doctor. Reminders depend on your phone: they don't arrive if notifications are turned off, the app is deleted, or the phone is off, and the app keeps only the next few weeks of them scheduled until you open it again. Don't rely on them alone for anything important."
         ]
       },
       {
