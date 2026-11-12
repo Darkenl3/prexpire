@@ -552,7 +552,7 @@ function UpdateRow() {
 // Prexpire Pro: the free plan's count, or Pro's status. Shown once the
 // installed app can sell Pro.
 function ProRow() {
-  const { available, isPro, state, openPaywall } = usePro();
+  const { available, isPro, state, openPaywall, manage } = usePro();
   const added = useMonthlyAdds();
   if (!available) return null;
   const description = isPro
@@ -564,6 +564,11 @@ function ProRow() {
     <SettingsSection title="Plan">
       <SettingsCard>
         <SettingRow icon={isPro ? 'checkmark-circle' : 'sparkles-outline'} accent="mint" title="Prexpire Pro" description={description} onPress={() => openPaywall('settings')} />
+        {/* Subscribers change or cancel their plan on Apple's own page; a
+            lifetime purchase has nothing to manage. */}
+        {isPro && !state?.lifetime ? (
+          <SettingRow icon="card-outline" accent="blue" title="Manage subscription" description="Change or cancel your plan in your Apple ID settings" onPress={manage} />
+        ) : null}
       </SettingsCard>
     </SettingsSection>
   );

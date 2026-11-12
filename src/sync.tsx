@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, useAuth } from './auth';
+import { revokeAppleSignIn, signsInWithApple } from './appleRevoke';
 
 // Backup and sync for signed-in people. The app stays local-first: everything
 // lives on the phone exactly as before, and this keeps a copy in Supabase
@@ -433,6 +434,9 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     } catch (e) {
       if (isNetwork(e)) return OFFLINE_DELETE;
     }
+    // Signed in with Apple: revoke Prexpire's access to the Apple ID too
+    // (src/appleRevoke.ts). It never blocks the deletion.
+    if (signsInWithApple(session)) await revokeAppleSignIn();
     let { data: purge, error } = await supabase.rpc('request_account_deletion');
     // A server that doesn't have the 30-day functions yet (002 not run).
     if (error && !isNetwork(error) && /request_account_deletion|PGRST202|does not exist/i.test(`${error.code} ${error.message}`)) ({ error } = await supabase.rpc('delete_account')), (purge = null);
@@ -441,7 +445,7 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     setDeletedNotice(typeof purge === 'string' ? purge : new Date(Date.now() + 30 * 86_400_000).toISOString());
     await signOutClearing(userId);
     return null;
-  }, [userId, runOnce, pendingDeletion, signOutClearing]);
+  }, [userId, session, runOnce, pendingDeletion, signOutClearing]);
 
   const restoreAccount = useCallback(async (): Promise<string | null> => {
     const { error } = await supabase.rpc('cancel_account_deletion');

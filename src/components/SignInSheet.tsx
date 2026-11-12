@@ -7,6 +7,7 @@ import { makeStyles, useTheme, LIGHT } from '../theme';
 import { MIN_PASSWORD, appleSignInAvailable, googleSignInAvailable, useAuth, type Outcome } from '../auth';
 import { TurnstileFrame } from './TurnstileFrame';
 import { useSync } from '../sync';
+import { canRevokeApple, signsInWithApple } from '../appleRevoke';
 
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
@@ -473,6 +474,8 @@ export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: b
   const c = useTheme();
   const s = useStyles();
   const { deleteAccount } = useSync();
+  const { session } = useAuth();
+  const apple = signsInWithApple(session) && canRevokeApple();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -497,6 +500,7 @@ export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: b
         <Text style={s.lede}>
           You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.
         </Text>
+        {apple ? <Text style={s.lede}>Apple asks you to confirm once, so Prexpire is also removed from the apps using your Apple ID.</Text> : null}
         {error ? <Text style={s.error}>{error}</Text> : null}
         <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Delete account" style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
           {busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.primaryText, { color: '#fff' }]}>Delete account</Text>}
