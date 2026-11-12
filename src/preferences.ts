@@ -136,7 +136,8 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     wasteAware: bool('wasteAware'),
     theme: oneOf('theme', THEME_MODES),
     compact: bool('compact'),
-    padLayout: oneOf('padLayout', PAD_LAYOUTS),
+    // The old Compact rows switch (before the Layout choice) becomes Detailed.
+    padLayout: PAD_LAYOUTS.includes(r.padLayout as PadLayout) ? (r.padLayout as PadLayout) : r.compact === true ? 'detailed' : defaults.padLayout,
     animations: bool('animations'),
     scanLineAnimation: bool('scanLineAnimation'),
     warningDays: oneOf('warningDays', WARNING_DAYS),

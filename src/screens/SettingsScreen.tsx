@@ -429,8 +429,7 @@ function searchIndex(): SearchEntry[] {
     { key: 'browse-categories', title: 'Browse categories', description: 'The lists for the categories you keep', icon: 'folder-open-outline', accent: 'purple', page: 'categories' },
     { key: 'appearance', title: 'Appearance', description: 'Theme, density and motion', icon: 'color-palette-outline', accent: 'pink', page: 'appearance' },
     { key: 'theme', title: 'Theme', description: 'Dark, light, or follow your device', icon: 'contrast-outline', accent: 'purple', page: 'appearance' },
-    { key: 'compact', title: 'Compact layout', description: 'Shorter rows in item lists', icon: 'reorder-four-outline', accent: 'blue', page: 'appearance' },
-    { key: 'padLayout', title: 'iPad layout', description: 'Basic, Compact or Detailed', icon: 'grid-outline', accent: 'blue', page: 'appearance' },
+    { key: 'padLayout', title: 'Layout', description: 'Basic, Compact or Detailed', icon: 'grid-outline', accent: 'blue', page: 'appearance' },
     { key: 'animations', title: 'Animations', description: 'Fades, press feedback and the scanning line', icon: 'sparkles-outline', accent: 'purple', page: 'appearance' },
     { key: 'warning-period', title: 'Warning period', description: 'Days before expiry', icon: 'hourglass-outline', accent: 'mint', page: null },
     { key: 'auto-shopping', title: 'Automatic Shopping List', description: 'Adds expiring products', icon: 'cart-outline', accent: 'mint', page: null },
@@ -946,38 +945,27 @@ function AppearanceDetail() {
             </FadeIn>
           }
         />
-        {pad ? (
-          // On iPad one choice covers how much each screen shows (src/density.ts).
-          <PickerRow
-            icon="grid-outline"
-            accent="blue"
-            title="iPad layout"
-            label="iPad layout"
-            description="How much each screen shows at once"
-            value={settings.padLayout}
-            options={PAD_LAYOUTS.map((m) => ({ value: m, label: PAD_LAYOUT_LABELS[m] }))}
-            onChange={(v) => update({ padLayout: v })}
-            below={
-              <FadeIn key={settings.padLayout}>
-                <Note>
-                  {settings.padLayout === 'basic'
-                    ? 'One column with only what’s coming up, in bigger rows'
-                    : settings.padLayout === 'detailed'
-                      ? 'More on screen: shorter rows with dates, extra columns'
-                      : 'Categories and your list side by side'}
-                </Note>
-              </FadeIn>
-            }
-          />
-        ) : (
-          <SettingRow
-            icon="reorder-four-outline"
-            accent="blue"
-            title="Compact layout"
-            description="Shorter rows in item lists"
-            right={<Toggle label="Compact layout" value={settings.compact} onChange={(v) => update({ compact: v })} />}
-          />
-        )}
+<PickerRow
+          icon="grid-outline"
+          accent="blue"
+          title="Layout"
+          label="Layout"
+          description="How much each screen shows at once"
+          value={settings.padLayout}
+          options={PAD_LAYOUTS.map((m) => ({ value: m, label: PAD_LAYOUT_LABELS[m] }))}
+          onChange={(v) => update({ padLayout: v })}
+          below={
+            <FadeIn key={settings.padLayout}>
+              <Note>
+                {settings.padLayout === 'basic'
+                  ? 'One column with only what’s coming up, in bigger rows'
+                  : settings.padLayout === 'detailed'
+                    ? pad ? 'More on screen: shorter rows with dates, extra columns' : 'More on screen: shorter rows with dates'
+                    : pad ? 'Categories and your list side by side' : 'Categories and your list'}
+              </Note>
+            </FadeIn>
+          }
+        />
         <SettingRow
           icon="sparkles-outline"
           accent="purple"

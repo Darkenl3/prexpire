@@ -77,7 +77,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const baseCount = layout.height >= 1300 ? 12 : layout.mode === 'split' && layout.height >= 1000 ? 11 : layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
   // Basic: the list is the whole screen (no categories above it), one column.
   // Detailed: shorter rows, and two columns of them when upright.
-  const upcomingCount = basic ? baseCount + 4 : detailed ? Math.round(baseCount * 1.3) * (layout.mode === 'split' ? 1 : 2) : baseCount;
+  const upcomingCount = basic ? baseCount + 4 : detailed ? Math.round(baseCount * 1.3) * (density.twoUp && layout.mode !== 'split' ? 2 : 1) : baseCount;
   const upcoming = useMemo(
     () =>
       items

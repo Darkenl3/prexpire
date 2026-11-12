@@ -91,3 +91,12 @@ test('JSON export holds only the item fields', () => {
   assert.deepEqual(Object.keys(json.items[0]), ['name', 'category', 'expiresOn', 'datePrecision', 'addedAt', 'source']);
   assert.equal(exportFileName('csv', today), 'prexpire-items-2026-10-26.csv');
 });
+
+test('the layout choice: kept when valid, the old Compact rows switch becomes Detailed', () => {
+  const d = defaultSettings('DMY');
+  const cats = ['food'];
+  assert.equal(sanitizeSettings({}, d, cats).padLayout, 'compact');
+  assert.equal(sanitizeSettings({ padLayout: 'basic' }, d, cats).padLayout, 'basic');
+  assert.equal(sanitizeSettings({ padLayout: 'huge', compact: true }, d, cats).padLayout, 'detailed');
+  assert.equal(sanitizeSettings({ padLayout: 'compact', compact: true }, d, cats).padLayout, 'compact');
+});
