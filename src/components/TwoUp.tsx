@@ -1,13 +1,13 @@
 import { Children, isValidElement, type ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
-import { useLayout } from '../layout';
+import { useDensity } from '../density';
 
 // On a wide landscape screen (an iPad on its side) lists of cards and rows
 // go two to a line, like Home's two columns and the Items grid; everywhere
-// else they stay one column.
+// else they stay one column. The iPad layout setting can turn it off (Basic)
+// or on upright too (Detailed): see src/density.ts.
 export function useTwoUp(): boolean {
-  const layout = useLayout();
-  return layout.mode === 'split' && layout.width >= 960;
+  return useDensity().twoUp;
 }
 
 // A list that becomes a two-column grid when useTwoUp() is true. `gap` is

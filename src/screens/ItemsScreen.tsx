@@ -15,7 +15,7 @@ import { SearchField } from '../components/SearchField';
 import { FadeIn, PressScale } from '../components/Press';
 import { BottomSheet } from '../components/BottomSheet';
 import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
-import { useLayout } from '../layout';
+import { useDensity } from '../density';
 
 type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
 
@@ -33,8 +33,10 @@ const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'R
 // no new dependencies, and every list behaviour (search, category filtering,
 // sorting, item management) unchanged.
 export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
-  const layout = useLayout();
-  const twoUp = layout.mode === 'split' && layout.width >= 960;
+  const density = useDensity();
+  const { twoUp, compactRows } = density;
+  // Each card's share of the row (two or three columns, 12 pt apart).
+  const cellWidth = density.columns === 3 ? 'calc(33.333% - 8px)' : 'calc(50% - 6px)';
   const { items } = useItems();
   const { settings, update, warning } = useSettings();
   const { all, custom } = useCategories();
@@ -93,7 +95,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
         title={shopping ? 'Shopping List' : 'Items'}
         subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
         badge={badge}
-        maxWidth={twoUp && !shopping ? 1120 : undefined}
+        maxWidth={density.layout === 'basic' ? 760 : twoUp && !shopping ? (density.columns === 3 ? 1240 : 1120) : undefined}
         dense
         headerAction={headerAction}
         onNavigate={onNavigate}
@@ -181,14 +183,14 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
               </View>
             )}
             {/* iPad landscape (and wide windows): two columns of cards. */}
-            <View style={[s.list, settings.compact && s.listCompact, twoUp && s.listTwoUp]}>
+            <View style={[s.list, compactRows && s.listCompact, twoUp && s.listTwoUp]}>
               {shown.map((item) =>
                 twoUp ? (
-                  <View key={item.id} style={s.twoUpCell}>
-                    <ItemCard item={item} compact={settings.compact} onToast={setShopToast} />
+                  <View key={item.id} style={{ width: cellWidth as unknown as number }}>
+                    <ItemCard item={item} compact={compactRows} onToast={setShopToast} />
                   </View>
                 ) : (
-                  <ItemCard key={item.id} item={item} compact={settings.compact} onToast={setShopToast} />
+                  <ItemCard key={item.id} item={item} compact={compactRows} onToast={setShopToast} />
                 ),
               )}
             </View>
@@ -405,7 +407,6 @@ const useStyles = makeStyles((t) => ({
   list: { gap: 12 },
   listCompact: { gap: 9 },
   listTwoUp: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 12 },
-  twoUpCell: { width: 'calc(50% - 6px)' as unknown as number },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 32 },
   emptyTitle: { color: t.text, fontSize: 17, fontWeight: '600' },
   emptyText: { color: t.textBody, fontSize: 14, marginBottom: 6 },

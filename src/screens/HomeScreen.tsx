@@ -14,6 +14,8 @@ import { TabTransition } from '../components/TabTransition';
 import { ItemRow } from '../components/ItemRow';
 import { AlertSpacer } from '../components/ExpiryAlert';
 import { gridFor, useLayout } from '../layout';
+import { useDensity } from '../density';
+import { TwoUpList } from '../components/TwoUp';
 import { AddArt, AppleArt, CapsuleArt, HouseArt, JarArt, PumpBottleArt } from '../components/Art';
 import { IconArt } from '../components/IconArt';
 import { SmallButton } from '../components/SettingsRows';
@@ -66,10 +68,16 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const t = useTheme();
   const c = useStyles();
   const { showExpired } = settings;
+  const density = useDensity();
+  const basic = density.layout === 'basic';
+  const detailed = density.layout === 'detailed';
   // Tall screens (iPad, either way up) have room for more of the list.
   // More rows on taller screens: a 13" iPad has room for 12 upright and 11
   // in landscape (the list has its own column there).
-  const upcomingCount = layout.height >= 1300 ? 12 : layout.mode === 'split' && layout.height >= 1000 ? 11 : layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
+  const baseCount = layout.height >= 1300 ? 12 : layout.mode === 'split' && layout.height >= 1000 ? 11 : layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
+  // Basic: the list is the whole screen (no categories above it), one column.
+  // Detailed: shorter rows, and two columns of them when upright.
+  const upcomingCount = basic ? baseCount + 4 : detailed ? Math.round(baseCount * 1.3) * (layout.mode === 'split' ? 1 : 2) : baseCount;
   const upcoming = useMemo(
     () =>
       items
@@ -93,13 +101,13 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   };
 
   const { mode, gutter } = layout;
-  const split = mode === 'split';
+  const split = mode === 'split' && !basic;
   const gridGap = mode === 'phone' ? space.gridGap : 12;
   const columnGap = layout.width >= 900 ? 28 : 18;
 
   // Width of the content area after safe-area insets, max width and gutters.
   const usable = layout.width - insets.left - insets.right;
-  const bodyWidth = Math.min(usable, layout.maxContentWidth) - 2 * gutter;
+  const bodyWidth = Math.min(usable, basic ? 760 : layout.maxContentWidth) - 2 * gutter;
   const leftWidth = split ? Math.min(Math.round((bodyWidth - columnGap) * layout.leftFraction), 560) : bodyWidth;
 
   // The grid is measured once laid out (split view, multitasking); the estimate covers the first frame.
@@ -239,10 +247,16 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const upcomingSection = (first: boolean) => (
     <>
       <SectionHeader title="Coming up next" action="View all" onAction={() => go('tab:items')} first={first} />
-      <View style={[c.list, settings.compact && c.listCompact]}>
-        {upcoming.map((item) => (
-          <ItemRow key={item.id} item={item} onPress={() => go('tab:items')} />
-        ))}
+      <View style={[c.list, density.compactRows && c.listCompact]}>
+        {detailed && !split ? (
+          <TwoUpList gap={6} columnGap={16}>
+            {upcoming.map((item) => (
+              <ItemRow key={item.id} item={item} onPress={() => go('tab:items')} />
+            ))}
+          </TwoUpList>
+        ) : (
+          upcoming.map((item) => <ItemRow key={item.id} item={item} onPress={() => go('tab:items')} />)
+        )}
         {upcoming.length === 0 && (
           <View style={c.empty}>
             <Text style={c.emptyTitle}>Nothing here yet</Text>
@@ -254,7 +268,9 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
     </>
   );
 
-  const frame = { maxWidth: layout.maxContentWidth, paddingHorizontal: gutter };
+  // Basic keeps one readable column, centred.
+  const maxWidth = basic ? 760 : layout.maxContentWidth;
+  const frame = { maxWidth, paddingHorizontal: gutter };
   // YouTube-style: ONLY the header hides while scrolling down (the bottom
   // navigation is permanent).
   const { hidden, onScroll } = useNavAutohide();
@@ -268,7 +284,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           never resizes the scroller, so the content never jumps and the
           scroll direction never oscillates while it slides. */}
       <TabTransition tab="home">
-        <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={layout.maxContentWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
+        <AutohideHeader hidden={hidden} badge={badge} gutter={gutter} maxWidth={maxWidth} onMenu={() => go('tab:settings')} onBell={() => go('tab:reminders')} />
         <ScrollView
           style={[c.scroll, NO_RUBBER_BAND]}
           onScroll={onScroll}
@@ -290,7 +306,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
               <>
                 {summary}
                 <BackupCard count={items.length} />
-                {categorySection}
+                {!basic && categorySection}
                 {upcomingSection(false)}
               </>
             )}

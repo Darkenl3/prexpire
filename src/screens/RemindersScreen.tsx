@@ -14,6 +14,7 @@ import { SmallButton } from '../components/SettingsRows';
 import { StatusMedallion } from '../components/HomeComponents';
 import { nativeReminders } from '../platform/notifications';
 import { TwoUpList } from '../components/TwoUp';
+import { useDensity } from '../density';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
@@ -89,6 +90,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
   const s = useStyles();
   const { items } = useItems();
   const { settings, update } = useSettings();
+  const { compactRows } = useDensity();
   const { due, upcoming } = useMemo(() => {
     const dueList = sortItems(remindersDue(items, settings.reminderLead), 'expiry');
     const dueIds = new Set(dueList.map((i) => i.id));
@@ -145,9 +147,9 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
         <Text style={s.sectionMeta}>{due.length === 0 ? 'No reminders are due.' : due.length === 1 ? '1 reminder due' : `${due.length} reminders due`}</Text>
       </View>
       {due.length > 0 ? (
-        <TwoUpList gap={settings.compact ? 8 : 10}>
+        <TwoUpList gap={compactRows ? 8 : 10}>
           {due.map((item) => (
-            <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
+            <ReminderCard key={item.id} item={item} compact={compactRows} onPress={() => onNavigate('tab:items')} />
           ))}
         </TwoUpList>
       ) : (
@@ -193,9 +195,9 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           .map((g) => (
             <View key={g.key}>
               <Text style={s.groupTitle}>{g.title}</Text>
-              <TwoUpList gap={settings.compact ? 8 : 10}>
+              <TwoUpList gap={compactRows ? 8 : 10}>
                 {g.list.map((item) => (
-                  <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
+                  <ReminderCard key={item.id} item={item} compact={compactRows} onPress={() => onNavigate('tab:items')} />
                 ))}
               </TwoUpList>
             </View>

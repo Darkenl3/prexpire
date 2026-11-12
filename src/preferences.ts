@@ -11,6 +11,8 @@ export type DateFormat = 'DMY' | 'MDY' | 'YMD';
 export type SortOrder = 'expiry' | 'added' | 'name';
 export type DefaultCategory = 'last' | CategoryId;
 export type ThemeMode = 'dark' | 'light' | 'system';
+// How much an iPad screen shows at once (see src/density.ts).
+export type PadLayout = 'basic' | 'compact' | 'detailed';
 
 export type Settings = {
   // Notifications. These drive the Reminders tab, its badge and the in-app
@@ -28,6 +30,7 @@ export type Settings = {
   // Appearance
   theme: ThemeMode;
   compact: boolean;
+  padLayout: PadLayout;
   animations: boolean;
   // The moving scanning line inside the Live Scan frame (cosmetic only: the
   // camera, barcode reading and date OCR keep running when it is off).
@@ -76,6 +79,8 @@ export function openDaysFor(settings: Pick<Settings, 'openDays'>, category: stri
 export const DATE_FORMATS: DateFormat[] = ['DMY', 'MDY', 'YMD'];
 export const SORT_ORDERS: SortOrder[] = ['expiry', 'added', 'name'];
 export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'system'];
+export const PAD_LAYOUTS: PadLayout[] = ['basic', 'compact', 'detailed'];
+export const PAD_LAYOUT_LABELS: Record<PadLayout, string> = { basic: 'Basic', compact: 'Compact', detailed: 'Detailed' };
 export const THEME_LABELS: Record<ThemeMode, string> = { dark: 'Dark', light: 'Light', system: 'System' };
 
 export const DATE_FORMAT_LABELS: Record<DateFormat, string> = { DMY: 'DD/MM/YYYY', MDY: 'MM/DD/YYYY', YMD: 'YYYY-MM-DD' };
@@ -103,6 +108,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     wasteAware: true,
     theme: 'dark',
     compact: false,
+    padLayout: 'compact',
     animations: true,
     scanLineAnimation: true,
     warningDays: 3,
@@ -130,6 +136,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     wasteAware: bool('wasteAware'),
     theme: oneOf('theme', THEME_MODES),
     compact: bool('compact'),
+    padLayout: oneOf('padLayout', PAD_LAYOUTS),
     animations: bool('animations'),
     scanLineAnimation: bool('scanLineAnimation'),
     warningDays: oneOf('warningDays', WARNING_DAYS),

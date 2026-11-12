@@ -4,6 +4,7 @@ import { useCategories } from '../categories';
 import { daysUntil } from '../scanner/dateParser';
 import { expiryStatus } from '../preferences';
 import { useSettings } from '../settings';
+import { useDensity } from '../density';
 import { ExpiryRow } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
@@ -55,19 +56,21 @@ type Props = {
 // The days-left pill already says how long is left, so the subtitle carries
 // ONLY the category — never a repeated "Expires in N days" phrase.
 export function ItemRow({ item, showDate = false, note, onPress }: Props) {
-  const { settings, formatDate, warning } = useSettings();
+  const { formatDate, warning } = useSettings();
+  const { compactRows, layout } = useDensity();
   const { nameOf } = useCategories();
   const { pill, tone } = itemPill(item, warning(item.category));
   const sub = note ? [note] : [nameOf(item.category)];
-  if (showDate) sub.push(formatDate(item.expiresOn, item.datePrecision));
+  // The Detailed iPad layout always adds the date.
+  if (showDate || layout === 'detailed') sub.push(formatDate(item.expiresOn, item.datePrecision));
   return (
     <ExpiryRow
-      art={itemRowArt(item, settings.compact)}
+      art={itemRowArt(item, compactRows)}
       title={item.name}
       sub={sub}
       pill={pill}
       tone={tone}
-      compact={settings.compact}
+      compact={compactRows}
       onPress={onPress}
     />
   );
