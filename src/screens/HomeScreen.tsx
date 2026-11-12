@@ -198,7 +198,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => go('settings:categories')} />
         </View>
       ) : (
-        <View style={[c.grid, { rowGap: gridGap }]} onLayout={onGridLayout}>
+        <View style={[c.grid, { rowGap: gridGap, columnGap: gridGap }]} onLayout={onGridLayout}>
           {shownCats.map((tile, i) => {
             const el = (
               <CategoryTile
@@ -407,8 +407,11 @@ const useStyles = makeStyles((t) => ({
   scrollContent: { flexGrow: 1 },
   columns: { flexDirection: 'row', alignItems: 'flex-start' },
   rightColumn: { flex: 1, minWidth: 0 },
-  // space-between absorbs the rounding left over from whole-pixel tile widths.
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  // A fixed gap between tiles, from the left: a last row that isn't full
+  // (Skincare, Household, Add category) stays together instead of being
+  // spread across the width. Whole-pixel tile widths leave at most a few
+  // pixels at the right edge.
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
   // 8px between "Coming up next" rows.
   list: { gap: 8 },
   listCompact: { gap: 6 },
