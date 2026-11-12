@@ -67,7 +67,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const c = useStyles();
   const { showExpired } = settings;
   // Tall screens (iPad, either way up) have room for more of the list.
-  const upcomingCount = layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
+  // More rows on taller screens: a 13" iPad (1376 pt) has room for 12.
+  const upcomingCount = layout.height >= 1300 ? 12 : layout.height >= 1000 ? 8 : layout.mode === 'split' && layout.height >= 740 ? 6 : UPCOMING_COUNT;
   const upcoming = useMemo(
     () =>
       items
