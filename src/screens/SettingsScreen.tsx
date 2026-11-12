@@ -570,11 +570,21 @@ function ProRow() {
     ? state?.lifetime
       ? 'Lifetime. Thank you for your support'
       : 'Active. No limits on items or categories'
-    : `${Math.min(added, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} free items this month. Resets ${nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+    : `${Math.min(added, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} items used this month. Resets ${nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
   return (
     <SettingsSection title="Plan">
       <SettingsCard>
-        <SettingRow icon={isPro ? 'checkmark-circle' : 'sparkles-outline'} accent="mint" title="Prexpire Pro" description={description} onPress={() => openPaywall('settings')} />
+        {/* Free users see their own plan named "Free" (with its count), and
+            Pro offered as the next step, so the 20 a month never reads as
+            something Pro gives. */}
+        <SettingRow
+          icon={isPro ? 'checkmark-circle' : 'sparkles-outline'}
+          accent="mint"
+          title={isPro ? 'Prexpire Pro' : 'Free plan'}
+          description={description}
+          right={isPro ? undefined : <StatusBadge label="Get Pro" tone="green" />}
+          onPress={() => openPaywall('settings')}
+        />
         {/* Subscribers change or cancel their plan on Apple's own page; a
             lifetime purchase has nothing to manage. */}
         {isPro && !state?.lifetime ? (
