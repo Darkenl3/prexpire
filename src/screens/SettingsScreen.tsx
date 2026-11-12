@@ -47,6 +47,7 @@ import { useSync } from '../sync';
 import legal from '../legal.json';
 import { FREE_ITEM_LIMIT, nextReset, useMonthlyAdds, usePro } from '../pro';
 import { FeedbackSheet } from '../components/FeedbackSheet';
+import { TwoColumns, TwoUpList } from '../components/TwoUp';
 import { SupportPage } from '../components/SupportPage';
 import { openStore, useStoreUpdate } from '../appStore';
 
@@ -168,7 +169,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const customCount = all.filter((cat) => cat.custom).length;
   const bottomPad = NAV_HEIGHT + navOffset(insets.bottom) + 24;
   const root = (
-    <>
+    <TwoColumns
+      left={
+        <>
       {saveError && (
         <View style={s.banner} accessibilityRole="alert">
           <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page</Note>
@@ -217,7 +220,10 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <SettingRow icon="color-palette-outline" accent="pink" title="Appearance" description="Theme, density and motion" onPress={() => open('appearance')} />
         </SettingsCard>
       </SettingsSection>
-
+        </>
+      }
+      right={
+        <>
       <SettingsSection title="Expiry & Lists">
         <SettingsCard>
           <PickerRow
@@ -304,7 +310,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           onPress={() => setConfirmClear(true)}
         />
       </SettingsCard>
-    </>
+        </>
+      }
+    />
   );
 
   return (
@@ -1139,8 +1147,13 @@ function StatsDetail() {
     first != null && last != null && firstMonth && firstMonth.key !== months[months.length - 1].key && Math.round(first * 100) !== Math.round(last * 100)
       ? `${last > first ? 'Up' : 'Down'} from ${Math.round(first * 100)}% in ${MONTH[firstMonth.month]}`
       : null;
+  // On a wide landscape screen: this month and the chart on the left, the
+  // totals and the categories on the right.
   return (
     <>
+      <TwoColumns
+        left={
+          <>
       <SettingsSection title="This month">
         <View style={s.wsHero} accessible accessibilityLabel={`${pct(thisMonth)} used in time this month. ${thisMonth.used} used, ${thisMonth.expired} expired.`}>
           <View style={s.wsHeroRow}>
@@ -1176,6 +1189,10 @@ function StatsDetail() {
           </View>
         </SettingsCard>
       </SettingsSection>
+          </>
+        }
+        right={
+          <>
       <SettingsSection title="All time">
         <SettingsCard>
           <SettingRow icon="checkmark-done" accent="mint" title="Used in time" value={pct(total)} />
@@ -1200,6 +1217,9 @@ function StatsDetail() {
           </SettingsCard>
         </SettingsSection>
       )}
+          </>
+        }
+      />
       <Note>
         {entries.length
           ? 'Use "Mark as consumed" when you finish something: it counts as used. Anything past its date counts as expired, whether it\'s still in your list or removed.'

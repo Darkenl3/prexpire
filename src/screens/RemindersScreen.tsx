@@ -13,6 +13,7 @@ import { categoryArt } from '../components/ResultSheet';
 import { SmallButton } from '../components/SettingsRows';
 import { StatusMedallion } from '../components/HomeComponents';
 import { nativeReminders } from '../platform/notifications';
+import { TwoUpList } from '../components/TwoUp';
 
 type Props = { badge: number; onNavigate: (route: string) => void };
 
@@ -144,11 +145,11 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
         <Text style={s.sectionMeta}>{due.length === 0 ? 'No reminders are due.' : due.length === 1 ? '1 reminder due' : `${due.length} reminders due`}</Text>
       </View>
       {due.length > 0 ? (
-        <View style={[s.list, settings.compact && s.listCompact]}>
+        <TwoUpList gap={settings.compact ? 8 : 10}>
           {due.map((item) => (
             <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
           ))}
-        </View>
+        </TwoUpList>
       ) : (
         <View style={s.caughtUp}>
           <StatusMedallion tone="ok" size={46} />
@@ -192,11 +193,11 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           .map((g) => (
             <View key={g.key}>
               <Text style={s.groupTitle}>{g.title}</Text>
-              <View style={[s.list, settings.compact && s.listCompact]}>
+              <TwoUpList gap={settings.compact ? 8 : 10}>
                 {g.list.map((item) => (
                   <ReminderCard key={item.id} item={item} compact={settings.compact} onPress={() => onNavigate('tab:items')} />
                 ))}
-              </View>
+              </TwoUpList>
             </View>
           ))
       ) : (

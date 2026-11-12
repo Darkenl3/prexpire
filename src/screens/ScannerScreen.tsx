@@ -167,6 +167,10 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const lookupGen = useRef(0);
 
   const landscape = root.width > root.height && root.height > 0;
+  // The side layout (camera left, form right) is for a camera on screen; an
+  // item typed in by hand has no camera, so it keeps the full centred form in
+  // landscape too (an iPad on its side).
+  const side = landscape && !manual;
   const granted = !!permission?.granted;
   const ocrReady = ocrAvailability === 'available';
 
@@ -404,7 +408,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const torchAvailable = torchSupported && granted && cameraReady && !cameraError;
 
   const header = (
-    <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (landscape && sheetOpen ? 0 : insets.right) + 16 }]}>
+    <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (side && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
         <PressScale onPress={onClose} hitSlop={8} scaleTo={0.94} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel="Back">
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -635,11 +639,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       initialCategory={category ?? guessed ?? fallbackCategory}
       categoryGuessed={!category && !!guessed}
       assumedOrder={assumedOrder}
-      layout={landscape ? 'side' : 'bottom'}
+      layout={side ? 'side' : 'bottom'}
       // Portrait is a FULL-SCREEN form now: everything below the header bar,
       // not the old half-height sheet (landscape keeps its side layout).
-      full={!landscape}
-      maxHeight={landscape ? root.height : Math.max(420, Math.round(root.height - insets.top - 104))}
+      full={!side}
+      maxHeight={side ? root.height : Math.max(420, Math.round(root.height - insets.top - 104))}
       bottomInset={insets.bottom}
       // Entered straight from an "Add manually" entry point: the only way out
       // is Cancel (there is no camera session to return to). Switched over
@@ -675,7 +679,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       )}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={[StyleSheet.absoluteFill, landscape && s.row, webKeyboard > 0 && { paddingBottom: webKeyboard }]}
+        style={[StyleSheet.absoluteFill, side && s.row, webKeyboard > 0 && { paddingBottom: webKeyboard }]}
       >
         <View style={s.column}>
           {header}
@@ -683,12 +687,12 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
               (the only place the network matters): while the device is offline
               it reassures that saved items and manual entry still work. */}
           <OfflineNotice />
-          <View style={[s.area, { marginLeft: insets.left, marginRight: landscape && sheetOpen ? 0 : insets.right }]} onLayout={onAreaLayout}>
+          <View style={[s.area, { marginLeft: insets.left, marginRight: side && sheetOpen ? 0 : insets.right }]} onLayout={onAreaLayout}>
             {body}
           </View>
         </View>
         {sheet && (
-          <View style={landscape ? [s.side, { paddingRight: insets.right, width: Math.min(400, Math.max(320, root.width * 0.42)) }] : s.bottom}>{sheet}</View>
+          <View style={side ? [s.side, { paddingRight: insets.right, width: Math.min(400, Math.max(320, root.width * 0.42)) }] : s.bottom}>{sheet}</View>
         )}
       </KeyboardAvoidingView>
     </View>

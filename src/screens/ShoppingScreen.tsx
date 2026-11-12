@@ -14,6 +14,7 @@ import { SectionHeader } from '../components/HomeComponents';
 import { FadeIn, PressScale } from '../components/Press';
 import { Note, Options, SmallButton } from '../components/SettingsRows';
 import { categoryIcon } from '../components/ItemCard';
+import { TwoUpList } from '../components/TwoUp';
 import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 
 // The Shopping List, now a view of the Lists tab (ItemsScreen renders this
@@ -128,7 +129,7 @@ export function ShoppingListBody({
         ) : (
           <>
             <SectionHeader title={toBuy.length ? `To buy (${toBuy.length})` : 'To buy'} action="Add item" onAction={() => setAddOpen(true)} />
-            <View style={c.list}>
+            <TwoUpList gap={0} columnGap={12}>
               {toBuy.map((entry) => (
                 <ShoppingRow
                   key={entry.id}
@@ -149,12 +150,12 @@ export function ShoppingListBody({
                   </View>
                 </FadeIn>
               )}
-            </View>
+            </TwoUpList>
 
             {purchased.length > 0 && (
               <>
                 <SectionHeader title={`Purchased (${purchased.length})`} action={confirmClear ? 'Tap again to clear' : 'Clear'} onAction={onClearPurchased} />
-                <View style={c.list}>
+                <TwoUpList gap={0} columnGap={12}>
                   {purchased.map((entry) => (
                     <ShoppingRow
                       key={entry.id}
@@ -167,7 +168,7 @@ export function ShoppingListBody({
                       categoryIconName={categoryIcon(entry.category, custom.find((x) => x.id === entry.category)?.icon)}
                     />
                   ))}
-                </View>
+                </TwoUpList>
                 <Note>Purchased items stay until you clear them.</Note>
               </>
             )}
