@@ -1343,8 +1343,8 @@ function ClearDataDialog({ visible, itemCount, categoryCount, listCount, onCance
 const useStyles = makeStyles((t) => ({
   root: { flex: 1, backgroundColor: t.bg },
   frame: { width: '100%', alignSelf: 'center' },
-  // Settings reads best a touch narrower than the lists.
-  rootFrame: { maxWidth: 640, paddingHorizontal: 16 },
+  // As wide as the other pages on iPad (up to 1240 pt in landscape).
+  rootFrame: { maxWidth: 1240, paddingHorizontal: 16 },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 0 },
   headerTitle: { flex: 1, color: t.text, fontSize: 30, fontWeight: '800', letterSpacing: -0.6 },
   detailTitle: { color: t.text, fontSize: 23, fontWeight: '700', letterSpacing: -0.4 },

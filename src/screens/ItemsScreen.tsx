@@ -93,7 +93,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
         title={shopping ? 'Shopping List' : 'Items'}
         subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
         badge={badge}
-        maxWidth={shopping ? 640 : twoUp ? 1120 : undefined}
+        maxWidth={twoUp && !shopping ? 1120 : undefined}
         dense
         headerAction={headerAction}
         onNavigate={onNavigate}

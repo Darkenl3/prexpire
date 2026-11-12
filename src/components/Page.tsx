@@ -37,7 +37,7 @@ type Props = {
 // title and content together - enters as one, exactly like Settings' own
 // unified fade; below it, the lead-in row and a scrolling body that leaves
 // room for the floating bottom nav.
-export function Page({ tab, title, subtitle, badge, maxWidth = 720, headerAction, dense = false, onNavigate, children }: Props) {
+export function Page({ tab, title, subtitle, badge, maxWidth = 1240, headerAction, dense = false, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
   const layout = useLayout();
   const c = useStyles();

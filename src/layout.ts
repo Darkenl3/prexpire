@@ -36,7 +36,10 @@ export function useLayout(): Layout {
     height,
     landscape,
     gutter,
-    maxContentWidth: mode === 'split' ? 1240 : mode === 'tablet' ? 760 : 560,
+    // Portrait iPad uses the screen's width (with the gutter), up to 980 pt:
+    // a 13" iPad fills edge to edge instead of a 760 pt column with wide
+    // empty sides. Smaller iPads are barely affected.
+    maxContentWidth: mode === 'split' ? 1240 : mode === 'tablet' ? 980 : 560,
     leftFraction: tabletClass ? 0.56 : 0.5,
     short: height < 500,
   };
