@@ -141,17 +141,17 @@ export function googleSignInAvailable(): boolean {
 
 // Asks the iPhone app for a native sign-in sheet (Apple's or Google's) and
 // waits for the identity token it sends back.
-async function nativeIdToken(provider: 'apple' | 'google', extra: Record<string, string> = {}): Promise<{ token?: string; error?: string }> {
+async function nativeIdToken(provider: 'apple' | 'google', extra: Record<string, string> = {}): Promise<{ token?: string; error?: string; detail?: string }> {
   const shell = (window as { ReactNativeWebView?: { postMessage?: (d: string) => void } }).ReactNativeWebView;
   if (!shell?.postMessage) return { error: 'failed' };
   const requestId = `${provider}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const event = `prexpire:${provider}-signin`;
   return new Promise((resolve) => {
     const onReply = (e: Event) => {
-      const d = (e as CustomEvent<{ requestId?: string; token?: string; error?: string }>).detail;
+      const d = (e as CustomEvent<{ requestId?: string; token?: string; error?: string; detail?: string }>).detail;
       if (!d || d.requestId !== requestId) return;
       window.removeEventListener(event, onReply);
-      resolve({ token: d.token, error: d.error });
+      resolve({ token: d.token, error: d.error, detail: typeof d.detail === 'string' ? d.detail : undefined });
     };
     window.addEventListener(event, onReply);
     shell.postMessage!(JSON.stringify({ type: `${provider}-signin`, requestId, ...extra }));
@@ -277,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = randomNonce();
       const apple = await nativeIdToken('apple', { nonce: sha256Hex(raw) });
       if (apple.error === 'canceled') return { error: 'canceled' };
-      if (!apple.token) return { error: "Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email." };
+      if (!apple.token) return { error: "Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email." + (apple.detail ? ` (Apple: ${apple.detail})` : '') };
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: apple.token, nonce: raw });
       return { error: explain(error) };
     } catch (e) {
