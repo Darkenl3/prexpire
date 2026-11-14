@@ -942,7 +942,7 @@ function AppearanceDetail() {
           description="Dark, light, or follow your device"
           value={settings.theme}
           options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
-          onChange={(v) => update({ theme: v })}
+          onChange={(v) => update({ theme: v, themeChosen: true })}
           below={
             <FadeIn key={settings.theme}>
               <Note>

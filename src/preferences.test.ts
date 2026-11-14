@@ -100,3 +100,11 @@ test('the layout choice: kept when valid, the old Compact rows switch becomes De
   assert.equal(sanitizeSettings({ padLayout: 'huge', compact: true }, d, cats).padLayout, 'detailed');
   assert.equal(sanitizeSettings({ padLayout: 'compact', compact: true }, d, cats).padLayout, 'compact');
 });
+
+test('theme follows the phone until the person picks one', () => {
+  const d = defaultSettings('DMY');
+  assert.equal(d.theme, 'system');
+  assert.equal(sanitizeSettings({ theme: 'dark' }, d, []).theme, 'system');
+  assert.equal(sanitizeSettings({ theme: 'dark', themeChosen: true }, d, []).theme, 'dark');
+  assert.equal(sanitizeSettings({ theme: 'light', themeChosen: true }, d, []).themeChosen, true);
+});

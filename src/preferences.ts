@@ -29,6 +29,9 @@ export type Settings = {
   wasteAware: boolean;
   // Appearance
   theme: ThemeMode;
+  // True once the person picks a theme themselves. Until then the app follows
+  // the phone (System), so a light-mode phone opens in light mode.
+  themeChosen: boolean;
   compact: boolean;
   padLayout: PadLayout;
   animations: boolean;
@@ -106,7 +109,8 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     reminderHour: 9,
     dailySummary: false,
     wasteAware: true,
-    theme: 'dark',
+    theme: 'system',
+    themeChosen: false,
     compact: false,
     padLayout: 'compact',
     animations: true,
@@ -134,7 +138,10 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     reminderHour: oneOf('reminderHour', REMINDER_HOURS),
     dailySummary: bool('dailySummary'),
     wasteAware: bool('wasteAware'),
-    theme: oneOf('theme', THEME_MODES),
+    // A theme saved before the person ever chose one (the old dark default)
+    // gives way to System.
+    theme: r.themeChosen === true ? oneOf('theme', THEME_MODES) : defaults.theme,
+    themeChosen: r.themeChosen === true,
     compact: bool('compact'),
     // The old Compact rows switch (before the Layout choice) becomes Detailed.
     padLayout: PAD_LAYOUTS.includes(r.padLayout as PadLayout) ? (r.padLayout as PadLayout) : r.compact === true ? 'detailed' : defaults.padLayout,
