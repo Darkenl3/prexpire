@@ -45,6 +45,32 @@ const ART: Record<string, (p: ArtProps) => ReactElement> = {
   capsule: (p) => <CapsuleArt size={p.size ?? 56} />,
   pump: (p) => <PumpBottleArt size={p.size ?? 56} />,
   jar: (p) => <JarArt size={p.size ?? 56} />,
+  // Dairy: a gable-top milk carton with a wedge of cheese in front of it.
+  dairy: (p) => (
+    <Canvas {...p}>
+      <Defs>
+        {grad('dyF', '#FFFFFF', '#D5E4F5', true)}
+        {grad('dyS', '#C6D8EE', '#9DB8DA')}
+        {grad('dyB', '#5AA2FF', '#2F6FE0')}
+        {grad('dyC', '#FFE27A', '#F6B52E', true)}
+        {grad('dyCs', '#F2B12A', '#D98E12')}
+      </Defs>
+      <Path d="M30 30 L42 14 H66 L54 30 Z" fill="url(#dyS)" />
+      <Rect x="42" y="7" width="24" height="8" rx="2.5" fill="url(#dyB)" />
+      <Path d="M54 30 L66 14 L74 30 Z" fill="url(#dyS)" />
+      <Rect x="54" y="30" width="20" height="58" rx="3" fill="url(#dyS)" />
+      <Rect x="22" y="30" width="34" height="58" rx="3" fill="url(#dyF)" />
+      <Rect x="22" y="48" width="34" height="20" fill="url(#dyB)" />
+      <Path d="M30 58 C32 53 36 53 39 57 C42 53 46 53 48 58" stroke="#FFFFFF" strokeWidth={3} fill="none" strokeLinecap="round" />
+      <Rect x="26" y="34" width="5" height="10" rx="2.5" fill="#FFFFFF" opacity={0.8} />
+      <Path d="M46 92 L92 92 L92 74 L52 64 Z" fill="url(#dyCs)" />
+      <Path d="M46 74 L52 64 L92 74 L86 76 Z" fill="url(#dyC)" />
+      <Path d="M46 74 L86 76 L92 74 L92 92 L46 92 Z" fill="url(#dyC)" />
+      <Circle cx="62" cy="83" r="4" fill="#E9A21E" />
+      <Circle cx="78" cy="86" r="3" fill="#E9A21E" />
+      <Circle cx="72" cy="80" r="2.2" fill="#E9A21E" />
+    </Canvas>
+  ),
   // ── Groceries and food ──
   'nutrition-outline': (p) => (
     <Canvas {...p}>

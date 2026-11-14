@@ -33,8 +33,17 @@ const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   skincare: 'water-outline',
   pantry: 'basket-outline',
 };
+// Choices drawn only as art (not Ionicons names) get the nearest glyph for rows.
+const ART_ONLY_GLYPHS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  apple: 'nutrition-outline',
+  dairy: 'egg-outline',
+  jar: 'basket-outline',
+  pump: 'water-outline',
+  capsule: 'medkit-outline',
+};
 export const categoryIcon = (id: string, customIcon?: string): keyof typeof Ionicons.glyphMap =>
-  (CATEGORY_ICONS[id] ?? (customIcon as keyof typeof Ionicons.glyphMap | undefined) ?? 'cube-outline');
+  CATEGORY_ICONS[id] ??
+  (customIcon ? ART_ONLY_GLYPHS[customIcon] ?? (customIcon in Ionicons.glyphMap ? (customIcon as keyof typeof Ionicons.glyphMap) : 'cube-outline') : 'cube-outline');
 
 // The built-ins map onto their own tile gradient; custom folders know theirs;
 // anything else (a deleted folder's items) reads as the neutral slate.

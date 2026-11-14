@@ -76,6 +76,7 @@ export const CATEGORY_ICONS = [
   'restaurant-outline',
   'nutrition-outline',
   'apple',
+  'dairy',
   'snow-outline',
   'pint-outline',
   'cafe-outline',
@@ -127,6 +128,7 @@ export const CATEGORY_ICONS = [
 export const CATEGORY_ICON_LABELS: Record<(typeof CATEGORY_ICONS)[number], string> = {
   'nutrition-outline': 'Vegetables',
   apple: 'Fruit',
+  dairy: 'Dairy',
   jar: 'Pantry',
   pump: 'Skincare',
   capsule: 'Medicine',
