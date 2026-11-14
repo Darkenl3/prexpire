@@ -116,7 +116,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const { items: shoppingItems, clearAll: clearShopping } = useShopping();
   const [confirmClear, setConfirmClear] = useState(false);
   const [page, setPage] = useState<PageId | null>(initialPage === 'categories' ? 'categories' : null);
-  const { email } = useAuth();
+  // Signed in is the session, not the email: an Apple account can have none.
+  const { email: accountEmail, session: authSession } = useAuth();
+  const email = accountEmail ?? (authSession ? 'Apple account' : null);
   const [signInOpen, setSignInOpen] = useState(initialPage === 'signin');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // The settings search sheet, opened from the magnifier in the header.
@@ -600,7 +602,8 @@ function ProRow() {
 function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
   const s = useStyles();
   const t = useTheme();
-  const { email, session } = useAuth();
+  const { email: accountEmail, session } = useAuth();
+  const email = accountEmail ?? (session ? 'Apple account' : null);
   const { status, lastSyncAt, syncNow, signOutAndClear } = useSync();
   const { formatDate } = useSettings();
   const [busy, setBusy] = useState(false);
