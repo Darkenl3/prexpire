@@ -229,7 +229,8 @@ const useStyles = makeStyles((t) => ({
     ...(t === LIGHT ? CARD_SHADOW : null),
   },
   summaryValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
-  summaryLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 1 },
+  // Centered: a longer label ("Săptămâna aceasta") wraps to two lines.
+  summaryLabel: { color: t.textMuted, fontSize: 12.5, fontWeight: '600', marginTop: 1, textAlign: 'center', paddingHorizontal: 6 },
   groupTitle: { color: t.textMuted, fontSize: 12.5, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 6, marginBottom: 8 },
   footnote: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 22, paddingHorizontal: 4 },
   footnoteText: { flex: 1, color: t.textMuted, fontSize: 12.5, lineHeight: 17 },
