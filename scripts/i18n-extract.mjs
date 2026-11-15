@@ -25,6 +25,13 @@ for (const rel of files) {
 // Language names shown in the picker (src/i18n.ts LANGUAGES[].english).
 for (const m of fs.readFileSync(path.join(ROOT, 'src/i18n.ts'), 'utf8').matchAll(/english: '([^']+)'/g)) if (!keys.has(m[1])) keys.set(m[1], 'src/i18n.ts');
 
+// The Help & Support answers (src/support.json, shared with the website).
+const support = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/support.json'), 'utf8'));
+for (const t of support.topics) for (const k of [t.title, ...t.questions.flatMap((x) => [x.q, x.a])]) if (!keys.has(k)) keys.set(k, 'src/support.json');
+
+// The iPhone shell's native scanner texts (sent to it in the app's language).
+for (const k of JSON.parse(fs.readFileSync(path.join(ROOT, 'src/locales/shell-strings.json'), 'utf8'))) if (!keys.has(k)) keys.set(k, 'shell');
+
 const list = [...keys.entries()].map(([text, where]) => ({ text, where }));
 fs.writeFileSync(path.join(ROOT, 'src/locales/strings.json'), JSON.stringify(list, null, 1));
 console.log(`${list.length} texts -> src/locales/strings.json (${list.reduce((a, b) => a + b.text.length, 0)} characters)`);

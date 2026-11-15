@@ -159,6 +159,12 @@ export function dateLocale(): string | undefined {
   return current === 'en' ? undefined : intlLocale();
 }
 
+// The current language's table (empty for English), for the iPhone shell's
+// native scanner, which shows the same texts as the app.
+export function currentTable(): Record<string, string> {
+  return TRANSLATIONS[current] ?? {};
+}
+
 export function intlLocale(): string {
   return current === 'zh-Hans' ? 'zh-CN' : current === 'zh-Hant' ? 'zh-TW' : current === 'pt' ? 'pt-BR' : current;
 }

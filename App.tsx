@@ -31,7 +31,8 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
-import { tr } from './src/i18n';
+import { currentTable, intlLocale, isRTL, tr } from './src/i18n';
+import shellStrings from './src/locales/shell-strings.json';
 type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPage?: 'categories' | 'signin' } | { tab: 'scan'; manual?: boolean };
 
 const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
@@ -270,6 +271,24 @@ function Shell() {
       // The shell went away; the next change reports again.
     }
   }, [inShell, settings.dateFormat]);
+
+  // The app's language, reported once so the shell's native scanner speaks it
+  // too: only the scanner's own texts (src/locales/shell-strings.json), in
+  // the chosen language. Changing the language reloads the page, which sends
+  // it again.
+  useEffect(() => {
+    if (!inShell || typeof window === 'undefined') return;
+    const shell = (window as { ReactNativeWebView?: { postMessage?: (data: string) => void } }).ReactNativeWebView;
+    if (!shell?.postMessage) return;
+    const all = currentTable();
+    const table: Record<string, string> = {};
+    for (const k of shellStrings as string[]) if (all[k] != null) table[k] = all[k];
+    try {
+      shell.postMessage(JSON.stringify({ type: 'language', rtl: isRTL(), locale: intlLocale(), table }));
+    } catch {
+      // The shell went away; the next load reports again.
+    }
+  }, [inShell]);
 
   // The Scanning Line Animation setting, reported so the shell's native
   // scanner hides or shows its moving sweep line exactly like the website's

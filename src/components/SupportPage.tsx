@@ -18,7 +18,13 @@ import { tr } from '../i18n';
 
 type Question = { q: string; a: string };
 type Topic = { id: string; title: string; icon: string; questions: Question[] };
-const TOPICS = support.topics as Topic[];
+// Shown in the app's language (the texts are listed for translators by
+// scripts/i18n-extract.mjs); the website keeps the English file as it is.
+const TOPICS = (support.topics as Topic[]).map((t) => ({
+  ...t,
+  title: tr(t.title),
+  questions: t.questions.map((x) => ({ q: tr(x.q), a: tr(x.a) })),
+}));
 const SITE = 'https://prexpire.com/support';
 
 const fold = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');

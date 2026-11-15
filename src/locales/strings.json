@@ -1,27 +1,27 @@
 [
  {
   "text": "{0} added · expires {1}",
-  "where": "App.tsx:305"
+  "where": "App.tsx:324"
  },
  {
   "text": "The product needs a name.",
-  "where": "App.tsx:345"
+  "where": "App.tsx:364"
  },
  {
   "text": "The expiry date could not be read.",
-  "where": "App.tsx:346"
+  "where": "App.tsx:365"
  },
  {
   "text": "Couldn't save the item. Please try again.",
-  "where": "App.tsx:357"
+  "where": "App.tsx:376"
  },
  {
   "text": "Keep your items safe",
-  "where": "App.tsx:586"
+  "where": "App.tsx:605"
  },
  {
   "text": "Without an account, your items live only on this phone. Create a free account and a lost, broken or new phone never loses them.",
-  "where": "App.tsx:587"
+  "where": "App.tsx:606"
  },
  {
   "text": "Update available",
@@ -1509,43 +1509,43 @@
  },
  {
   "text": "Get in touch",
-  "where": "src/components/SupportPage.tsx:49"
+  "where": "src/components/SupportPage.tsx:55"
  },
  {
   "text": "Email us",
-  "where": "src/components/SupportPage.tsx:54"
+  "where": "src/components/SupportPage.tsx:60"
  },
  {
   "text": "Prexpire {0}",
-  "where": "src/components/SupportPage.tsx:56"
- },
- {
-  "text": "Ask a question",
-  "where": "src/components/SupportPage.tsx:61"
- },
- {
-  "text": "Write to us from here. Add your email to get an answer",
   "where": "src/components/SupportPage.tsx:62"
  },
  {
+  "text": "Ask a question",
+  "where": "src/components/SupportPage.tsx:67"
+ },
+ {
+  "text": "Write to us from here. Add your email to get an answer",
+  "where": "src/components/SupportPage.tsx:68"
+ },
+ {
   "text": "Open the support website",
-  "where": "src/components/SupportPage.tsx:65"
+  "where": "src/components/SupportPage.tsx:71"
  },
  {
   "text": "Search the answers",
-  "where": "src/components/SupportPage.tsx:70"
+  "where": "src/components/SupportPage.tsx:76"
  },
  {
   "text": "No answer matches “",
-  "where": "src/components/SupportPage.tsx:113"
+  "where": "src/components/SupportPage.tsx:119"
  },
  {
   "text": "Ask us instead, or email support@prexpire.com.",
-  "where": "src/components/SupportPage.tsx:114"
+  "where": "src/components/SupportPage.tsx:120"
  },
  {
   "text": "Didn't find your answer?",
-  "where": "src/components/SupportPage.tsx:119"
+  "where": "src/components/SupportPage.tsx:125"
  },
  {
   "text": "Security check",
@@ -3342,5 +3342,361 @@
  {
   "text": "Chinese (Traditional)",
   "where": "src/i18n.ts"
+ },
+ {
+  "text": "Scanning",
+  "where": "src/support.json"
+ },
+ {
+  "text": "The scanner can't read my date",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Fill the frame with just the date line and hold still for a second. In dim light, turn on the flashlight. Dates printed in dots, or on curved and shiny packs, are the hardest to read. If it still won't read, tap Enter date and set it with the wheels.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Can I scan the barcode and the date?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Yes, in either order. Point at the barcode and the name fills in, then point at the date. If the date was found first, tap Scan barcode on the Add product screen. Your date is kept.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Why is the product name empty?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Names come from public product databases, looked up by barcode. Some products aren't listed, and without internet the lookup can't run. Type the name once: the next time you scan that barcode, Prexpire remembers it.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "I'm not getting reminders",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Check that notifications are on in iPhone Settings, Prexpire, Notifications. Reminders arrive at 9:00 when an item enters its warning period, with a catch-up at 13:00 and 18:00 if you add it later in the day. To check they work, use Send a test notification in Settings, Notifications.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Can some things warn me earlier?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Yes. Every category has its own warning period. Change it in Settings, Categories: open a category and pick how early its items should warn you.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Account and backup",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Do I need an account?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "No. Everything works on your phone without one. An account backs up your items and keeps them the same on all your devices.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "How do I move to a new phone?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Sign in with the same account on the new phone and your items come back. Without an account, save a backup in Settings, Data & Storage, and open it on the new phone.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "How do I delete my account?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "In Settings, Account, Delete account, or at app.prexpire.com/delete-account. You have 30 days to change your mind: sign in again in that time and it's restored. After that, the account and its backup are deleted for good. Items on your phone stay.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "What's free, and what does Pro add?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Free includes 20 new items a month and one category of your own. Pro removes both limits. It's monthly, yearly with a one-week free trial, or a one-time lifetime purchase.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "I bought Pro but it isn't showing",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Open Settings, Prexpire Pro, and tap Restore purchases. Use the same Apple ID you bought it with.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "How do I cancel or get a refund?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Apple handles payments. Cancel in iPhone Settings, your name, Subscriptions. For a refund, ask Apple at reportaproblem.apple.com.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Does Family Sharing work?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Yes, for the lifetime purchase. Monthly and yearly plans are for one Apple ID.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Privacy and offline use",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Are my photos uploaded?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "No. Labels are read on your phone, and camera images are never uploaded or kept. When you scan a barcode, only its number is sent, to look up the product's name.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Does Prexpire work offline?",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Yes. Scanning dates, your items, lists and reminders all work offline. Only name lookups and account sync need internet.",
+  "where": "src/support.json"
+ },
+ {
+  "text": "Reading {0}... hold still.",
+  "where": "shell"
+ },
+ {
+  "text": "Previous: {0}",
+  "where": "shell"
+ },
+ {
+  "text": "Next: {0}",
+  "where": "shell"
+ },
+ {
+  "text": "Expired {0} days ago",
+  "where": "shell"
+ },
+ {
+  "text": "Expired yesterday",
+  "where": "shell"
+ },
+ {
+  "text": "Expires today",
+  "where": "shell"
+ },
+ {
+  "text": "Expires tomorrow",
+  "where": "shell"
+ },
+ {
+  "text": "Expires in {0} days",
+  "where": "shell"
+ },
+ {
+  "text": "Expiry date read. Now point at the barcode, or continue without it.",
+  "where": "shell"
+ },
+ {
+  "text": "Prexpire reads expiry dates through your camera, on this device only.",
+  "where": "shell"
+ },
+ {
+  "text": "Name read",
+  "where": "shell"
+ },
+ {
+  "text": "Product found",
+  "where": "shell"
+ },
+ {
+  "text": "Checking product...",
+  "where": "shell"
+ },
+ {
+  "text": "We couldn't identify this product. Point at its name, or at the expiry date.",
+  "where": "shell"
+ },
+ {
+  "text": "No internet. Point at the product's name, or at the expiry date.",
+  "where": "shell"
+ },
+ {
+  "text": "Product details aren't available right now. Point at its name, or at the expiry date.",
+  "where": "shell"
+ },
+ {
+  "text": "The camera could not start. Another app may be using it. Close it and try again.",
+  "where": "shell"
+ },
+ {
+  "text": "Adding it with your date.",
+  "where": "shell"
+ },
+ {
+  "text": "Looking up the name...",
+  "where": "shell"
+ },
+ {
+  "text": "You can type the name next.",
+  "where": "shell"
+ },
+ {
+  "text": "Now point at the barcode to fill in the name.",
+  "where": "shell"
+ },
+ {
+  "text": "Point at the barcode. Your date is kept.",
+  "where": "shell"
+ },
+ {
+  "text": "Back to the product",
+  "where": "shell"
+ },
+ {
+  "text": "Close scanner",
+  "where": "shell"
+ },
+ {
+  "text": "What the camera read",
+  "where": "shell"
+ },
+ {
+  "text": "Couldn't reach Prexpire to save. It may already be saved. Check your list first; if not, finish saving in the app.",
+  "where": "shell"
+ },
+ {
+  "text": "Couldn't read the stamp: set the day and month",
+  "where": "shell"
+ },
+ {
+  "text": "Named from the label text. Check it",
+  "where": "shell"
+ },
+ {
+  "text": "Type a name for this product",
+  "where": "shell"
+ },
+ {
+  "text": "Back to scanner",
+  "where": "shell"
+ },
+ {
+  "text": "Category not chosen",
+  "where": "shell"
+ },
+ {
+  "text": "Searching online barcode databases and the web...",
+  "where": "shell"
+ },
+ {
+  "text": "We couldn't find this product online.",
+  "where": "shell"
+ },
+ {
+  "text": "Product details aren't available right now.",
+  "where": "shell"
+ },
+ {
+  "text": "Barcode scanned",
+  "where": "shell"
+ },
+ {
+  "text": "Continue without barcode",
+  "where": "shell"
+ },
+ {
+  "text": "Check the name and date, then save.",
+  "where": "shell"
+ },
+ {
+  "text": "Scan barcode",
+  "where": "shell"
+ },
+ {
+  "text": "Finish saving in the app",
+  "where": "shell"
+ },
+ {
+  "text": "Continue without a barcode",
+  "where": "shell"
+ },
+ {
+  "text": "Long-press to see what the camera read",
+  "where": "shell"
+ },
+ {
+  "text": "Scan the barcode",
+  "where": "shell"
+ },
+ {
+  "text": "Search online again",
+  "where": "shell"
+ },
+ {
+  "text": "Point at an expiry date,\na barcode or a name.",
+  "where": "shell"
+ },
+ {
+  "text": "Prexpire's reader",
+  "where": "shell"
+ },
+ {
+  "text": "the standard reader",
+  "where": "shell"
+ },
+ {
+  "text": "(Newest first, with {0}.)",
+  "where": "shell"
+ },
+ {
+  "text": "Nothing readable yet ({0}). Point at a label for a moment, then try again.",
+  "where": "shell"
+ },
+ {
+  "text": "Named from the label text. Check it · Barcode {0}",
+  "where": "shell"
+ },
+ {
+  "text": "Identified by barcode, saved on this device · Barcode {0}",
+  "where": "shell"
+ },
+ {
+  "text": "online",
+  "where": "shell"
+ },
+ {
+  "text": "Identified by barcode ({0}) · Barcode {1}",
+  "where": "shell"
+ },
+ {
+  "text": "Barcode {0} · no name yet. Type one",
+  "where": "shell"
+ },
+ {
+  "text": "{0} category",
+  "where": "shell"
+ },
+ {
+  "text": "Full date",
+  "where": "shell"
+ },
+ {
+  "text": "Month and year",
+  "where": "shell"
+ },
+ {
+  "text": "Saved as the last day of that month.",
+  "where": "shell"
+ },
+ {
+  "text": "Turn the wheels to the date printed on the pack.",
+  "where": "shell"
  }
 ]
