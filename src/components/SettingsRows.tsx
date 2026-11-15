@@ -5,7 +5,7 @@ import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, 
 import { FadeIn, PressScale } from './Press';
 import { BottomSheet } from './BottomSheet';
 
-import { tr, dirIcon } from '../i18n';
+import { tr, dirIcon, isRTL } from '../i18n';
 // Building blocks of the Settings page, styled after the reference's grouped
 // card design: white cards on a cool-white page, fine #E5EDF3 hairlines, soft
 // pastel icon tiles, crisp SF-style typography and gentle press feedback.
@@ -95,19 +95,21 @@ type RowProps = {
   // Makes the whole row a button with a chevron.
   onPress?: () => void;
   titleColor?: string;
+  // Lines the description may use before it is cut (default 2).
+  descriptionLines?: number;
 };
 
-export function SettingRow({ icon, accent, title, description, value, right, below, onPress, titleColor }: RowProps) {
+export function SettingRow({ icon, accent, title, description, value, right, below, onPress, titleColor, descriptionLines = 2 }: RowProps) {
   const c = useTheme();
   const s = useStyles();
   const body = (
     <View style={s.row}>
       <IconTile icon={icon} accent={accent} />
       <View style={s.rowText}>
-        <Text style={[s.rowTitle, titleColor ? { color: titleColor } : null]} numberOfLines={1}>
+        <Text style={[s.rowTitle, titleColor ? { color: titleColor } : null]} numberOfLines={2}>
           {title}
         </Text>
-        {!!description && <Text style={s.rowDesc} numberOfLines={2}>
+        {!!description && <Text style={s.rowDesc} numberOfLines={descriptionLines}>
           {description}
         </Text>}
       </View>
@@ -152,7 +154,10 @@ export function Toggle({ value, onChange, label, disabled = false }: { value: bo
       accessibilityState={{ checked: value, disabled }}
       style={{ minHeight: 44, minWidth: 52, alignItems: 'center', justifyContent: 'center', marginVertical: -12 }}
     >
-      <View pointerEvents="none">
+      {/* react-native-web places the knob with a mix of physical and logical
+          offsets, which pushes it out of the track in right-to-left, so the
+          switch itself always lays out left-to-right. */}
+      <View pointerEvents="none" {...(isRTL() ? { dir: 'ltr' } : null)}>
         <Switch
           value={value}
           disabled={disabled}
@@ -273,6 +278,9 @@ export function OptionSheet<T extends string | number>({
 }) {
   const c = useTheme();
   const s = useStyles();
+  // Every line follows the reading direction, even a name in another script
+  // (an English language name in Hebrew), so the list keeps one edge.
+  const align = { textAlign: isRTL() ? 'right' : 'left' } as const;
 
   return (
     <BottomSheet
@@ -307,11 +315,11 @@ export function OptionSheet<T extends string | number>({
             >
               {o.sub ? (
                 <View style={{ flex: 1, paddingVertical: 9 }}>
-                  <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
-                  <Text style={s.sheetOptionSub}>{o.sub}</Text>
+                  <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled, align]}>{o.label}</Text>
+                  <Text style={[s.sheetOptionSub, align]}>{o.sub}</Text>
                 </View>
               ) : (
-                <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
+                <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled, align]}>{o.label}</Text>
               )}
               {on && (
                 <FadeIn>
@@ -434,7 +442,8 @@ const useStyles = makeStyles((c) => ({
   // Subtexts carry a breath of cyan (theme.textSub) instead of pure gray, so
   // the secondary line reads as part of the app's teal world.
   rowDesc: { color: c.textBody, fontSize: 14, marginTop: 2, lineHeight: 19 },
-  rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8 },
+  // Capped so a long value (some languages run long) never squeezes the title.
+  rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8, flexShrink: 1, maxWidth: '42%' },
   chevron: { marginLeft: 2, opacity: 0.75 },
   // Gentle press feedback: a whisper of tint behind the row (the scale-down
   // and opacity settle come from PressScale, timed like the rest).
@@ -483,12 +492,16 @@ const useStyles = makeStyles((c) => ({
   sheetCancel: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: c.separator,
-    marginTop: 4,
+    minHeight: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: c.surfaceBorder,
+    backgroundColor: c.cardAlt,
+    marginTop: 10,
+    marginHorizontal: 6,
+    marginBottom: 4,
   },
-  sheetCancelText: { color: c.textMuted, fontSize: 16, fontWeight: '600' },
+  sheetCancelText: { color: c.text, fontSize: 16, fontWeight: '600' },
   badge: { paddingHorizontal: 11, height: 27, borderRadius: 999, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.cardAlt, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
   badgeGreen: { borderColor: 'rgba(78,155,46,0.4)', backgroundColor: '#E2F5D2' },
   badgeAmber: { borderColor: 'rgba(222,154,43,0.4)', backgroundColor: '#FCF0D6' },

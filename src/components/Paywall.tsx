@@ -12,7 +12,7 @@ import { BottomSheet } from './BottomSheet';
 import { LegalDetail, type LegalDoc } from '../screens/SettingsScreen';
 import legal from '../legal.json';
 
-import { tr } from '../i18n';
+import { tr, dateLocale } from '../i18n';
 // The Pro offer. One idea carries it: the free plan's 20 places, drawn as a
 // row of pips that fill with the items you track today. Pro is simply "no
 // row": everything else in the app stays free.
@@ -124,7 +124,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
 
   const added = useMonthlyAdds();
   const count = items.length;
-  const resets = nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+  const resets = nextReset().toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long' });
   const selling = available && !isPro && !!plans;
   const { motion } = useSettings();
   const filled = Math.min(added, FREE_ITEM_LIMIT);

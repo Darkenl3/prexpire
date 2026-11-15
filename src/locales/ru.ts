@@ -396,7 +396,7 @@ const table: Record<string, string> = {
   "Dark": "Тёмная",
   "Light": "Светлая",
   "System": "Системная",
-  "Recently added": "Недавно добавленные",
+  "Recently added": "Новые",
   "On the expiry day": "В день истечения",
   "1 day before": "За 1 день",
   "{0} days before": "За {0} дн.",

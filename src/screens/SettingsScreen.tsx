@@ -54,7 +54,7 @@ import { TwoColumns, TwoUpList } from '../components/TwoUp';
 import { SupportPage } from '../components/SupportPage';
 import { openStore, useStoreUpdate } from '../appStore';
 
-import { LANGUAGES, applyLanguage, availableLanguages, language, phoneLanguage, tr, type LanguageChoice, dirIcon } from '../i18n';
+import { LANGUAGES, applyLanguage, availableLanguages, phoneLanguage, tr, type LanguageChoice, dirIcon, dateLocale } from '../i18n';
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
 // Inside the iPhone app: the installed app's own version and build
@@ -232,7 +232,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
             value={settings.language}
             options={[
               { value: 'system', label: tr("Phone language"), sub: LANGUAGES.find((l) => l.code === phoneLanguage())?.native },
-              ...availableLanguages().map((l) => ({ value: l.code as LanguageChoice, label: l.native, sub: l.code === language() ? undefined : tr(l.english) })),
+              // Each language by its own name, one line each, as language
+              // pickers do: anyone can find theirs whatever is showing now.
+              ...availableLanguages().map((l) => ({ value: l.code as LanguageChoice, label: l.native })),
             ]}
             onChange={(v) => {
               update({ language: v });
@@ -586,7 +588,7 @@ function ProRow() {
     ? state?.lifetime
       ? tr("Lifetime. Thank you for your support")
       : tr("Active. No limits on items or categories")
-    : tr("{0} of {1} items used this month. Resets {2}", [Math.min(added, FREE_ITEM_LIMIT), FREE_ITEM_LIMIT, nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })]);
+    : tr("{0} of {1} items used this month. Resets {2}", [Math.min(added, FREE_ITEM_LIMIT), FREE_ITEM_LIMIT, nextReset().toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })]);
   return (
     <SettingsSection title={tr("Plan")}>
       <SettingsCard>
@@ -598,6 +600,7 @@ function ProRow() {
           accent="mint"
           title={isPro ? tr("Prexpire Pro") : tr("Free plan")}
           description={description}
+          descriptionLines={3}
           right={isPro ? undefined : <StatusBadge label={tr("Get Pro")} tone="green" />}
           onPress={() => openPaywall('settings')}
         />
@@ -630,7 +633,7 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
     ? Date.now() - synced.getTime() < 60000
       ? tr("Just now")
       : synced.toDateString() === new Date().toDateString()
-        ? synced.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+        ? synced.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })
         : formatDate(synced.toISOString().slice(0, 10))
     : tr("Not yet");
   const backupValue = status === 'syncing' ? tr("Backing up…") : status === 'offline' ? tr("Offline") : status === 'error' ? tr("Didn't finish") : ago;
@@ -641,7 +644,7 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
           <Text style={s.avatarLetter}>{(email ?? '?')[0].toUpperCase()}</Text>
         </View>
         <Text style={s.heroTitle} numberOfLines={1}>{email ?? tr("Signed out")}</Text>
-        <Text style={s.heroSub}>{since ? tr("Account since {0}", [since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })]) : tr("Signed in")}</Text>
+        <Text style={s.heroSub}>{since ? tr("Account since {0}", [since.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' })]) : tr("Signed in")}</Text>
       </View>
       <SettingsSection title={tr("Backup and sync")}>
         <SettingsCard>

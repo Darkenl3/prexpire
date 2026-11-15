@@ -9,7 +9,7 @@ import { TurnstileFrame } from './TurnstileFrame';
 import { useSync } from '../sync';
 import { canRevokeApple, signsInWithApple } from '../appleRevoke';
 
-import { tr, dirIcon } from '../i18n';
+import { tr, dirIcon, dateLocale } from '../i18n';
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
 //
@@ -522,7 +522,7 @@ export function DeletionPendingSheet() {
   const [error, setError] = useState<string | null>(null);
   const when = pendingDeletion ? new Date(pendingDeletion) : null;
   const days = when ? Math.max(0, Math.ceil((when.getTime() - Date.now()) / 86_400_000)) : 0;
-  const date = when ? when.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const date = when ? when.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   const restore = async () => {
     if (busy) return;
     setBusy('restore');
@@ -561,7 +561,7 @@ export function AccountDeletedSheet() {
   const c = useTheme();
   const s = useStyles();
   const { deletedNotice, dismissDeletedNotice } = useSync();
-  const date = deletedNotice ? new Date(deletedNotice).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const date = deletedNotice ? new Date(deletedNotice).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   return (
     <BottomSheet visible={!!deletedNotice} onClose={dismissDeletedNotice} title={tr("Account deleted")} scrollable={false} maxWidth={460}>
       <View style={s.body}>

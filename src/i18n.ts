@@ -153,6 +153,12 @@ export function dirIcon<T extends string>(name: T): T {
 }
 
 // The locale for dates and numbers (Intl), matching the app's language.
+// Locale for dates and times: the phone's own for English (keeps its
+// day/month order), otherwise the app language.
+export function dateLocale(): string | undefined {
+  return current === 'en' ? undefined : intlLocale();
+}
+
 export function intlLocale(): string {
   return current === 'zh-Hans' ? 'zh-CN' : current === 'zh-Hant' ? 'zh-TW' : current === 'pt' ? 'pt-BR' : current;
 }

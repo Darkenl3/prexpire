@@ -94,7 +94,6 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
       <Page
         tab="items"
         title={shopping ? tr("Shopping List") : tr("Items")}
-        subtitle={shopping ? tr("What you need to buy next.") : tr("Everything you're tracking.")}
         badge={badge}
         maxWidth={density.layout === 'basic' ? 760 : twoUp && !shopping ? (density.columns === 3 ? 1240 : 1120) : undefined}
         dense
@@ -436,6 +435,6 @@ const useSheetStyles = makeStyles((c) => ({
   optionIconBlank: { width: 17, height: 17 },
   optionText: { color: c.text, fontSize: 15.5, fontWeight: '500', flex: 1 },
   optionTextOn: { color: c.green, fontWeight: '600' },
-  cancel: { borderRadius: 16, minHeight: 52, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  cancelText: { color: c.textMuted, fontSize: 16, fontWeight: '600' },
+  cancel: { borderRadius: 14, minHeight: 50, alignItems: 'center', justifyContent: 'center', marginTop: 10, marginHorizontal: 6, marginBottom: 4, borderWidth: 1, borderColor: c.surfaceBorder, backgroundColor: c.cardAlt },
+  cancelText: { color: c.text, fontSize: 16, fontWeight: '600' },
 }));

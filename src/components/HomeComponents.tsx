@@ -628,7 +628,9 @@ function NavTab({ tab, selected, narrow, travel, onTab }: { tab: (typeof tabs)[n
           <Ionicons name={selected ? tab.iconOn : tab.icon} size={24} color={selected ? c.scanInk : c.textMuted} />
         </Animated.View>
         <Text
-          style={[s.tabLabel, narrow && s.tabLabelNarrow, { color: selected ? c.scanInk : c.textMuted }]}
+          // Browsers ignore adjustsFontSizeToFit, so long labels (some languages
+          // run long) step down a size themselves.
+          style={[s.tabLabel, narrow && s.tabLabelNarrow, tab.label.length > 9 && s.tabLabelLong, { color: selected ? c.scanInk : c.textMuted }]}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.85}
@@ -850,6 +852,7 @@ const useStyles = makeStyles((c) => ({
   tabChipPill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12, backgroundColor: c.selBg },
   tabLabel: { fontSize: 11.5, fontWeight: '500' },
   tabLabelNarrow: { fontSize: 10.5 },
+  tabLabelLong: { fontSize: 9.5, letterSpacing: -0.2 },
   scan: { width: 50, height: 50, borderRadius: 25, backgroundColor: c.scan, alignItems: 'center', justifyContent: 'center' },
   scanLine: { position: 'absolute', width: 16, height: 2.5, borderRadius: 2, backgroundColor: c.scanInk },
 }));

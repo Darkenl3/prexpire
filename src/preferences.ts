@@ -4,7 +4,7 @@
 import type { DayOrder } from './scanner/dateParser';
 import type { CategoryId, Item } from './items';
 
-import { LANGUAGES, tr, type LanguageChoice } from './i18n.ts';
+import { LANGUAGES, tr, dateLocale, type LanguageChoice } from './i18n.ts';
 export type ReminderLead = 0 | 1 | 3 | 7;
 export type ReminderHour = 7 | 8 | 9 | 10 | 12 | 17 | 19 | 21;
 export type WarningDays = 3 | 7 | 14 | 30;
@@ -63,7 +63,7 @@ export type Settings = {
 export const REMINDER_LEADS: ReminderLead[] = [0, 1, 3, 7];
 export const REMINDER_HOURS: ReminderHour[] = [7, 8, 9, 10, 12, 17, 19, 21];
 export function reminderHourLabel(hour: number) {
-  return new Date(2026, 0, 1, hour, 0).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return new Date(2026, 0, 1, hour, 0).toLocaleTimeString(dateLocale(), { hour: 'numeric', minute: '2-digit' });
 }
 export const WARNING_DAYS: WarningDays[] = [3, 7, 14, 30];
 // "Use within" choices after opening, in days.
