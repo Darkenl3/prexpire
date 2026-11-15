@@ -1816,92 +1816,84 @@
   "where": "src/screens/ItemsScreen.tsx:96"
  },
  {
-  "text": "What you need to buy next.",
-  "where": "src/screens/ItemsScreen.tsx:97"
- },
- {
-  "text": "Everything you're tracking.",
-  "where": "src/screens/ItemsScreen.tsx:97"
- },
- {
   "text": "Lists view",
-  "where": "src/screens/ItemsScreen.tsx:110"
+  "where": "src/screens/ItemsScreen.tsx:109"
  },
  {
   "text": "Tracked items",
-  "where": "src/screens/ItemsScreen.tsx:117"
+  "where": "src/screens/ItemsScreen.tsx:116"
  },
  {
   "text": "Shopping list",
-  "where": "src/screens/ItemsScreen.tsx:129"
+  "where": "src/screens/ItemsScreen.tsx:128"
  },
  {
   "text": "Filter and sort. Category: {0}. Sort by {1}.",
-  "where": "src/screens/ItemsScreen.tsx:154"
+  "where": "src/screens/ItemsScreen.tsx:153"
  },
  {
   "text": "Filter",
-  "where": "src/screens/ItemsScreen.tsx:158"
+  "where": "src/screens/ItemsScreen.tsx:157"
  },
  {
   "text": "expired",
-  "where": "src/screens/ItemsScreen.tsx:172"
+  "where": "src/screens/ItemsScreen.tsx:171"
  },
  {
   "text": "valid",
-  "where": "src/screens/ItemsScreen.tsx:174"
+  "where": "src/screens/ItemsScreen.tsx:173"
  },
  {
   "text": "1 expired item is hidden",
-  "where": "src/screens/ItemsScreen.tsx:180"
+  "where": "src/screens/ItemsScreen.tsx:179"
  },
  {
   "text": "{0} expired items are hidden",
-  "where": "src/screens/ItemsScreen.tsx:180"
+  "where": "src/screens/ItemsScreen.tsx:179"
  },
  {
   "text": ". You can show them again in Settings.",
-  "where": "src/screens/ItemsScreen.tsx:180"
+  "where": "src/screens/ItemsScreen.tsx:179"
  },
  {
   "text": "No matches",
-  "where": "src/screens/ItemsScreen.tsx:197"
+  "where": "src/screens/ItemsScreen.tsx:196"
  },
  {
   "text": "Nothing you track is called “",
-  "where": "src/screens/ItemsScreen.tsx:198"
+  "where": "src/screens/ItemsScreen.tsx:197"
  },
  {
   "text": "Nothing here",
-  "where": "src/screens/ItemsScreen.tsx:206"
+  "where": "src/screens/ItemsScreen.tsx:205"
  },
  {
   "text": "No items yet",
-  "where": "src/screens/ItemsScreen.tsx:206"
+  "where": "src/screens/ItemsScreen.tsx:205"
  },
  {
   "text": "Scan a label or add a product by hand.",
-  "where": "src/screens/ItemsScreen.tsx:207"
+  "where": "src/screens/ItemsScreen.tsx:206"
  },
  {
   "text": "Filter & sort",
-  "where": "src/screens/ItemsScreen.tsx:293"
+  "where": "src/screens/ItemsScreen.tsx:292"
  },
  {
   "text": "Filter and sort",
-  "where": "src/screens/ItemsScreen.tsx:293"
+  "where": "src/screens/ItemsScreen.tsx:292"
  },
  {
   "text": "All categories",
-  "where": "src/screens/ItemsScreen.tsx:301"
+  "where": "src/screens/ItemsScreen.tsx:300"
  },
  {
   "text": "Sort by",
-  "where": "src/screens/ItemsScreen.tsx:306"
+  "where": "src/screens/ItemsScreen.tsx:305"
  },
  {
   "text": "Sort order",
-  "where": "src/screens/ItemsScreen.tsx:307"
+  "where": "src/screens/ItemsScreen.tsx:306"
  },
  {
   "text": "Soonest first",
@@ -2241,199 +2233,199 @@
  },
  {
   "text": "Expiry & Lists",
-  "where": "src/screens/SettingsScreen.tsx:248"
+  "where": "src/screens/SettingsScreen.tsx:250"
  },
  {
   "text": "Days before expiry",
-  "where": "src/screens/SettingsScreen.tsx:255"
+  "where": "src/screens/SettingsScreen.tsx:257"
  },
  {
   "text": "Automatic Shopping List",
-  "where": "src/screens/SettingsScreen.tsx:263"
- },
- {
-  "text": "Adds expiring products",
-  "where": "src/screens/SettingsScreen.tsx:264"
- },
- {
-  "text": "Automatically add expiring products to the Shopping List",
   "where": "src/screens/SettingsScreen.tsx:265"
  },
  {
+  "text": "Adds expiring products",
+  "where": "src/screens/SettingsScreen.tsx:266"
+ },
+ {
+  "text": "Automatically add expiring products to the Shopping List",
+  "where": "src/screens/SettingsScreen.tsx:267"
+ },
+ {
   "text": "Date format",
-  "where": "src/screens/SettingsScreen.tsx:270"
+  "where": "src/screens/SettingsScreen.tsx:272"
  },
  {
   "text": "Sorting",
-  "where": "src/screens/SettingsScreen.tsx:280"
- },
- {
-  "text": "Order items",
   "where": "src/screens/SettingsScreen.tsx:282"
  },
  {
+  "text": "Order items",
+  "where": "src/screens/SettingsScreen.tsx:284"
+ },
+ {
   "text": "Show expired items",
-  "where": "src/screens/SettingsScreen.tsx:290"
+  "where": "src/screens/SettingsScreen.tsx:292"
  },
  {
   "text": "Keep past-date items visible",
-  "where": "src/screens/SettingsScreen.tsx:291"
+  "where": "src/screens/SettingsScreen.tsx:293"
  },
  {
   "text": "Insights",
-  "where": "src/screens/SettingsScreen.tsx:297"
- },
- {
-  "text": "What you used in time and what expired",
   "where": "src/screens/SettingsScreen.tsx:299"
  },
  {
+  "text": "What you used in time and what expired",
+  "where": "src/screens/SettingsScreen.tsx:301"
+ },
+ {
   "text": "Data & Storage",
-  "where": "src/screens/SettingsScreen.tsx:303"
+  "where": "src/screens/SettingsScreen.tsx:305"
  },
  {
   "text": "Save everything to a file, or restore one",
-  "where": "src/screens/SettingsScreen.tsx:309"
+  "where": "src/screens/SettingsScreen.tsx:311"
  },
  {
   "text": "About",
-  "where": "src/screens/SettingsScreen.tsx:315"
- },
- {
-  "text": "App version",
   "where": "src/screens/SettingsScreen.tsx:317"
  },
  {
-  "text": "Answers, and how to reach us",
-  "where": "src/screens/SettingsScreen.tsx:318"
- },
- {
-  "text": "Report a bug, or share feedback or an idea",
+  "text": "App version",
   "where": "src/screens/SettingsScreen.tsx:319"
  },
  {
-  "text": "Clear all data",
-  "where": "src/screens/SettingsScreen.tsx:328"
+  "text": "Answers, and how to reach us",
+  "where": "src/screens/SettingsScreen.tsx:320"
  },
  {
-  "text": "Delete everything stored here",
+  "text": "Report a bug, or share feedback or an idea",
+  "where": "src/screens/SettingsScreen.tsx:321"
+ },
+ {
+  "text": "Clear all data",
   "where": "src/screens/SettingsScreen.tsx:330"
  },
  {
+  "text": "Delete everything stored here",
+  "where": "src/screens/SettingsScreen.tsx:332"
+ },
+ {
   "text": "Search settings",
-  "where": "src/screens/SettingsScreen.tsx:350"
+  "where": "src/screens/SettingsScreen.tsx:352"
  },
  {
   "text": "Expiry reminders",
-  "where": "src/screens/SettingsScreen.tsx:440"
+  "where": "src/screens/SettingsScreen.tsx:442"
  },
  {
   "text": "Get notified before items expire",
-  "where": "src/screens/SettingsScreen.tsx:440"
+  "where": "src/screens/SettingsScreen.tsx:442"
  },
  {
   "text": "Reminder timing",
-  "where": "src/screens/SettingsScreen.tsx:441"
+  "where": "src/screens/SettingsScreen.tsx:443"
  },
  {
   "text": "When a reminder appears before the expiry date",
-  "where": "src/screens/SettingsScreen.tsx:441"
+  "where": "src/screens/SettingsScreen.tsx:443"
  },
  {
   "text": "Daily summary",
-  "where": "src/screens/SettingsScreen.tsx:442"
+  "where": "src/screens/SettingsScreen.tsx:444"
  },
  {
   "text": "See what's expiring soon",
-  "where": "src/screens/SettingsScreen.tsx:442"
+  "where": "src/screens/SettingsScreen.tsx:444"
  },
  {
   "text": "Browser notifications",
-  "where": "src/screens/SettingsScreen.tsx:443"
+  "where": "src/screens/SettingsScreen.tsx:445"
  },
  {
   "text": "Allow notifications from this browser",
-  "where": "src/screens/SettingsScreen.tsx:443"
+  "where": "src/screens/SettingsScreen.tsx:445"
  },
  {
   "text": "Allow notifications on this device",
-  "where": "src/screens/SettingsScreen.tsx:443"
+  "where": "src/screens/SettingsScreen.tsx:445"
  },
  {
   "text": "Default category",
-  "where": "src/screens/SettingsScreen.tsx:445"
+  "where": "src/screens/SettingsScreen.tsx:447"
  },
  {
   "text": "Preselected when you add an item",
-  "where": "src/screens/SettingsScreen.tsx:445"
+  "where": "src/screens/SettingsScreen.tsx:447"
  },
  {
   "text": "Browse categories",
-  "where": "src/screens/SettingsScreen.tsx:446"
+  "where": "src/screens/SettingsScreen.tsx:448"
  },
  {
   "text": "The lists for the categories you keep",
-  "where": "src/screens/SettingsScreen.tsx:446"
+  "where": "src/screens/SettingsScreen.tsx:448"
  },
  {
   "text": "Theme",
-  "where": "src/screens/SettingsScreen.tsx:448"
+  "where": "src/screens/SettingsScreen.tsx:450"
  },
  {
   "text": "Dark, light, or follow your device",
-  "where": "src/screens/SettingsScreen.tsx:448"
+  "where": "src/screens/SettingsScreen.tsx:450"
  },
  {
   "text": "Layout",
-  "where": "src/screens/SettingsScreen.tsx:449"
+  "where": "src/screens/SettingsScreen.tsx:451"
  },
  {
   "text": "Basic, Compact or Detailed",
-  "where": "src/screens/SettingsScreen.tsx:449"
+  "where": "src/screens/SettingsScreen.tsx:451"
  },
  {
   "text": "Animations",
-  "where": "src/screens/SettingsScreen.tsx:450"
+  "where": "src/screens/SettingsScreen.tsx:452"
  },
  {
   "text": "Fades, press feedback and the scanning line",
-  "where": "src/screens/SettingsScreen.tsx:450"
+  "where": "src/screens/SettingsScreen.tsx:452"
  },
  {
   "text": "How dates are displayed",
-  "where": "src/screens/SettingsScreen.tsx:453"
+  "where": "src/screens/SettingsScreen.tsx:455"
  },
  {
   "text": "Export data",
-  "where": "src/screens/SettingsScreen.tsx:458"
- },
- {
-  "text": "Download your items as JSON or CSV",
-  "where": "src/screens/SettingsScreen.tsx:458"
- },
- {
-  "text": "Your data, camera and exports",
   "where": "src/screens/SettingsScreen.tsx:460"
  },
  {
+  "text": "Download your items as JSON or CSV",
+  "where": "src/screens/SettingsScreen.tsx:460"
+ },
+ {
+  "text": "Your data, camera and exports",
+  "where": "src/screens/SettingsScreen.tsx:462"
+ },
+ {
   "text": "Close search",
-  "where": "src/screens/SettingsScreen.tsx:481"
+  "where": "src/screens/SettingsScreen.tsx:483"
  },
  {
   "text": "Type to find a setting by name or what it does",
-  "where": "src/screens/SettingsScreen.tsx:489"
- },
- {
-  "text": "No settings match “",
   "where": "src/screens/SettingsScreen.tsx:491"
  },
  {
+  "text": "No settings match “",
+  "where": "src/screens/SettingsScreen.tsx:493"
+ },
+ {
   "text": "Update",
-  "where": "src/screens/SettingsScreen.tsx:571"
+  "where": "src/screens/SettingsScreen.tsx:573"
  },
  {
   "text": "Prexpire {0} is on the App Store",
-  "where": "src/screens/SettingsScreen.tsx:573"
+  "where": "src/screens/SettingsScreen.tsx:575"
  },
  {
   "text": "Lifetime. Thank you for your support",
@@ -2441,619 +2433,623 @@
  },
  {
   "text": "Active. No limits on items or categories",
-  "where": "src/screens/SettingsScreen.tsx:588"
- },
- {
-  "text": "{0} of {1} items used this month. Resets {2}",
-  "where": "src/screens/SettingsScreen.tsx:589"
+  "where": "src/screens/SettingsScreen.tsx:587"
  },
  {
   "text": "Plan",
-  "where": "src/screens/SettingsScreen.tsx:591"
+  "where": "src/screens/SettingsScreen.tsx:589"
  },
  {
   "text": "Free plan",
-  "where": "src/screens/SettingsScreen.tsx:599"
+  "where": "src/screens/SettingsScreen.tsx:600"
+ },
+ {
+  "text": "{0} of {1} items this month",
+  "where": "src/screens/SettingsScreen.tsx:603"
+ },
+ {
+  "text": "Resets {0}",
+  "where": "src/screens/SettingsScreen.tsx:604"
  },
  {
   "text": "Get Pro",
-  "where": "src/screens/SettingsScreen.tsx:601"
+  "where": "src/screens/SettingsScreen.tsx:605"
  },
  {
   "text": "Change or cancel your plan in your Apple ID settings",
-  "where": "src/screens/SettingsScreen.tsx:607"
+  "where": "src/screens/SettingsScreen.tsx:612"
  },
  {
   "text": "Just now",
-  "where": "src/screens/SettingsScreen.tsx:631"
+  "where": "src/screens/SettingsScreen.tsx:636"
  },
  {
   "text": "Not yet",
-  "where": "src/screens/SettingsScreen.tsx:635"
+  "where": "src/screens/SettingsScreen.tsx:640"
  },
  {
   "text": "Backing up…",
-  "where": "src/screens/SettingsScreen.tsx:636"
+  "where": "src/screens/SettingsScreen.tsx:641"
  },
  {
   "text": "Offline",
-  "where": "src/screens/SettingsScreen.tsx:636"
+  "where": "src/screens/SettingsScreen.tsx:641"
  },
  {
   "text": "Didn't finish",
-  "where": "src/screens/SettingsScreen.tsx:636"
+  "where": "src/screens/SettingsScreen.tsx:641"
  },
  {
   "text": "Signed out",
-  "where": "src/screens/SettingsScreen.tsx:643"
- },
- {
-  "text": "Account since {0}",
-  "where": "src/screens/SettingsScreen.tsx:644"
- },
- {
-  "text": "Backup and sync",
-  "where": "src/screens/SettingsScreen.tsx:646"
- },
- {
-  "text": "Last backed up",
   "where": "src/screens/SettingsScreen.tsx:648"
  },
  {
-  "text": "Back up now",
+  "text": "Account since {0}",
   "where": "src/screens/SettingsScreen.tsx:649"
+ },
+ {
+  "text": "Backup and sync",
+  "where": "src/screens/SettingsScreen.tsx:651"
+ },
+ {
+  "text": "Last backed up",
+  "where": "src/screens/SettingsScreen.tsx:653"
+ },
+ {
+  "text": "Back up now",
+  "where": "src/screens/SettingsScreen.tsx:654"
  },
  {
   "text": "Also brings in changes from your other phones",
-  "where": "src/screens/SettingsScreen.tsx:649"
+  "where": "src/screens/SettingsScreen.tsx:654"
  },
  {
   "text": "You're offline. Your items are safe on this phone, and they'll back up when you're connected.",
-  "where": "src/screens/SettingsScreen.tsx:653"
+  "where": "src/screens/SettingsScreen.tsx:658"
  },
  {
   "text": "The last backup didn't finish. It tries again on its own; you can also tap Back up now.",
-  "where": "src/screens/SettingsScreen.tsx:653"
+  "where": "src/screens/SettingsScreen.tsx:658"
  },
  {
   "text": "Session",
-  "where": "src/screens/SettingsScreen.tsx:657"
+  "where": "src/screens/SettingsScreen.tsx:662"
  },
  {
   "text": "Choose a new password for this account",
-  "where": "src/screens/SettingsScreen.tsx:659"
- },
- {
-  "text": "Signing out…",
-  "where": "src/screens/SettingsScreen.tsx:663"
- },
- {
-  "text": "Sign out",
-  "where": "src/screens/SettingsScreen.tsx:663"
- },
- {
-  "text": "Removes your items from this phone. They stay in your account",
   "where": "src/screens/SettingsScreen.tsx:664"
  },
  {
+  "text": "Signing out…",
+  "where": "src/screens/SettingsScreen.tsx:668"
+ },
+ {
+  "text": "Sign out",
+  "where": "src/screens/SettingsScreen.tsx:668"
+ },
+ {
+  "text": "Removes your items from this phone. They stay in your account",
+  "where": "src/screens/SettingsScreen.tsx:669"
+ },
+ {
   "text": "Deleted for good after 30 days",
-  "where": "src/screens/SettingsScreen.tsx:680"
+  "where": "src/screens/SettingsScreen.tsx:685"
  },
  {
   "text": "Preferences",
-  "where": "src/screens/SettingsScreen.tsx:701"
- },
- {
-  "text": "Saved in this browser",
-  "where": "src/screens/SettingsScreen.tsx:702"
- },
- {
-  "text": "Saved on this device",
-  "where": "src/screens/SettingsScreen.tsx:702"
- },
- {
-  "text": "Library",
-  "where": "src/screens/SettingsScreen.tsx:704"
- },
- {
-  "text": "Items added",
   "where": "src/screens/SettingsScreen.tsx:706"
  },
  {
-  "text": "Shopping list entries",
+  "text": "Saved in this browser",
   "where": "src/screens/SettingsScreen.tsx:707"
  },
  {
+  "text": "Saved on this device",
+  "where": "src/screens/SettingsScreen.tsx:707"
+ },
+ {
+  "text": "Library",
+  "where": "src/screens/SettingsScreen.tsx:709"
+ },
+ {
+  "text": "Items added",
+  "where": "src/screens/SettingsScreen.tsx:711"
+ },
+ {
+  "text": "Shopping list entries",
+  "where": "src/screens/SettingsScreen.tsx:712"
+ },
+ {
   "text": "Where data lives",
-  "where": "src/screens/SettingsScreen.tsx:713"
+  "where": "src/screens/SettingsScreen.tsx:718"
  },
  {
   "text": "This browser",
-  "where": "src/screens/SettingsScreen.tsx:713"
+  "where": "src/screens/SettingsScreen.tsx:718"
  },
  {
   "text": "This device",
-  "where": "src/screens/SettingsScreen.tsx:713"
+  "where": "src/screens/SettingsScreen.tsx:718"
  },
  {
   "text": "Synced",
-  "where": "src/screens/SettingsScreen.tsx:714"
+  "where": "src/screens/SettingsScreen.tsx:719"
  },
  {
   "text": "Never",
-  "where": "src/screens/SettingsScreen.tsx:714"
+  "where": "src/screens/SettingsScreen.tsx:719"
  },
  {
   "text": "Camera access",
-  "where": "src/screens/SettingsScreen.tsx:728"
+  "where": "src/screens/SettingsScreen.tsx:733"
  },
  {
   "text": "The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings",
-  "where": "src/screens/SettingsScreen.tsx:730"
+  "where": "src/screens/SettingsScreen.tsx:735"
  },
  {
   "text": "The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app",
-  "where": "src/screens/SettingsScreen.tsx:730"
+  "where": "src/screens/SettingsScreen.tsx:735"
  },
  {
   "text": "Open scanner",
-  "where": "src/screens/SettingsScreen.tsx:732"
- },
- {
-  "text": "Data storage",
   "where": "src/screens/SettingsScreen.tsx:737"
  },
  {
+  "text": "Data storage",
+  "where": "src/screens/SettingsScreen.tsx:742"
+ },
+ {
   "text": "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them",
-  "where": "src/screens/SettingsScreen.tsx:739"
+  "where": "src/screens/SettingsScreen.tsx:744"
  },
  {
   "text": "Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.",
-  "where": "src/screens/SettingsScreen.tsx:739"
+  "where": "src/screens/SettingsScreen.tsx:744"
  },
  {
   "text": "Reminder time",
-  "where": "src/screens/SettingsScreen.tsx:773"
+  "where": "src/screens/SettingsScreen.tsx:778"
  },
  {
   "text": "When reminders arrive on the day",
-  "where": "src/screens/SettingsScreen.tsx:775"
+  "where": "src/screens/SettingsScreen.tsx:780"
  },
  {
   "text": "Earlier for what you waste",
-  "where": "src/screens/SettingsScreen.tsx:783"
+  "where": "src/screens/SettingsScreen.tsx:788"
  },
  {
   "text": "An extra heads-up for categories you often throw away, from your waste stats",
-  "where": "src/screens/SettingsScreen.tsx:784"
+  "where": "src/screens/SettingsScreen.tsx:789"
  },
  {
   "text": "Delivery",
-  "where": "src/screens/SettingsScreen.tsx:796"
+  "where": "src/screens/SettingsScreen.tsx:801"
  },
  {
   "text": "Allowed",
-  "where": "src/screens/SettingsScreen.tsx:822"
+  "where": "src/screens/SettingsScreen.tsx:827"
  },
  {
   "text": "Blocked",
-  "where": "src/screens/SettingsScreen.tsx:823"
+  "where": "src/screens/SettingsScreen.tsx:828"
  },
  {
   "text": "Not set",
-  "where": "src/screens/SettingsScreen.tsx:824"
- },
- {
-  "text": "Unavailable",
-  "where": "src/screens/SettingsScreen.tsx:825"
- },
- {
-  "text": "This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background",
   "where": "src/screens/SettingsScreen.tsx:829"
  },
  {
-  "text": "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open",
+  "text": "Unavailable",
   "where": "src/screens/SettingsScreen.tsx:830"
  },
  {
+  "text": "This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background",
+  "where": "src/screens/SettingsScreen.tsx:834"
+ },
+ {
+  "text": "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open",
+  "where": "src/screens/SettingsScreen.tsx:835"
+ },
+ {
   "text": "Your browser will ask for permission when you select Allow. In-app expiry alerts appear while the app is open either way",
-  "where": "src/screens/SettingsScreen.tsx:831"
+  "where": "src/screens/SettingsScreen.tsx:836"
  },
  {
   "text": "This browser doesn't support web notifications. In-app expiry alerts still appear while the app is open",
-  "where": "src/screens/SettingsScreen.tsx:832"
+  "where": "src/screens/SettingsScreen.tsx:837"
  },
  {
   "text": "System notifications are not set up in this version of the app. In-app expiry alerts appear while it is open",
-  "where": "src/screens/SettingsScreen.tsx:832"
+  "where": "src/screens/SettingsScreen.tsx:837"
  },
  {
   "text": "Browsers only allow notifications on secure (https) pages. In-app expiry alerts still appear while the app is open",
-  "where": "src/screens/SettingsScreen.tsx:833"
+  "where": "src/screens/SettingsScreen.tsx:838"
  },
  {
   "text": "Reminders are set automatically from your items and arrive even when Prexpire is closed",
-  "where": "src/screens/SettingsScreen.tsx:841"
+  "where": "src/screens/SettingsScreen.tsx:846"
  },
  {
   "text": "Notifications are off for Prexpire. Turn them on in iPhone Settings, then come back",
-  "where": "src/screens/SettingsScreen.tsx:842"
+  "where": "src/screens/SettingsScreen.tsx:847"
  },
  {
   "text": "Allow notifications to get reminded before your items expire, even when Prexpire is closed",
-  "where": "src/screens/SettingsScreen.tsx:843"
+  "where": "src/screens/SettingsScreen.tsx:848"
  },
  {
   "text": "Expiry reminders on this iPhone",
-  "where": "src/screens/SettingsScreen.tsx:860"
- },
- {
-  "text": "Test sent. It arrives in a few seconds, even if you close the app now",
   "where": "src/screens/SettingsScreen.tsx:865"
  },
  {
+  "text": "Test sent. It arrives in a few seconds, even if you close the app now",
+  "where": "src/screens/SettingsScreen.tsx:870"
+ },
+ {
   "text": "Waiting…",
-  "where": "src/screens/SettingsScreen.tsx:868"
+  "where": "src/screens/SettingsScreen.tsx:873"
  },
  {
   "text": "Allow notifications",
-  "where": "src/screens/SettingsScreen.tsx:868"
+  "where": "src/screens/SettingsScreen.tsx:873"
  },
  {
   "text": "Open iPhone Settings",
-  "where": "src/screens/SettingsScreen.tsx:869"
+  "where": "src/screens/SettingsScreen.tsx:874"
  },
  {
   "text": "Sending…",
-  "where": "src/screens/SettingsScreen.tsx:870"
+  "where": "src/screens/SettingsScreen.tsx:875"
  },
  {
   "text": "Send a test notification",
-  "where": "src/screens/SettingsScreen.tsx:870"
+  "where": "src/screens/SettingsScreen.tsx:875"
  },
  {
   "text": "Waiting for browser…",
-  "where": "src/screens/SettingsScreen.tsx:893"
+  "where": "src/screens/SettingsScreen.tsx:898"
  },
  {
   "text": "The built-ins you keep and the folders you add, all in one place",
-  "where": "src/screens/SettingsScreen.tsx:914"
- },
- {
-  "text": "Defaults",
   "where": "src/screens/SettingsScreen.tsx:919"
  },
  {
+  "text": "Defaults",
+  "where": "src/screens/SettingsScreen.tsx:924"
+ },
+ {
   "text": "Last used",
-  "where": "src/screens/SettingsScreen.tsx:929"
+  "where": "src/screens/SettingsScreen.tsx:934"
  },
  {
   "text": "Browse",
-  "where": "src/screens/SettingsScreen.tsx:933"
+  "where": "src/screens/SettingsScreen.tsx:938"
  },
  {
   "text": "System follows your device’s appearance and switches live",
-  "where": "src/screens/SettingsScreen.tsx:960"
+  "where": "src/screens/SettingsScreen.tsx:965"
  },
  {
   "text": "A bright take on the same design",
-  "where": "src/screens/SettingsScreen.tsx:960"
+  "where": "src/screens/SettingsScreen.tsx:965"
  },
  {
   "text": "The classic near-black look",
-  "where": "src/screens/SettingsScreen.tsx:960"
+  "where": "src/screens/SettingsScreen.tsx:965"
  },
  {
   "text": "How much each screen shows at once",
-  "where": "src/screens/SettingsScreen.tsx:970"
+  "where": "src/screens/SettingsScreen.tsx:975"
  },
  {
   "text": "One column with only what’s coming up, in bigger rows",
-  "where": "src/screens/SettingsScreen.tsx:977"
+  "where": "src/screens/SettingsScreen.tsx:982"
  },
  {
   "text": "More on screen: shorter rows with dates, extra columns",
-  "where": "src/screens/SettingsScreen.tsx:977"
+  "where": "src/screens/SettingsScreen.tsx:982"
  },
  {
   "text": "More on screen: shorter rows with dates",
-  "where": "src/screens/SettingsScreen.tsx:977"
+  "where": "src/screens/SettingsScreen.tsx:982"
  },
  {
   "text": "Categories and your list side by side",
-  "where": "src/screens/SettingsScreen.tsx:977"
+  "where": "src/screens/SettingsScreen.tsx:982"
  },
  {
   "text": "Categories and your list",
-  "where": "src/screens/SettingsScreen.tsx:977"
+  "where": "src/screens/SettingsScreen.tsx:982"
  },
  {
   "text": "Fades and press feedback",
-  "where": "src/screens/SettingsScreen.tsx:986"
+  "where": "src/screens/SettingsScreen.tsx:991"
  },
  {
   "text": "Your device asks for reduced motion, so animations stay off",
-  "where": "src/screens/SettingsScreen.tsx:988"
- },
- {
-  "text": "Scanning Line Animation",
   "where": "src/screens/SettingsScreen.tsx:993"
  },
  {
+  "text": "Scanning Line Animation",
+  "where": "src/screens/SettingsScreen.tsx:998"
+ },
+ {
   "text": "Show or hide the moving scanning line during product scanning",
-  "where": "src/screens/SettingsScreen.tsx:994"
+  "where": "src/screens/SettingsScreen.tsx:999"
  },
  {
   "text": "The file could not be created. Your browser may be blocking downloads on this page.",
-  "where": "src/screens/SettingsScreen.tsx:1018"
+  "where": "src/screens/SettingsScreen.tsx:1023"
  },
  {
   "text": "Backup file created. Keep it somewhere safe, such as iCloud Drive or Files.",
-  "where": "src/screens/SettingsScreen.tsx:1031"
+  "where": "src/screens/SettingsScreen.tsx:1036"
  },
  {
   "text": "The backup file couldn't be created here.",
-  "where": "src/screens/SettingsScreen.tsx:1033"
+  "where": "src/screens/SettingsScreen.tsx:1038"
  },
  {
   "text": "The backup couldn't be restored. Nothing was changed.",
-  "where": "src/screens/SettingsScreen.tsx:1062"
- },
- {
-  "text": "Backup",
   "where": "src/screens/SettingsScreen.tsx:1067"
  },
  {
-  "text": "Save a backup",
+  "text": "Backup",
   "where": "src/screens/SettingsScreen.tsx:1072"
  },
  {
+  "text": "Save a backup",
+  "where": "src/screens/SettingsScreen.tsx:1077"
+ },
+ {
   "text": "Items, categories, settings, Shopping List and stats, in one file",
-  "where": "src/screens/SettingsScreen.tsx:1073"
+  "where": "src/screens/SettingsScreen.tsx:1078"
  },
  {
   "text": "Save backup",
-  "where": "src/screens/SettingsScreen.tsx:1076"
+  "where": "src/screens/SettingsScreen.tsx:1081"
  },
  {
   "text": "Restore a backup",
-  "where": "src/screens/SettingsScreen.tsx:1083"
+  "where": "src/screens/SettingsScreen.tsx:1088"
  },
  {
   "text": "Replaces everything here with the backup's contents",
-  "where": "src/screens/SettingsScreen.tsx:1084"
+  "where": "src/screens/SettingsScreen.tsx:1089"
  },
  {
   "text": "Restore {0} {1}{2}? What is here now will be replaced.",
-  "where": "src/screens/SettingsScreen.tsx:1090"
+  "where": "src/screens/SettingsScreen.tsx:1095"
  },
  {
   "text": "Choose file",
-  "where": "src/screens/SettingsScreen.tsx:1099"
+  "where": "src/screens/SettingsScreen.tsx:1104"
  },
  {
   "text": "Sync",
-  "where": "src/screens/SettingsScreen.tsx:1108"
+  "where": "src/screens/SettingsScreen.tsx:1113"
  },
  {
   "text": "PREXPIRE has no cloud: items, categories and settings live only in this browser, on this device",
-  "where": "src/screens/SettingsScreen.tsx:1114"
+  "where": "src/screens/SettingsScreen.tsx:1119"
  },
  {
   "text": "PREXPIRE has no cloud: items, categories and settings live only on this device",
-  "where": "src/screens/SettingsScreen.tsx:1114"
+  "where": "src/screens/SettingsScreen.tsx:1119"
  },
  {
   "text": "Off",
-  "where": "src/screens/SettingsScreen.tsx:1115"
+  "where": "src/screens/SettingsScreen.tsx:1120"
  },
  {
   "text": "Download your {0} added {1}: name, category, expiry date, date precision, when added and source",
-  "where": "src/screens/SettingsScreen.tsx:1121"
- },
- {
-  "text": "Nothing to export yet. Items you add will be exported here (sample items are not included)",
-  "where": "src/screens/SettingsScreen.tsx:1121"
- },
- {
-  "text": "Export items as JSON",
-  "where": "src/screens/SettingsScreen.tsx:1125"
- },
- {
-  "text": "Export items as CSV",
   "where": "src/screens/SettingsScreen.tsx:1126"
  },
  {
+  "text": "Nothing to export yet. Items you add will be exported here (sample items are not included)",
+  "where": "src/screens/SettingsScreen.tsx:1126"
+ },
+ {
+  "text": "Export items as JSON",
+  "where": "src/screens/SettingsScreen.tsx:1130"
+ },
+ {
+  "text": "Export items as CSV",
+  "where": "src/screens/SettingsScreen.tsx:1131"
+ },
+ {
   "text": "To keep a copy, export before clearing your browser data or moving devices",
-  "where": "src/screens/SettingsScreen.tsx:1134"
+  "where": "src/screens/SettingsScreen.tsx:1139"
  },
  {
   "text": "{0} from {1}% in {2}",
-  "where": "src/screens/SettingsScreen.tsx:1179"
+  "where": "src/screens/SettingsScreen.tsx:1184"
  },
  {
   "text": "This month",
-  "where": "src/screens/SettingsScreen.tsx:1188"
+  "where": "src/screens/SettingsScreen.tsx:1193"
  },
  {
   "text": "{0} used in time this month. {1} used, {2} expired.",
-  "where": "src/screens/SettingsScreen.tsx:1189"
+  "where": "src/screens/SettingsScreen.tsx:1194"
  },
  {
   "text": "used in time",
-  "where": "src/screens/SettingsScreen.tsx:1192"
+  "where": "src/screens/SettingsScreen.tsx:1197"
  },
  {
   "text": "{0} used  ·  {1} expired",
-  "where": "src/screens/SettingsScreen.tsx:1196"
+  "where": "src/screens/SettingsScreen.tsx:1201"
  },
  {
   "text": "Nothing used or expired yet this month.",
-  "where": "src/screens/SettingsScreen.tsx:1196"
+  "where": "src/screens/SettingsScreen.tsx:1201"
  },
  {
   "text": "Used in time, last 6 months",
-  "where": "src/screens/SettingsScreen.tsx:1200"
+  "where": "src/screens/SettingsScreen.tsx:1205"
  },
  {
   "text": "Share of items used in time, per month",
-  "where": "src/screens/SettingsScreen.tsx:1204"
+  "where": "src/screens/SettingsScreen.tsx:1209"
  },
  {
   "text": "All time",
-  "where": "src/screens/SettingsScreen.tsx:1227"
- },
- {
-  "text": "Used in time",
-  "where": "src/screens/SettingsScreen.tsx:1229"
- },
- {
-  "text": "Items used",
-  "where": "src/screens/SettingsScreen.tsx:1230"
- },
- {
-  "text": "Expired before use",
-  "where": "src/screens/SettingsScreen.tsx:1231"
- },
- {
-  "text": "Expiring soon now",
   "where": "src/screens/SettingsScreen.tsx:1232"
  },
  {
-  "text": "By category",
+  "text": "Used in time",
+  "where": "src/screens/SettingsScreen.tsx:1234"
+ },
+ {
+  "text": "Items used",
+  "where": "src/screens/SettingsScreen.tsx:1235"
+ },
+ {
+  "text": "Expired before use",
   "where": "src/screens/SettingsScreen.tsx:1236"
  },
  {
+  "text": "Expiring soon now",
+  "where": "src/screens/SettingsScreen.tsx:1237"
+ },
+ {
+  "text": "By category",
+  "where": "src/screens/SettingsScreen.tsx:1241"
+ },
+ {
   "text": "Use \"Mark as consumed\" when you finish something: it counts as used. Anything past its date counts as expired, whether it's still in your list or removed.",
-  "where": "src/screens/SettingsScreen.tsx:1255"
+  "where": "src/screens/SettingsScreen.tsx:1260"
  },
  {
   "text": "Nothing yet. Use \"Mark as consumed\" in an item's menu when you finish it; anything past its date counts as expired.",
-  "where": "src/screens/SettingsScreen.tsx:1255"
+  "where": "src/screens/SettingsScreen.tsx:1260"
  },
  {
   "text": "Last updated {0}",
-  "where": "src/screens/SettingsScreen.tsx:1268"
+  "where": "src/screens/SettingsScreen.tsx:1273"
  },
  {
   "text": "In short",
-  "where": "src/screens/SettingsScreen.tsx:1272"
- },
- {
-  "text": "Your data",
   "where": "src/screens/SettingsScreen.tsx:1277"
  },
  {
+  "text": "Your data",
+  "where": "src/screens/SettingsScreen.tsx:1282"
+ },
+ {
   "text": "Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones",
-  "where": "src/screens/SettingsScreen.tsx:1278"
+  "where": "src/screens/SettingsScreen.tsx:1283"
  },
  {
   "text": "Camera",
-  "where": "src/screens/SettingsScreen.tsx:1280"
+  "where": "src/screens/SettingsScreen.tsx:1285"
  },
  {
   "text": "Labels are read on the phone; images are never uploaded or kept",
-  "where": "src/screens/SettingsScreen.tsx:1280"
+  "where": "src/screens/SettingsScreen.tsx:1285"
  },
  {
   "text": "Barcodes",
-  "where": "src/screens/SettingsScreen.tsx:1281"
+  "where": "src/screens/SettingsScreen.tsx:1286"
  },
  {
   "text": "Only the barcode number is sent to product databases, to find the name",
-  "where": "src/screens/SettingsScreen.tsx:1281"
+  "where": "src/screens/SettingsScreen.tsx:1286"
  },
  {
   "text": "No ads, no tracking",
-  "where": "src/screens/SettingsScreen.tsx:1282"
- },
- {
-  "text": "Questions: {0}",
-  "where": "src/screens/SettingsScreen.tsx:1282"
- },
- {
-  "text": "Keep track of what matters before it expires.",
   "where": "src/screens/SettingsScreen.tsx:1287"
  },
  {
+  "text": "Questions: {0}",
+  "where": "src/screens/SettingsScreen.tsx:1287"
+ },
+ {
+  "text": "Keep track of what matters before it expires.",
+  "where": "src/screens/SettingsScreen.tsx:1292"
+ },
+ {
   "text": "Version",
-  "where": "src/screens/SettingsScreen.tsx:1288"
+  "where": "src/screens/SettingsScreen.tsx:1293"
  },
  {
   "text": "Last updated",
-  "where": "src/screens/SettingsScreen.tsx:1301"
+  "where": "src/screens/SettingsScreen.tsx:1306"
  },
  {
   "text": "The short version",
-  "where": "src/screens/SettingsScreen.tsx:1303"
+  "where": "src/screens/SettingsScreen.tsx:1308"
  },
  {
   "text": "Also at prexpire.com/",
-  "where": "src/screens/SettingsScreen.tsx:1333"
+  "where": "src/screens/SettingsScreen.tsx:1338"
  },
  {
   "text": "Clear all data?",
-  "where": "src/screens/SettingsScreen.tsx:1368"
+  "where": "src/screens/SettingsScreen.tsx:1373"
  },
  {
   "text": "This permanently deletes from",
-  "where": "src/screens/SettingsScreen.tsx:1369"
+  "where": "src/screens/SettingsScreen.tsx:1374"
  },
  {
   "text": "this browser",
-  "where": "src/screens/SettingsScreen.tsx:1369"
+  "where": "src/screens/SettingsScreen.tsx:1374"
  },
  {
   "text": "this device",
-  "where": "src/screens/SettingsScreen.tsx:1369"
+  "where": "src/screens/SettingsScreen.tsx:1374"
  },
  {
   "text": "1 item you added",
-  "where": "src/screens/SettingsScreen.tsx:1371"
- },
- {
-  "text": "{0} items you added",
-  "where": "src/screens/SettingsScreen.tsx:1371"
- },
- {
-  "text": "1 Shopping List entry",
-  "where": "src/screens/SettingsScreen.tsx:1372"
- },
- {
-  "text": "{0} Shopping List entries",
-  "where": "src/screens/SettingsScreen.tsx:1372"
- },
- {
-  "text": "1 category you added",
-  "where": "src/screens/SettingsScreen.tsx:1374"
- },
- {
-  "text": "{0} categories you added",
-  "where": "src/screens/SettingsScreen.tsx:1374"
- },
- {
-  "text": "•  Every setting on this page (back to the defaults)",
   "where": "src/screens/SettingsScreen.tsx:1376"
  },
  {
-  "text": "•  The remembered last-used category and expiration events",
+  "text": "{0} items you added",
+  "where": "src/screens/SettingsScreen.tsx:1376"
+ },
+ {
+  "text": "1 Shopping List entry",
   "where": "src/screens/SettingsScreen.tsx:1377"
  },
  {
-  "text": "This can't be undone; export your items first if you want a copy",
+  "text": "{0} Shopping List entries",
+  "where": "src/screens/SettingsScreen.tsx:1377"
+ },
+ {
+  "text": "1 category you added",
   "where": "src/screens/SettingsScreen.tsx:1379"
  },
  {
+  "text": "{0} categories you added",
+  "where": "src/screens/SettingsScreen.tsx:1379"
+ },
+ {
+  "text": "•  Every setting on this page (back to the defaults)",
+  "where": "src/screens/SettingsScreen.tsx:1381"
+ },
+ {
+  "text": "•  The remembered last-used category and expiration events",
+  "where": "src/screens/SettingsScreen.tsx:1382"
+ },
+ {
+  "text": "This can't be undone; export your items first if you want a copy",
+  "where": "src/screens/SettingsScreen.tsx:1384"
+ },
+ {
   "text": "Nothing could be deleted because this browser's storage refused the change. Try again",
-  "where": "src/screens/SettingsScreen.tsx:1380"
+  "where": "src/screens/SettingsScreen.tsx:1385"
  },
  {
   "text": "Deleting…",
-  "where": "src/screens/SettingsScreen.tsx:1383"
+  "where": "src/screens/SettingsScreen.tsx:1388"
  },
  {
   "text": "Delete everything",
-  "where": "src/screens/SettingsScreen.tsx:1383"
+  "where": "src/screens/SettingsScreen.tsx:1388"
  },
  {
   "text": "Moved to Purchased",

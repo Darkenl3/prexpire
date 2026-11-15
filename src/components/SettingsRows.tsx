@@ -170,6 +170,51 @@ export function Toggle({ value, onChange, label, disabled = false }: { value: bo
   );
 }
 
+// The free plan at a glance: the plan name with an upgrade button beside it,
+// then a usage bar spanning the text column with the count on one side and
+// the reset date on the other, so neither has to squeeze past the button.
+export function PlanUsageRow({ icon, accent, title, used, limit, countLabel, resetLabel, cta, onPress }: {
+  icon: IconName;
+  accent: Accent;
+  title: string;
+  used: number;
+  limit: number;
+  countLabel: string;
+  resetLabel: string;
+  cta: string;
+  onPress: () => void;
+}) {
+  const c = useTheme();
+  const s = useStyles();
+  const share = limit > 0 ? Math.min(1, used / limit) : 0;
+  // Green while there is room, amber once the month's allowance runs low.
+  const fill = share >= 0.8 ? c.amber : c.green;
+  return (
+    <View style={s.rowWrap}>
+      <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}. ${countLabel}. ${resetLabel}`} accessibilityHint={cta} style={s.pressable} pressedStyle={s.rowPressed}>
+        <View style={s.row}>
+          <IconTile icon={icon} accent={accent} />
+          <View style={s.rowText}>
+            <View style={s.planHead}>
+              <Text style={[s.rowTitle, { flexShrink: 1 }]} numberOfLines={1}>{title}</Text>
+              <View style={[s.planCta, { backgroundColor: c.mint }]}>
+                <Text style={[s.planCtaText, { color: c.scanInk }]} numberOfLines={1}>{cta}</Text>
+              </View>
+            </View>
+            <View style={s.planTrack} accessibilityRole="progressbar" aria-valuemin={0} aria-valuemax={limit} aria-valuenow={used}>
+              <View style={[s.planFill, { width: `${Math.max(share * 100, used > 0 ? 4 : 0)}%`, backgroundColor: fill }]} />
+            </View>
+            <View style={s.planFoot}>
+              <Text style={s.planCount} numberOfLines={1}>{countLabel}</Text>
+              <Text style={s.planReset} numberOfLines={1}>{resetLabel}</Text>
+            </View>
+          </View>
+        </View>
+      </PressScale>
+    </View>
+  );
+}
+
 // A compact rounded status badge, e.g. "Off" or "Up to date". Remount it with
 // a fresh key when its meaning changes and the new badge fades in softly.
 export function StatusBadge({ label, tone = 'muted', check = false }: { label: string; tone?: 'green' | 'amber' | 'muted'; check?: boolean }) {
@@ -445,6 +490,14 @@ const useStyles = makeStyles((c) => ({
   // Capped so a long value (some languages run long) never squeezes the title.
   rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8, flexShrink: 1, maxWidth: '42%' },
   chevron: { marginLeft: 2, opacity: 0.75 },
+  planHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  planCta: { height: 30, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  planCtaText: { fontSize: 13.5, fontWeight: '700' },
+  planTrack: { height: 6, borderRadius: 3, backgroundColor: c.separator, overflow: 'hidden', marginTop: 12 },
+  planFill: { height: 6, borderRadius: 3 },
+  planFoot: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: 7 },
+  planCount: { color: c.textBody, fontSize: 13, fontWeight: '500', flexShrink: 1 },
+  planReset: { color: c.textMuted, fontSize: 13, flexShrink: 0 },
   // Gentle press feedback: a whisper of tint behind the row (the scale-down
   // and opacity settle come from PressScale, timed like the rest).
   rowPressed: { backgroundColor: c === LIGHT ? 'rgba(102,135,125,0.10)' : 'rgba(255,255,255,0.05)' },

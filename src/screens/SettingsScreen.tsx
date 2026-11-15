@@ -31,7 +31,7 @@ import { Brandmark, GlassIconButton, NAV_HEIGHT, navOffset } from '../components
 import { TAB_MS, TAB_SLIDE, tabEnterDirection } from '../components/TabTransition';
 import { CategoryManager } from '../components/CategoryManager';
 import { FadeIn, PressScale } from '../components/Press';
-import { IconTile, Note, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
+import { IconTile, Note, PlanUsageRow, PickerRow, SettingRow, SettingsCard, SettingsSection, SmallButton, StatusBadge, Toggle } from '../components/SettingsRows';
 import { SearchField } from '../components/SearchField';
 import { useShopping } from '../shopping';
 import { AlertSpacer } from '../components/ExpiryAlert';
@@ -584,26 +584,28 @@ function ProRow() {
   const { available, isPro, state, openPaywall, manage } = usePro();
   const added = useMonthlyAdds();
   if (!available) return null;
-  const description = isPro
-    ? state?.lifetime
-      ? tr("Lifetime. Thank you for your support")
-      : tr("Active. No limits on items or categories")
-    : tr("{0} of {1} items used this month. Resets {2}", [Math.min(added, FREE_ITEM_LIMIT), FREE_ITEM_LIMIT, nextReset().toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })]);
+  const description = state?.lifetime ? tr("Lifetime. Thank you for your support") : tr("Active. No limits on items or categories");
   return (
     <SettingsSection title={tr("Plan")}>
       <SettingsCard>
         {/* Free users see their own plan named "Free" (with its count), and
             Pro offered as the next step, so the 20 a month never reads as
             something Pro gives. */}
-        <SettingRow
-          icon={isPro ? 'checkmark-circle' : 'sparkles-outline'}
-          accent="mint"
-          title={isPro ? tr("Prexpire Pro") : tr("Free plan")}
-          description={description}
-          descriptionLines={3}
-          right={isPro ? undefined : <StatusBadge label={tr("Get Pro")} tone="green" />}
-          onPress={() => openPaywall('settings')}
-        />
+        {isPro ? (
+          <SettingRow icon="checkmark-circle" accent="mint" title={tr("Prexpire Pro")} description={description} onPress={() => openPaywall('settings')} />
+        ) : (
+          <PlanUsageRow
+            icon="sparkles-outline"
+            accent="mint"
+            title={tr("Free plan")}
+            used={Math.min(added, FREE_ITEM_LIMIT)}
+            limit={FREE_ITEM_LIMIT}
+            countLabel={tr("{0} of {1} items this month", [Math.min(added, FREE_ITEM_LIMIT), FREE_ITEM_LIMIT])}
+            resetLabel={tr("Resets {0}", [nextReset().toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })])}
+            cta={tr("Get Pro")}
+            onPress={() => openPaywall('settings')}
+          />
+        )}
         {/* Subscribers change or cancel their plan on Apple's own page; a
             lifetime purchase has nothing to manage. */}
         {isPro && !state?.lifetime ? (
