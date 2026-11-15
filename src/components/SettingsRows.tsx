@@ -490,7 +490,7 @@ const useStyles = makeStyles((c) => ({
   // the secondary line reads as part of the app's teal world.
   rowDesc: { color: c.textBody, fontSize: 14, marginTop: 2, lineHeight: 19 },
   // Capped so a long value (some languages run long) never squeezes the title.
-  rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8, flexShrink: 1, maxWidth: '42%' },
+  rowValue: { color: c.textMuted, fontSize: 15, fontWeight: '500', marginLeft: 8, flexShrink: 1, maxWidth: '36%' },
   chevron: { marginLeft: 2, opacity: 0.75 },
   planHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   planCta: { height: 30, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
