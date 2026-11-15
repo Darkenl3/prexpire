@@ -46,9 +46,11 @@ const today = () => {
 
 const USE_KEY = 'prexpire.usage.v1'; // { first: day, days: [recent days used] }
 const ASKED_KEY = 'prexpire.ratingAsked.v1'; // last time asked (ms)
-const MIN_AGE_DAYS = 5;
-const MIN_DAYS_USED = 4;
-const MIN_ITEMS = 8;
+// Earned, but early enough that new users who like it get asked: two
+// different days of use and a few items. iOS still caps it at 3 a year.
+const MIN_AGE_DAYS = 1;
+const MIN_DAYS_USED = 2;
+const MIN_ITEMS = 4;
 const ASK_EVERY_DAYS = 120;
 
 type Use = { first: string; days: string[] };
