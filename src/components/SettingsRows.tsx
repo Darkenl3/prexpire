@@ -102,14 +102,16 @@ type RowProps = {
 export function SettingRow({ icon, accent, title, description, value, right, below, onPress, titleColor, descriptionLines = 2 }: RowProps) {
   const c = useTheme();
   const s = useStyles();
+  const rtlAlign = isRTL() ? ({ textAlign: 'right' } as const) : null;
   const body = (
     <View style={s.row}>
       <IconTile icon={icon} accent={accent} />
       <View style={s.rowText}>
-        <Text style={[s.rowTitle, titleColor ? { color: titleColor } : null]} numberOfLines={2}>
+        <Text style={[s.rowTitle, titleColor ? { color: titleColor } : null, rtlAlign]} numberOfLines={2}>
           {title}
         </Text>
-        {!!description && <Text style={s.rowDesc} numberOfLines={descriptionLines}>
+        {/* An email or web address keeps the reading edge in Hebrew too. */}
+        {!!description && <Text style={[s.rowDesc, rtlAlign]} numberOfLines={descriptionLines}>
           {description}
         </Text>}
       </View>
