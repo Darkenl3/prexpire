@@ -17,6 +17,7 @@ import { ChoicePill, type PillColors } from './ChoicePill';
 import { OPEN_DAY_CHOICES, OPEN_DAYS_DEFAULT, OPEN_DAYS_FALLBACK, WARNING_DAYS, type WarningDays } from '../preferences';
 import { usePro, useProLimits } from '../pro';
 
+import { tr } from '../i18n';
 // Managing the user's categories: the unified list (the built-ins they keep
 // plus the folders they added, in the user's order, all removable), a
 // restore section for the built-ins they removed, and the full-screen page
@@ -210,7 +211,7 @@ export function CategoryManager() {
           }}
           scaleTo={0.99}
           accessibilityRole="button"
-          accessibilityLabel={`Edit ${name}`}
+          accessibilityLabel={tr("Edit {0}", [name])}
           style={s.rowMain}
         >
           <View style={[s.rowIcon, { backgroundColor: iconBg, borderColor: iconBorder }]}>
@@ -221,7 +222,7 @@ export function CategoryManager() {
               {name}
             </Text>
             <Text style={s.rowSub} numberOfLines={1}>
-              {countFor(id) === 1 ? '1 item' : `${countFor(id)} items`}
+              {countFor(id) === 1 ? tr("1 item") : tr("{0} items", [countFor(id)])}
             </Text>
           </View>
         </PressScale>
@@ -231,10 +232,10 @@ export function CategoryManager() {
           {...responderFor(id).panHandlers}
           accessible
           accessibilityRole="adjustable"
-          accessibilityLabel={`Reorder ${name}`}
+          accessibilityLabel={tr("Reorder {0}", [name])}
           accessibilityActions={[
-            { name: 'increment', label: 'Move down' },
-            { name: 'decrement', label: 'Move up' },
+            { name: 'increment', label: tr("Move down") },
+            { name: 'decrement', label: tr("Move up") },
           ]}
           onAccessibilityAction={(e) => {
             if (e.nativeEvent.actionName === 'increment' && index < all.length - 1) move(id, 1);
@@ -260,7 +261,7 @@ export function CategoryManager() {
           hitSlop={8}
           scaleTo={0.97}
           accessibilityRole="button"
-          accessibilityLabel={confirmingThis ? `Confirm removing ${name}` : `Remove ${name}`}
+          accessibilityLabel={confirmingThis ? tr("Confirm removing {0}", [name]) : tr("Remove {0}", [name])}
           style={[s.remove, confirmingThis && s.removeConfirm]}
         >
           <Ionicons name={confirmingThis ? 'trash' : 'trash-outline'} size={17} color={confirmingThis ? c.red : c.textMuted} />
@@ -274,7 +275,7 @@ export function CategoryManager() {
       {all.map((cat, i) => renderRow(cat.id, cat.name, cat.custom, i))}
       {removed.length > 0 && (
         <View style={s.removedWrap}>
-          <Text style={s.removedTitle}>Removed</Text>
+          <Text style={s.removedTitle}>{tr("Removed")}</Text>
           {removed.map((id) => {
             const def = BUILTINS.find((x) => x.id === id);
             if (!def) return null;
@@ -288,10 +289,10 @@ export function CategoryManager() {
                   <Text style={s.rowNameRemoved} numberOfLines={1}>
                     {def.name}
                   </Text>
-                  <Text style={s.rowSub}>{count === 1 ? '1 item still filed here' : `${count} items still filed here`}</Text>
+                  <Text style={s.rowSub}>{count === 1 ? tr("1 item still filed here") : tr("{0} items still filed here", [count])}</Text>
                 </View>
                 <SmallButton
-                  label="Restore"
+                  label={tr("Restore")}
                   icon="return-up-back-outline"
                   onPress={() => {
                     Haptics.selectionAsync().catch(() => {});
@@ -303,7 +304,7 @@ export function CategoryManager() {
           })}
         </View>
       )}
-      <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => (categoriesLocked ? openPaywall('categories') : setAdding(true))} />
+      <SmallButton label={tr("Add category")} icon="add-circle-outline" tone="mint" onPress={() => (categoriesLocked ? openPaywall('categories') : setAdding(true))} />
       {(() => {
         const from = all.find((x) => x.id === moving);
         if (!from) return null;
@@ -317,20 +318,19 @@ export function CategoryManager() {
         };
         return (
           <Modal visible transparent animationType="fade" onRequestClose={close}>
-            <PressScale onPress={close} scaleTo={1} style={s.scrim} accessibilityLabel="Close">
+            <PressScale onPress={close} scaleTo={1} style={s.scrim} accessibilityLabel={tr("Close")}>
               <View />
             </PressScale>
             <View style={s.dialogWrap} pointerEvents="box-none">
               <View style={s.dialog} accessibilityRole={'dialog' as never}>
-                <Text style={s.dialogTitle}>Remove {from.name}?</Text>
+                <Text style={s.dialogTitle}>{tr("Remove")}{' '}{from.name}?</Text>
                 <Text style={s.dialogText}>
-                  {n === 1 ? 'It has 1 item.' : `It has ${n} items.`} Move {n === 1 ? 'it' : 'them'} to:
-                </Text>
+                  {n === 1 ? tr("It has 1 item.") : tr("It has {0} items.", [n])} {' '}{tr("Move")}{' '}{n === 1 ? 'it' : 'them'} {' '}{tr("to:")}</Text>
                 <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={{ gap: 6 }}>
                   {all
                     .filter((x) => x.id !== from.id)
                     .map((x) => (
-                      <PressScale key={x.id} onPress={() => void finish(x.id)} scaleTo={0.98} style={s.dialogRow} accessibilityRole="button" accessibilityLabel={`Move to ${x.name}`}>
+                      <PressScale key={x.id} onPress={() => void finish(x.id)} scaleTo={0.98} style={s.dialogRow} accessibilityRole="button" accessibilityLabel={tr("Move to {0}", [x.name])}>
                         <Ionicons name="folder-open-outline" size={18} color={c.green} />
                         <Text style={s.dialogRowText} numberOfLines={1}>
                           {x.name}
@@ -341,18 +341,18 @@ export function CategoryManager() {
                 <PressScale onPress={() => void finish(null)} scaleTo={0.98} style={s.dialogRow} accessibilityRole="button">
                   <Ionicons name="trash-outline" size={18} color={c.red} />
                   <Text style={[s.dialogRowText, { color: c.red }]} numberOfLines={2}>
-                    {from.custom ? 'Remove anyway (items show as "Other")' : 'Remove, keep items filed (restore later)'}
+                    {from.custom ? tr("Remove anyway (items show as \"Other\")") : tr("Remove, keep items filed (restore later)")}
                   </Text>
                 </PressScale>
                 <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
-                  <SmallButton label="Cancel" onPress={close} />
+                  <SmallButton label={tr("Cancel")} onPress={close} />
                 </View>
               </View>
             </View>
           </Modal>
         );
       })()}
-      {saveError && <Note tone="warn">The last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>}
+      {saveError && <Note tone="warn">{tr("The last change couldn't be saved in this browser's storage. It applies until you close the page.")}</Note>}
       <CategoryPage visible={adding} onClose={() => setAdding(false)} onSave={(name, icon, tint) => add(name, icon, tint)?.id ?? null} />
       {(() => {
         const cat = all.find((x) => x.id === editing);
@@ -405,11 +405,11 @@ function TilePreview({ tint, icon, name, art }: { tint: Tint; icon: string; name
     Animated.spring(bump, { toValue: 1, damping: 14, stiffness: 260, mass: 0.7, useNativeDriver: true }).start();
   }, [tint, icon, motion, bump]);
   return (
-    <View style={s.previewWrap} accessible accessibilityLabel={`Preview of the ${name} tile on Home`}>
+    <View style={s.previewWrap} accessible accessibilityLabel={tr("Preview of the {0} tile on Home", [name])}>
       <Animated.View style={{ transform: [{ scale: bump }] }} pointerEvents="none">
-        <CategoryTile tint={tint} art={art ?? <IconArt icon={icon || DEFAULT_CATEGORY_ICON} size={64} />} name={name} sub="0 items" status={{ label: 'All good', tone: 'green' }} width={150} onPress={() => {}} />
+        <CategoryTile tint={tint} art={art ?? <IconArt icon={icon || DEFAULT_CATEGORY_ICON} size={64} />} name={name} sub={tr("0 items")} status={{ label: tr("All good"), tone: 'green' }} width={150} onPress={() => {}} />
       </Animated.View>
-      <Text style={s.previewCaption}>How it looks on Home</Text>
+      <Text style={s.previewCaption}>{tr("How it looks on Home")}</Text>
     </View>
   );
 }
@@ -488,9 +488,9 @@ function CategoryPage({
           <View style={s.pageHeader}>
             {/* A proper 42pt glass circle (the old width-override left it a
                 touch oval); the spacer opposite keeps the title centred. */}
-            <GlassIconButton icon="chevron-back" iconSize={22} size={42} label="Cancel" onPress={onClose} />
+            <GlassIconButton icon="chevron-back" iconSize={22} size={42} label={tr("Cancel")} onPress={onClose} />
             <Text style={s.pageTitle} accessibilityRole="header">
-              {editing ? 'Edit category' : 'New category'}
+              {editing ? tr("Edit category") : tr("New category")}
             </Text>
             <View style={s.backBtn} />
           </View>
@@ -502,14 +502,10 @@ function CategoryPage({
             keyboardDismissMode="on-drag"
           >
             <Text style={s.pageIntro}>
-              {!editing
-                ? 'A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.'
-                : builtin
-                  ? 'Choose a different icon or colour for this category. Its name stays the same, and every item in it keeps its place.'
-                  : 'Change the name, icon or colour. Every item in this folder stays in it.'}
+              {!editing ? tr("A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.") : builtin ? tr("Choose a different icon or colour for this category. Its name stays the same, and every item in it keeps its place.") : tr("Change the name, icon or colour. Every item in this folder stays in it.")}
             </Text>
-            <TilePreview tint={tint} icon={icon} name={trimmed || 'New category'} />
-            <Text style={s.label}>Name</Text>
+            <TilePreview tint={tint} icon={icon} name={trimmed || tr("New category")} />
+            <Text style={s.label}>{tr("Name")}</Text>
             {/* Deliberately NOT autofocused: the keyboard opens only when the
                 user taps this field. Typed text survives keyboard dismissals
                 (and rerenders) untouched, because the value lives here. */}
@@ -519,7 +515,7 @@ function CategoryPage({
                 setName(t);
                 setRejected(false);
               }}
-              placeholder="Name, e.g. Pet food"
+              placeholder={tr("Name, e.g. Pet food")}
               placeholderTextColor={c.textMuted}
               // The box itself shows it is active (lime edge), not a ring inside it.
               onFocus={() => setNameFocused(true)}
@@ -529,11 +525,11 @@ function CategoryPage({
               editable={!builtin}
               maxLength={24}
               returnKeyType="done"
-              accessibilityLabel="Category name"
+              accessibilityLabel={tr("Category name")}
             />
-            {rejected && !trimmed && <Text style={s.warn}>Give the category a name first.</Text>}
-            {builtin && <Text style={s.hint}>Preset categories keep their name.</Text>}
-            <Text style={s.label}>Icon</Text>
+            {rejected && !trimmed && <Text style={s.warn}>{tr("Give the category a name first.")}</Text>}
+            {builtin && <Text style={s.hint}>{tr("Preset categories keep their name.")}</Text>}
+            <Text style={s.label}>{tr("Icon")}</Text>
             <View style={s.iconGrid}>
               {CATEGORY_ICONS.map((ic) => {
                 const on = ic === icon;
@@ -544,7 +540,7 @@ function CategoryPage({
                     scaleTo={0.97}
                     accessibilityRole="radio"
                     aria-checked={on}
-                    accessibilityLabel={`Icon: ${CATEGORY_ICON_LABELS[ic]}`}
+                    accessibilityLabel={tr("Icon: {0}", [CATEGORY_ICON_LABELS[ic]])}
                     style={[s.iconCell, on && { borderColor: c.tints[tint].border, backgroundColor: c === LIGHT ? c.tints[tint].top : `${c.tints[tint].top}55` }]}
                   >
                     <View style={{ opacity: on ? 1 : 0.78 }}>
@@ -554,7 +550,7 @@ function CategoryPage({
                 );
               })}
             </View>
-            <Text style={s.label}>Colour</Text>
+            <Text style={s.label}>{tr("Colour")}</Text>
             <View style={s.tintRow}>
               {CUSTOM_TINTS.map((t) => {
                 const on = t === tint;
@@ -566,7 +562,7 @@ function CategoryPage({
                     scaleTo={0.97}
                     accessibilityRole="radio"
                     aria-checked={on}
-                    accessibilityLabel={`Colour ${t}`}
+                    accessibilityLabel={tr("Colour {0}", [t])}
                     style={[s.tintDot, on && s.tintDotOn]}
                   >
                     <View style={[s.tintFill, { backgroundColor: g.top, borderColor: g.border }]}>
@@ -576,13 +572,13 @@ function CategoryPage({
                 );
               })}
             </View>
-            <Text style={s.label}>Warning period</Text>
-            <Text style={s.hint}>How early items here show as expiring, get their first reminder, and join your Shopping List.</Text>
+            <Text style={s.label}>{tr("Warning period")}</Text>
+            <Text style={s.hint}>{tr("How early items here show as expiring, get their first reminder, and join your Shopping List.")}</Text>
             <View style={s.pillRow}>
               {(['general', ...WARNING_DAYS] as const).map((w) => (
                 <ChoicePill
                   key={String(w)}
-                  label={w === 'general' ? `Same as app (${settings.warningDays} days)` : `${w} days`}
+                  label={w === 'general' ? tr("Same as app ({0} days)", [settings.warningDays]) : tr("{0} days", [w])}
                   selected={warn === w}
                   onPress={() => setWarn(w)}
                   colors={pagePills(c)}
@@ -590,13 +586,13 @@ function CategoryPage({
                 />
               ))}
             </View>
-            <Text style={s.label}>Once opened, use within</Text>
-            <Text style={s.hint}>When you mark an item here as opened, its date moves to this many days from that day (never later than the printed date).</Text>
+            <Text style={s.label}>{tr("Once opened, use within")}</Text>
+            <Text style={s.hint}>{tr("When you mark an item here as opened, its date moves to this many days from that day (never later than the printed date).")}</Text>
             <View style={s.pillRow}>
               {OPEN_DAY_CHOICES.map((d) => (
                 <ChoicePill
                   key={d}
-                  label={d === 1 ? '1 day' : `${d} days`}
+                  label={d === 1 ? tr("1 day") : tr("{0} days", [d])}
                   selected={open === d}
                   onPress={() => setOpen(d)}
                   colors={pagePills(c)}
@@ -605,11 +601,11 @@ function CategoryPage({
               ))}
             </View>
             <View style={s.pageActions}>
-              <SmallButton label="Cancel" onPress={onClose} />
+              <SmallButton label={tr("Cancel")} onPress={onClose} />
               {editing ? (
-                <SmallButton label="Save changes" icon="checkmark-circle-outline" tone="mint" onPress={submit} />
+                <SmallButton label={tr("Save changes")} icon="checkmark-circle-outline" tone="mint" onPress={submit} />
               ) : (
-                <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={submit} />
+                <SmallButton label={tr("Add category")} icon="add-circle-outline" tone="mint" onPress={submit} />
               )}
             </View>
           </ScrollView>

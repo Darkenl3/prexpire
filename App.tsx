@@ -31,6 +31,7 @@ import { useLayout } from './src/layout';
 import { dayOrderForRegion, parseExpiry } from './src/scanner/dateParser';
 import type { Detection } from './src/scanner/useExpiryScanner';
 
+import { tr } from './src/i18n';
 type Route = { tab: TabId; category?: CategoryId; shopping?: boolean; settingsPage?: 'categories' | 'signin' } | { tab: 'scan'; manual?: boolean };
 
 const TABS: TabId[] = ['home', 'items', 'reminders', 'settings'];
@@ -301,7 +302,7 @@ function Shell() {
       setNativeScan(null);
       setTimeout(
         () => {
-          setNotice(`${item.name} added · expires ${formatDate(item.expiresOn, item.datePrecision)}`);
+          setNotice(tr("{0} added · expires {1}", [item.name, formatDate(item.expiresOn, item.datePrecision)]));
           setRoute({ tab: 'home' });
           setLastTab('home');
         },
@@ -341,8 +342,8 @@ function Shell() {
         typeof detail.image === 'string' && detail.image.length <= 300000 && (/^data:image\//.test(detail.image) || /^https:\/\//.test(detail.image))
           ? detail.image
           : undefined;
-      if (!name) return reply(false, 'The product needs a name.');
-      if (!dateIso) return reply(false, 'The expiry date could not be read.');
+      if (!name) return reply(false, tr("The product needs a name."));
+      if (!dateIso) return reply(false, tr("The expiry date could not be read."));
       const wanted = typeof detail.category === 'string' && detail.category ? (detail.category as CategoryId) : null;
       const category = wanted && categoryIds.includes(wanted) ? wanted : fallbackCategory;
       handled.add(requestId);
@@ -353,7 +354,7 @@ function Shell() {
         })
         .catch(() => {
           handled.delete(requestId);
-          reply(false, "Couldn't save the item. Please try again.");
+          reply(false, tr("Couldn't save the item. Please try again."));
         });
     };
     window.addEventListener('prexpire:save', onSave);
@@ -464,7 +465,7 @@ function Shell() {
     (item: Item) => {
       maybeAskForRating(items.length + 1 + history.length);
       setNativeScan(null);
-      setNotice(`${item.name} added · expires ${formatDate(item.expiresOn, item.datePrecision)}`);
+      setNotice(tr("{0} added · expires {1}", [item.name, formatDate(item.expiresOn, item.datePrecision)]));
       setRoute({ tab: 'home' });
       setLastTab('home');
     },
@@ -582,8 +583,8 @@ function Shell() {
 }
 
 const KEEP_SAFE = {
-  title: 'Keep your items safe',
-  text: "Without an account, your items live only on this phone. Create a free account and a lost, broken or new phone never loses them.",
+  title: tr("Keep your items safe"),
+  text: tr("Without an account, your items live only on this phone. Create a free account and a lost, broken or new phone never loses them."),
 };
 
 // Themed chrome: the page background and the status-bar style follow the theme.

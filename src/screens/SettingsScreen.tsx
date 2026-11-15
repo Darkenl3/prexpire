@@ -54,6 +54,7 @@ import { TwoColumns, TwoUpList } from '../components/TwoUp';
 import { SupportPage } from '../components/SupportPage';
 import { openStore, useStoreUpdate } from '../appStore';
 
+import { LANGUAGES, applyLanguage, availableLanguages, language, phoneLanguage, tr, type LanguageChoice } from '../i18n';
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
 // Inside the iPhone app: the installed app's own version and build
@@ -87,18 +88,18 @@ type PageId =
   | 'termsOfUse';
 
 const PAGE_TITLES: Record<PageId, string> = {
-  account: 'Account',
-  profile: 'Profile',
-  privacy: 'Privacy & Security',
-  notifications: 'Notifications',
-  categories: 'Categories',
-  appearance: 'Appearance',
-  backup: 'Backup & Restore',
-  stats: 'Waste stats',
-  help: 'Help & Support',
-  terms: 'Terms & Privacy',
-  privacyPolicy: 'Privacy Policy',
-  termsOfUse: 'Terms of Use',
+  account: tr("Account"),
+  profile: tr("Profile"),
+  privacy: tr("Privacy & Security"),
+  notifications: tr("Notifications"),
+  categories: tr("Categories"),
+  appearance: tr("Appearance"),
+  backup: tr("Backup & Restore"),
+  stats: tr("Waste stats"),
+  help: tr("Help & Support"),
+  terms: tr("Terms & Privacy"),
+  privacyPolicy: tr("Privacy Policy"),
+  termsOfUse: tr("Terms of Use"),
 };
 
 // 'signin' opens Settings with the sign-in sheet already up (from the
@@ -118,7 +119,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const [page, setPage] = useState<PageId | null>(initialPage === 'categories' ? 'categories' : null);
   // Signed in is the session, not the email: an Apple account can have none.
   const { email: accountEmail, session: authSession } = useAuth();
-  const email = accountEmail ?? (authSession ? 'Apple account' : null);
+  const email = accountEmail ?? (authSession ? tr("Apple account") : null);
   const [signInOpen, setSignInOpen] = useState(initialPage === 'signin');
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // The settings search sheet, opened from the magnifier in the header.
@@ -179,7 +180,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         <>
       {saveError && (
         <View style={s.banner} accessibilityRole="alert">
-          <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page</Note>
+          <Note tone="warn">{tr("Your last change couldn't be saved in this browser's storage. It applies until you close the page")}</Note>
         </View>
       )}
 
@@ -188,7 +189,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <PressScale
         onPress={() => (email ? open('account') : setSignInOpen(true))}
         accessibilityRole="button"
-        accessibilityLabel={email ? `Account, signed in as ${email}` : 'Sign in to back up your items'}
+        accessibilityLabel={email ? tr("Account, signed in as {0}", [email]) : tr("Sign in to back up your items")}
         style={s.profileCard}
         scaleTo={0.99}
       >
@@ -200,9 +201,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           )}
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={s.profileTitle} numberOfLines={1}>{email ? email : 'Sign in'}</Text>
+          <Text style={s.profileTitle} numberOfLines={1}>{email ? email : tr("Sign in")}</Text>
           <Text style={s.profileSub} numberOfLines={1}>
-            {email ? 'Signed in' : 'Back up your items to an account'}
+            {email ? tr("Signed in") : tr("Back up your items to an account")}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
@@ -211,48 +212,63 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
       <UpdateRow />
       <ProRow />
 
-      <SettingsSection title="General">
+      <SettingsSection title={tr("General")}>
         <SettingsCard>
-          <SettingRow icon="person-outline" accent="mint" title="Profile" description="Your library and storage" onPress={() => open('profile')} />
-          <SettingRow icon="shield-checkmark-outline" accent="blue" title="Privacy & Security" description="Camera access and stored data" onPress={() => open('privacy')} />
+          <SettingRow icon="person-outline" accent="mint" title={tr("Profile")} description={tr("Your library and storage")} onPress={() => open('profile')} />
+          <SettingRow icon="shield-checkmark-outline" accent="blue" title={tr("Privacy & Security")} description={tr("Camera access and stored data")} onPress={() => open('privacy')} />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="App Preferences">
+      <SettingsSection title={tr("App Preferences")}>
         <SettingsCard>
-          <SettingRow icon="notifications-outline" accent="amber" title="Notifications" description="Expiry reminders and timing" onPress={() => open('notifications')} />
-          <SettingRow icon="grid" accent="purple" title="Categories" description="Your folders and defaults" onPress={() => open('categories')} />
-          <SettingRow icon="color-palette-outline" accent="pink" title="Appearance" description="Theme, density and motion" onPress={() => open('appearance')} />
+          <SettingRow icon="notifications-outline" accent="amber" title={tr("Notifications")} description={tr("Expiry reminders and timing")} onPress={() => open('notifications')} />
+          <SettingRow icon="grid" accent="purple" title={tr("Categories")} description={tr("Your folders and defaults")} onPress={() => open('categories')} />
+          <SettingRow icon="color-palette-outline" accent="pink" title={tr("Appearance")} description={tr("Theme, density and motion")} onPress={() => open('appearance')} />
+          <PickerRow<LanguageChoice>
+            icon="language-outline"
+            accent="teal"
+            title={tr("Language")}
+            label={tr("Language")}
+            value={settings.language}
+            options={[
+              { value: 'system', label: tr("Phone language"), sub: LANGUAGES.find((l) => l.code === phoneLanguage())?.native },
+              ...availableLanguages().map((l) => ({ value: l.code as LanguageChoice, label: l.native, sub: l.code === language() ? undefined : tr(l.english) })),
+            ]}
+            onChange={(v) => {
+              update({ language: v });
+              applyLanguage(v);
+            }}
+          />
         </SettingsCard>
       </SettingsSection>
         </>
       }
       right={
         <>
-      <SettingsSection title="Expiry & Lists">
+      <SettingsSection title={tr("Expiry & Lists")}>
         <SettingsCard>
           <PickerRow
             icon="hourglass-outline"
             accent="mint"
-            title="Warning period"
-            label="Warning period"
-            description="Days before expiry"
+            title={tr("Warning period")}
+            label={tr("Warning period")}
+            description={tr("Days before expiry")}
             value={settings.warningDays}
-            options={WARNING_DAYS.map((d) => ({ value: d, label: `${d} days` }))}
+            options={WARNING_DAYS.map((d) => ({ value: d, label: tr("{0} days", [d]) }))}
             onChange={(v) => update({ warningDays: v })}
           />
           <SettingRow
             icon="cart-outline"
             accent="mint"
-            title="Automatic Shopping List"
-            description="Adds expiring products"
-            right={<Toggle label="Automatically add expiring products to the Shopping List" value={settings.autoShoppingList} onChange={(v) => update({ autoShoppingList: v })} />}
+            title={tr("Automatic Shopping List")}
+            description={tr("Adds expiring products")}
+            right={<Toggle label={tr("Automatically add expiring products to the Shopping List")} value={settings.autoShoppingList} onChange={(v) => update({ autoShoppingList: v })} />}
           />
           <PickerRow
             icon="calendar-outline"
             accent="teal"
-            title="Date format"
-            label="Date format"
+            title={tr("Date format")}
+            label={tr("Date format")}
             description={formatDate(isoToday(new Date()))}
             value={settings.dateFormat}
             options={DATE_FORMATS.map((f) => ({ value: f, label: DATE_FORMAT_LABELS[f] }))}
@@ -261,9 +277,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <PickerRow
             icon="swap-vertical-outline"
             accent="blue"
-            title="Sorting"
-            label="Sorting"
-            description="Order items"
+            title={tr("Sorting")}
+            label={tr("Sorting")}
+            description={tr("Order items")}
             value={settings.sort}
             options={SORT_ORDERS.map((o) => ({ value: o, label: SORT_LABELS[o] }))}
             onChange={(v) => update({ sort: v })}
@@ -271,37 +287,37 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <SettingRow
             icon="eye-outline"
             accent="teal"
-            title="Show expired items"
-            description="Keep past-date items visible"
-            right={<Toggle label="Show expired items" value={settings.showExpired} onChange={(v) => update({ showExpired: v })} />}
+            title={tr("Show expired items")}
+            description={tr("Keep past-date items visible")}
+            right={<Toggle label={tr("Show expired items")} value={settings.showExpired} onChange={(v) => update({ showExpired: v })} />}
           />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Insights">
+      <SettingsSection title={tr("Insights")}>
         <SettingsCard>
-          <SettingRow icon="leaf-outline" accent="mint" title="Waste stats" description="What you used in time and what expired" onPress={() => open('stats')} />
+          <SettingRow icon="leaf-outline" accent="mint" title={tr("Waste stats")} description={tr("What you used in time and what expired")} onPress={() => open('stats')} />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="Data & Storage">
+      <SettingsSection title={tr("Data & Storage")}>
         <SettingsCard>
           <SettingRow
             icon="cloud-upload-outline"
             accent="mint"
-            title="Backup & Restore"
-            description="Save everything to a file, or restore one"
+            title={tr("Backup & Restore")}
+            description={tr("Save everything to a file, or restore one")}
             onPress={() => open('backup')}
           />
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title="About">
+      <SettingsSection title={tr("About")}>
         <SettingsCard>
-          <SettingRow icon="information-circle-outline" accent="blue" title="App version" value={APP_VERSION_SHOWN} />
-          <SettingRow icon="help-circle-outline" accent="teal" title="Help & Support" description="Answers, and how to reach us" onPress={() => open('help')} />
-          <SettingRow icon="chatbubble-ellipses-outline" accent="mint" title="Send feedback" description="Report a bug, or share feedback or an idea" onPress={() => setFeedbackOpen(true)} />
-          <SettingRow icon="document-text-outline" accent="purple" title="Terms & Privacy" onPress={() => open('terms')} />
+          <SettingRow icon="information-circle-outline" accent="blue" title={tr("App version")} value={APP_VERSION_SHOWN} />
+          <SettingRow icon="help-circle-outline" accent="teal" title={tr("Help & Support")} description={tr("Answers, and how to reach us")} onPress={() => open('help')} />
+          <SettingRow icon="chatbubble-ellipses-outline" accent="mint" title={tr("Send feedback")} description={tr("Report a bug, or share feedback or an idea")} onPress={() => setFeedbackOpen(true)} />
+          <SettingRow icon="document-text-outline" accent="purple" title={tr("Terms & Privacy")} onPress={() => open('terms')} />
         </SettingsCard>
       </SettingsSection>
 
@@ -309,9 +325,9 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
         <SettingRow
           icon="trash-outline"
           accent="red"
-          title="Clear all data"
+          title={tr("Clear all data")}
           titleColor={accents.red}
-          description="Delete everything stored here"
+          description={tr("Delete everything stored here")}
           onPress={() => setConfirmClear(true)}
         />
       </SettingsCard>
@@ -327,12 +343,11 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <View style={s.header}>
             {/* The compact 38pt glass back circle: the header's title row
                 stays light, the button stops competing with it. */}
-            <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={() => onNavigate('tab:home')} />
+            <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Go back")} onPress={() => onNavigate('tab:home')} />
             <Text style={s.headerTitle} accessibilityRole="header">
-              Settings
-            </Text>
+              {tr("Settings")}</Text>
             {/* The magnifier at the top right: opens the settings search sheet. */}
-            <GlassIconButton icon="search" iconSize={19} size={38} label="Search settings" onPress={() => setSearchOpen(true)} />
+            <GlassIconButton icon="search" iconSize={19} size={38} label={tr("Search settings")} onPress={() => setSearchOpen(true)} />
           </View>
         </View>
         <ScrollViewLike bottomPad={bottomPad}>
@@ -345,7 +360,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
           <View style={[s.root, { paddingTop: insets.top }]}>
             <View style={[s.frame, s.rootFrame]}>
               <View style={s.header}>
-                <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={closePage} />
+                <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Go back")} onPress={closePage} />
                 <Text style={s.detailTitle} accessibilityRole="header">
                   {PAGE_TITLES[page]}
                 </Text>
@@ -419,31 +434,31 @@ type SearchEntry = {
 
 function searchIndex(): SearchEntry[] {
   return [
-    { key: 'profile', title: 'Profile', description: 'Your library and storage', icon: 'person-outline', accent: 'mint', page: 'profile' },
-    { key: 'privacy', title: 'Privacy & Security', description: 'Camera access and stored data', icon: 'shield-checkmark-outline', accent: 'blue', page: 'privacy' },
-    { key: 'notifications', title: 'Notifications', description: 'Expiry reminders and timing', icon: 'notifications-outline', accent: 'amber', page: 'notifications' },
-    { key: 'expiry-reminders', title: 'Expiry reminders', description: 'Get notified before items expire', icon: 'notifications-outline', accent: 'amber', page: 'notifications' },
-    { key: 'reminder-timing', title: 'Reminder timing', description: 'When a reminder appears before the expiry date', icon: 'time-outline', accent: 'amber', page: 'notifications' },
-    { key: 'daily-summary', title: 'Daily summary', description: "See what's expiring soon", icon: 'today-outline', accent: 'amber', page: 'notifications' },
-    { key: 'browser-notifications', title: WEB ? 'Browser notifications' : 'Notifications', description: WEB ? 'Allow notifications from this browser' : 'Allow notifications on this device', icon: 'globe-outline', accent: 'amber', page: 'notifications' },
-    { key: 'categories', title: 'Categories', description: 'Your folders and defaults', icon: 'grid', accent: 'purple', page: 'categories' },
-    { key: 'default-category', title: 'Default category', description: 'Preselected when you add an item', icon: 'pricetag-outline', accent: 'blue', page: 'categories' },
-    { key: 'browse-categories', title: 'Browse categories', description: 'The lists for the categories you keep', icon: 'folder-open-outline', accent: 'purple', page: 'categories' },
-    { key: 'appearance', title: 'Appearance', description: 'Theme, density and motion', icon: 'color-palette-outline', accent: 'pink', page: 'appearance' },
-    { key: 'theme', title: 'Theme', description: 'Dark, light, or follow your device', icon: 'contrast-outline', accent: 'purple', page: 'appearance' },
-    { key: 'padLayout', title: 'Layout', description: 'Basic, Compact or Detailed', icon: 'grid-outline', accent: 'blue', page: 'appearance' },
-    { key: 'animations', title: 'Animations', description: 'Fades, press feedback and the scanning line', icon: 'sparkles-outline', accent: 'purple', page: 'appearance' },
-    { key: 'warning-period', title: 'Warning period', description: 'Days before expiry', icon: 'hourglass-outline', accent: 'mint', page: null },
-    { key: 'auto-shopping', title: 'Automatic Shopping List', description: 'Adds expiring products', icon: 'cart-outline', accent: 'mint', page: null },
-    { key: 'date-format', title: 'Date format', description: 'How dates are displayed', icon: 'calendar-outline', accent: 'teal', page: null },
-    { key: 'sorting', title: 'Sorting', description: 'Order items', icon: 'swap-vertical-outline', accent: 'blue', page: null },
-    { key: 'show-expired', title: 'Show expired items', description: 'Keep past-date items visible', icon: 'eye-outline', accent: 'teal', page: null },
-    { key: 'backup', title: 'Backup & Restore', description: 'Save everything to a file, or restore one', icon: 'cloud-upload-outline', accent: 'mint', page: 'backup' },
-    { key: 'stats', title: 'Waste stats', description: 'What you used in time and what expired', icon: 'leaf-outline', accent: 'mint', page: 'stats' },
-    { key: 'export', title: 'Export data', description: 'Download your items as JSON or CSV', icon: 'download-outline', accent: 'teal', page: 'backup' },
-    { key: 'help', title: 'Help & Support', description: 'Answers, and how to reach us', icon: 'help-circle-outline', accent: 'teal', page: 'help' },
-    { key: 'terms', title: 'Terms & Privacy', description: 'Your data, camera and exports', icon: 'document-text-outline', accent: 'purple', page: 'terms' },
-    { key: 'clear-data', title: 'Clear all data', description: 'Delete everything stored here', icon: 'trash-outline', accent: 'red', page: null },
+    { key: 'profile', title: tr("Profile"), description: tr("Your library and storage"), icon: 'person-outline', accent: 'mint', page: 'profile' },
+    { key: 'privacy', title: tr("Privacy & Security"), description: tr("Camera access and stored data"), icon: 'shield-checkmark-outline', accent: 'blue', page: 'privacy' },
+    { key: 'notifications', title: tr("Notifications"), description: tr("Expiry reminders and timing"), icon: 'notifications-outline', accent: 'amber', page: 'notifications' },
+    { key: 'expiry-reminders', title: tr("Expiry reminders"), description: tr("Get notified before items expire"), icon: 'notifications-outline', accent: 'amber', page: 'notifications' },
+    { key: 'reminder-timing', title: tr("Reminder timing"), description: tr("When a reminder appears before the expiry date"), icon: 'time-outline', accent: 'amber', page: 'notifications' },
+    { key: 'daily-summary', title: tr("Daily summary"), description: tr("See what's expiring soon"), icon: 'today-outline', accent: 'amber', page: 'notifications' },
+    { key: 'browser-notifications', title: WEB ? tr("Browser notifications") : tr("Notifications"), description: WEB ? tr("Allow notifications from this browser") : tr("Allow notifications on this device"), icon: 'globe-outline', accent: 'amber', page: 'notifications' },
+    { key: 'categories', title: tr("Categories"), description: tr("Your folders and defaults"), icon: 'grid', accent: 'purple', page: 'categories' },
+    { key: 'default-category', title: tr("Default category"), description: tr("Preselected when you add an item"), icon: 'pricetag-outline', accent: 'blue', page: 'categories' },
+    { key: 'browse-categories', title: tr("Browse categories"), description: tr("The lists for the categories you keep"), icon: 'folder-open-outline', accent: 'purple', page: 'categories' },
+    { key: 'appearance', title: tr("Appearance"), description: tr("Theme, density and motion"), icon: 'color-palette-outline', accent: 'pink', page: 'appearance' },
+    { key: 'theme', title: tr("Theme"), description: tr("Dark, light, or follow your device"), icon: 'contrast-outline', accent: 'purple', page: 'appearance' },
+    { key: 'padLayout', title: tr("Layout"), description: tr("Basic, Compact or Detailed"), icon: 'grid-outline', accent: 'blue', page: 'appearance' },
+    { key: 'animations', title: tr("Animations"), description: tr("Fades, press feedback and the scanning line"), icon: 'sparkles-outline', accent: 'purple', page: 'appearance' },
+    { key: 'warning-period', title: tr("Warning period"), description: tr("Days before expiry"), icon: 'hourglass-outline', accent: 'mint', page: null },
+    { key: 'auto-shopping', title: tr("Automatic Shopping List"), description: tr("Adds expiring products"), icon: 'cart-outline', accent: 'mint', page: null },
+    { key: 'date-format', title: tr("Date format"), description: tr("How dates are displayed"), icon: 'calendar-outline', accent: 'teal', page: null },
+    { key: 'sorting', title: tr("Sorting"), description: tr("Order items"), icon: 'swap-vertical-outline', accent: 'blue', page: null },
+    { key: 'show-expired', title: tr("Show expired items"), description: tr("Keep past-date items visible"), icon: 'eye-outline', accent: 'teal', page: null },
+    { key: 'backup', title: tr("Backup & Restore"), description: tr("Save everything to a file, or restore one"), icon: 'cloud-upload-outline', accent: 'mint', page: 'backup' },
+    { key: 'stats', title: tr("Waste stats"), description: tr("What you used in time and what expired"), icon: 'leaf-outline', accent: 'mint', page: 'stats' },
+    { key: 'export', title: tr("Export data"), description: tr("Download your items as JSON or CSV"), icon: 'download-outline', accent: 'teal', page: 'backup' },
+    { key: 'help', title: tr("Help & Support"), description: tr("Answers, and how to reach us"), icon: 'help-circle-outline', accent: 'teal', page: 'help' },
+    { key: 'terms', title: tr("Terms & Privacy"), description: tr("Your data, camera and exports"), icon: 'document-text-outline', accent: 'purple', page: 'terms' },
+    { key: 'clear-data', title: tr("Clear all data"), description: tr("Delete everything stored here"), icon: 'trash-outline', accent: 'red', page: null },
   ];
 }
 
@@ -463,18 +478,17 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
       <View style={[s.searchRoot, { paddingTop: insets.top + 6, paddingLeft: insets.left, paddingRight: insets.right }]}>
         <View style={[s.frame, s.rootFrame, s.searchBody]}>
           <View style={s.header}>
-            <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Close search" onPress={onClose} />
+            <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Close search")} onPress={onClose} />
             <Text style={s.detailTitle} accessibilityRole="header">
-              Search settings
-            </Text>
+              {tr("Search settings")}</Text>
           </View>
-          <SearchField value={query} onChange={setQuery} placeholder="Search settings" accessibilityLabel="Search settings" />
+          <SearchField value={query} onChange={setQuery} placeholder={tr("Search settings")} accessibilityLabel={tr("Search settings")} />
           <ScrollView style={s.searchScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={s.searchContent}>
               {q === '' ? (
-                <Text style={s.searchHint}>Type to find a setting by name or what it does</Text>
+                <Text style={s.searchHint}>{tr("Type to find a setting by name or what it does")}</Text>
               ) : results.length === 0 ? (
-                <Text style={s.searchHint}>No settings match “{query.trim()}”</Text>
+                <Text style={s.searchHint}>{tr("No settings match “")}{query.trim()}”</Text>
               ) : (
                 <View style={s.resultsCard}>
                   {results.map((e, i) => (
@@ -554,9 +568,9 @@ function UpdateRow() {
   const update = useStoreUpdate();
   if (!update) return null;
   return (
-    <SettingsSection title="Update">
+    <SettingsSection title={tr("Update")}>
       <SettingsCard>
-        <SettingRow icon="arrow-up-circle-outline" accent="mint" title="Update available" description={`Prexpire ${update.version} is on the App Store`} value="Update" onPress={() => openStore(update.url)} />
+        <SettingRow icon="arrow-up-circle-outline" accent="mint" title={tr("Update available")} description={tr("Prexpire {0} is on the App Store", [update.version])} value={tr("Update")} onPress={() => openStore(update.url)} />
       </SettingsCard>
     </SettingsSection>
   );
@@ -570,11 +584,11 @@ function ProRow() {
   if (!available) return null;
   const description = isPro
     ? state?.lifetime
-      ? 'Lifetime. Thank you for your support'
-      : 'Active. No limits on items or categories'
-    : `${Math.min(added, FREE_ITEM_LIMIT)} of ${FREE_ITEM_LIMIT} items used this month. Resets ${nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+      ? tr("Lifetime. Thank you for your support")
+      : tr("Active. No limits on items or categories")
+    : tr("{0} of {1} items used this month. Resets {2}", [Math.min(added, FREE_ITEM_LIMIT), FREE_ITEM_LIMIT, nextReset().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })]);
   return (
-    <SettingsSection title="Plan">
+    <SettingsSection title={tr("Plan")}>
       <SettingsCard>
         {/* Free users see their own plan named "Free" (with its count), and
             Pro offered as the next step, so the 20 a month never reads as
@@ -582,15 +596,15 @@ function ProRow() {
         <SettingRow
           icon={isPro ? 'checkmark-circle' : 'sparkles-outline'}
           accent="mint"
-          title={isPro ? 'Prexpire Pro' : 'Free plan'}
+          title={isPro ? tr("Prexpire Pro") : tr("Free plan")}
           description={description}
-          right={isPro ? undefined : <StatusBadge label="Get Pro" tone="green" />}
+          right={isPro ? undefined : <StatusBadge label={tr("Get Pro")} tone="green" />}
           onPress={() => openPaywall('settings')}
         />
         {/* Subscribers change or cancel their plan on Apple's own page; a
             lifetime purchase has nothing to manage. */}
         {isPro && !state?.lifetime ? (
-          <SettingRow icon="card-outline" accent="blue" title="Manage subscription" description="Change or cancel your plan in your Apple ID settings" onPress={manage} />
+          <SettingRow icon="card-outline" accent="blue" title={tr("Manage subscription")} description={tr("Change or cancel your plan in your Apple ID settings")} onPress={manage} />
         ) : null}
       </SettingsCard>
     </SettingsSection>
@@ -603,7 +617,7 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
   const s = useStyles();
   const t = useTheme();
   const { email: accountEmail, session } = useAuth();
-  const email = accountEmail ?? (session ? 'Apple account' : null);
+  const email = accountEmail ?? (session ? tr("Apple account") : null);
   const { status, lastSyncAt, syncNow, signOutAndClear } = useSync();
   const { formatDate } = useSettings();
   const [busy, setBusy] = useState(false);
@@ -614,42 +628,40 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
   const synced = lastSyncAt ? new Date(lastSyncAt) : null;
   const ago = synced
     ? Date.now() - synced.getTime() < 60000
-      ? 'Just now'
+      ? tr("Just now")
       : synced.toDateString() === new Date().toDateString()
         ? synced.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
         : formatDate(synced.toISOString().slice(0, 10))
-    : 'Not yet';
-  const backupValue = status === 'syncing' ? 'Backing up…' : status === 'offline' ? 'Offline' : status === 'error' ? "Didn't finish" : ago;
+    : tr("Not yet");
+  const backupValue = status === 'syncing' ? tr("Backing up…") : status === 'offline' ? tr("Offline") : status === 'error' ? tr("Didn't finish") : ago;
   return (
     <>
       <View style={s.heroCard}>
         <View style={s.heroAvatar}>
           <Text style={s.avatarLetter}>{(email ?? '?')[0].toUpperCase()}</Text>
         </View>
-        <Text style={s.heroTitle} numberOfLines={1}>{email ?? 'Signed out'}</Text>
-        <Text style={s.heroSub}>{since ? `Account since ${since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}` : 'Signed in'}</Text>
+        <Text style={s.heroTitle} numberOfLines={1}>{email ?? tr("Signed out")}</Text>
+        <Text style={s.heroSub}>{since ? tr("Account since {0}", [since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })]) : tr("Signed in")}</Text>
       </View>
-      <SettingsSection title="Backup and sync">
+      <SettingsSection title={tr("Backup and sync")}>
         <SettingsCard>
-          <SettingRow icon={status === 'offline' ? 'cloud-offline-outline' : 'cloud-done-outline'} accent="mint" title="Last backed up" value={backupValue} />
-          <SettingRow icon="refresh-outline" accent="teal" title="Back up now" description="Also brings in changes from your other phones" onPress={() => syncNow()} />
+          <SettingRow icon={status === 'offline' ? 'cloud-offline-outline' : 'cloud-done-outline'} accent="mint" title={tr("Last backed up")} value={backupValue} />
+          <SettingRow icon="refresh-outline" accent="teal" title={tr("Back up now")} description={tr("Also brings in changes from your other phones")} onPress={() => syncNow()} />
         </SettingsCard>
         {status === 'offline' || status === 'error' ? (
           <Note>
-            {status === 'offline'
-              ? "You're offline. Your items are safe on this phone, and they'll back up when you're connected."
-              : "The last backup didn't finish. It tries again on its own; you can also tap Back up now."}
+            {status === 'offline' ? tr("You're offline. Your items are safe on this phone, and they'll back up when you're connected.") : tr("The last backup didn't finish. It tries again on its own; you can also tap Back up now.")}
           </Note>
         ) : null}
       </SettingsSection>
-      <SettingsSection title="Session">
+      <SettingsSection title={tr("Session")}>
         <SettingsCard>
-          <SettingRow icon="key-outline" accent="blue" title="Change password" description="Choose a new password for this account" onPress={() => setChangePw(true)} />
+          <SettingRow icon="key-outline" accent="blue" title={tr("Change password")} description={tr("Choose a new password for this account")} onPress={() => setChangePw(true)} />
           <SettingRow
             icon="log-out-outline"
             accent="amber"
-            title={busy ? 'Signing out…' : 'Sign out'}
-            description="Removes your items from this phone. They stay in your account"
+            title={busy ? tr("Signing out…") : tr("Sign out")}
+            description={tr("Removes your items from this phone. They stay in your account")}
             onPress={async () => {
               if (busy) return;
               setBusy(true);
@@ -663,9 +675,9 @@ function AccountDetail({ onSignedOut }: { onSignedOut: () => void }) {
         </SettingsCard>
         {signOutError ? <Note tone="warn">{signOutError}</Note> : null}
       </SettingsSection>
-      <SettingsSection title="Delete account">
+      <SettingsSection title={tr("Delete account")}>
         <SettingsCard>
-          <SettingRow icon="trash-outline" accent="red" title="Delete account" titleColor={t.red} description="Deleted for good after 30 days" onPress={() => setDeleting(true)} />
+          <SettingRow icon="trash-outline" accent="red" title={tr("Delete account")} titleColor={t.red} description={tr("Deleted for good after 30 days")} onPress={() => setDeleting(true)} />
         </SettingsCard>
       </SettingsSection>
       <ChangePasswordSheet visible={changePw} onClose={() => setChangePw(false)} />
@@ -686,20 +698,20 @@ function ProfileDetail() {
         <View style={s.heroAvatar}>
           <Ionicons name="person" size={34} color={t.pills.green.text} />
         </View>
-        <Text style={s.heroTitle}>Preferences</Text>
-        <Text style={s.heroSub}>{WEB ? 'Saved in this browser' : 'Saved on this device'}</Text>
+        <Text style={s.heroTitle}>{tr("Preferences")}</Text>
+        <Text style={s.heroSub}>{WEB ? tr("Saved in this browser") : tr("Saved on this device")}</Text>
       </View>
-      <SettingsSection title="Library">
+      <SettingsSection title={tr("Library")}>
         <SettingsCard>
-          <SettingRow icon="cube-outline" accent="mint" title="Items added" value={`${saved.length}`} />
-          <SettingRow icon="cart-outline" accent="mint" title="Shopping list entries" value={`${shopping.length}`} />
-          <SettingRow icon="folder-open-outline" accent="blue" title="Your categories" value={`${all.length}`} />
+          <SettingRow icon="cube-outline" accent="mint" title={tr("Items added")} value={`${saved.length}`} />
+          <SettingRow icon="cart-outline" accent="mint" title={tr("Shopping list entries")} value={`${shopping.length}`} />
+          <SettingRow icon="folder-open-outline" accent="blue" title={tr("Your categories")} value={`${all.length}`} />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="Storage">
+      <SettingsSection title={tr("Storage")}>
         <SettingsCard>
-          <SettingRow icon="server-outline" accent="teal" title="Where data lives" value={WEB ? 'This browser' : 'This device'} />
-          <SettingRow icon="cloud-offline-outline" accent="amber" title="Synced" value="Never" />
+          <SettingRow icon="server-outline" accent="teal" title={tr("Where data lives")} value={WEB ? tr("This browser") : tr("This device")} />
+          <SettingRow icon="cloud-offline-outline" accent="amber" title={tr("Synced")} value={tr("Never")} />
         </SettingsCard>
       </SettingsSection>
     </>
@@ -708,27 +720,23 @@ function ProfileDetail() {
 
 function PrivacyDetail({ onNavigate }: { onNavigate: (route: string) => void }) {
   return (
-    <SettingsSection title="Privacy & Security">
+    <SettingsSection title={tr("Privacy & Security")}>
       <SettingsCard>
         <SettingRow
           icon="camera-outline"
           accent="teal"
-          title="Camera access"
+          title={tr("Camera access")}
           description={
-            WEB
-              ? "The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings"
-              : 'The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app'
+            WEB ? tr("The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings") : tr("The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app")
           }
-          below={<SmallButton label="Open scanner" icon="scan-outline" onPress={() => onNavigate('scan')} />}
+          below={<SmallButton label={tr("Open scanner")} icon="scan-outline" onPress={() => onNavigate('scan')} />}
         />
         <SettingRow
           icon="lock-closed-outline"
           accent="mint"
-          title="Data storage"
+          title={tr("Data storage")}
           description={
-            WEB
-              ? "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them"
-              : 'Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.'
+            WEB ? tr("Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them") : tr("Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.")
           }
         />
       </SettingsCard>
@@ -740,21 +748,21 @@ function NotificationsDetail() {
   const { settings, update } = useSettings();
   return (
     <>
-      <SettingsSection title="Reminders">
+      <SettingsSection title={tr("Reminders")}>
         <SettingsCard>
           <SettingRow
             icon="notifications-outline"
             accent="amber"
-            title="Expiry reminders"
-            description="Get notified before items expire"
-            right={<Toggle label="Expiry reminders" value={settings.reminders} onChange={(v) => update({ reminders: v })} />}
+            title={tr("Expiry reminders")}
+            description={tr("Get notified before items expire")}
+            right={<Toggle label={tr("Expiry reminders")} value={settings.reminders} onChange={(v) => update({ reminders: v })} />}
           />
           <PickerRow
             icon="time-outline"
             accent="amber"
-            title="Reminder timing"
-            label="Reminder timing"
-            description="When a reminder appears before the expiry date"
+            title={tr("Reminder timing")}
+            label={tr("Reminder timing")}
+            description={tr("When a reminder appears before the expiry date")}
             value={settings.reminderLead}
             options={REMINDER_LEADS.map((l) => ({ value: l, label: reminderLeadLabel(l) }))}
             onChange={(v) => update({ reminderLead: v })}
@@ -762,9 +770,9 @@ function NotificationsDetail() {
           <PickerRow
             icon="alarm-outline"
             accent="amber"
-            title="Reminder time"
-            label="Reminder time"
-            description="When reminders arrive on the day"
+            title={tr("Reminder time")}
+            label={tr("Reminder time")}
+            description={tr("When reminders arrive on the day")}
             value={settings.reminderHour}
             options={REMINDER_HOURS.map((h) => ({ value: h, label: reminderHourLabel(h) }))}
             onChange={(v) => update({ reminderHour: v })}
@@ -772,20 +780,20 @@ function NotificationsDetail() {
           <SettingRow
             icon="trending-down-outline"
             accent="amber"
-            title="Earlier for what you waste"
-            description="An extra heads-up for categories you often throw away, from your waste stats"
-            right={<Toggle label="Earlier for what you waste" value={settings.wasteAware} onChange={(v) => update({ wasteAware: v })} />}
+            title={tr("Earlier for what you waste")}
+            description={tr("An extra heads-up for categories you often throw away, from your waste stats")}
+            right={<Toggle label={tr("Earlier for what you waste")} value={settings.wasteAware} onChange={(v) => update({ wasteAware: v })} />}
           />
           <SettingRow
             icon="today-outline"
             accent="amber"
-            title="Daily summary"
-            description="See what's expiring soon"
-            right={<Toggle label="Daily summary" value={settings.dailySummary} onChange={(v) => update({ dailySummary: v })} />}
+            title={tr("Daily summary")}
+            description={tr("See what's expiring soon")}
+            right={<Toggle label={tr("Daily summary")} value={settings.dailySummary} onChange={(v) => update({ dailySummary: v })} />}
           />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="Delivery">
+      <SettingsSection title={tr("Delivery")}>
         <SettingsCard>
           <BrowserNotificationsRow />
         </SettingsCard>
@@ -811,18 +819,18 @@ function BrowserNotificationsRow() {
   };
 
   const label: Record<NotificationStatus, string> = {
-    granted: 'Allowed',
-    denied: 'Blocked',
-    default: 'Not set',
-    unsupported: 'Unavailable',
-    insecure: 'Unavailable',
+    granted: tr("Allowed"),
+    denied: tr("Blocked"),
+    default: tr("Not set"),
+    unsupported: tr("Unavailable"),
+    insecure: tr("Unavailable"),
   };
   const note: Record<NotificationStatus, { text: string; tone: 'ok' | 'warn' | 'muted' }> = {
-    granted: { text: 'This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background', tone: 'ok' },
-    denied: { text: "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open", tone: 'warn' },
-    default: { text: 'Your browser will ask for permission when you select Allow. In-app expiry alerts appear while the app is open either way', tone: 'muted' },
-    unsupported: { text: WEB ? "This browser doesn't support web notifications. In-app expiry alerts still appear while the app is open" : 'System notifications are not set up in this version of the app. In-app expiry alerts appear while it is open', tone: 'muted' },
-    insecure: { text: 'Browsers only allow notifications on secure (https) pages. In-app expiry alerts still appear while the app is open', tone: 'muted' },
+    granted: { text: tr("This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background"), tone: 'ok' },
+    denied: { text: tr("Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open"), tone: 'warn' },
+    default: { text: tr("Your browser will ask for permission when you select Allow. In-app expiry alerts appear while the app is open either way"), tone: 'muted' },
+    unsupported: { text: WEB ? tr("This browser doesn't support web notifications. In-app expiry alerts still appear while the app is open") : tr("System notifications are not set up in this version of the app. In-app expiry alerts appear while it is open"), tone: 'muted' },
+    insecure: { text: tr("Browsers only allow notifications on secure (https) pages. In-app expiry alerts still appear while the app is open"), tone: 'muted' },
   };
 
   const badgeTone = status === 'granted' ? 'green' : status === 'denied' ? 'amber' : 'muted';
@@ -830,9 +838,9 @@ function BrowserNotificationsRow() {
   // Inside the iPhone app: real reminders, delivered even when it's closed.
   if (nativeReminders()) {
     const appNote: Record<NotificationStatus, { text: string; tone: 'ok' | 'warn' | 'muted' }> = {
-      granted: { text: 'Reminders are set automatically from your items and arrive even when Prexpire is closed', tone: 'ok' },
-      denied: { text: 'Notifications are off for Prexpire. Turn them on in iPhone Settings, then come back', tone: 'warn' },
-      default: { text: 'Allow notifications to get reminded before your items expire, even when Prexpire is closed', tone: 'muted' },
+      granted: { text: tr("Reminders are set automatically from your items and arrive even when Prexpire is closed"), tone: 'ok' },
+      denied: { text: tr("Notifications are off for Prexpire. Turn them on in iPhone Settings, then come back"), tone: 'warn' },
+      default: { text: tr("Allow notifications to get reminded before your items expire, even when Prexpire is closed"), tone: 'muted' },
       unsupported: { text: '', tone: 'muted' },
       insecure: { text: '', tone: 'muted' },
     };
@@ -848,18 +856,18 @@ function BrowserNotificationsRow() {
       <SettingRow
         icon="notifications-outline"
         accent="amber"
-        title="Notifications"
-        description="Expiry reminders on this iPhone"
+        title={tr("Notifications")}
+        description={tr("Expiry reminders on this iPhone")}
         right={<StatusBadge key={status} label={label[status]} tone={badgeTone} check={status === 'granted'} />}
         below={
           <>
             <FadeIn key={status}>
-              <Note tone={appNote[status].tone}>{testSent ? 'Test sent. It arrives in a few seconds, even if you close the app now' : appNote[status].text}</Note>
+              <Note tone={appNote[status].tone}>{testSent ? tr("Test sent. It arrives in a few seconds, even if you close the app now") : appNote[status].text}</Note>
             </FadeIn>
             <View style={s.buttons}>
-              {status === 'default' && <SmallButton label={asking ? 'Waiting…' : 'Allow notifications'} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />}
-              {status === 'denied' && <SmallButton label="Open iPhone Settings" icon="settings-outline" tone="mint" onPress={openNotificationSettings} />}
-              {status !== 'denied' && <SmallButton label={testing ? 'Sending…' : 'Send a test notification'} icon="paper-plane-outline" disabled={testing} onPress={test} />}
+              {status === 'default' && <SmallButton label={asking ? tr("Waiting…") : tr("Allow notifications")} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />}
+              {status === 'denied' && <SmallButton label={tr("Open iPhone Settings")} icon="settings-outline" tone="mint" onPress={openNotificationSettings} />}
+              {status !== 'denied' && <SmallButton label={testing ? tr("Sending…") : tr("Send a test notification")} icon="paper-plane-outline" disabled={testing} onPress={test} />}
             </View>
           </>
         }
@@ -871,8 +879,8 @@ function BrowserNotificationsRow() {
     <SettingRow
       icon="globe-outline"
       accent="amber"
-      title={WEB ? 'Browser notifications' : 'Notifications'}
-      description={WEB ? 'Allow notifications from this browser' : 'Allow notifications on this device'}
+      title={WEB ? tr("Browser notifications") : tr("Notifications")}
+      description={WEB ? tr("Allow notifications from this browser") : tr("Allow notifications on this device")}
       right={<StatusBadge key={status} label={label[status]} tone={badgeTone} check={status === 'granted'} />}
       below={
         <>
@@ -882,7 +890,7 @@ function BrowserNotificationsRow() {
           {status === 'default' && (
             <FadeIn>
               <View style={s.buttons}>
-                <SmallButton label={asking ? 'Waiting for browser…' : 'Allow notifications'} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />
+                <SmallButton label={asking ? tr("Waiting for browser…") : tr("Allow notifications")} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />
               </View>
             </FadeIn>
           )}
@@ -897,34 +905,34 @@ function CategoriesDetail({ onNavigate }: { onNavigate: (route: string) => void 
   const { all } = useCategories();
   return (
     <>
-      <SettingsSection title="Your categories">
+      <SettingsSection title={tr("Your categories")}>
         <SettingsCard>
           <SettingRow
             icon="folder-open-outline"
             accent="blue"
-            title="Your categories"
-            description="The built-ins you keep and the folders you add, all in one place"
+            title={tr("Your categories")}
+            description={tr("The built-ins you keep and the folders you add, all in one place")}
             below={<CategoryManager />}
           />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="Defaults">
+      <SettingsSection title={tr("Defaults")}>
         <SettingsCard>
           <PickerRow<DefaultCategory>
             icon="pricetag-outline"
             accent="blue"
-            title="Default category"
-            label="Default category"
-            description="Preselected when you add an item"
+            title={tr("Default category")}
+            label={tr("Default category")}
+            description={tr("Preselected when you add an item")}
             value={settings.defaultCategory}
             onChange={(v) => update({ defaultCategory: v })}
-            options={[{ value: 'last', label: 'Last used' }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
+            options={[{ value: 'last', label: tr("Last used") }, ...all.map((cat) => ({ value: cat.id as DefaultCategory, label: cat.name }))]}
           />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="Browse">
+      <SettingsSection title={tr("Browse")}>
         <SettingsCard>
-          <SettingRow icon="grid" accent="purple" title="Browse categories" description="The lists for the categories you keep" onPress={() => onNavigate('tab:items')} />
+          <SettingRow icon="grid" accent="purple" title={tr("Browse categories")} description={tr("The lists for the categories you keep")} onPress={() => onNavigate('tab:items')} />
         </SettingsCard>
       </SettingsSection>
     </>
@@ -935,25 +943,21 @@ function AppearanceDetail() {
   const { settings, update, systemReduceMotion } = useSettings();
   const { pad } = useDensity();
   return (
-    <SettingsSection title="Appearance">
+    <SettingsSection title={tr("Appearance")}>
       <SettingsCard>
         <PickerRow
           icon="contrast-outline"
           accent="purple"
-          title="Theme"
-          label="Theme"
-          description="Dark, light, or follow your device"
+          title={tr("Theme")}
+          label={tr("Theme")}
+          description={tr("Dark, light, or follow your device")}
           value={settings.theme}
           options={THEME_MODES.map((m) => ({ value: m, label: THEME_LABELS[m] }))}
           onChange={(v) => update({ theme: v, themeChosen: true })}
           below={
             <FadeIn key={settings.theme}>
               <Note>
-                {settings.theme === 'system'
-                  ? 'System follows your device\u2019s appearance and switches live'
-                  : settings.theme === 'light'
-                    ? 'A bright take on the same design'
-                    : 'The classic near-black look'}
+                {settings.theme === 'system' ? tr("System follows your device’s appearance and switches live") : settings.theme === 'light' ? tr("A bright take on the same design") : tr("The classic near-black look")}
               </Note>
             </FadeIn>
           }
@@ -961,20 +965,16 @@ function AppearanceDetail() {
 <PickerRow
           icon="grid-outline"
           accent="blue"
-          title="Layout"
-          label="Layout"
-          description="How much each screen shows at once"
+          title={tr("Layout")}
+          label={tr("Layout")}
+          description={tr("How much each screen shows at once")}
           value={settings.padLayout}
           options={PAD_LAYOUTS.map((m) => ({ value: m, label: PAD_LAYOUT_LABELS[m] }))}
           onChange={(v) => update({ padLayout: v })}
           below={
             <FadeIn key={settings.padLayout}>
               <Note>
-                {settings.padLayout === 'basic'
-                  ? 'One column with only what’s coming up, in bigger rows'
-                  : settings.padLayout === 'detailed'
-                    ? pad ? 'More on screen: shorter rows with dates, extra columns' : 'More on screen: shorter rows with dates'
-                    : pad ? 'Categories and your list side by side' : 'Categories and your list'}
+                {settings.padLayout === 'basic' ? tr("One column with only what’s coming up, in bigger rows") : settings.padLayout === 'detailed' ? pad ? tr("More on screen: shorter rows with dates, extra columns") : tr("More on screen: shorter rows with dates") : pad ? tr("Categories and your list side by side") : tr("Categories and your list")}
               </Note>
             </FadeIn>
           }
@@ -982,17 +982,17 @@ function AppearanceDetail() {
         <SettingRow
           icon="sparkles-outline"
           accent="purple"
-          title="Animations"
-          description="Fades and press feedback"
-          right={<Toggle label="Animations" value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
-          below={systemReduceMotion ? <FadeIn><Note>Your device asks for reduced motion, so animations stay off</Note></FadeIn> : undefined}
+          title={tr("Animations")}
+          description={tr("Fades and press feedback")}
+          right={<Toggle label={tr("Animations")} value={settings.animations && !systemReduceMotion} disabled={systemReduceMotion} onChange={(v) => update({ animations: v })} />}
+          below={systemReduceMotion ? <FadeIn><Note>{tr("Your device asks for reduced motion, so animations stay off")}</Note></FadeIn> : undefined}
         />
         <SettingRow
           icon="scan-outline"
           accent="mint"
-          title="Scanning Line Animation"
-          description="Show or hide the moving scanning line during product scanning"
-          right={<Toggle label="Scanning Line Animation" value={settings.scanLineAnimation} onChange={(v) => update({ scanLineAnimation: v })} />}
+          title={tr("Scanning Line Animation")}
+          description={tr("Show or hide the moving scanning line during product scanning")}
+          right={<Toggle label={tr("Scanning Line Animation")} value={settings.scanLineAnimation} onChange={(v) => update({ scanLineAnimation: v })} />}
         />
       </SettingsCard>
     </SettingsSection>
@@ -1015,7 +1015,7 @@ function BackupDetail() {
         await saveTextFile(exportFileName('csv', now), 'text/csv', itemsToCsv(saved, names));
       }
     } catch {
-      setExportError('The file could not be created. Your browser may be blocking downloads on this page.');
+      setExportError(tr("The file could not be created. Your browser may be blocking downloads on this page."));
     }
   };
   // The full backup: every key Prexpire stores, in one file.
@@ -1028,9 +1028,9 @@ function BackupDetail() {
       const entries = await AsyncStorage.multiGet(keys);
       const now = new Date();
       await saveTextFile(backupFileName(now), 'application/json', buildBackup(entries, APP_VERSION, now));
-      setBackupNote({ tone: 'ok', text: 'Backup file created. Keep it somewhere safe, such as iCloud Drive or Files.' });
+      setBackupNote({ tone: 'ok', text: tr("Backup file created. Keep it somewhere safe, such as iCloud Drive or Files.") });
     } catch {
-      setBackupNote({ tone: 'warn', text: "The backup file couldn't be created here." });
+      setBackupNote({ tone: 'warn', text: tr("The backup file couldn't be created here.") });
     }
   };
   const pickBackup = () => {
@@ -1059,44 +1059,44 @@ function BackupDetail() {
       if (typeof window !== 'undefined') window.location.reload();
     } catch {
       setPending(null);
-      setBackupNote({ tone: 'warn', text: "The backup couldn't be restored. Nothing was changed." });
+      setBackupNote({ tone: 'warn', text: tr("The backup couldn't be restored. Nothing was changed.") });
     }
   };
   return (
     <>
-      <SettingsSection title="Backup">
+      <SettingsSection title={tr("Backup")}>
         <SettingsCard>
           <SettingRow
             icon="archive-outline"
             accent="mint"
-            title="Save a backup"
-            description="Items, categories, settings, Shopping List and stats, in one file"
+            title={tr("Save a backup")}
+            description={tr("Items, categories, settings, Shopping List and stats, in one file")}
             below={
               <View style={s.buttons}>
-                <SmallButton label="Save backup" icon="download-outline" tone="mint" onPress={() => void saveBackup()} />
+                <SmallButton label={tr("Save backup")} icon="download-outline" tone="mint" onPress={() => void saveBackup()} />
               </View>
             }
           />
           <SettingRow
             icon="refresh-circle-outline"
             accent="blue"
-            title="Restore a backup"
-            description="Replaces everything here with the backup's contents"
+            title={tr("Restore a backup")}
+            description={tr("Replaces everything here with the backup's contents")}
             below={
               <>
                 {pending ? (
                   <>
                     <Note tone="warn">
-                      {`Restore ${pending.items} ${pending.items === 1 ? 'item' : 'items'}${pending.createdAt ? ` saved ${new Date(pending.createdAt).toLocaleDateString()}` : ''}? What is here now will be replaced.`}
+                      {tr("Restore {0} {1}{2}? What is here now will be replaced.", [pending.items, pending.items === 1 ? 'item' : 'items', pending.createdAt ? ` saved ${new Date(pending.createdAt).toLocaleDateString()}` : ''])}
                     </Note>
                     <View style={s.buttons}>
-                      <SmallButton label="Cancel" onPress={() => setPending(null)} />
-                      <SmallButton label="Restore" icon="refresh-outline" tone="mint" onPress={() => void restore()} />
+                      <SmallButton label={tr("Cancel")} onPress={() => setPending(null)} />
+                      <SmallButton label={tr("Restore")} icon="refresh-outline" tone="mint" onPress={() => void restore()} />
                     </View>
                   </>
                 ) : (
                   <View style={s.buttons}>
-                    <SmallButton label="Choose file" icon="folder-open-outline" onPress={pickBackup} />
+                    <SmallButton label={tr("Choose file")} icon="folder-open-outline" onPress={pickBackup} />
                   </View>
                 )}
                 {backupNote && <Note tone={backupNote.tone === 'warn' ? 'warn' : undefined}>{backupNote.text}</Note>}
@@ -1105,25 +1105,25 @@ function BackupDetail() {
           />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="Sync">
+      <SettingsSection title={tr("Sync")}>
         <SettingsCard>
           <SettingRow
             icon="cloud-offline-outline"
             accent="mint"
-            title="Sync"
-            description={WEB ? 'PREXPIRE has no cloud: items, categories and settings live only in this browser, on this device' : 'PREXPIRE has no cloud: items, categories and settings live only on this device'}
-            right={<StatusBadge label="Off" />}
+            title={tr("Sync")}
+            description={WEB ? tr("PREXPIRE has no cloud: items, categories and settings live only in this browser, on this device") : tr("PREXPIRE has no cloud: items, categories and settings live only on this device")}
+            right={<StatusBadge label={tr("Off")} />}
           />
           <SettingRow
             icon="download-outline"
             accent="teal"
-            title="Export data"
-            description={saved.length ? `Download your ${saved.length} added ${saved.length === 1 ? 'item' : 'items'}: name, category, expiry date, date precision, when added and source` : 'Nothing to export yet. Items you add will be exported here (sample items are not included)'}
+            title={tr("Export data")}
+            description={saved.length ? tr("Download your {0} added {1}: name, category, expiry date, date precision, when added and source", [saved.length, saved.length === 1 ? 'item' : 'items']) : tr("Nothing to export yet. Items you add will be exported here (sample items are not included)")}
             below={
               <>
                 <View style={s.buttons}>
-                  <SmallButton label="JSON" icon="code-slash-outline" disabled={!saved.length} onPress={() => exportAs('json')} accessibilityLabel="Export items as JSON" />
-                  <SmallButton label="CSV" icon="document-text-outline" disabled={!saved.length} onPress={() => exportAs('csv')} accessibilityLabel="Export items as CSV" />
+                  <SmallButton label="JSON" icon="code-slash-outline" disabled={!saved.length} onPress={() => exportAs('json')} accessibilityLabel={tr("Export items as JSON")} />
+                  <SmallButton label="CSV" icon="document-text-outline" disabled={!saved.length} onPress={() => exportAs('csv')} accessibilityLabel={tr("Export items as CSV")} />
                 </View>
                 {exportError && <Note tone="warn">{exportError}</Note>}
               </>
@@ -1131,7 +1131,7 @@ function BackupDetail() {
           />
         </SettingsCard>
       </SettingsSection>
-      <Note>To keep a copy, export before clearing your browser data or moving devices</Note>
+      <Note>{tr("To keep a copy, export before clearing your browser data or moving devices")}</Note>
     </>
   );
 }
@@ -1151,7 +1151,7 @@ function StatsDetail() {
   const thisMonth = byMonth(entries, now, 1)[0].tally;
   const total = tally(entries);
   const months = byMonth(entries, now, 6);
-  const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const MONTH = [tr("Jan"), tr("Feb"), tr("Mar"), tr("Apr"), tr("May"), tr("Jun"), tr("Jul"), tr("Aug"), tr("Sep"), tr("Oct"), tr("Nov"), tr("Dec")];
   const soon = saved.filter((i) => {
     const d = Math.round((new Date(i.expiresOn).getTime() - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
     return d >= 0 && d <= warning(i.category);
@@ -1176,7 +1176,7 @@ function StatsDetail() {
   const firstMonth = months[rates.findIndex((r) => r !== null)];
   const trend =
     first != null && last != null && firstMonth && firstMonth.key !== months[months.length - 1].key && Math.round(first * 100) !== Math.round(last * 100)
-      ? `${last > first ? 'Up' : 'Down'} from ${Math.round(first * 100)}% in ${MONTH[firstMonth.month]}`
+      ? tr("{0} from {1}% in {2}", [last > first ? 'Up' : 'Down', Math.round(first * 100), MONTH[firstMonth.month]])
       : null;
   // On a wide landscape screen: this month and the chart on the left, the
   // totals and the categories on the right.
@@ -1185,23 +1185,23 @@ function StatsDetail() {
       <TwoColumns
         left={
           <>
-      <SettingsSection title="This month">
-        <View style={s.wsHero} accessible accessibilityLabel={`${pct(thisMonth)} used in time this month. ${thisMonth.used} used, ${thisMonth.expired} expired.`}>
+      <SettingsSection title={tr("This month")}>
+        <View style={s.wsHero} accessible accessibilityLabel={tr("{0} used in time this month. {1} used, {2} expired.", [pct(thisMonth), thisMonth.used, thisMonth.expired])}>
           <View style={s.wsHeroRow}>
             <Text style={[s.wsHeroValue, { color: usedInTime(thisMonth) === null ? c.textMuted : c.green }]}>{pct(thisMonth)}</Text>
-            <Text style={s.wsHeroLabel}>used in time</Text>
+            <Text style={s.wsHeroLabel}>{tr("used in time")}</Text>
           </View>
           {split(thisMonth, 12)}
           <Text style={s.wsHeroSub}>
-            {thisMonth.used + thisMonth.expired > 0 ? `${thisMonth.used} used  ·  ${thisMonth.expired} expired` : 'Nothing used or expired yet this month.'}
+            {thisMonth.used + thisMonth.expired > 0 ? tr("{0} used  ·  {1} expired", [thisMonth.used, thisMonth.expired]) : tr("Nothing used or expired yet this month.")}
           </Text>
         </View>
       </SettingsSection>
-      <SettingsSection title="Used in time, last 6 months">
+      <SettingsSection title={tr("Used in time, last 6 months")}>
         <SettingsCard>
           {/* One child, so the card draws no divider inside the chart. */}
           <View>
-          <View style={s.chart} accessibilityLabel="Share of items used in time, per month">
+          <View style={s.chart} accessibilityLabel={tr("Share of items used in time, per month")}>
             {months.map((m, i) => {
               const r = rates[i];
               const current = i === months.length - 1;
@@ -1224,16 +1224,16 @@ function StatsDetail() {
         }
         right={
           <>
-      <SettingsSection title="All time">
+      <SettingsSection title={tr("All time")}>
         <SettingsCard>
-          <SettingRow icon="checkmark-done" accent="mint" title="Used in time" value={pct(total)} />
-          <SettingRow icon="restaurant-outline" accent="teal" title="Items used" value={String(total.used)} />
-          <SettingRow icon="trash-outline" accent="red" title="Expired before use" value={String(total.expired)} />
-          <SettingRow icon="time-outline" accent="amber" title="Expiring soon now" value={String(soon)} />
+          <SettingRow icon="checkmark-done" accent="mint" title={tr("Used in time")} value={pct(total)} />
+          <SettingRow icon="restaurant-outline" accent="teal" title={tr("Items used")} value={String(total.used)} />
+          <SettingRow icon="trash-outline" accent="red" title={tr("Expired before use")} value={String(total.expired)} />
+          <SettingRow icon="time-outline" accent="amber" title={tr("Expiring soon now")} value={String(soon)} />
         </SettingsCard>
       </SettingsSection>
       {entries.length > 0 && (
-        <SettingsSection title="By category">
+        <SettingsSection title={tr("By category")}>
           <SettingsCard>
             {byCategory(entries).map((row, i) => (
               <View key={row.category} style={[s.catRow, i > 0 && s.catRowLine]}>
@@ -1242,7 +1242,7 @@ function StatsDetail() {
                   <Text style={s.catPct}>{pct(row.tally)}</Text>
                 </View>
                 {split(row.tally, 6)}
-                <Text style={s.catSub}>{`${row.tally.used} used  ·  ${row.tally.expired} expired`}</Text>
+                <Text style={s.catSub}>{tr("{0} used  ·  {1} expired", [row.tally.used, row.tally.expired])}</Text>
               </View>
             ))}
           </SettingsCard>
@@ -1252,9 +1252,7 @@ function StatsDetail() {
         }
       />
       <Note>
-        {entries.length
-          ? 'Use "Mark as consumed" when you finish something: it counts as used. Anything past its date counts as expired, whether it\'s still in your list or removed.'
-          : 'Nothing yet. Use "Mark as consumed" in an item\'s menu when you finish it; anything past its date counts as expired.'}
+        {entries.length ? tr("Use \"Mark as consumed\" when you finish something: it counts as used. Anything past its date counts as expired, whether it's still in your list or removed.") : tr("Nothing yet. Use \"Mark as consumed\" in an item's menu when you finish it; anything past its date counts as expired.")}
       </Note>
     </>
   );
@@ -1265,29 +1263,29 @@ function TermsDetail({ openPage }: { openPage: (p: PageId) => void }) {
   const s = useStyles();
   return (
     <>
-      <SettingsSection title="Documents">
+      <SettingsSection title={tr("Documents")}>
         <SettingsCard>
-          <SettingRow icon="shield-checkmark-outline" accent="mint" title="Privacy Policy" description={`Last updated ${legal.privacy.updated}`} onPress={() => openPage('privacyPolicy')} />
-          <SettingRow icon="document-text-outline" accent="blue" title="Terms of Use" description={`Last updated ${legal.terms.updated}`} onPress={() => openPage('termsOfUse')} />
+          <SettingRow icon="shield-checkmark-outline" accent="mint" title={tr("Privacy Policy")} description={tr("Last updated {0}", [legal.privacy.updated])} onPress={() => openPage('privacyPolicy')} />
+          <SettingRow icon="document-text-outline" accent="blue" title={tr("Terms of Use")} description={tr("Last updated {0}", [legal.terms.updated])} onPress={() => openPage('termsOfUse')} />
         </SettingsCard>
       </SettingsSection>
-      <SettingsSection title="In short">
+      <SettingsSection title={tr("In short")}>
         <SettingsCard>
           <SettingRow
             icon="phone-portrait-outline"
             accent="teal"
-            title="Your data"
-            description="Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones"
+            title={tr("Your data")}
+            description={tr("Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones")}
           />
-          <SettingRow icon="camera-outline" accent="teal" title="Camera" description="Labels are read on the phone; images are never uploaded or kept" />
-          <SettingRow icon="barcode-outline" accent="purple" title="Barcodes" description="Only the barcode number is sent to product databases, to find the name" />
-          <SettingRow icon="eye-off-outline" accent="purple" title="No ads, no tracking" description={`Questions: ${legal.contact}`} />
+          <SettingRow icon="camera-outline" accent="teal" title={tr("Camera")} description={tr("Labels are read on the phone; images are never uploaded or kept")} />
+          <SettingRow icon="barcode-outline" accent="purple" title={tr("Barcodes")} description={tr("Only the barcode number is sent to product databases, to find the name")} />
+          <SettingRow icon="eye-off-outline" accent="purple" title={tr("No ads, no tracking")} description={tr("Questions: {0}", [legal.contact])} />
         </SettingsCard>
       </SettingsSection>
       <View style={s.aboutFooter}>
         <Brandmark height={35} />
-        <Text style={s.aboutTagline}>Keep track of what matters before it expires.</Text>
-        <Text style={s.aboutVersion}>Version {APP_VERSION_SHOWN}</Text>
+        <Text style={s.aboutTagline}>{tr("Keep track of what matters before it expires.")}</Text>
+        <Text style={s.aboutVersion}>{tr("Version")}{' '}{APP_VERSION_SHOWN}</Text>
       </View>
     </>
   );
@@ -1300,9 +1298,9 @@ export function LegalDetail({ doc }: { doc: LegalDoc }) {
   const s = useStyles();
   return (
     <>
-      <Text style={s.legalUpdated}>Last updated {doc.updated}</Text>
+      <Text style={s.legalUpdated}>{tr("Last updated")}{' '}{doc.updated}</Text>
       <View style={s.legalShort}>
-        <Text style={s.legalShortTitle}>The short version</Text>
+        <Text style={s.legalShortTitle}>{tr("The short version")}</Text>
         {doc.short.map((line) => (
           <View key={line} style={s.legalShortRow}>
             <Ionicons name="checkmark-circle" size={18} color="#A6DF6B" style={{ marginTop: 2 }} />
@@ -1332,7 +1330,7 @@ export function LegalDetail({ doc }: { doc: LegalDoc }) {
           )}
         </View>
       ))}
-      <Text style={s.legalFoot}>Also at prexpire.com/{doc === legal.privacy ? 'privacy' : 'terms'}</Text>
+      <Text style={s.legalFoot}>{tr("Also at prexpire.com/")}{doc === legal.privacy ? 'privacy' : 'terms'}</Text>
     </>
   );
 }
@@ -1363,27 +1361,26 @@ function ClearDataDialog({ visible, itemCount, categoryCount, listCount, onCance
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => {} : onCancel}>
       <View style={s.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onCancel} accessibilityLabel="Close" importantForAccessibility="no" />
-        <View style={[s.dialog, { backgroundColor: t.dialogBg, borderColor: t.dangerBorder }]} accessibilityRole={'dialog' as never} accessibilityLabel="Clear all data" {...({ 'aria-modal': true } as object)}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onCancel} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
+        <View style={[s.dialog, { backgroundColor: t.dialogBg, borderColor: t.dangerBorder }]} accessibilityRole={'dialog' as never} accessibilityLabel={tr("Clear all data")} {...({ 'aria-modal': true } as object)}>
           <IconTile icon="trash-outline" accent="red" size={48} />
           <Text style={s.dialogTitle} accessibilityRole="header">
-            Clear all data?
-          </Text>
-          <Text style={s.dialogText}>This permanently deletes from {WEB ? 'this browser' : 'this device'}:</Text>
+            {tr("Clear all data?")}</Text>
+          <Text style={s.dialogText}>{tr("This permanently deletes from")}{' '}{WEB ? tr("this browser") : tr("this device")}:</Text>
           <View style={s.dialogList}>
-            <Text style={s.dialogText}>•  {itemCount === 1 ? '1 item you added' : `${itemCount} items you added`}</Text>
-            <Text style={s.dialogText}>•  {listCount === 1 ? '1 Shopping List entry' : `${listCount} Shopping List entries`}</Text>
+            <Text style={s.dialogText}>•  {itemCount === 1 ? tr("1 item you added") : tr("{0} items you added", [itemCount])}</Text>
+            <Text style={s.dialogText}>•  {listCount === 1 ? tr("1 Shopping List entry") : tr("{0} Shopping List entries", [listCount])}</Text>
             {categoryCount > 0 && (
-              <Text style={s.dialogText}>•  {categoryCount === 1 ? '1 category you added' : `${categoryCount} categories you added`}</Text>
+              <Text style={s.dialogText}>•  {categoryCount === 1 ? tr("1 category you added") : tr("{0} categories you added", [categoryCount])}</Text>
             )}
-            <Text style={s.dialogText}>•  Every setting on this page (back to the defaults)</Text>
-            <Text style={s.dialogText}>•  The remembered last-used category and expiration events</Text>
+            <Text style={s.dialogText}>{tr("•  Every setting on this page (back to the defaults)")}</Text>
+            <Text style={s.dialogText}>{tr("•  The remembered last-used category and expiration events")}</Text>
           </View>
-          <Text style={s.dialogMuted}>This can't be undone; export your items first if you want a copy</Text>
-          {error && <Note tone="warn">Nothing could be deleted because this browser's storage refused the change. Try again</Note>}
+          <Text style={s.dialogMuted}>{tr("This can't be undone; export your items first if you want a copy")}</Text>
+          {error && <Note tone="warn">{tr("Nothing could be deleted because this browser's storage refused the change. Try again")}</Note>}
           <View style={s.dialogButtons}>
-            <SmallButton label="Cancel" onPress={onCancel} disabled={busy} />
-            <SmallButton label={busy ? 'Deleting…' : 'Delete everything'} icon="trash-outline" tone="danger" onPress={confirm} disabled={busy} />
+            <SmallButton label={tr("Cancel")} onPress={onCancel} disabled={busy} />
+            <SmallButton label={busy ? tr("Deleting…") : tr("Delete everything")} icon="trash-outline" tone="danger" onPress={confirm} disabled={busy} />
           </View>
         </View>
       </View>

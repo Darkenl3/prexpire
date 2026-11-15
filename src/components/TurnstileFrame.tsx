@@ -2,6 +2,7 @@ import { createElement, useEffect, useRef } from 'react';
 import { Platform, View } from 'react-native';
 import { useTheme, LIGHT } from '../theme';
 
+import { tr } from '../i18n';
 // Cloudflare Turnstile for the sign-in sheet. The iPhone app runs this web
 // app from a file on the phone, which has no web address, so Turnstile can't
 // run in it directly; it runs in public/turnstile.html on app.prexpire.com,
@@ -53,11 +54,11 @@ export function TurnstileFrame({ onToken, resetKey, onError }: Props) {
   if (Platform.OS !== 'web') return null;
   const theme = c === LIGHT ? 'light' : 'dark';
   return (
-    <View style={{ height: 68, borderRadius: 16, overflow: 'hidden' }} accessibilityLabel="Security check">
+    <View style={{ height: 68, borderRadius: 16, overflow: 'hidden' }} accessibilityLabel={tr("Security check")}>
       {createElement('iframe', {
         ref: frame,
         src: `${TURNSTILE_ORIGIN}/turnstile.html?theme=${theme}`,
-        title: 'Security check',
+        title: tr("Security check"),
         style: { width: '100%', height: 68, border: 0, background: 'transparent', colorScheme: theme },
       })}
     </View>

@@ -7,6 +7,7 @@ import { useSettings } from '../settings';
 import { PressScale } from './Press';
 import { chromeId, nativeChrome, registerChrome, updateChrome, type ChromeButton } from '../platform/nativeChrome';
 
+import { tr } from '../i18n';
 // The brand wordmark: the user's own logo artwork, cut pixel-exact from
 // their file (transparent PNGs): the solid filled four-leaf lime icon stays
 // lime in both themes, with near-white ink for the dark page and deep
@@ -141,7 +142,7 @@ export function Brandmark({ height }: { height: number }) {
   const c = useTheme();
   const source = c === LIGHT ? brandDarkInk : brandWhiteInk;
   const width = Math.round(height * BRAND_ASPECT);
-  return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel="Prexpire" />;
+  return <Image source={source} style={{ width, height }} resizeMode="contain" accessibilityLabel={tr("Prexpire")} />;
 }
 
 const noop = () => {};
@@ -172,9 +173,9 @@ export function Header({
           every other section is a destination, not a hub, so its strip leads
           with the exact compact back circle Settings' header leads with. */}
       {onBack ? (
-        <GlassIconButton icon="chevron-back" iconSize={20} size={38} label="Go back" onPress={onBack} />
+        <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Go back")} onPress={onBack} />
       ) : (
-        <GlassIconButton icon="menu" iconSize={24} label="Menu" onPress={onMenu ?? noop} />
+        <GlassIconButton icon="menu" iconSize={24} label={tr("Menu")} onPress={onMenu ?? noop} />
       )}
       {/* The section's title lives in the header strip - the Settings
           structure: Home keeps the wordmark (its intentional title), every
@@ -196,7 +197,7 @@ export function Header({
           still carries no counts of any kind - neither the reminder count nor
           the shopping count.) */}
       {onBell && (
-        <GlassIconButton icon="notifications-outline" iconSize={22} badge={badge} label={`${badge} notifications`} onPress={onBell}>
+        <GlassIconButton icon="notifications-outline" iconSize={22} badge={badge} label={tr("{0} notifications", [badge])} onPress={onBell}>
           <Ionicons name="notifications-outline" size={22} color={c.text} />
           {badge > 0 && (
             <View style={[s.bellBadge, { borderColor: c.bg }]}>
@@ -314,8 +315,8 @@ function ActionButton({ icon, text, onPress, primary }: { icon: keyof typeof Ion
 export function AddActions({ onScan, onManual }: { onScan: () => void; onManual: () => void }) {
   return (
     <View style={{ flexDirection: 'row', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-      <ActionButton icon="scan-outline" text="Scan a label" onPress={onScan} primary />
-      <ActionButton icon="create-outline" text="Add manually" onPress={onManual} />
+      <ActionButton icon="scan-outline" text={tr("Scan a label")} onPress={onScan} primary />
+      <ActionButton icon="create-outline" text={tr("Add manually")} onPress={onManual} />
     </View>
   );
 }
@@ -487,10 +488,10 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
 export type TabId = 'home' | 'items' | 'reminders' | 'settings';
 
 const tabs: { id: TabId; label: string; icon: keyof typeof Ionicons.glyphMap; iconOn: keyof typeof Ionicons.glyphMap }[] = [
-  { id: 'home', label: 'Home', icon: 'home-outline', iconOn: 'home' },
-  { id: 'items', label: 'Lists', icon: 'list', iconOn: 'list' },
-  { id: 'reminders', label: 'Reminders', icon: 'notifications-outline', iconOn: 'notifications' },
-  { id: 'settings', label: 'Settings', icon: 'settings-sharp', iconOn: 'settings-sharp' },
+  { id: 'home', label: tr("Home"), icon: 'home-outline', iconOn: 'home' },
+  { id: 'items', label: tr("Lists"), icon: 'list', iconOn: 'list' },
+  { id: 'reminders', label: tr("Reminders"), icon: 'notifications-outline', iconOn: 'notifications' },
+  { id: 'settings', label: tr("Settings"), icon: 'settings-sharp', iconOn: 'settings-sharp' },
 ];
 
 type BottomNavProps = {
@@ -683,7 +684,7 @@ export function BottomNav({ active, insets, maxWidth = 560, onTab, onScan }: Bot
           {renderTab(tabs[0])}
           {renderTab(tabs[1])}
           <View style={s.tab}>
-            <PressScale onPress={onScan} accessibilityRole="button" accessibilityLabel="Scan a label" scaleTo={0.97} style={s.scan}>
+            <PressScale onPress={onScan} accessibilityRole="button" accessibilityLabel={tr("Scan a label")} scaleTo={0.97} style={s.scan}>
               <Ionicons name="scan-outline" size={26} color={c.scanInk} />
               <View style={s.scanLine} />
             </PressScale>

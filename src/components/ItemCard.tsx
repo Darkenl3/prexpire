@@ -15,6 +15,7 @@ import { SmallButton } from './SettingsRows';
 import { useWebKeyboardInset } from './WebKeyboardInset';
 import { maybeAskForRating } from '../appStore';
 
+import { tr } from '../i18n';
 // The redesigned item card for the Lists tab (the reference's compact card): a
 // rounded pale-green art square carrying the category's art on the left, the
 // name / category / expiry-date meta rows and the days-left pill in the
@@ -96,7 +97,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
   // The same days-left wording every list uses ("Today", "1 day", "5 days") —
   // the card's own date row says the exact day.
-  const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
+  const pill = status === 'expired' ? tr("Expired") : days === 0 ? tr("Today") : days === 1 ? tr("1 day") : tr("{0} days", [days]);
 
   const known = custom.find((cat) => cat.id === item.category);
   const icon = categoryIcon(item.category, known?.icon);
@@ -114,7 +115,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
   const addToShoppingList = async () => {
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
     closeMenu();
-    onToast(result.ok ? `${result.item.name} added to your list` : 'That is already on your list');
+    onToast(result.ok ? tr("{0} added to your list", [result.item.name]) : tr("That is already on your list"));
   };
 
   // Consumed: the item leaves the tracked list (it is no longer in the
@@ -126,11 +127,11 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     // Used in time: a good moment for Apple's rating prompt (when earned).
     maybeAskForRating(allItems.length + history.length);
     if (!restock) {
-      onToast(`${item.name} marked as consumed`);
+      onToast(tr("{0} marked as consumed", [item.name]));
       return;
     }
     const result = await addManual({ name: item.name, category: item.category, quantity: 1 });
-    onToast(result.ok ? `${item.name} consumed and added to your list` : `${item.name} consumed. It is already on your list`);
+    onToast(result.ok ? tr("{0} consumed and added to your list", [item.name]) : tr("{0} consumed. It is already on your list", [item.name]));
   };
 
   // Mark as opened: the date becomes the category's "use within" period from
@@ -141,13 +142,13 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     try {
       if (item.openedOn) {
         await unopenItem(item.id);
-        onToast(`${item.name}: printed date restored`);
+        onToast(tr("{0}: printed date restored", [item.name]));
         return;
       }
       const useBy = await openItem(item.id, openDays(item.category));
-      if (useBy) onToast(`Opened. Use by ${formatDate(useBy)}`);
+      if (useBy) onToast(tr("Opened. Use by {0}", [formatDate(useBy)]));
     } catch {
-      onToast("Couldn't save that. Please try again.");
+      onToast(tr("Couldn't save that. Please try again."));
     }
   };
 
@@ -160,9 +161,9 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     Haptics.selectionAsync().catch(() => {});
     try {
       await renameItem(item.id, clean);
-      onToast(`Renamed to ${clean.slice(0, 80)}`);
+      onToast(tr("Renamed to {0}", [clean.slice(0, 80)]));
     } catch {
-      onToast("Couldn't rename the item. Please try again.");
+      onToast(tr("Couldn't rename the item. Please try again."));
     }
   };
 
@@ -173,9 +174,9 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     Haptics.selectionAsync().catch(() => {});
     try {
       await setItemCategory(item.id, category);
-      onToast(`${item.name} moved to ${nameOf(category)}`);
+      onToast(tr("{0} moved to {1}", [item.name, nameOf(category)]));
     } catch {
-      onToast("Couldn't change the category. Please try again.");
+      onToast(tr("Couldn't change the category. Please try again."));
     }
   };
 
@@ -187,7 +188,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
     }
     closeMenu();
     await removeItem(item.id);
-    onToast(`${item.name} removed`);
+    onToast(tr("{0} removed", [item.name]));
   };
 
   return (
@@ -197,7 +198,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           the reference card, carrying real data. */}
       <View style={[s.thumb, compact && s.thumbCompact]}>
         {item.image ? (
-          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={`${item.name} product photo`} accessibilityRole="image" />
+          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={tr("{0} product photo", [item.name])} accessibilityRole="image" />
         ) : (
           categoryArt(item.category, compact ? 26 : 32)
         )}
@@ -220,7 +221,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           <Ionicons name="calendar-outline" size={13.5} color={t.textSub} />
           <Text style={s.metaText} numberOfLines={1}>
             {formatDate(item.expiresOn, item.datePrecision)}
-            {item.openedOn ? ' · opened' : ''}
+            {item.openedOn ? tr(" · opened") : ''}
           </Text>
         </View>
       </View>
@@ -234,7 +235,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           scaleTo={0.88}
           style={s.dots}
           accessibilityRole="button"
-          accessibilityLabel={`Actions for ${item.name}`}
+          accessibilityLabel={tr("Actions for {0}", [item.name])}
         >
           <Ionicons name="ellipsis-vertical" size={17} color={t.textMuted} />
         </PressScale>
@@ -264,12 +265,12 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           screen size with no positioning math and stays fully accessible. */}
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={closeMenu}>
         <View style={s.backdrop}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu} accessibilityLabel="Close" importantForAccessibility="no" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeMenu} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
           <FadeIn>
             <View
               style={[s.menu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
               accessibilityRole={'dialog' as never}
-              accessibilityLabel={`Actions for ${item.name}`}
+              accessibilityLabel={tr("Actions for {0}", [item.name])}
               {...({ 'aria-modal': true } as object)}
             >
               <Text style={s.menuName} numberOfLines={2}>
@@ -284,21 +285,21 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 }}
                 style={s.menuRow}
                 accessibilityRole="button"
-                accessibilityLabel={`Mark ${item.name} as consumed`}
+                accessibilityLabel={tr("Mark {0} as consumed", [item.name])}
               >
                 <Ionicons name="checkmark-done" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Mark as consumed</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Mark as consumed")}</Text>
               </PressScale>
               {/* Opened: moves the date to the category's use-within period. */}
               <PressScale
                 onPress={() => void toggleOpened()}
                 style={s.menuRow}
                 accessibilityRole="button"
-                accessibilityLabel={item.openedOn ? `Mark ${item.name} as not opened` : `Mark ${item.name} as opened`}
+                accessibilityLabel={item.openedOn ? tr("Mark {0} as not opened", [item.name]) : tr("Mark {0} as opened", [item.name])}
               >
                 <Ionicons name={item.openedOn ? 'arrow-undo-outline' : 'open-outline'} size={19} color={t.green} />
                 <Text style={[s.menuRowText, { color: t.text }]}>
-                  {item.openedOn ? 'Not opened (printed date)' : `Mark as opened (use within ${openDays(item.category)} d)`}
+                  {item.openedOn ? tr("Not opened (printed date)") : tr("Mark as opened (use within {0} d)", [openDays(item.category)])}
                 </Text>
               </PressScale>
               {/* Rename: hands over to the Rename dialog. */}
@@ -310,10 +311,10 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 }}
                 style={s.menuRow}
                 accessibilityRole="button"
-                accessibilityLabel={`Rename ${item.name}`}
+                accessibilityLabel={tr("Rename {0}", [item.name])}
               >
                 <Ionicons name="pencil-outline" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Rename</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Rename")}</Text>
               </PressScale>
               {/* Change category: hands over to the category picker dialog. */}
               <PressScale
@@ -323,21 +324,21 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 }}
                 style={s.menuRow}
                 accessibilityRole="button"
-                accessibilityLabel={`Change the category of ${item.name}`}
+                accessibilityLabel={tr("Change the category of {0}", [item.name])}
               >
                 <Ionicons name="folder-open-outline" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Change category</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Change category")}</Text>
               </PressScale>
-              <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Add ${item.name} to your Shopping List`}>
+              <PressScale onPress={() => void addToShoppingList()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={tr("Add {0} to your Shopping List", [item.name])}>
                 <Ionicons name="cart-outline" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Add to Shopping List</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Add to Shopping List")}</Text>
               </PressScale>
-              <PressScale onPress={() => void removePressed()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`}>
+              <PressScale onPress={() => void removePressed()} style={s.menuRow} accessibilityRole="button" accessibilityLabel={tr("Remove {0}", [item.name])}>
                 <Ionicons name="trash-outline" size={19} color={t.red} />
-                <Text style={[s.menuRowText, { color: t.red }]}>{confirmRemove ? 'Tap again to remove' : 'Remove item'}</Text>
+                <Text style={[s.menuRowText, { color: t.red }]}>{confirmRemove ? tr("Tap again to remove") : tr("Remove item")}</Text>
               </PressScale>
               <View style={s.menuClose}>
-                <SmallButton label="Close" onPress={closeMenu} />
+                <SmallButton label={tr("Close")} onPress={closeMenu} />
               </View>
             </View>
           </FadeIn>
@@ -348,19 +349,19 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           (the app's input box, lime while active) and Cancel / Save. */}
       <Modal visible={renameOpen} transparent animationType="fade" onRequestClose={() => setRenameOpen(false)}>
         <View style={[s.backdrop, webKeyboard > 0 && { paddingBottom: webKeyboard }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRenameOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setRenameOpen(false)} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
           <FadeIn>
             <View
               style={[s.menu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
               accessibilityRole={'dialog' as never}
-              accessibilityLabel={`Rename ${item.name}`}
+              accessibilityLabel={tr("Rename {0}", [item.name])}
               {...({ 'aria-modal': true } as object)}
             >
-              <Text style={[s.consumeQuestion, { color: t.text }]}>Rename</Text>
+              <Text style={[s.consumeQuestion, { color: t.text }]}>{tr("Rename")}</Text>
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
-                placeholder="Product name"
+                placeholder={tr("Product name")}
                 placeholderTextColor={t.textMuted}
                 maxLength={80}
                 autoFocus
@@ -369,12 +370,12 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 onSubmitEditing={() => void saveName()}
                 onFocus={() => setDraftFocused(true)}
                 onBlur={() => setDraftFocused(false)}
-                accessibilityLabel="Product name"
+                accessibilityLabel={tr("Product name")}
                 style={[s.nameInput, { color: t.text, borderColor: draftFocused ? t.chipOnBorder : t.surfaceBorder, backgroundColor: t === LIGHT ? '#FFFFFF' : t.cardAlt }]}
               />
               <View style={s.renameButtons}>
-                <SmallButton label="Cancel" onPress={() => setRenameOpen(false)} />
-                <SmallButton label="Save name" icon="checkmark" tone="mint" onPress={() => void saveName()} />
+                <SmallButton label={tr("Cancel")} onPress={() => setRenameOpen(false)} />
+                <SmallButton label={tr("Save name")} icon="checkmark" tone="mint" onPress={() => void saveName()} />
               </View>
             </View>
           </FadeIn>
@@ -386,18 +387,18 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
           current one is ticked. Scrolls when the list is long. */}
       <Modal visible={categoryOpen} transparent animationType="fade" onRequestClose={() => setCategoryOpen(false)}>
         <View style={s.backdrop}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setCategoryOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setCategoryOpen(false)} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
           <FadeIn>
             <View
               style={[s.menu, s.categoryMenu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
               accessibilityRole={'dialog' as never}
-              accessibilityLabel={`Category of ${item.name}`}
+              accessibilityLabel={tr("Category of {0}", [item.name])}
               {...({ 'aria-modal': true } as object)}
             >
               <Text style={s.menuName} numberOfLines={2}>
                 {item.name}
               </Text>
-              <Text style={[s.consumeQuestion, { color: t.text }]}>Move it to another category.</Text>
+              <Text style={[s.consumeQuestion, { color: t.text }]}>{tr("Move it to another category.")}</Text>
               <ScrollView style={s.categoryList} contentContainerStyle={s.categoryListBody}>
                 {all.map((cat) => {
                   const current = cat.id === item.category;
@@ -408,7 +409,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                       style={[s.menuRow, current && { borderWidth: 1, borderColor: t.chipOnBorder }]}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: current }}
-                      accessibilityLabel={`Move ${item.name} to ${cat.name}`}
+                      accessibilityLabel={tr("Move {0} to {1}", [item.name, cat.name])}
                     >
                       <View style={s.categoryArt}>{categoryArt(cat.id as CategoryId, 22)}</View>
                       <Text style={[s.menuRowText, s.categoryName, { color: t.text }]} numberOfLines={1}>
@@ -420,7 +421,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 })}
               </ScrollView>
               <View style={s.menuClose}>
-                <SmallButton label="Cancel" onPress={() => setCategoryOpen(false)} />
+                <SmallButton label={tr("Cancel")} onPress={() => setCategoryOpen(false)} />
               </View>
             </View>
           </FadeIn>
@@ -430,28 +431,28 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
       {/* The Consumed dialog: the same compact dialog as the actions menu. */}
       <Modal visible={consumeOpen} transparent animationType="fade" onRequestClose={() => setConsumeOpen(false)}>
         <View style={s.backdrop}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setConsumeOpen(false)} accessibilityLabel="Close" importantForAccessibility="no" />
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setConsumeOpen(false)} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
           <FadeIn>
             <View
               style={[s.menu, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
               accessibilityRole={'dialog' as never}
-              accessibilityLabel={`${item.name} consumed`}
+              accessibilityLabel={tr("{0} consumed", [item.name])}
               {...({ 'aria-modal': true } as object)}
             >
               <Text style={s.menuName} numberOfLines={2}>
                 {item.name}
               </Text>
-              <Text style={[s.consumeQuestion, { color: t.text }]}>Used it up? Add it to your Shopping List to buy it again.</Text>
-              <PressScale onPress={() => void consume(true)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Mark ${item.name} as consumed and add it to your Shopping List`}>
+              <Text style={[s.consumeQuestion, { color: t.text }]}>{tr("Used it up? Add it to your Shopping List to buy it again.")}</Text>
+              <PressScale onPress={() => void consume(true)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={tr("Mark {0} as consumed and add it to your Shopping List", [item.name])}>
                 <Ionicons name="cart-outline" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Consumed, add to Shopping List</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Consumed, add to Shopping List")}</Text>
               </PressScale>
-              <PressScale onPress={() => void consume(false)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={`Mark ${item.name} as consumed`}>
+              <PressScale onPress={() => void consume(false)} style={s.menuRow} accessibilityRole="button" accessibilityLabel={tr("Mark {0} as consumed", [item.name])}>
                 <Ionicons name="checkmark-done" size={19} color={t.green} />
-                <Text style={[s.menuRowText, { color: t.text }]}>Consumed, don't add</Text>
+                <Text style={[s.menuRowText, { color: t.text }]}>{tr("Consumed, don't add")}</Text>
               </PressScale>
               <View style={s.menuClose}>
-                <SmallButton label="Cancel" onPress={() => setConsumeOpen(false)} />
+                <SmallButton label={tr("Cancel")} onPress={() => setConsumeOpen(false)} />
               </View>
             </View>
           </FadeIn>

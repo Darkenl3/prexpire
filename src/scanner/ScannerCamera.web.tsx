@@ -13,6 +13,7 @@ import { createWebOcr } from './ocr.web';
 import { parseExpiry } from './dateParser';
 import type { CameraErrorKind, FrameReading, ScannerCameraProps } from './ScannerCamera.types';
 
+import { tr } from '../i18n';
 // Web build: the camera through getUserMedia (rear camera preferred) shown in a <video>,
 // frames copied to a canvas cropped EXACTLY to the scanning frame, and read in the browser
 // (Tesseract for text, ZXing or the native BarcodeDetector for product barcodes). Nothing
@@ -110,13 +111,13 @@ async function createDetectorReader(): Promise<CanvasBarcodeReader | null> {
 function describeError(e: unknown): [CameraErrorKind, string] {
   const name = (e as { name?: string })?.name;
   if (name === 'NotAllowedError' || name === 'SecurityError') {
-    return ['denied', 'Camera access is blocked for this site. Allow the camera in your browser settings, then try again.'];
+    return ['denied', tr("Camera access is blocked for this site. Allow the camera in your browser settings, then try again.")];
   }
-  if (name === 'NotFoundError' || name === 'OverconstrainedError') return ['unavailable', 'No camera was found on this device.'];
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') return ['unavailable', tr("No camera was found on this device.")];
   if (name === 'NotReadableError' || name === 'AbortError') {
-    return ['other', 'The camera is being used by another app or tab. Close it and try again.'];
+    return ['other', tr("The camera is being used by another app or tab. Close it and try again.")];
   }
-  return ['other', 'The camera could not start.'];
+  return ['other', tr("The camera could not start.")];
 }
 
 // Grayscale with a little extra contrast (the scanner's original preprocessing,
@@ -228,7 +229,7 @@ export function ScannerCamera({ ref, active, torch, onReady, onError }: ScannerC
 
     (async () => {
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        callbacks.current.onError('unsupported', 'This browser cannot use the camera here. Open Prexpire over https in Safari, Chrome or Edge.');
+        callbacks.current.onError('unsupported', tr("This browser cannot use the camera here. Open Prexpire over https in Safari, Chrome or Edge."));
         return;
       }
       // Never two streams at once.
@@ -269,7 +270,7 @@ export function ScannerCamera({ ref, active, torch, onReady, onError }: ScannerC
         await worker.current;
       } catch {
         worker.current = null;
-        if (!cancelled) callbacks.current.onError('ocr', 'The text reader could not load. Check your connection and try again.');
+        if (!cancelled) callbacks.current.onError('ocr', tr("The text reader could not load. Check your connection and try again."));
       }
     })();
 
@@ -354,7 +355,7 @@ export function ScannerCamera({ ref, active, torch, onReady, onError }: ScannerC
       autoPlay
       muted
       playsInline
-      aria-label="Camera preview"
+      aria-label={tr("Camera preview")}
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', backgroundColor: '#000' }}
     />
   );

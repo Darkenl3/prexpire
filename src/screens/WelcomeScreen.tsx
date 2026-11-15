@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressScale } from '../components/Press';
 import { useSettings } from '../settings';
 
+import { tr } from '../i18n';
 // The get-started screen: shown once, on the very first launch of a fresh
 // install, and never again. One screen, not a tour — the app works without an
 // account, so it leads straight to the first scan.
@@ -38,21 +39,21 @@ const CARDS: Card[] = [
     icon: 'cafe-outline',
     name: 'Organic milk',
     frames: [
-      { label: 'Expires in', value: '4 days', tone: 'ok' },
-      { label: 'Expires in', value: '3 days', tone: 'ok' },
-      { label: 'Use it soon', value: '2 days', tone: 'soon' },
-      { label: 'Use it soon', value: '2 days', tone: 'soon' },
+      { label: tr("Expires in"), value: tr("4 days"), tone: 'ok' },
+      { label: tr("Expires in"), value: tr("3 days"), tone: 'ok' },
+      { label: tr("Use it soon"), value: tr("2 days"), tone: 'soon' },
+      { label: tr("Use it soon"), value: tr("2 days"), tone: 'soon' },
     ],
   },
-  { icon: 'medkit-outline', name: 'Ibuprofen', frames: [{ label: 'Expires in', value: '7 months', tone: 'ok' }] },
+  { icon: 'medkit-outline', name: 'Ibuprofen', frames: [{ label: tr("Expires in"), value: tr("7 months"), tone: 'ok' }] },
   {
     icon: 'nutrition-outline',
     name: 'Greek yogurt',
     frames: [
-      { label: 'Use it today', value: '1 day', tone: 'soon' },
-      { label: 'Use it today', value: '1 day', tone: 'soon' },
-      { label: 'Use it today', value: '1 day', tone: 'soon' },
-      { label: 'Past its date', value: 'Expired', tone: 'gone' },
+      { label: tr("Use it today"), value: tr("1 day"), tone: 'soon' },
+      { label: tr("Use it today"), value: tr("1 day"), tone: 'soon' },
+      { label: tr("Use it today"), value: tr("1 day"), tone: 'soon' },
+      { label: tr("Past its date"), value: tr("Expired"), tone: 'gone' },
     ],
   },
 ];
@@ -103,7 +104,7 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
           source={brandWhiteInk}
           style={{ width: Math.round((compact ? 34 : 40) * BRAND_ASPECT), height: compact ? 34 : 40, alignSelf: 'center' }}
           resizeMode="contain"
-          accessibilityLabel="Prexpire"
+          accessibilityLabel={tr("Prexpire")}
         />
 
         <View style={[s.cards, { marginTop: compact ? 22 : 44 }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -121,25 +122,24 @@ export default function WelcomeScreen({ onStart, onSignIn }: Props) {
 
         <Animated.View style={[s.copy, { opacity: copy, transform: [{ translateY: copy.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }]}>
           <Text style={[s.title, compact && { fontSize: 32, lineHeight: 35 }]} accessibilityRole="header">
-            Never forget an expiry date again.
-          </Text>
-          <Text style={s.lede}>Scan the date once. Prexpire shows you what to use first.</Text>
+            {tr("Never forget an expiry date again.")}</Text>
+          <Text style={s.lede}>{tr("Scan the date once. Prexpire shows you what to use first.")}</Text>
         </Animated.View>
 
         <Animated.View style={{ opacity: copy, gap: 10 }}>
           {/* One way in. Home's big scan button is right there; a second
               "explore" option was the same thing in other words. */}
-          <PressScale onPress={onStart} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Get started" style={s.primary}>
-            <Text style={s.primaryText}>Get started</Text>
+          <PressScale onPress={onStart} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Get started")} style={s.primary}>
+            <Text style={s.primaryText}>{tr("Get started")}</Text>
           </PressScale>
           {onSignIn ? (
-            <PressScale onPress={onSignIn} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Sign in to back up and sync" style={s.link}>
+            <PressScale onPress={onSignIn} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Sign in to back up and sync")} style={s.link}>
               <Text style={s.linkText}>
-                Have an account? <Text style={{ color: LIME, fontWeight: '700' }}>Sign in</Text>
+                {tr("Have an account?")}{' '}<Text style={{ color: LIME, fontWeight: '700' }}>{tr("Sign in")}</Text>
               </Text>
             </PressScale>
           ) : null}
-          <Text style={s.note}>No account needed. Works offline.</Text>
+          <Text style={s.note}>{tr("No account needed. Works offline.")}</Text>
         </Animated.View>
       </View>
     </View>

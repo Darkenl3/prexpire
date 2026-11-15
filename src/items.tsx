@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSettings } from './settings';
 import { noteItemAdded } from './pro';
 
+import { tr } from './i18n';
 // Items the user tracks. Every item is real: items added in the app are saved
 // on the device with AsyncStorage, and a fresh install or an emptied storage
 // starts with zero items (empty states guide the first scan instead). There
@@ -13,11 +14,11 @@ import { noteItemAdded } from './pro';
 export type CategoryId = 'food' | 'medicine' | 'household' | 'skincare' | 'pantry' | (string & {});
 
 export const CATEGORY_NAMES: Record<string, string> = {
-  food: 'Food',
-  medicine: 'Medicine',
-  household: 'Household',
-  skincare: 'Skincare',
-  pantry: 'Pantry',
+  food: tr("Food"),
+  medicine: tr("Medicine"),
+  household: tr("Household"),
+  skincare: tr("Skincare"),
+  pantry: tr("Pantry"),
 };
 
 // The five built-in ids (custom ones live in src/categories.tsx).

@@ -5,6 +5,7 @@ import { BottomSheet } from './components/BottomSheet';
 import { PressScale } from './components/Press';
 import { makeStyles, useTheme } from './theme';
 
+import { tr } from './i18n';
 // The App Store, from the website part of the iPhone app (window.__prexpireStore):
 //
 //  • Rating: Apple's own "Enjoying Prexpire?" star prompt, asked only after
@@ -144,12 +145,12 @@ export function UpdateNotice() {
     setOpen(false);
   };
   return (
-    <BottomSheet visible={open} onClose={close} title="Update available" scrollable maxWidth={460}>
+    <BottomSheet visible={open} onClose={close} title={tr("Update available")} scrollable maxWidth={460}>
       <View style={s.body}>
         <View style={s.badge}>
           <Ionicons name="arrow-up-circle" size={40} color={c.green} />
         </View>
-        <Text style={s.lede}>Prexpire {update.version} is on the App Store.</Text>
+        <Text style={s.lede}>{tr("Prexpire")}{' '}{update.version} {' '}{tr("is on the App Store.")}</Text>
         {update.notes ? <Text style={s.notes}>{update.notes}</Text> : null}
         <PressScale
           onPress={() => {
@@ -158,10 +159,10 @@ export function UpdateNotice() {
           }}
           scaleTo={0.97}
           accessibilityRole="button"
-          accessibilityLabel="Update in the App Store"
+          accessibilityLabel={tr("Update in the App Store")}
           style={s.primary}
         >
-          <Text style={s.primaryText}>Update in the App Store</Text>
+          <Text style={s.primaryText}>{tr("Update in the App Store")}</Text>
         </PressScale>
       </View>
     </BottomSheet>

@@ -9,6 +9,7 @@ import { TurnstileFrame } from './TurnstileFrame';
 import { useSync } from '../sync';
 import { canRevokeApple, signsInWithApple } from '../appleRevoke';
 
+import { tr } from '../i18n';
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
 //
@@ -34,10 +35,10 @@ type Props = { visible: boolean; onClose: () => void; onSignedIn?: () => void; i
 
 const TITLES: Record<Step, string> = {
   start: '',
-  code: 'Check your email',
-  forgot: 'Reset your password',
-  newpass: 'Choose a new password',
-  login: 'Sign in with a code',
+  code: tr("Check your email"),
+  forgot: tr("Reset your password"),
+  newpass: tr("Choose a new password"),
+  login: tr("Sign in with a code"),
 };
 
 export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signin', intro }: Props) {
@@ -90,7 +91,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   // spends the token, and asks the widget for the next one.
   const guarded = async (work: (token: string) => Promise<Outcome>): Promise<Outcome | null> => {
     if (!captcha) {
-      setError(captchaBroken ? "The security check couldn't load. Check your connection, then try again." : 'One moment: the security check is still running.');
+      setError(captchaBroken ? tr("The security check couldn't load. Check your connection, then try again.") : tr("One moment: the security check is still running."));
       return null;
     }
     const token = captcha;
@@ -111,21 +112,21 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   };
   const emailOk = () => {
     if (EMAIL_OK.test(email.trim())) return true;
-    setError('Enter an email address like name@example.com.');
+    setError(tr("Enter an email address like name@example.com."));
     return false;
   };
 
   const submitStart = async () => {
     if (!emailOk()) return;
     if (mode === 'signup') {
-      if (password.length < MIN_PASSWORD) return setError(`Use at least ${MIN_PASSWORD} characters for your password.`);
+      if (password.length < MIN_PASSWORD) return setError(tr("Use at least {0} characters for your password.", [MIN_PASSWORD]));
       const out = await guarded((t) => auth.signUp(email, password, t));
       if (!out) return;
       if (!out.error) goCode('signup');
       else if (out.exists) setMode('signin');
       return;
     }
-    if (!password) return setError('Enter your password.');
+    if (!password) return setError(tr("Enter your password."));
     const out = await guarded((t) => auth.signIn(email, password, t));
     if (!out) return;
     if (!out.error) return done();
@@ -134,12 +135,12 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
       // new code one tap away (it needs a fresh security check).
       goCode('signup');
       setWait(0);
-      setError("This account isn't confirmed yet. Enter the code from your email, or send a new one.");
+      setError(tr("This account isn't confirmed yet. Enter the code from your email, or send a new one."));
     }
   };
 
   const submitCode = async (value = code) => {
-    if (!/^\d{6}$/.test(value)) return setError('Enter the 6-digit code from the email.');
+    if (!/^\d{6}$/.test(value)) return setError(tr("Enter the 6-digit code from the email."));
     if (purpose === 'signup') {
       const out = await run(() => auth.confirmSignUp(email, value));
       if (!out.error) done();
@@ -176,7 +177,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   };
 
   const submitNewPassword = async () => {
-    if (password.length < MIN_PASSWORD) return setError(`Use at least ${MIN_PASSWORD} characters for your password.`);
+    if (password.length < MIN_PASSWORD) return setError(tr("Use at least {0} characters for your password.", [MIN_PASSWORD]));
     const out = await run(() => auth.setPassword(password));
     if (!out.error) done();
   };
@@ -200,7 +201,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
       textContentType={mode === 'signup' ? 'emailAddress' : 'username'}
       inputMode="email"
       returnKeyType="next"
-      accessibilityLabel="Email address"
+      accessibilityLabel={tr("Email address")}
       style={[s.input, error && !password ? s.inputBad : null]}
     />
   );
@@ -214,7 +215,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
           clear();
         }}
         onSubmitEditing={onSubmit}
-        placeholder={isNew ? `New password, ${MIN_PASSWORD}+ characters` : 'Password'}
+        placeholder={isNew ? tr("New password, {0}+ characters", [MIN_PASSWORD]) : tr("Password")}
         placeholderTextColor={c.textMuted}
         secureTextEntry={!showPassword}
         autoCapitalize="none"
@@ -222,14 +223,14 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         autoComplete={isNew ? 'new-password' : 'current-password'}
         textContentType={isNew ? 'newPassword' : 'password'}
         returnKeyType="go"
-        accessibilityLabel={isNew ? 'New password' : 'Password'}
+        accessibilityLabel={isNew ? tr("New password") : tr("Password")}
         style={[s.input, { paddingRight: 52 }]}
       />
       <PressScale
         onPress={() => setShowPassword((v) => !v)}
         scaleTo={0.9}
         accessibilityRole="button"
-        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+        accessibilityLabel={showPassword ? tr("Hide password") : tr("Show password")}
         style={s.eye}
       >
         <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={c.textMuted} />
@@ -255,7 +256,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
     }
     const digits = (text.match(/d{6}/)?.[0] ?? text.replace(/D/g, '')).slice(0, 6);
     if (digits.length !== 6) {
-      setError("There's no 6-digit code to paste. Copy the code from the email, then tap Paste code.");
+      setError(tr("There's no 6-digit code to paste. Copy the code from the email, then tap Paste code."));
       codeRef.current?.focus();
       return;
     }
@@ -277,9 +278,9 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   ) : null;
 
   const back = (to: Step) => (
-    <PressScale onPress={() => (setError(null), setStep(to))} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Back" style={[s.linkBtn, { alignSelf: 'flex-start' }]}>
+    <PressScale onPress={() => (setError(null), setStep(to))} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Back")} style={[s.linkBtn, { alignSelf: 'flex-start' }]}>
       <Ionicons name="arrow-back" size={15} color={c.textMuted} />
-      <Text style={s.link}>Back</Text>
+      <Text style={s.link}>{tr("Back")}</Text>
     </PressScale>
   );
 
@@ -317,31 +318,31 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
           onPress={() => viaProvider(auth.signInWithApple)}
           scaleTo={0.97}
           accessibilityRole="button"
-          accessibilityLabel="Continue with Apple"
+          accessibilityLabel={tr("Continue with Apple")}
           style={[s.apple, { backgroundColor: c === LIGHT ? '#000' : '#fff' }]}
         >
           <Ionicons name="logo-apple" size={20} color={c === LIGHT ? '#fff' : '#000'} />
-          <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>Continue with Apple</Text>
+          <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>{tr("Continue with Apple")}</Text>
         </PressScale>
       ) : null}
       {/* Apple's sheet can stop at "Sign-Up Not Completed" when a real address
           is shared; Hide My Email always goes through. */}
-      {hasApple ? <Text style={[s.orText, { textAlign: 'center', marginTop: -2 }]}>With Apple, choose “Hide My Email” to sign in smoothly.</Text> : null}
+      {hasApple ? <Text style={[s.orText, { textAlign: 'center', marginTop: -2 }]}>{tr("With Apple, choose “Hide My Email” to sign in smoothly.")}</Text> : null}
       {hasGoogle ? (
         <PressScale
           onPress={() => viaProvider(auth.signInWithGoogle)}
           scaleTo={0.97}
           accessibilityRole="button"
-          accessibilityLabel="Continue with Google"
+          accessibilityLabel={tr("Continue with Google")}
           style={[s.apple, s.google]}
         >
           <Ionicons name="logo-google" size={18} color={c.text} />
-          <Text style={[s.appleText, { color: c.text }]}>Continue with Google</Text>
+          <Text style={[s.appleText, { color: c.text }]}>{tr("Continue with Google")}</Text>
         </PressScale>
       ) : null}
       <View style={s.orRow}>
         <View style={s.orLine} />
-        <Text style={s.orText}>or with email</Text>
+        <Text style={s.orText}>{tr("or with email")}</Text>
         <View style={s.orLine} />
       </View>
     </>
@@ -353,36 +354,32 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
       <View style={s.body}>
         {apple}
         <Text style={s.lede}>
-          {intro && mode === 'signup'
-            ? intro.text
-            : mode === 'signup'
-              ? "Optional. An account keeps a copy of your items. We'll email you a code to confirm it."
-              : 'Your items stay on this phone either way.'}
+          {intro && mode === 'signup' ? intro.text : mode === 'signup' ? tr("Optional. An account keeps a copy of your items. We'll email you a code to confirm it.") : tr("Your items stay on this phone either way.")}
         </Text>
         {emailField(submitStart)}
         {passwordField(submitStart, mode === 'signup')}
         {mode === 'signin' ? (
           <View style={[s.row, { marginTop: -4 }]}>
-            {link('Forgot password?', () => (setError(null), setStep('forgot')))}
-            {link('Email me a code instead', () => (setError(null), setStep('login')))}
+            {link(tr("Forgot password?"), () => (setError(null), setStep('forgot')))}
+            {link(tr("Email me a code instead"), () => (setError(null), setStep('login')))}
           </View>
         ) : null}
         {errorLine}
         {check}
-        {primary(mode === 'signup' ? 'Create account' : 'Sign in', submitStart)}
-        {mode === 'signup' ? <Text style={s.fine}>By creating an account you agree to the Terms and Privacy Policy.</Text> : null}
+        {primary(mode === 'signup' ? tr("Create account") : tr("Sign in"), submitStart)}
+        {mode === 'signup' ? <Text style={s.fine}>{tr("By creating an account you agree to the Terms and Privacy Policy.")}</Text> : null}
         <View style={s.switchRow}>
-          <Text style={s.switchText}>{mode === 'signin' ? 'New to Prexpire?' : 'Already have an account?'}</Text>
-          {link(mode === 'signin' ? 'Create an account' : 'Sign in', () => (setError(null), setPassword(''), setMode(mode === 'signin' ? 'signup' : 'signin')), true)}
+          <Text style={s.switchText}>{mode === 'signin' ? tr("New to Prexpire?") : tr("Already have an account?")}</Text>
+          {link(mode === 'signin' ? tr("Create an account") : tr("Sign in"), () => (setError(null), setPassword(''), setMode(mode === 'signin' ? 'signup' : 'signin')), true)}
         </View>
       </View>
     );
   } else if (step === 'code') {
-    const what = purpose === 'signup' ? 'to confirm your account' : purpose === 'reset' ? 'to reset your password' : 'to sign in';
+    const what = purpose === 'signup' ? tr("to confirm your account") : purpose === 'reset' ? tr("to reset your password") : tr("to sign in");
     body = (
       <View style={s.body}>
         <Text style={s.lede}>
-          Enter the 6-digit code we sent to <Text style={{ color: c.text, fontWeight: '700' }}>{email.trim()}</Text> {what}.
+          {tr("Enter the 6-digit code we sent to")}{' '}<Text style={{ color: c.text, fontWeight: '700' }}>{email.trim()}</Text> {what}.
         </Text>
         {/* Six boxes over one invisible field: typing, pasting and iOS's
             "from Mail" code suggestion all go into the field, and the boxes
@@ -411,58 +408,58 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
             textContentType="oneTimeCode"
             maxLength={6}
             caretHidden
-            accessibilityLabel="6-digit code"
+            accessibilityLabel={tr("6-digit code")}
             style={s.hiddenInput}
           />
         </PressScale>
-        <PressScale onPress={pasteCode} scaleTo={0.94} accessibilityRole="button" accessibilityLabel="Paste code" style={[s.linkBtn, { alignSelf: 'center', marginTop: -4 }]}>
+        <PressScale onPress={pasteCode} scaleTo={0.94} accessibilityRole="button" accessibilityLabel={tr("Paste code")} style={[s.linkBtn, { alignSelf: 'center', marginTop: -4 }]}>
           <Ionicons name="clipboard-outline" size={15} color={c.green} />
-          <Text style={[s.link, { color: c.green, fontWeight: '700' }]}>Paste code</Text>
+          <Text style={[s.link, { color: c.green, fontWeight: '700' }]}>{tr("Paste code")}</Text>
         </PressScale>
         {errorLine}
-        {primary(purpose === 'reset' ? 'Check code' : purpose === 'signup' ? 'Confirm account' : 'Sign in', () => submitCode())}
+        {primary(purpose === 'reset' ? tr("Check code") : purpose === 'signup' ? tr("Confirm account") : tr("Sign in"), () => submitCode())}
         <View style={s.row}>
           {back(purpose === 'reset' ? 'forgot' : purpose === 'login' ? 'login' : 'start')}
-          {link(wait > 0 ? `New code in ${wait}s` : 'Send a new code', resend, wait <= 0)}
+          {link(wait > 0 ? tr("New code in {0}s", [wait]) : tr("Send a new code"), resend, wait <= 0)}
         </View>
         {wait <= 0 ? check : null}
-        <Text style={s.fine}>Can't find it? Check your spam folder.</Text>
+        <Text style={s.fine}>{tr("Can't find it? Check your spam folder.")}</Text>
       </View>
     );
   } else if (step === 'forgot') {
     body = (
       <View style={s.body}>
-        <Text style={s.lede}>Enter your account's email. We'll send a code so you can choose a new password.</Text>
+        <Text style={s.lede}>{tr("Enter your account's email. We'll send a code so you can choose a new password.")}</Text>
         {emailField(submitForgot)}
         {errorLine}
         {check}
-        {primary('Email me a reset code', submitForgot)}
+        {primary(tr("Email me a reset code"), submitForgot)}
         {back('start')}
       </View>
     );
   } else if (step === 'login') {
     body = (
       <View style={s.body}>
-        <Text style={s.lede}>No password needed. We'll email you a code to sign in to your account.</Text>
+        <Text style={s.lede}>{tr("No password needed. We'll email you a code to sign in to your account.")}</Text>
         {emailField(submitLogin)}
         {errorLine}
         {check}
-        {primary('Email me a code', submitLogin)}
+        {primary(tr("Email me a code"), submitLogin)}
         {back('start')}
       </View>
     );
   } else {
     body = (
       <View style={s.body}>
-        <Text style={s.lede}>Code accepted. Choose the new password for {email.trim()}.</Text>
+        <Text style={s.lede}>{tr("Code accepted. Choose the new password for")}{' '}{email.trim()}.</Text>
         {passwordField(submitNewPassword, true)}
         {errorLine}
-        {primary('Save new password', submitNewPassword)}
+        {primary(tr("Save new password"), submitNewPassword)}
       </View>
     );
   }
 
-  const title = step === 'start' ? (mode === 'signup' ? (intro?.title ?? 'Create your account') : 'Welcome back') : TITLES[step];
+  const title = step === 'start' ? (mode === 'signup' ? (intro?.title ?? tr("Create your account")) : tr("Welcome back")) : TITLES[step];
   return (
     <BottomSheet visible={visible} onClose={onClose} title={title} scrollable maxWidth={460}>
       {body}
@@ -495,21 +492,19 @@ export function DeleteAccountSheet({ visible, onClose, onDeleted }: { visible: b
     onDeleted();
   };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Delete your account?" scrollable={false} maxWidth={460}>
+    <BottomSheet visible={visible} onClose={onClose} title={tr("Delete your account?")} scrollable={false} maxWidth={460}>
       <View style={s.body}>
         <Text style={s.lede}>
-          Your account and everything saved in it (items, shopping list, categories) will be deleted for good after 30 days.
-        </Text>
+          {tr("Your account and everything saved in it (items, shopping list, categories) will be deleted for good after 30 days.")}</Text>
         <Text style={s.lede}>
-          You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.
-        </Text>
-        {apple ? <Text style={s.lede}>Apple asks you to confirm once, so Prexpire is also removed from the apps using your Apple ID.</Text> : null}
+          {tr("You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.")}</Text>
+        {apple ? <Text style={s.lede}>{tr("Apple asks you to confirm once, so Prexpire is also removed from the apps using your Apple ID.")}</Text> : null}
         {error ? <Text style={s.error}>{error}</Text> : null}
-        <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Delete account" style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.primaryText, { color: '#fff' }]}>Delete account</Text>}
+        <PressScale onPress={remove} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Delete account")} style={[s.primary, { backgroundColor: c.red }, busy && { opacity: 0.7 }]}>
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={[s.primaryText, { color: '#fff' }]}>{tr("Delete account")}</Text>}
         </PressScale>
-        <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep my account" style={[s.linkBtn, { alignSelf: 'center' }]}>
-          <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep my account</Text>
+        <PressScale onPress={onClose} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Keep my account")} style={[s.linkBtn, { alignSelf: 'center' }]}>
+          <Text style={[s.link, { fontWeight: '700', color: c.text }]}>{tr("Keep my account")}</Text>
         </PressScale>
       </View>
     </BottomSheet>
@@ -543,18 +538,17 @@ export function DeletionPendingSheet() {
     setBusy(null);
   };
   return (
-    <BottomSheet visible={!!pendingDeletion} onClose={() => {}} locked title="Your account is being deleted" scrollable={false} maxWidth={460}>
+    <BottomSheet visible={!!pendingDeletion} onClose={() => {}} locked title={tr("Your account is being deleted")} scrollable={false} maxWidth={460}>
       <View style={s.body}>
         <Text style={s.lede}>
-          {days <= 1 ? 'It will be deleted for good tomorrow' : `It will be deleted for good in ${days} days`}, on {date}, with everything saved in it.
-        </Text>
-        <Text style={s.lede}>Restore it to keep using your account and get your items back.</Text>
+          {days <= 1 ? tr("It will be deleted for good tomorrow") : tr("It will be deleted for good in {0} days", [days])}{tr(", on")}{' '}{date}{tr(", with everything saved in it.")}</Text>
+        <Text style={s.lede}>{tr("Restore it to keep using your account and get your items back.")}</Text>
         {error ? <Text style={s.error}>{error}</Text> : null}
-        <PressScale onPress={restore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Restore my account" style={[s.primary, busy === 'restore' && { opacity: 0.7 }]}>
-          {busy === 'restore' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>Restore my account</Text>}
+        <PressScale onPress={restore} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Restore my account")} style={[s.primary, busy === 'restore' && { opacity: 0.7 }]}>
+          {busy === 'restore' ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>{tr("Restore my account")}</Text>}
         </PressScale>
-        <PressScale onPress={keep} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Keep it deleted and sign out" style={[s.linkBtn, { alignSelf: 'center' }]}>
-          {busy === 'keep' ? <ActivityIndicator color={c.textMuted} /> : <Text style={[s.link, { fontWeight: '700', color: c.text }]}>Keep it deleted and sign out</Text>}
+        <PressScale onPress={keep} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Keep it deleted and sign out")} style={[s.linkBtn, { alignSelf: 'center' }]}>
+          {busy === 'keep' ? <ActivityIndicator color={c.textMuted} /> : <Text style={[s.link, { fontWeight: '700', color: c.text }]}>{tr("Keep it deleted and sign out")}</Text>}
         </PressScale>
       </View>
     </BottomSheet>
@@ -569,18 +563,18 @@ export function AccountDeletedSheet() {
   const { deletedNotice, dismissDeletedNotice } = useSync();
   const date = deletedNotice ? new Date(deletedNotice).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
   return (
-    <BottomSheet visible={!!deletedNotice} onClose={dismissDeletedNotice} title="Account deleted" scrollable={false} maxWidth={460}>
+    <BottomSheet visible={!!deletedNotice} onClose={dismissDeletedNotice} title={tr("Account deleted")} scrollable={false} maxWidth={460}>
       <View style={s.body}>
         <View style={{ alignItems: 'center', paddingVertical: 4 }}>
           <Ionicons name="checkmark-circle" size={44} color={c.green} />
         </View>
         <Text style={[s.lede, { textAlign: 'center' }]}>
-          You're signed out. Your account and everything in it will be deleted for good on{' '}
+          {tr("You're signed out. Your account and everything in it will be deleted for good on")}{' '}
           <Text style={{ color: c.text, fontWeight: '700' }}>{date}</Text>.
         </Text>
-        <Text style={[s.lede, { textAlign: 'center' }]}>Changed your mind? Sign in before then and choose Restore my account.</Text>
-        <PressScale onPress={dismissDeletedNotice} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Back to Prexpire" style={s.primary}>
-          <Text style={s.primaryText}>Back to Prexpire</Text>
+        <Text style={[s.lede, { textAlign: 'center' }]}>{tr("Changed your mind? Sign in before then and choose Restore my account.")}</Text>
+        <PressScale onPress={dismissDeletedNotice} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Back to Prexpire")} style={s.primary}>
+          <Text style={s.primaryText}>{tr("Back to Prexpire")}</Text>
         </PressScale>
       </View>
     </BottomSheet>
@@ -604,7 +598,7 @@ export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; on
     setSaved(false);
   }, [visible]);
   const save = async () => {
-    if (value.length < MIN_PASSWORD) return setError(`Use at least ${MIN_PASSWORD} characters for your password.`);
+    if (value.length < MIN_PASSWORD) return setError(tr("Use at least {0} characters for your password.", [MIN_PASSWORD]));
     setBusy(true);
     setError(null);
     const out = await setPassword(value);
@@ -614,7 +608,7 @@ export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; on
     setTimeout(onClose, 900);
   };
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Change password" scrollable={false} maxWidth={460}>
+    <BottomSheet visible={visible} onClose={onClose} title={tr("Change password")} scrollable={false} maxWidth={460}>
       <View style={s.body}>
         <View>
           <TextInput
@@ -624,23 +618,23 @@ export function ChangePasswordSheet({ visible, onClose }: { visible: boolean; on
               if (error) setError(null);
             }}
             onSubmitEditing={save}
-            placeholder={`New password, ${MIN_PASSWORD}+ characters`}
+            placeholder={tr("New password, {0}+ characters", [MIN_PASSWORD])}
             placeholderTextColor={c.textMuted}
             secureTextEntry={!show}
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="new-password"
             textContentType="newPassword"
-            accessibilityLabel="New password"
+            accessibilityLabel={tr("New password")}
             style={[s.input, { paddingRight: 52 }, error ? s.inputBad : null]}
           />
-          <PressScale onPress={() => setShow((v) => !v)} scaleTo={0.9} accessibilityRole="button" accessibilityLabel={show ? 'Hide password' : 'Show password'} style={s.eye}>
+          <PressScale onPress={() => setShow((v) => !v)} scaleTo={0.9} accessibilityRole="button" accessibilityLabel={show ? tr("Hide password") : tr("Show password")} style={s.eye}>
             <Ionicons name={show ? 'eye-off-outline' : 'eye-outline'} size={20} color={c.textMuted} />
           </PressScale>
         </View>
         {error ? <Text style={s.error}>{error}</Text> : null}
-        <PressScale onPress={busy || saved ? () => {} : save} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Save new password" style={[s.primary, busy && { opacity: 0.7 }]}>
-          {busy ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>{saved ? 'Password changed' : 'Save new password'}</Text>}
+        <PressScale onPress={busy || saved ? () => {} : save} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Save new password")} style={[s.primary, busy && { opacity: 0.7 }]}>
+          {busy ? <ActivityIndicator color={c.scanInk} /> : <Text style={s.primaryText}>{saved ? tr("Password changed") : tr("Save new password")}</Text>}
         </PressScale>
       </View>
     </BottomSheet>

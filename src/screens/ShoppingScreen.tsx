@@ -17,6 +17,7 @@ import { categoryIcon } from '../components/ItemCard';
 import { TwoUpList } from '../components/TwoUp';
 import { useWebKeyboardInset } from '../components/WebKeyboardInset';
 
+import { tr } from '../i18n';
 // The Shopping List, now a view of the Lists tab (ItemsScreen renders this
 // body below its Items/Shopping segmented control): what to buy, what was
 // bought, and the two ways entries arrive (typed by the user, or placed
@@ -67,7 +68,7 @@ export function ShoppingListBody({
       Haptics.selectionAsync().catch(() => {});
       runLeave(entry.id, () => {
         setPurchased(entry.id, !entry.purchasedAt);
-        if (!entry.purchasedAt) onToast('Moved to Purchased');
+        if (!entry.purchasedAt) onToast(tr("Moved to Purchased"));
       });
     },
     [runLeave, setPurchased, onToast],
@@ -78,7 +79,7 @@ export function ShoppingListBody({
       Haptics.selectionAsync().catch(() => {});
       runLeave(entry.id, () => {
         remove(entry.id);
-        onToast('Removed from your list');
+        onToast(tr("Removed from your list"));
       });
     },
     [runLeave, remove, onToast],
@@ -98,7 +99,7 @@ export function ShoppingListBody({
     }
     setConfirmClear(false);
     clearPurchased();
-    onToast('Cleared purchased items');
+    onToast(tr("Cleared purchased items"));
   }, [confirmClear, clearPurchased, onToast]);
 
   const empty = ready && toBuy.length === 0 && purchased.length === 0;
@@ -107,7 +108,7 @@ export function ShoppingListBody({
     <>
       {saveError && (
         <View style={c.banner} accessibilityRole="alert">
-          <Note tone="warn">Your last change couldn't be saved in this browser's storage. It applies until you close the page.</Note>
+          <Note tone="warn">{tr("Your last change couldn't be saved in this browser's storage. It applies until you close the page.")}</Note>
         </View>
       )}
 
@@ -121,14 +122,14 @@ export function ShoppingListBody({
               <View style={c.emptyIcon}>
                 <Ionicons name="cart-outline" size={30} color={accents.mint} />
               </View>
-              <Text style={c.emptyTitle}>Your list is empty</Text>
-              <Text style={c.emptyText}>Add what you need to buy. Products that are expiring soon can land here automatically.</Text>
-              <SmallButton label="Add an item" icon="add" tone="mint" onPress={() => setAddOpen(true)} accessibilityLabel="Add an item to your Shopping List" />
+              <Text style={c.emptyTitle}>{tr("Your list is empty")}</Text>
+              <Text style={c.emptyText}>{tr("Add what you need to buy. Products that are expiring soon can land here automatically.")}</Text>
+              <SmallButton label={tr("Add an item")} icon="add" tone="mint" onPress={() => setAddOpen(true)} accessibilityLabel={tr("Add an item to your Shopping List")} />
             </View>
           </FadeIn>
         ) : (
           <>
-            <SectionHeader title={toBuy.length ? `To buy (${toBuy.length})` : 'To buy'} action="Add item" onAction={() => setAddOpen(true)} />
+            <SectionHeader title={toBuy.length ? tr("To buy ({0})", [toBuy.length]) : tr("To buy")} action={tr("Add item")} onAction={() => setAddOpen(true)} />
             <TwoUpList gap={0} columnGap={12}>
               {toBuy.map((entry) => (
                 <ShoppingRow
@@ -146,7 +147,7 @@ export function ShoppingListBody({
                 <FadeIn>
                   <View style={c.allDone}>
                     <Ionicons name="checkmark-done-circle-outline" size={22} color={t.green} />
-                    <Text style={c.allDoneText}>Everything on your list is bought.</Text>
+                    <Text style={c.allDoneText}>{tr("Everything on your list is bought.")}</Text>
                   </View>
                 </FadeIn>
               )}
@@ -154,7 +155,7 @@ export function ShoppingListBody({
 
             {purchased.length > 0 && (
               <>
-                <SectionHeader title={`Purchased (${purchased.length})`} action={confirmClear ? 'Tap again to clear' : 'Clear'} onAction={onClearPurchased} />
+                <SectionHeader title={tr("Purchased ({0})", [purchased.length])} action={confirmClear ? tr("Tap again to clear") : tr("Clear")} onAction={onClearPurchased} />
                 <TwoUpList gap={0} columnGap={12}>
                   {purchased.map((entry) => (
                     <ShoppingRow
@@ -169,13 +170,13 @@ export function ShoppingListBody({
                     />
                   ))}
                 </TwoUpList>
-                <Note>Purchased items stay until you clear them.</Note>
+                <Note>{tr("Purchased items stay until you clear them.")}</Note>
               </>
             )}
           </>
         )}
 
-      <AddItemDialog visible={addOpen} onClose={() => setAddOpen(false)} onAdded={(name) => onToast(`${name} added to your list`)} />
+      <AddItemDialog visible={addOpen} onClose={() => setAddOpen(false)} onAdded={(name) => onToast(tr("{0} added to your list", [name]))} />
     </>
   );
 }
@@ -228,16 +229,16 @@ function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone,
   const marginBottom = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] });
 
   const days = entry.expiresOn ? daysUntil(entry.expiresOn, new Date()) : null;
-  const pill = days === null ? null : days < 0 ? 'Expired' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
+  const pill = days === null ? null : days < 0 ? tr("Expired") : days === 0 ? tr("Today") : days === 1 ? tr("1 day") : tr("{0} days", [days]);
   const amber = days !== null && days <= warning(entry.category);
 
-  const reasonLabel = entry.reason === 'expiring' ? 'Expiring soon' : 'Manually added';
+  const reasonLabel = entry.reason === 'expiring' ? tr("Expiring soon") : tr("Manually added");
   const sub = entry.purchasedAt ? purchasedLabel(entry.purchasedAt, settings.dateFormat) : `${nameOf(entry.category)}  •  ${reasonLabel}`;
 
   return (
     <Animated.View style={{ maxHeight, opacity: anim, marginBottom }}>
       <View style={c.row} onLayout={onLayout}>
-        <CheckButton checked={purchased} label={`${purchased ? 'Bought' : 'Mark bought'}: ${entry.name}`} onPress={() => onToggle(entry)} />
+        <CheckButton checked={purchased} label={`${purchased ? tr("Bought") : tr("Mark bought")}: ${entry.name}`} onPress={() => onToggle(entry)} />
         <View style={c.rowText}>
           {/* The name wraps to a second line before it ever cuts to an
               ellipsis, matching the item cards on the Items view. */}
@@ -268,7 +269,7 @@ function ShoppingRow({ entry, purchased, leaving, categoryIconName, onLeaveDone,
           onPress={() => onRemove(entry)}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${entry.name}`}
+          accessibilityLabel={tr("Remove {0}", [entry.name])}
           scaleTo={0.88}
           style={c.remove}
         >
@@ -319,7 +320,7 @@ function QtyStepper({ value, onChange, label }: { value: number; onChange: (q: n
       onPress={() => !disabled && onChange(value + delta)}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={`${a11y} quantity of ${label}`}
+      accessibilityLabel={tr("{0} quantity of {1}", [a11y, label])}
       style={({ pressed }) => [c.stepBtn, pressed && c.stepPressed, disabled && c.stepDisabled]}
     >
       <Ionicons name={icon} size={14} color={disabled ? t.textMuted : t.text} />
@@ -327,11 +328,11 @@ function QtyStepper({ value, onChange, label }: { value: number; onChange: (q: n
   );
   return (
     <View style={c.stepper}>
-      {btn('remove', -1, value <= 1, 'Decrease')}
-      <Text style={c.qty} accessibilityLabel={`Quantity of ${label}: ${value}`}>
+      {btn('remove', -1, value <= 1, tr("Decrease"))}
+      <Text style={c.qty} accessibilityLabel={tr("Quantity of {0}: {1}", [label, value])}>
         {value}
       </Text>
-      {btn('add', 1, value >= 99, 'Increase')}
+      {btn('add', 1, value >= 99, tr("Increase"))}
     </View>
   );
 }
@@ -342,7 +343,7 @@ function purchasedLabel(purchasedAt: string, format: DateFormat): string {
   const days = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
   const pad = (n: number) => String(n).padStart(2, '0');
   const shown = format === 'YMD' ? `${y}-${pad(m)}-${pad(d)}` : format === 'MDY' ? `${pad(m)}/${pad(d)}/${y}` : `${pad(d)}/${pad(m)}/${y}`;
-  return days === 0 ? 'Purchased today' : days === -1 ? 'Purchased yesterday' : `Purchased ${shown}`;
+  return days === 0 ? tr("Purchased today") : days === -1 ? tr("Purchased yesterday") : tr("Purchased {0}", [shown]);
 }
 
 // ---------------------------------------------------------------------------
@@ -386,7 +387,7 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
       onAdded(result.item.name);
       onClose();
     } else {
-      setError(result.reason === 'duplicate' ? 'That is already on your list.' : 'Type a name first.');
+      setError(result.reason === 'duplicate' ? tr("That is already on your list.") : tr("Type a name first."));
       setBusy(false);
     }
   }, [busy, name, category, quantity, addManual, onAdded, onClose]);
@@ -394,24 +395,23 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => {} : onClose}>
       <View style={[c.backdrop, webKeyboard > 0 && { paddingBottom: webKeyboard }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onClose} accessibilityLabel="Close" importantForAccessibility="no" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onClose} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
         <View
           style={[c.dialog, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
           accessibilityRole={'dialog' as never}
-          accessibilityLabel="Add to Shopping List"
+          accessibilityLabel={tr("Add to Shopping List")}
           {...({ 'aria-modal': true } as object)}
         >
           <Text style={c.dialogTitle} accessibilityRole="header">
-            Add to Shopping List
-          </Text>
+            {tr("Add to Shopping List")}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="What do you need?"
+            placeholder={tr("What do you need?")}
             placeholderTextColor={t.textMuted}
             maxLength={80}
             autoFocus
-            accessibilityLabel="Item name"
+            accessibilityLabel={tr("Item name")}
             // The box itself shows it is active (the same lime edge as the
             // search field), instead of a browser ring drawn inside it.
             onFocus={() => setNameFocused(true)}
@@ -420,11 +420,11 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
             returnKeyType="done"
             onSubmitEditing={() => void save()}
           />
-          <Text style={c.fieldLabel}>Quantity</Text>
-          <QtyStepper value={quantity} onChange={setQuantity} label={name || 'the item'} />
-          <Text style={c.fieldLabel}>Category</Text>
+          <Text style={c.fieldLabel}>{tr("Quantity")}</Text>
+          <QtyStepper value={quantity} onChange={setQuantity} label={name || tr("the item")} />
+          <Text style={c.fieldLabel}>{tr("Category")}</Text>
           <Options
-            label="Category"
+            label={tr("Category")}
             value={category}
             onChange={setCategory}
             options={all.map((cat) => ({ value: cat.id as CategoryId, label: cat.name }))}
@@ -435,8 +435,8 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
             </FadeIn>
           ) : null}
           <View style={c.dialogButtons}>
-            <SmallButton label="Cancel" onPress={onClose} disabled={busy} />
-            <SmallButton label={busy ? 'Adding…' : 'Add to list'} icon="add" tone="mint" onPress={() => void save()} disabled={busy || !name.trim()} />
+            <SmallButton label={tr("Cancel")} onPress={onClose} disabled={busy} />
+            <SmallButton label={busy ? tr("Adding…") : tr("Add to list")} icon="add" tone="mint" onPress={() => void save()} disabled={busy || !name.trim()} />
           </View>
         </View>
       </View>

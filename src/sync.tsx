@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, useAuth } from './auth';
 import { revokeAppleSignIn, signsInWithApple } from './appleRevoke';
 
+import { tr } from './i18n';
 // Backup and sync for signed-in people. The app stays local-first: everything
 // lives on the phone exactly as before, and this keeps a copy in Supabase
 // (public.records, one row per thing, readable only by its owner through Row
@@ -199,7 +200,7 @@ const Ctx = createContext<SyncContext>({
   dismissDeletedNotice: () => {},
 });
 
-const OFFLINE_DELETE = "You're offline. Connect to the internet to delete your account.";
+const OFFLINE_DELETE = tr("You're offline. Connect to the internet to delete your account.");
 const isNetwork = (e: unknown) => /fetch|network|load failed/i.test(String((e as { message?: string })?.message ?? e));
 
 // When the signed-in account will be deleted for good, or null. A server
@@ -392,15 +393,15 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     if (timer.current) clearTimeout(timer.current);
     // 1. Back up whatever hasn't been sent yet, so signing out never loses it.
     if (typeof navigator !== 'undefined' && navigator.onLine === false)
-      return "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out.";
+      return tr("You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out.");
     try {
       if (running.current) await running.current;
       await runOnce(userId);
     } catch (e) {
       const msg = String((e as { message?: string })?.message ?? e).toLowerCase();
       return msg.includes('fetch') || msg.includes('network')
-        ? "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out."
-        : "Your latest changes couldn't be backed up just now. Try signing out again in a minute.";
+        ? tr("You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out.")
+        : tr("Your latest changes couldn't be backed up just now. Try signing out again in a minute.");
     }
     // 2. Sign out, then 3. clear the account's data from this phone.
     await signOutClearing(userId);
@@ -440,7 +441,7 @@ export function SyncProvider({ children }: { children: (generation: number) => R
     let { data: purge, error } = await supabase.rpc('request_account_deletion');
     // A server that doesn't have the 30-day functions yet (002 not run).
     if (error && !isNetwork(error) && /request_account_deletion|PGRST202|does not exist/i.test(`${error.code} ${error.message}`)) ({ error } = await supabase.rpc('delete_account')), (purge = null);
-    if (error) return isNetwork(error) ? OFFLINE_DELETE : "Your account couldn't be deleted just now. Try again in a minute.";
+    if (error) return isNetwork(error) ? OFFLINE_DELETE : tr("Your account couldn't be deleted just now. Try again in a minute.");
     setPendingDeletion(null);
     setDeletedNotice(typeof purge === 'string' ? purge : new Date(Date.now() + 30 * 86_400_000).toISOString());
     await signOutClearing(userId);
@@ -449,7 +450,7 @@ export function SyncProvider({ children }: { children: (generation: number) => R
 
   const restoreAccount = useCallback(async (): Promise<string | null> => {
     const { error } = await supabase.rpc('cancel_account_deletion');
-    if (error) return isNetwork(error) ? "You're offline. Connect to the internet to restore your account." : "Your account couldn't be restored just now. Try again in a minute.";
+    if (error) return isNetwork(error) ? tr("You're offline. Connect to the internet to restore your account.") : tr("Your account couldn't be restored just now. Try again in a minute.");
     setPendingDeletion(null);
     syncNow();
     return null;

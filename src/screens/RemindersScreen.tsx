@@ -16,13 +16,14 @@ import { nativeReminders } from '../platform/notifications';
 import { TwoUpList } from '../components/TwoUp';
 import { useDensity } from '../density';
 
+import { tr } from '../i18n';
 type Props = { badge: number; onNavigate: (route: string) => void };
 
 // The sort control's labels (the reference's "Soonest first" wording). The
 // control edits the app's ONE shared sort preference — the same value the
 // Lists tab's pills and Settings' picker write — so every surface always
 // agrees. Soonest first (expiry) is the default and the reference's state.
-const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Soonest first', added: 'Recently added', name: 'A–Z' };
+const SORT_SHORT: Record<SortOrder, string> = { expiry: tr("Soonest first"), added: tr("Recently added"), name: 'A–Z' };
 
 // The Reminders tab, redesigned to the reference screenshot: the glass
 // information banner under the title, "Due now" with its live status and the
@@ -47,7 +48,7 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
   const status = expiryStatus(item.expiresOn, warning(item.category));
   const days = daysUntil(item.expiresOn, new Date());
   const tone: Tone = status === 'expired' ? 'red' : status === 'soon' ? 'amber' : 'green';
-  const pill = status === 'expired' ? 'Expired' : days === 0 ? 'Due today' : days === 1 ? '1 day' : `${days} days`;
+  const pill = status === 'expired' ? tr("Expired") : days === 0 ? tr("Due today") : days === 1 ? tr("1 day") : tr("{0} days", [days]);
   return (
     <PressScale
       onPress={onPress}
@@ -58,7 +59,7 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
     >
       <View style={[s.thumb, compact && s.thumbCompact]}>
         {item.image ? (
-          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={`${item.name} product photo`} accessibilityRole="image" />
+          <Image source={{ uri: item.image }} style={s.thumbImage} accessibilityLabel={tr("{0} product photo", [item.name])} accessibilityRole="image" />
         ) : (
           categoryArt(item.category, compact ? 26 : 30)
         )}
@@ -109,27 +110,27 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
 
   if (!settings.reminders) {
     return (
-      <Page tab="reminders" title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
+      <Page tab="reminders" title={tr("Reminders")} subtitle={tr("Keep track before it's too late.")} badge={badge} onNavigate={onNavigate}>
         <View style={s.off}>
           <View style={s.offIcon}>
             <Ionicons name="notifications-off-outline" size={26} color={t.textMuted} />
           </View>
-          <Text style={s.offTitle}>Expiry reminders are off</Text>
-          <Text style={s.offText}>Turn them on in Settings to see which items need a reminder.</Text>
-          <SmallButton label="Open Settings" icon="settings-outline" tone="mint" onPress={() => onNavigate('tab:settings')} />
+          <Text style={s.offTitle}>{tr("Expiry reminders are off")}</Text>
+          <Text style={s.offText}>{tr("Turn them on in Settings to see which items need a reminder.")}</Text>
+          <SmallButton label={tr("Open Settings")} icon="settings-outline" tone="mint" onPress={() => onNavigate('tab:settings')} />
         </View>
       </Page>
     );
   }
 
   return (
-    <Page tab="reminders" title="Reminders" subtitle="Keep track before it's too late." badge={badge} onNavigate={onNavigate}>
+    <Page tab="reminders" title={tr("Reminders")} subtitle={tr("Keep track before it's too late.")} badge={badge} onNavigate={onNavigate}>
       {/* The summary: how much is due now, this week, and later. */}
       <View style={s.summary}>
         {[
-          { label: 'Due now', value: due.length, color: due.length ? t.red : t.text },
-          { label: 'This week', value: thisWeek.length, color: thisWeek.length ? t.amberText : t.text },
-          { label: 'Later', value: later.length, color: t.text },
+          { label: tr("Due now"), value: due.length, color: due.length ? t.red : t.text },
+          { label: tr("This week"), value: thisWeek.length, color: thisWeek.length ? t.amberText : t.text },
+          { label: tr("Later"), value: later.length, color: t.text },
         ].map((x) => (
           <View key={x.label} style={s.summaryBox}>
             <Text style={[s.summaryValue, { color: x.color }]}>{x.value}</Text>
@@ -142,9 +143,8 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           due reminders or the reference's large empty-state card. */}
       <View style={[s.sectionRow, s.sectionFirst]}>
         <Text style={s.sectionTitle} accessibilityRole="header">
-          Due now
-        </Text>
-        <Text style={s.sectionMeta}>{due.length === 0 ? 'No reminders are due.' : due.length === 1 ? '1 reminder due' : `${due.length} reminders due`}</Text>
+          {tr("Due now")}</Text>
+        <Text style={s.sectionMeta}>{due.length === 0 ? tr("No reminders are due.") : due.length === 1 ? tr("1 reminder due") : tr("{0} reminders due", [due.length])}</Text>
       </View>
       {due.length > 0 ? (
         <TwoUpList gap={compactRows ? 8 : 10}>
@@ -155,11 +155,9 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
       ) : (
         <View style={s.caughtUp}>
           <StatusMedallion tone="ok" size={46} />
-          <Text style={s.caughtUpTitle}>All caught up!</Text>
+          <Text style={s.caughtUpTitle}>{tr("All caught up!")}</Text>
           <Text style={s.caughtUpSub}>
-            {next
-              ? `Nothing is due. Next up: ${next.name}, ${nextDays === 0 ? 'today' : nextDays === 1 ? 'tomorrow' : `in ${nextDays} days`}.`
-              : 'Nothing is due, and nothing is being tracked yet.'}
+            {next ? tr("Nothing is due. Next up: {0}, {1}.", [next.name, nextDays === 0 ? 'today' : nextDays === 1 ? 'tomorrow' : `in ${nextDays} days`]) : tr("Nothing is due, and nothing is being tracked yet.")}
           </Text>
         </View>
       )}
@@ -168,7 +166,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           right. */}
       <View style={s.sectionRow}>
         <Text style={s.sectionTitle} accessibilityRole="header">
-          Upcoming ({upcoming.length})
+          {tr("Upcoming (")}{upcoming.length})
         </Text>
         <PressScale
           onPress={cycleSort}
@@ -176,7 +174,7 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
           hitSlop={6}
           style={s.sortHit}
           accessibilityRole="button"
-          accessibilityLabel={`Sort order: ${SORT_SHORT[settings.sort]}. Tap to change.`}
+          accessibilityLabel={tr("Sort order: {0}. Tap to change.", [SORT_SHORT[settings.sort]])}
         >
           <View style={s.sortBtn}>
             <Text style={s.sortText} numberOfLines={1}>
@@ -188,8 +186,8 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
       </View>
       {upcoming.length > 0 ? (
         [
-          { key: 'week', title: 'This week', list: thisWeek },
-          { key: 'later', title: 'Later', list: later },
+          { key: 'week', title: tr("This week"), list: thisWeek },
+          { key: 'later', title: tr("Later"), list: later },
         ]
           .filter((g) => g.list.length)
           .map((g) => (
@@ -203,16 +201,14 @@ export function RemindersScreen({ badge, onNavigate }: Props) {
             </View>
           ))
       ) : (
-        <Text style={s.noneText}>No upcoming reminders.</Text>
+        <Text style={s.noneText}>{tr("No upcoming reminders.")}</Text>
       )}
       {/* What notifications do here, honestly: real reminders in the iPhone
           app; in a browser, alerts only while the page is open. */}
       <View style={s.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={t.textMuted} />
         <Text style={s.footnoteText}>
-          {nativeReminders()
-            ? 'You get a notification before things expire, even when Prexpire is closed. Change when in Settings, Notifications.'
-            : 'Expiry alerts appear while this page is open. For reminders when it\x27s closed, use the iPhone app.'}
+          {nativeReminders() ? tr("You get a notification before things expire, even when Prexpire is closed. Change when in Settings, Notifications.") : tr("Expiry alerts appear while this page is open. For reminders when it's closed, use the iPhone app.")}
         </Text>
       </View>
     </Page>

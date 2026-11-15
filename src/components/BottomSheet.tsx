@@ -6,6 +6,7 @@ import { useSettings } from '../settings';
 import { NAV_HEIGHT, navOffset } from './HomeComponents';
 import { useWebKeyboardInset } from './WebKeyboardInset';
 
+import { tr } from '../i18n';
 // The shared bottom sheet every expandable panel in the app sits on (Filter &
 // Sort, the settings value pickers, and any future panel). It owns the whole
 // chrome contract in one place:
@@ -192,7 +193,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
     <Modal visible={visible} transparent animationType="none" onRequestClose={requestClose} {...({ 'aria-modal': true } as object)}>
       <View style={[s.wrap, keyboard ? { paddingBottom: keyboard } : null]}>
         <Animated.View style={[StyleSheet.absoluteFill, s.scrim, { opacity: scrim }]} pointerEvents="none" />
-        <Pressable style={[StyleSheet.absoluteFill, { touchAction: 'none' } as object]} onPress={requestClose} accessibilityLabel={`Close ${title}`} importantForAccessibility="no" />
+        <Pressable style={[StyleSheet.absoluteFill, { touchAction: 'none' } as object]} onPress={requestClose} accessibilityLabel={tr("Close {0}", [title])} importantForAccessibility="no" />
         <Animated.View
           onLayout={(e) => setHeight(Math.round(e.nativeEvent.layout.height))}
           style={[s.sheet, { backgroundColor: c.dialogBg, maxWidth, maxHeight, paddingBottom: bottomPad, transform: [{ translateY: sheetY }] }]}
@@ -200,7 +201,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
           accessibilityLabel={accessibilityLabel ?? title}
         >
           {/* The drag handle: the whole header row accepts the swipe-down. */}
-          <View {...pan.panHandlers} style={s.header} accessible accessibilityLabel={`${title}. Swipe down to close.`}>
+          <View {...pan.panHandlers} style={s.header} accessible accessibilityLabel={tr("{0}. Swipe down to close.", [title])}>
             <View style={s.grabber} />
             <Text style={s.title} accessibilityRole="header">
               {title}

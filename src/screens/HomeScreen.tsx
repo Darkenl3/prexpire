@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../auth';
 import { SignInSheet } from '../components/SignInSheet';
 
+import { tr } from '../i18n';
 function categoryArt(art: ArtKey, size: number) {
   switch (art) {
     case 'apple':
@@ -140,7 +141,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         key: cat.id,
         tint: (builtin ? (lookOf(cat.id).tint ?? builtin.tint) : folder!.tint) as Tint,
         name: cat.name,
-        sub: ((n) => (n === 1 ? '1 item' : `${n} items`))(saved.filter((i) => i.category === cat.id).length),
+        sub: ((n) => (n === 1 ? tr("1 item") : tr("{0} items", [n])))(saved.filter((i) => i.category === cat.id).length),
         status: tileStatus(attention.byCategory(cat.id)),
         // A folder's illustration is in the built-ins' style (an unknown or
         // old icon identifier shows the folder picture, never a blank).
@@ -163,10 +164,10 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const summary =
     needAttention > 0 ? (
       <AttentionCard
-        title={needAttention === 1 ? '1 item needs attention' : `${needAttention} items need attention`}
+        title={needAttention === 1 ? tr("1 item needs attention") : tr("{0} items need attention", [needAttention])}
         subtitle={[
-          ...(attention.expired ? [`${attention.expired} expired`] : []),
-          ...(attention.soon ? [`${attention.soon} expiring soon`] : []),
+          ...(attention.expired ? [tr("{0} expired", [attention.expired])] : []),
+          ...(attention.soon ? [tr("{0} expiring soon", [attention.soon])] : []),
         ]}
         onPress={() => go('tab:reminders')}
       />
@@ -175,8 +176,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
       // slot always tells the user where they stand.
       <AttentionCard
         tone="green"
-        title="All caught up!"
-        subtitle={[items.length === 0 ? 'Nothing to watch yet' : `Nothing needs attention  •  ${items.length} tracked`]}
+        title={tr("All caught up!")}
+        subtitle={[items.length === 0 ? tr("Nothing to watch yet") : tr("Nothing needs attention  •  {0} tracked", [items.length])]}
         onPress={() => go('tab:reminders')}
       />
     );
@@ -188,9 +189,9 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
           grid shows, and becomes "Show less" once expanded. With few enough
           categories there is no control at all. */}
       <SectionHeader
-        title="Your categories"
-        action={overflow ? (gridExpanded ? 'Show less' : 'View all') : undefined}
-        actionLabel={overflow ? (gridExpanded ? 'Show fewer categories' : `Show all ${catTiles.length} categories`) : undefined}
+        title={tr("Your categories")}
+        action={overflow ? (gridExpanded ? tr("Show less") : tr("View all")) : undefined}
+        actionLabel={overflow ? (gridExpanded ? tr("Show fewer categories") : tr("Show all {0} categories", [catTiles.length])) : undefined}
         onAction={
           overflow
             ? () => {
@@ -203,9 +204,9 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         // Every category removed and none added: a helpful empty state with
         // the action to create the first one (no placeholder tiles).
         <View style={c.empty}>
-          <Text style={c.emptyTitle}>No categories yet</Text>
-          <Text style={c.emptyText}>Create your first folder to organise what you track.</Text>
-          <SmallButton label="Add category" icon="add-circle-outline" tone="mint" onPress={() => go('settings:categories')} />
+          <Text style={c.emptyTitle}>{tr("No categories yet")}</Text>
+          <Text style={c.emptyText}>{tr("Create your first folder to organise what you track.")}</Text>
+          <SmallButton label={tr("Add category")} icon="add-circle-outline" tone="mint" onPress={() => go('settings:categories')} />
         </View>
       ) : (
         <View style={[c.grid, { rowGap: gridGap, columnGap: gridGap }]} onLayout={onGridLayout}>
@@ -233,7 +234,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
               key={addTile.id}
               tint={addTile.tint}
               width={tileWidth}
-              name={addTile.name}
+              name={tr(addTile.name)}
               art={categoryArt(addTile.art, compact ? 56 : 64)}
               compact={compact}
               onPress={() => go('settings:categories')}
@@ -246,7 +247,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
 
   const upcomingSection = (first: boolean) => (
     <>
-      <SectionHeader title="Coming up next" action="View all" onAction={() => go('tab:items')} first={first} />
+      <SectionHeader title={tr("Coming up next")} action={tr("View all")} onAction={() => go('tab:items')} first={first} />
       <View style={[c.list, density.compactRows && c.listCompact]}>
         {detailed && !split ? (
           <TwoUpList gap={6} columnGap={16}>
@@ -259,8 +260,8 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
         )}
         {upcoming.length === 0 && (
           <View style={c.empty}>
-            <Text style={c.emptyTitle}>Nothing here yet</Text>
-            <Text style={c.emptyText}>Scan a label or add a product by hand to start tracking it.</Text>
+            <Text style={c.emptyTitle}>{tr("Nothing here yet")}</Text>
+            <Text style={c.emptyText}>{tr("Scan a label or add a product by hand to start tracking it.")}</Text>
             <AddActions onScan={() => go('scan')} onManual={() => go('manual')} />
           </View>
         )}
@@ -319,7 +320,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
 }
 
 function tileStatus(n: number) {
-  return n > 0 ? { label: `${n} expiring`, tone: 'amber' as const } : { label: 'All good', tone: 'green' as const };
+  return n > 0 ? { label: tr("{0} expiring", [n]), tone: 'amber' as const } : { label: tr("All good"), tone: 'green' as const };
 }
 
 function Toast({ text, bottom, motion, onDone }: { text: string; bottom: number; motion: boolean; onDone?: () => void }) {
@@ -375,15 +376,15 @@ function BackupCard({ count }: { count: number }) {
     <>
       {show ? (
         <FadeIn>
-          <PressScale onPress={() => setOpen(true)} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={`Back up your ${count} items`} style={c.backup}>
+          <PressScale onPress={() => setOpen(true)} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={tr("Back up your {0} items", [count])} style={c.backup}>
             <View style={c.backupIcon}>
               <Ionicons name="cloud-upload-outline" size={20} color={t.mint} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={c.backupTitle}>Back up your {count} items</Text>
-              <Text style={c.backupSub}>They're only on this phone. A free account keeps them safe.</Text>
+              <Text style={c.backupTitle}>{tr("Back up your")}{' '}{count} {' '}{tr("items")}</Text>
+              <Text style={c.backupSub}>{tr("They're only on this phone. A free account keeps them safe.")}</Text>
             </View>
-            <PressScale onPress={hide} scaleTo={0.9} accessibilityRole="button" accessibilityLabel="Hide this" hitSlop={10} style={c.backupClose}>
+            <PressScale onPress={hide} scaleTo={0.9} accessibilityRole="button" accessibilityLabel={tr("Hide this")} hitSlop={10} style={c.backupClose}>
               <Ionicons name="close" size={16} color={t.textMuted} />
             </PressScale>
           </PressScale>
@@ -394,7 +395,7 @@ function BackupCard({ count }: { count: number }) {
         onClose={() => setOpen(false)}
         onSignedIn={() => setOpen(false)}
         initialMode="signup"
-        intro={{ title: 'Keep your items safe', text: `Your ${count} items live only on this phone. Create a free account and a lost, broken or new phone never loses them.` }}
+        intro={{ title: tr("Keep your items safe"), text: tr("Your {0} items live only on this phone. Create a free account and a lost, broken or new phone never loses them.", [count]) }}
       />
     </>
   );

@@ -4,6 +4,7 @@
 import type { DayOrder } from './scanner/dateParser';
 import type { CategoryId, Item } from './items';
 
+import { LANGUAGES, tr, type LanguageChoice } from './i18n.ts';
 export type ReminderLead = 0 | 1 | 3 | 7;
 export type ReminderHour = 7 | 8 | 9 | 10 | 12 | 17 | 19 | 21;
 export type WarningDays = 3 | 7 | 14 | 30;
@@ -32,6 +33,8 @@ export type Settings = {
   // True once the person picks a theme themselves. Until then the app follows
   // the phone (System), so a light-mode phone opens in light mode.
   themeChosen: boolean;
+  // The app's language: 'system' follows the phone (src/i18n.ts).
+  language: LanguageChoice;
   compact: boolean;
   padLayout: PadLayout;
   animations: boolean;
@@ -83,8 +86,8 @@ export const DATE_FORMATS: DateFormat[] = ['DMY', 'MDY', 'YMD'];
 export const SORT_ORDERS: SortOrder[] = ['expiry', 'added', 'name'];
 export const THEME_MODES: ThemeMode[] = ['dark', 'light', 'system'];
 export const PAD_LAYOUTS: PadLayout[] = ['basic', 'compact', 'detailed'];
-export const PAD_LAYOUT_LABELS: Record<PadLayout, string> = { basic: 'Basic', compact: 'Compact', detailed: 'Detailed' };
-export const THEME_LABELS: Record<ThemeMode, string> = { dark: 'Dark', light: 'Light', system: 'System' };
+export const PAD_LAYOUT_LABELS: Record<PadLayout, string> = { basic: tr("Basic"), compact: tr("Compact"), detailed: tr("Detailed") };
+export const THEME_LABELS: Record<ThemeMode, string> = { dark: tr("Dark"), light: tr("Light"), system: tr("System") };
 
 export const DATE_FORMAT_LABELS: Record<DateFormat, string> = { DMY: 'DD/MM/YYYY', MDY: 'MM/DD/YYYY', YMD: 'YYYY-MM-DD' };
 
@@ -96,10 +99,10 @@ export function dayOrderForFormat(format: DateFormat, fallback: DayOrder): DayOr
   return format === 'DMY' || format === 'MDY' ? format : fallback;
 }
 
-export const SORT_LABELS: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recently added', name: 'Product name' };
+export const SORT_LABELS: Record<SortOrder, string> = { expiry: tr("Expiry date"), added: tr("Recently added"), name: 'Product name' };
 
 export function reminderLeadLabel(lead: ReminderLead) {
-  return lead === 0 ? 'On the expiry day' : lead === 1 ? '1 day before' : `${lead} days before`;
+  return lead === 0 ? tr("On the expiry day") : lead === 1 ? tr("1 day before") : tr("{0} days before", [lead]);
 }
 
 export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
@@ -111,6 +114,7 @@ export function defaultSettings(dayOrder: 'DMY' | 'MDY' = 'DMY'): Settings {
     wasteAware: true,
     theme: 'system',
     themeChosen: false,
+    language: 'system',
     compact: false,
     padLayout: 'compact',
     animations: true,
@@ -142,6 +146,7 @@ export function sanitizeSettings(raw: unknown, defaults: Settings, categories: r
     // gives way to System.
     theme: r.themeChosen === true ? oneOf('theme', THEME_MODES) : defaults.theme,
     themeChosen: r.themeChosen === true,
+    language: r.language === 'system' || LANGUAGES.some((l) => l.code === r.language) ? (r.language as LanguageChoice) : defaults.language,
     compact: bool('compact'),
     // The old Compact rows switch (before the Layout choice) becomes Detailed.
     padLayout: PAD_LAYOUTS.includes(r.padLayout as PadLayout) ? (r.padLayout as PadLayout) : r.compact === true ? 'detailed' : defaults.padLayout,
@@ -234,7 +239,7 @@ function csvCell(value: string) {
 }
 
 export function itemsToCsv(items: Item[], categoryNames: Record<string, string>) {
-  const header = ['Name', 'Category', 'Expires on', 'Date precision', 'Added at', 'Source'];
+  const header = [tr("Name"), tr("Category"), tr("Expires on"), tr("Date precision"), tr("Added at"), tr("Source")];
   const rows = items.map((i) => [i.name, categoryNames[i.category] ?? i.category, i.expiresOn, i.datePrecision, i.addedAt, i.source]);
   return [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }

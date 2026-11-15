@@ -10,6 +10,7 @@
 
 import type { PlannedReminder } from '../reminderPlan';
 
+import { tr } from '../i18n.ts';
 export type NotificationStatus = 'granted' | 'denied' | 'default' | 'unsupported' | 'insecure';
 
 type Shell = { postMessage?: (data: string) => void };
@@ -53,7 +54,7 @@ const ask = (type: string, timeoutMs = 15000) =>
 
 export function notificationStatus(): NotificationStatus {
   if (shell()) return appStatus;
-  if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
+  if (typeof window === 'undefined' || !(tr("Notification") in window)) return 'unsupported';
   if (!window.isSecureContext) return 'insecure';
   return Notification.permission;
 }

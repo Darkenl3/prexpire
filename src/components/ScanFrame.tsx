@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { useTheme, withAlpha } from '../theme';
 import { useSettings } from '../settings';
 
+import { tr } from '../i18n';
 const CORNER = 30;
 const STROKE = 4;
 const CORNER_RADIUS = 14;
@@ -54,7 +55,7 @@ export const ScanFrame = memo(function ScanFrame({ width, height, scanning, succ
       style={[{ width, height }, success && { backgroundColor: withAlpha(lime, 0.08), borderRadius: CORNER_RADIUS }]}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={success ? 'Date detected' : scanning ? 'Scanning for an expiry date' : 'Scanning frame'}
+      accessibilityLabel={success ? tr("Date detected") : scanning ? tr("Scanning for an expiry date") : tr("Scanning frame")}
     >
       {success && <View style={[StyleSheet.absoluteFill, { borderRadius: CORNER_RADIUS, borderWidth: 1.5, borderColor: withAlpha(lime, 0.55) }]} />}
       {scanning && lineOn && (

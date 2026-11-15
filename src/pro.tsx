@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './auth';
 
+import { tr } from './i18n';
 // Prexpire Pro. Free forever: scanning, reminders, backup, everything —
 // with FREE_ITEM_LIMIT new items a month and FREE_CUSTOM_CATEGORIES of your
 // own categories. Pro removes both limits. Purchases go through Apple, in the iPhone app's shell (RevenueCat,
@@ -209,7 +210,7 @@ const Ctx = createContext<ProContext>({
   closePaywall: () => {},
 });
 
-const PROBLEM = "Couldn't reach the App Store. Check your connection and try again.";
+const PROBLEM = tr("Couldn't reach the App Store. Check your connection and try again.");
 
 export function ProProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();

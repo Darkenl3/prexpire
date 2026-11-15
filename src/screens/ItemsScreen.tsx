@@ -17,12 +17,13 @@ import { BottomSheet } from '../components/BottomSheet';
 import { ShoppingListBody, ShoppingToast } from './ShoppingScreen';
 import { useDensity } from '../density';
 
+import { tr } from '../i18n';
 type Props = { badge: number; category?: CategoryId; shopping?: boolean; onNavigate: (route: string) => void };
 
 // Labels for the sort picker, in the reference's dropdown wording; the Settings
 // page spells the same values out in full, and both always agree because they
 // edit the same preference.
-const SORT_SHORT: Record<SortOrder, string> = { expiry: 'Expiry date', added: 'Recent', name: 'A–Z' };
+const SORT_SHORT: Record<SortOrder, string> = { expiry: tr("Expiry date"), added: tr("Recent"), name: 'A–Z' };
 
 // The Lists tab, simplified to the reference: the title block with the lime
 // "Add item" capsule, the compact Items / Shopping list switcher, then ONE
@@ -81,10 +82,10 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
       style={s.addBtn}
       pressedStyle={s.addBtnPressed}
       accessibilityRole="button"
-      accessibilityLabel={shopping ? 'Add an item to your Shopping List' : 'Add an item'}
+      accessibilityLabel={shopping ? tr("Add an item to your Shopping List") : tr("Add an item")}
     >
       <Ionicons name="add" size={19} color={c.scanInk} />
-      <Text style={s.addBtnText}>Add item</Text>
+      <Text style={s.addBtnText}>{tr("Add item")}</Text>
     </PressScale>
   );
 
@@ -92,8 +93,8 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
     <>
       <Page
         tab="items"
-        title={shopping ? 'Shopping List' : 'Items'}
-        subtitle={shopping ? 'What you need to buy next.' : "Everything you're tracking."}
+        title={shopping ? tr("Shopping List") : tr("Items")}
+        subtitle={shopping ? tr("What you need to buy next.") : tr("Everything you're tracking.")}
         badge={badge}
         maxWidth={density.layout === 'basic' ? 760 : twoUp && !shopping ? (density.columns === 3 ? 1240 : 1120) : undefined}
         dense
@@ -106,19 +107,18 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             navigates (tab:items / tab:shop), so the address bar, the back
             button and the shell's glass bar all follow the switch like any
             other route. */}
-        <View style={s.viewSwitch} accessibilityRole="radiogroup" aria-label="Lists view">
+        <View style={s.viewSwitch} accessibilityRole="radiogroup" aria-label={tr("Lists view")}>
           <PressScale
             onPress={() => onNavigate('tab:items')}
             scaleTo={0.98}
             style={[s.seg, !shopping && s.segOn]}
             accessibilityRole="radio"
             aria-checked={!shopping}
-            accessibilityLabel="Tracked items"
+            accessibilityLabel={tr("Tracked items")}
           >
             <Ionicons name="list" size={16} color={!shopping ? c.scanInk : c.textMuted} />
             <Text style={[s.segText, !shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-              Items
-            </Text>
+              {tr("Items")}</Text>
           </PressScale>
           <PressScale
             onPress={() => onNavigate('tab:shop')}
@@ -126,12 +126,11 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             style={[s.seg, !!shopping && s.segOn]}
             accessibilityRole="radio"
             aria-checked={!!shopping}
-            accessibilityLabel="Shopping list"
+            accessibilityLabel={tr("Shopping list")}
           >
             <Ionicons name="cart-outline" size={16} color={shopping ? c.scanInk : c.textMuted} />
             <Text style={[s.segText, shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-              Shopping list
-            </Text>
+              {tr("Shopping list")}</Text>
           </PressScale>
         </View>
         {shopping ? (
@@ -152,11 +151,11 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 scaleTo={0.96}
                 style={[s.filterBtn, !!filterLabel && s.filterBtnOn]}
                 accessibilityRole="button"
-                accessibilityLabel={`Filter and sort. Category: ${filterLabel ?? 'all'}. Sort by ${SORT_SHORT[settings.sort]}.`}
+                accessibilityLabel={tr("Filter and sort. Category: {0}. Sort by {1}.", [filterLabel ?? 'all', SORT_SHORT[settings.sort]])}
               >
                 <Ionicons name="funnel" size={15} color={filterLabel ? c.green : c.textMuted} />
                 <Text style={[s.filterBtnText, !!filterLabel && s.filterBtnTextOn]} numberOfLines={1}>
-                  {filterLabel ?? 'Filter'}
+                  {filterLabel ?? tr("Filter")}
                 </Text>
               </PressScale>
             </View>
@@ -166,20 +165,19 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
                 every number computed from the real filtered items. */}
             <View style={s.countRow}>
               <Text style={s.countText} numberOfLines={1}>
-                {searched.length === 1 ? '1 item' : `${searched.length} items`}
+                {searched.length === 1 ? tr("1 item") : tr("{0} items", [searched.length])}
                 {filterLabel ? ` · ${filterLabel}` : ''}
               </Text>
               <Text style={s.countSplit} numberOfLines={1}>
-                <Text style={{ color: expired.length ? c.red : c.textMuted }}>{expired.length} expired</Text>
+                <Text style={{ color: expired.length ? c.red : c.textMuted }}>{expired.length} {' '}{tr("expired")}</Text>
                 <Text style={{ color: c.textMuted }}> · </Text>
-                <Text style={{ color: c.green }}>{valid} valid</Text>
+                <Text style={{ color: c.green }}>{valid} {' '}{tr("valid")}</Text>
               </Text>
             </View>
             {!settings.showExpired && expired.length > 0 && (
               <View style={s.hidden}>
                 <Note>
-                  {expired.length === 1 ? '1 expired item is hidden' : `${expired.length} expired items are hidden`}. You can show them again in Settings.
-                </Note>
+                  {expired.length === 1 ? tr("1 expired item is hidden") : tr("{0} expired items are hidden", [expired.length])}{tr(". You can show them again in Settings.")}</Note>
               </View>
             )}
             {/* iPad landscape (and wide windows): two columns of cards. */}
@@ -196,17 +194,17 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             </View>
             {shown.length === 0 && !!needle && (
               <View style={s.empty}>
-                <Text style={s.emptyTitle}>No matches</Text>
-                <Text style={s.emptyText}>Nothing you track is called “{query.trim()}”.</Text>
+                <Text style={s.emptyTitle}>{tr("No matches")}</Text>
+                <Text style={s.emptyText}>{tr("Nothing you track is called “")}{query.trim()}”.</Text>
                 <View style={s.emptyButtons}>
-                  <SmallButton label="Clear search" icon="close" onPress={() => setQuery('')} />
+                  <SmallButton label={tr("Clear search")} icon="close" onPress={() => setQuery('')} />
                 </View>
               </View>
             )}
             {shown.length === 0 && !needle && (
               <View style={s.empty}>
-                <Text style={s.emptyTitle}>{items.length ? 'Nothing here' : 'No items yet'}</Text>
-                <Text style={s.emptyText}>Scan a label or add a product by hand.</Text>
+                <Text style={s.emptyTitle}>{items.length ? tr("Nothing here") : tr("No items yet")}</Text>
+                <Text style={s.emptyText}>{tr("Scan a label or add a product by hand.")}</Text>
                 <AddActions onScan={() => onNavigate('scan')} onManual={() => onNavigate('manual')} />
               </View>
             )}
@@ -292,21 +290,21 @@ function FilterSheet({
   };
 
   return (
-    <BottomSheet visible={visible} onClose={onClose} title="Filter & sort" accessibilityLabel="Filter and sort" footer={
-      <PressScale onPress={close} accessibilityRole="button" accessibilityLabel="Cancel" style={s.cancel} pressedStyle={s.optionPressed}>
-        <Text style={s.cancelText}>Cancel</Text>
+    <BottomSheet visible={visible} onClose={onClose} title={tr("Filter & sort")} accessibilityLabel={tr("Filter and sort")} footer={
+      <PressScale onPress={close} accessibilityRole="button" accessibilityLabel={tr("Cancel")} style={s.cancel} pressedStyle={s.optionPressed}>
+        <Text style={s.cancelText}>{tr("Cancel")}</Text>
       </PressScale>
     }>
       <View>
-        <Text style={s.section}>Category</Text>
-        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Category">
-          {categoryRow('all', 'All categories')}
+        <Text style={s.section}>{tr("Category")}</Text>
+        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel={tr("Category")}>
+          {categoryRow('all', tr("All categories"))}
           {categories.map((cat) => categoryRow(cat.id, cat.name, cat.icon))}
         </View>
       </View>
       <View>
-        <Text style={s.section}>Sort by</Text>
-        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel="Sort order">
+        <Text style={s.section}>{tr("Sort by")}</Text>
+        <View style={s.options} accessibilityRole="radiogroup" accessibilityLabel={tr("Sort order")}>
           {SORT_ORDERS.map((o) => {
             const on = sort === o;
             return (

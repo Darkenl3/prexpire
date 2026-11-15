@@ -3,6 +3,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, withAlpha, radius } from '../theme';
 
+import { tr } from '../i18n';
 // Offline awareness for the scanner screens. The ONLY thing the app needs the
 // network for is the online barcode lookup: everything the user already saved
 // (items, shopping list, reminders, settings) lives in local storage, and
@@ -38,12 +39,11 @@ export function OfflineNotice() {
     <View
       style={[styles.pill, { backgroundColor: withAlpha(t.text, 0.07), borderColor: withAlpha(t.text, 0.14) }]}
       accessibilityRole="text"
-      accessibilityLabel="You're offline. Your saved items are still available."
+      accessibilityLabel={tr("You're offline. Your saved items are still available.")}
     >
       <Ionicons name="cloud-offline-outline" size={14} color={t.mint} />
       <Text style={[styles.text, { color: t.text }]} numberOfLines={2}>
-        You're offline. Your saved items are still available.
-      </Text>
+        {tr("You're offline. Your saved items are still available.")}</Text>
     </View>
   );
 }

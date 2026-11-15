@@ -10,6 +10,7 @@ import { canOpenLinks, openLink } from '../platform/links';
 import { tap } from '../platform/haptics';
 import support from '../support.json';
 
+import { tr } from '../i18n';
 // Settings, About, Help & Support. The same questions and answers as
 // prexpire.com/support (both read src/support.json): ways to reach us
 // first, then the answers by topic, searchable, each one opening in
@@ -45,28 +46,28 @@ export function SupportPage({ appVersion }: { appVersion: string }) {
 
   return (
     <>
-      <SettingsSection title="Get in touch">
+      <SettingsSection title={tr("Get in touch")}>
         <SettingsCard>
           <SettingRow
             icon="mail-outline"
             accent="blue"
-            title="Email us"
+            title={tr("Email us")}
             description={support.email}
-            onPress={links ? () => openLink(`mailto:${support.email}?subject=${encodeURIComponent(`Prexpire ${appVersion}`)}`) : undefined}
+            onPress={links ? () => openLink(`mailto:${support.email}?subject=${encodeURIComponent(tr("Prexpire {0}", [appVersion]))}`) : undefined}
           />
           <SettingRow
             icon="chatbubble-ellipses-outline"
             accent="mint"
-            title="Ask a question"
-            description="Write to us from here. Add your email to get an answer"
+            title={tr("Ask a question")}
+            description={tr("Write to us from here. Add your email to get an answer")}
             onPress={() => setAsking(true)}
           />
-          {links && <SettingRow icon="globe-outline" accent="teal" title="Open the support website" description="prexpire.com/support" onPress={() => openLink(SITE)} />}
+          {links && <SettingRow icon="globe-outline" accent="teal" title={tr("Open the support website")} description="prexpire.com/support" onPress={() => openLink(SITE)} />}
         </SettingsCard>
       </SettingsSection>
 
       <View style={s.search}>
-        <SearchField value={query} onChange={setQuery} placeholder="Search the answers" accessibilityLabel="Search the answers" />
+        <SearchField value={query} onChange={setQuery} placeholder={tr("Search the answers")} accessibilityLabel={tr("Search the answers")} />
       </View>
 
       {shown.map((t) => (
@@ -109,19 +110,19 @@ export function SupportPage({ appVersion }: { appVersion: string }) {
 
       {searching && shown.length === 0 && (
         <View style={s.empty}>
-          <Text style={s.emptyTitle}>No answer matches “{query.trim()}”</Text>
-          <Text style={s.emptyText}>Ask us instead, or email support@prexpire.com.</Text>
+          <Text style={s.emptyTitle}>{tr("No answer matches “")}{query.trim()}”</Text>
+          <Text style={s.emptyText}>{tr("Ask us instead, or email support@prexpire.com.")}</Text>
         </View>
       )}
 
       <View style={s.ask}>
-        <Text style={s.askTitle}>Didn't find your answer?</Text>
-        <PressScale onPress={() => setAsking(true)} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Ask a question" style={s.askBtn}>
-          <Text style={s.askBtnText}>Ask a question</Text>
+        <Text style={s.askTitle}>{tr("Didn't find your answer?")}</Text>
+        <PressScale onPress={() => setAsking(true)} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Ask a question")} style={s.askBtn}>
+          <Text style={s.askBtnText}>{tr("Ask a question")}</Text>
         </PressScale>
       </View>
 
-      <FeedbackSheet visible={asking} onClose={() => setAsking(false)} appVersion={appVersion} initialKind="question" title="Ask a question" />
+      <FeedbackSheet visible={asking} onClose={() => setAsking(false)} appVersion={appVersion} initialKind="question" title={tr("Ask a question")} />
     </>
   );
 }

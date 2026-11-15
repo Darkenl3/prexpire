@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { makeStyles, useTheme } from '../theme';
 import { PressScale } from './Press';
 
+import { tr } from '../i18n';
 // The reference's search field: a wide, quietly rounded field with a magnifier
 // on the left, soft placeholder text, and a clear button that appears only
 // while there is something to clear. The border breathes towards the mint
@@ -16,7 +17,7 @@ type Props = {
   accessibilityLabel?: string;
 };
 
-export function SearchField({ value, onChange, placeholder = 'Search items…', accessibilityLabel }: Props) {
+export function SearchField({ value, onChange, placeholder = tr("Search items…"), accessibilityLabel }: Props) {
   const c = useTheme();
   const s = useStyles();
   const [focused, setFocused] = useState(false);
@@ -36,7 +37,7 @@ export function SearchField({ value, onChange, placeholder = 'Search items…', 
         onBlur={() => setFocused(false)}
       />
       {!!value && (
-        <PressScale onPress={() => onChange('')} scaleTo={0.88} hitSlop={8} style={s.clear} accessibilityRole="button" accessibilityLabel="Clear search">
+        <PressScale onPress={() => onChange('')} scaleTo={0.88} hitSlop={8} style={s.clear} accessibilityRole="button" accessibilityLabel={tr("Clear search")}>
           <Ionicons name="close" size={15} color={c.textMuted} />
         </PressScale>
       )}

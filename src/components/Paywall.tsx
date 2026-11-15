@@ -12,6 +12,7 @@ import { BottomSheet } from './BottomSheet';
 import { LegalDetail, type LegalDoc } from '../screens/SettingsScreen';
 import legal from '../legal.json';
 
+import { tr } from '../i18n';
 // The Pro offer. One idea carries it: the free plan's 20 places, drawn as a
 // row of pips that fill with the items you track today. Pro is simply "no
 // row": everything else in the app stays free.
@@ -30,21 +31,21 @@ function tellShell(open: boolean) {
 }
 
 const LEADS: Record<PaywallReason, (n: number) => string> = {
-  welcome: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro tracks every shop, the pantry and the medicine cabinet, with no limit.`,
-  limit: () => `You've added this month's ${FREE_ITEM_LIMIT} free items. Everything you track keeps working. Pro lets you keep adding.`,
-  categories: () => `The free plan includes ${FREE_CUSTOM_CATEGORIES} category of your own. Pro lets you add as many as you need.`,
-  settings: () => `Free with ${FREE_ITEM_LIMIT} new items every month. Pro takes the limit away.`,
+  welcome: () => tr("Free with {0} new items every month. Pro tracks every shop, the pantry and the medicine cabinet, with no limit.", [FREE_ITEM_LIMIT]),
+  limit: () => tr("You've added this month's {0} free items. Everything you track keeps working. Pro lets you keep adding.", [FREE_ITEM_LIMIT]),
+  categories: () => tr("The free plan includes {0} category of your own. Pro lets you add as many as you need.", [FREE_CUSTOM_CATEGORIES]),
+  settings: () => tr("Free with {0} new items every month. Pro takes the limit away.", [FREE_ITEM_LIMIT]),
 };
 
 type Perk = { icon: keyof typeof Ionicons.glyphMap; title: string; text: string };
 const PERKS: Perk[] = [
-  { icon: 'infinite', title: 'Unlimited items', text: 'Add every shop, every week, without counting.' },
-  { icon: 'grid-outline', title: 'Unlimited categories', text: 'Make a category for the garage, the baby, the first-aid kit.' },
-  { icon: 'heart-outline', title: 'Keeps Prexpire independent', text: 'No ads and no tracking, now or later.' },
+  { icon: 'infinite', title: tr("Unlimited items"), text: tr("Add every shop, every week, without counting.") },
+  { icon: 'grid-outline', title: tr("Unlimited categories"), text: tr("Make a category for the garage, the baby, the first-aid kit.") },
+  { icon: 'heart-outline', title: tr("Keeps Prexpire independent"), text: tr("No ads and no tracking, now or later.") },
 ];
 // Opens inside the Lifetime card while it's the chosen plan (the card grows
 // downward, so nothing above it moves).
-const FAMILY: Perk = { icon: 'people-outline', title: 'Shared with your family', text: 'Up to 5 family members get Pro too, through Family Sharing.' };
+const FAMILY: Perk = { icon: 'people-outline', title: tr("Shared with your family"), text: tr("Up to 5 family members get Pro too, through Family Sharing.") };
 
 function savingVsMonthly(plans: ProPlan[]): number | null {
   const m = plans.find((p) => p.kind === 'monthly');
@@ -143,38 +144,37 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
     const out = await restore();
     setBusy(null);
     if (out.error) setNote({ text: out.error, bad: true });
-    else if (!out.found) setNote({ text: 'No Pro purchase was found for this Apple ID.', bad: true });
+    else if (!out.found) setNote({ text: tr("No Pro purchase was found for this Apple ID."), bad: true });
   };
 
   const cta = !plan
-    ? 'Choose a plan'
+    ? tr("Choose a plan")
     : plan.trialDays > 0
-      ? `Try ${plan.trialDays} days free`
+      ? tr("Try {0} days free", [plan.trialDays])
       : plan.kind === 'lifetime'
-        ? `Buy for ${plan.price}`
-        : `Subscribe for ${plan.price}`;
+        ? tr("Buy for {0}", [plan.price])
+        : tr("Subscribe for {0}", [plan.price]);
   const terms = !plan
     ? ''
     : plan.kind === 'lifetime'
-      ? 'One payment. Pro is yours for good, and Family Sharing gives it to up to 5 family members too.'
-      : `${plan.trialDays > 0 ? `${plan.trialDays} days free, then ` : ''}${plan.price} a ${plan.kind === 'annual' ? 'year' : 'month'}. Renews automatically until you cancel, at least 24 hours before the end of the period, in your Apple ID's subscriptions.`;
+      ? tr("One payment. Pro is yours for good, and Family Sharing gives it to up to 5 family members too.")
+      : tr("{0}{1} a {2}. Renews automatically until you cancel, at least 24 hours before the end of the period, in your Apple ID's subscriptions.", [plan.trialDays > 0 ? `${plan.trialDays} days free, then ` : '', plan.price, plan.kind === 'annual' ? 'year' : 'month']);
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.topBar}>
-        <PressScale onPress={onClose} scaleTo={0.9} accessibilityRole="button" accessibilityLabel="Close" style={s.close}>
+        <PressScale onPress={onClose} scaleTo={0.9} accessibilityRole="button" accessibilityLabel={tr("Close")} style={s.close}>
           <Ionicons name="close" size={20} color={c.text} />
         </PressScale>
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.scroll, { paddingBottom: selling ? 20 : insets.bottom + 28 }]} showsVerticalScrollIndicator={false}>
         <View style={s.column}>
           <Text style={s.title} accessibilityRole="header">
-            Prexpire Pro
-          </Text>
-          <Text style={s.lead}>{isPro ? 'Thank you. Pro is on: no limits on items or categories.' : LEADS[reason](count)}</Text>
+            {tr("Prexpire Pro")}</Text>
+          <Text style={s.lead}>{isPro ? tr("Thank you. Pro is on: no limits on items or categories.") : LEADS[reason](count)}</Text>
 
           {/* The free plan's places. */}
-          <View style={s.meter} accessible accessibilityLabel={`${added} of ${FREE_ITEM_LIMIT} free items used this month`}>
+          <View style={s.meter} accessible accessibilityLabel={tr("{0} of {1} free items used this month", [added, FREE_ITEM_LIMIT])}>
             <View style={s.pips}>
               {Array.from({ length: FREE_ITEM_LIMIT }, (_, i) => (
                 <View key={i} style={[s.pip, i < filled && (filled >= FREE_ITEM_LIMIT && !isPro ? s.pipFull : s.pipOn)]} />
@@ -184,7 +184,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
               </View>
             </View>
             <Text style={s.meterText}>
-              {isPro ? `${count} ${count === 1 ? 'item' : 'items'}, no limit` : `${filled} of ${FREE_ITEM_LIMIT} free items this month. Resets on ${resets}`}
+              {isPro ? tr("{0} {1}, no limit", [count, count === 1 ? 'item' : 'items']) : tr("{0} of {1} free items this month. Resets on {2}", [filled, FREE_ITEM_LIMIT, resets])}
             </Text>
           </View>
 
@@ -192,26 +192,26 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
             <PerkRow perk={PERKS[0]} />
             <PerkRow perk={PERKS[1]} spaced />
             <PerkRow perk={PERKS[2]} spaced />
-            <Text style={s.freeLine}>Scanning, reminders and backup stay free for everyone.</Text>
+            <Text style={s.freeLine}>{tr("Scanning, reminders and backup stay free for everyone.")}</Text>
           </View>
 
           {isPro ? (
             <>
               {!state?.lifetime && (
-                <PressScale onPress={manage} scaleTo={0.97} accessibilityRole="button" accessibilityLabel="Manage subscription" style={s.secondary}>
-                  <Text style={s.secondaryText}>Manage subscription</Text>
+                <PressScale onPress={manage} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Manage subscription")} style={s.secondary}>
+                  <Text style={s.secondaryText}>{tr("Manage subscription")}</Text>
                 </PressScale>
               )}
-              <PressScale onPress={onClose} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel="Back to Prexpire" style={s.cta}>
-                <Text style={s.ctaText}>Back to Prexpire</Text>
+              <PressScale onPress={onClose} scaleTo={0.96} pressedStyle={{ opacity: 0.85 }} accessibilityRole="button" accessibilityLabel={tr("Back to Prexpire")} style={s.cta}>
+                <Text style={s.ctaText}>{tr("Back to Prexpire")}</Text>
               </PressScale>
             </>
           ) : !available ? (
-            <Text style={s.unavailable}>Pro is available in the Prexpire iPhone app.</Text>
+            <Text style={s.unavailable}>{tr("Pro is available in the Prexpire iPhone app.")}</Text>
           ) : !plans ? (
             <View style={s.loading}>
               {loadFailed ? (
-                <Text style={s.unavailable}>Couldn't reach the App Store. Check your connection, then open this again.</Text>
+                <Text style={s.unavailable}>{tr("Couldn't reach the App Store. Check your connection, then open this again.")}</Text>
               ) : (
                 <ActivityIndicator color={c.textMuted} />
               )}
@@ -221,13 +221,13 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
               <View style={s.plans} accessibilityRole={'radiogroup' as never}>
                 {ordered.map((p) => {
                   const on = p.id === selected;
-                  const name = p.kind === 'annual' ? 'Yearly' : p.kind === 'monthly' ? 'Monthly' : p.kind === 'lifetime' ? 'Lifetime' : p.id;
+                  const name = p.kind === 'annual' ? tr("Yearly") : p.kind === 'monthly' ? tr("Monthly") : p.kind === 'lifetime' ? tr("Lifetime") : p.id;
                   const sub =
                     p.kind === 'annual'
-                      ? `${p.perMonth ? `${p.perMonth} a month` : 'Billed yearly'}${p.trialDays ? `, ${p.trialDays} days free` : ''}`
+                      ? `${p.perMonth ? tr("{0} a month", [p.perMonth]) : tr("Billed yearly")}${p.trialDays ? tr(", {0} days free", [p.trialDays]) : ''}`
                       : p.kind === 'monthly'
-                        ? 'Billed monthly'
-                        : 'Pay once, share with your family';
+                        ? tr("Billed monthly")
+                        : tr("Pay once, share with your family");
                   return (
                     <PlanCard
                       key={p.id}
@@ -242,7 +242,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
                           <Text style={s.planName}>{name}</Text>
                           {p.kind === 'annual' && saving ? (
                             <View style={s.badge}>
-                              <Text style={s.badgeText}>Save {saving}%</Text>
+                              <Text style={s.badgeText}>{tr("Save")}{' '}{saving}%</Text>
                             </View>
                           ) : null}
                         </View>
@@ -258,15 +258,15 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
 
           <View style={s.links}>
             {!isPro && available ? (
-              <PressScale onPress={onRestore} scaleTo={0.95} accessibilityRole="button" accessibilityLabel="Restore purchases" style={s.link}>
-                {busy === 'restore' ? <ActivityIndicator size="small" color={c.textMuted} /> : <Text style={s.linkText}>Restore purchases</Text>}
+              <PressScale onPress={onRestore} scaleTo={0.95} accessibilityRole="button" accessibilityLabel={tr("Restore purchases")} style={s.link}>
+                {busy === 'restore' ? <ActivityIndicator size="small" color={c.textMuted} /> : <Text style={s.linkText}>{tr("Restore purchases")}</Text>}
               </PressScale>
             ) : null}
-            <PressScale onPress={() => setDoc('terms')} scaleTo={0.95} accessibilityRole="button" accessibilityLabel="Terms of Use" style={s.link}>
-              <Text style={s.linkText}>Terms</Text>
+            <PressScale onPress={() => setDoc('terms')} scaleTo={0.95} accessibilityRole="button" accessibilityLabel={tr("Terms of Use")} style={s.link}>
+              <Text style={s.linkText}>{tr("Terms")}</Text>
             </PressScale>
-            <PressScale onPress={() => setDoc('privacy')} scaleTo={0.95} accessibilityRole="button" accessibilityLabel="Privacy Policy" style={s.link}>
-              <Text style={s.linkText}>Privacy</Text>
+            <PressScale onPress={() => setDoc('privacy')} scaleTo={0.95} accessibilityRole="button" accessibilityLabel={tr("Privacy Policy")} style={s.link}>
+              <Text style={s.linkText}>{tr("Privacy")}</Text>
             </PressScale>
           </View>
         </View>
@@ -283,7 +283,7 @@ function PaywallBody({ reason, onClose }: { reason: PaywallReason; onClose: () =
           </View>
         </View>
       ) : null}
-      <BottomSheet visible={!!doc} onClose={() => setDoc(null)} title={doc === 'privacy' ? 'Privacy Policy' : 'Terms of Use'} maxHeightRatio={0.9} maxWidth={620}>
+      <BottomSheet visible={!!doc} onClose={() => setDoc(null)} title={doc === 'privacy' ? tr("Privacy Policy") : tr("Terms of Use")} maxHeightRatio={0.9} maxWidth={620}>
         {doc ? <LegalDetail doc={(doc === 'privacy' ? legal.privacy : legal.terms) as LegalDoc} /> : null}
       </BottomSheet>
     </View>

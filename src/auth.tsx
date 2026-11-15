@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type Session } from '@supabase/supabase-js';
 
+import { tr } from './i18n';
 // Accounts (optional). Prexpire works fully without one; signing in is for
 // people who want their list backed up and, later, synced across phones.
 //
@@ -65,20 +66,20 @@ export function explain(error: SupaError): string | null {
   const code = error.code ?? '';
   const msg = (error.message ?? '').toLowerCase();
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429 || msg.includes('rate limit'))
-    return 'Too many emails were sent. Wait a few minutes, then try again.';
-  if (code === 'invalid_credentials' || msg.includes('invalid login credentials')) return "That email and password don't match. Check them, or reset your password.";
-  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) return 'Confirm your email first. Enter the code we sent you.';
-  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered')) return 'An account with this email already exists. Sign in instead.';
-  if (code === 'weak_password' || msg.includes('password should')) return `Choose a stronger password: at least ${MIN_PASSWORD} characters, not a common one.`;
-  if (code === 'same_password' || msg.includes('different from the old')) return 'Choose a password different from your current one.';
+    return tr("Too many emails were sent. Wait a few minutes, then try again.");
+  if (code === 'invalid_credentials' || msg.includes('invalid login credentials')) return tr("That email and password don't match. Check them, or reset your password.");
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed')) return tr("Confirm your email first. Enter the code we sent you.");
+  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered')) return tr("An account with this email already exists. Sign in instead.");
+  if (code === 'weak_password' || msg.includes('password should')) return tr("Choose a stronger password: at least {0} characters, not a common one.", [MIN_PASSWORD]);
+  if (code === 'same_password' || msg.includes('different from the old')) return tr("Choose a password different from your current one.");
   if (code === 'otp_expired' || msg.includes('token has expired') || msg.includes('otp') || msg.includes('invalid token'))
-    return "That code isn't right or has expired. Check it, or send a new one.";
+    return tr("That code isn't right or has expired. Check it, or send a new one.");
   if (code === 'email_address_invalid' || msg.includes('invalid email') || msg.includes('validate email'))
-    return "That email address doesn't look right. Check it and try again.";
-  if (code === 'captcha_failed' || msg.includes('captcha')) return 'The security check failed. Try again.';
-  if (code === 'signup_disabled') return 'New accounts are paused right now. Try again later.';
-  if (msg.includes('fetch') || msg.includes('network') || msg.includes('failed to')) return "You're offline. Connect to the internet to continue.";
-  return "That didn't work just now. Try again in a minute.";
+    return tr("That email address doesn't look right. Check it and try again.");
+  if (code === 'captcha_failed' || msg.includes('captcha')) return tr("The security check failed. Try again.");
+  if (code === 'signup_disabled') return tr("New accounts are paused right now. Try again later.");
+  if (msg.includes('fetch') || msg.includes('network') || msg.includes('failed to')) return tr("You're offline. Connect to the internet to continue.");
+  return tr("That didn't work just now. Try again in a minute.");
 }
 
 const norm = (email: string) => email.trim().toLowerCase();
@@ -184,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Supabase hides whether an address is taken: an existing, confirmed
       // account comes back as a user with no identities and no email is sent.
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0)
-        return { error: 'An account with this email already exists. Sign in instead.', exists: true };
+        return { error: tr("An account with this email already exists. Sign in instead."), exists: true };
       return { error: null };
     } catch (e) {
       return fail(e);
@@ -247,7 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // created with a password and confirmed with their own code.
       const { error } = await supabase.auth.signInWithOtp({ email: norm(email), options: { shouldCreateUser: false, captchaToken } });
       if (error && (error.code === 'otp_disabled' || /signups not allowed|user not found/i.test(error.message)))
-        return { error: 'There is no account with this email yet. Create one instead.' };
+        return { error: tr("There is no account with this email yet. Create one instead.") };
       return { error: explain(error) };
     } catch (e) {
       return fail(e);
@@ -277,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = randomNonce();
       const apple = await nativeIdToken('apple', { nonce: sha256Hex(raw) });
       if (apple.error === 'canceled') return { error: 'canceled' };
-      if (!apple.token) return { error: "Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email." + (apple.detail ? ` (Apple: ${apple.detail})` : '') };
+      if (!apple.token) return { error: tr("Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email.") + (apple.detail ? tr(" (Apple: {0})", [apple.detail]) : '') };
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: apple.token, nonce: raw });
       return { error: explain(error) };
     } catch (e) {
@@ -289,7 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const google = await nativeIdToken('google');
       if (google.error === 'canceled') return { error: 'canceled' };
-      if (!google.token) return { error: "Sign in with Google didn't work. Try again, or use your email." };
+      if (!google.token) return { error: tr("Sign in with Google didn't work. Try again, or use your email.") };
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: google.token });
       return { error: explain(error) };
     } catch (e) {

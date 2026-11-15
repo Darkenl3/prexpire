@@ -6,6 +6,7 @@ import { File } from 'expo-file-system';
 import { cropForFrame, type Rect } from './cropMath';
 import { recognizeText } from './ocr';
 import type { BarcodeBounds, FrameGeometry, ScannerCameraProps } from './ScannerCamera.types';
+import { tr } from '../i18n';
 // iOS and Android: expo-camera for the preview, a still about once a second cropped EXACTLY to
 // the frame, and on-device text recognition (Apple Vision / ML Kit). Product barcodes are
 // decoded by the camera's live scanner, but only reported when their bounds sit inside the
@@ -140,7 +141,7 @@ export function ScannerCamera({ ref, active, torch, scanBarcodes = false, barcod
       onBarcodeScanned={scanBarcodes ? onBarcodeScanned : undefined}
       barcodeScannerSettings={scanBarcodes ? { barcodeTypes: [...BARCODE_TYPES] } : undefined}
       onCameraReady={onCameraReady}
-      onMountError={(e) => onError('unavailable', e.message || 'No camera was found on this device.')}
+      onMountError={(e) => onError('unavailable', e.message || tr("No camera was found on this device."))}
     />
   );
 }

@@ -5,6 +5,7 @@ import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, 
 import { FadeIn, PressScale } from './Press';
 import { BottomSheet } from './BottomSheet';
 
+import { tr } from '../i18n';
 // Building blocks of the Settings page, styled after the reference's grouped
 // card design: white cards on a cool-white page, fine #E5EDF3 hairlines, soft
 // pastel icon tiles, crisp SF-style typography and gentle press feedback.
@@ -180,7 +181,7 @@ export function StatusBadge({ label, tone = 'muted', check = false }: { label: s
   );
 }
 
-type Option<T> = { value: T; label: string; disabled?: boolean };
+type Option<T> = { value: T; label: string; sub?: string; disabled?: boolean };
 
 // A set of choices shown as chips: one is selected, like radio buttons.
 export function Options<T extends string | number>({ label, options, value, onChange }: { label: string; options: Option<T>[]; value: T; onChange: (v: T) => void }) {
@@ -280,8 +281,8 @@ export function OptionSheet<T extends string | number>({
       title={title}
       scrollable={options.length > 6}
       footer={
-        <PressScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Cancel" style={s.sheetCancel} pressedStyle={s.rowPressed}>
-          <Text style={s.sheetCancelText}>Cancel</Text>
+        <PressScale onPress={onClose} accessibilityRole="button" accessibilityLabel={tr("Cancel")} style={s.sheetCancel} pressedStyle={s.rowPressed}>
+          <Text style={s.sheetCancelText}>{tr("Cancel")}</Text>
         </PressScale>
       }
     >
@@ -304,7 +305,14 @@ export function OptionSheet<T extends string | number>({
               style={[s.sheetOption, o.disabled && s.chipDisabled]}
               pressedStyle={s.rowPressed}
             >
-              <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
+              {o.sub ? (
+                <View style={{ flex: 1, paddingVertical: 9 }}>
+                  <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
+                  <Text style={s.sheetOptionSub}>{o.sub}</Text>
+                </View>
+              ) : (
+                <Text style={[s.sheetOptionText, on && s.sheetOptionTextOn, o.disabled && s.chipTextDisabled]}>{o.label}</Text>
+              )}
               {on && (
                 <FadeIn>
                   <Ionicons name="checkmark" size={19} color={c.green} />
@@ -471,6 +479,7 @@ const useStyles = makeStyles((c) => ({
   sheetOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 54, paddingHorizontal: 16, gap: 12 },
   sheetOptionText: { color: c.text, fontSize: 16.5, fontWeight: '500', flex: 1 },
   sheetOptionTextOn: { color: c.green, fontWeight: '600' },
+  sheetOptionSub: { color: c.textMuted, fontSize: 13.5, marginTop: 2 },
   sheetCancel: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -14,6 +14,7 @@ import { useSettings } from '../settings';
 import { nativeDatePicker, pickNativeDate } from '../platform/nativeDate';
 import { tap } from '../platform/haptics';
 
+import { tr } from '../i18n';
 // The sheet's category pills: the same solid "selected" language as the
 // Items filters and sort row — the ACTIVE theme's lime fill with its ink on
 // top (built per render, since the scanner's accent follows the app theme).
@@ -67,14 +68,14 @@ function FolderCategoryArt({ id, size }: { id: string; size: number }) {
 }
 
 const REASON_TEXT: Partial<Record<ConfirmReason, string>> = {
-  'no-label': 'No EXP or BEST BEFORE label was found next to this date.',
-  'multiple-dates': 'More than one date was found. Choose the expiry date.',
-  'month-only': 'Only a month is printed. The item will expire at the end of that month.',
-  'in-past': 'This date has already passed.',
-  'sell-by': 'This is a sell-by date, which can be earlier than the real expiry date.',
-  'no-year': 'No year is printed, so the next time this date comes round was used. Check the year.',
-  'coded-date': 'This date was printed as a code (year and day of the year). Check it.',
-  'shelf-life': 'Calculated from the production date and the printed shelf life. Check it.',
+  'no-label': tr("No EXP or BEST BEFORE label was found next to this date."),
+  'multiple-dates': tr("More than one date was found. Choose the expiry date."),
+  'month-only': tr("Only a month is printed. The item will expire at the end of that month."),
+  'in-past': tr("This date has already passed."),
+  'sell-by': tr("This is a sell-by date, which can be earlier than the real expiry date."),
+  'no-year': tr("No year is printed, so the next time this date comes round was used. Check the year."),
+  'coded-date': tr("This date was printed as a code (year and day of the year). Check it."),
+  'shelf-life': tr("Calculated from the production date and the printed shelf life. Check it."),
 };
 
 export type SaveInput = { name: string; category: CategoryId; date: Interpretation; image?: string };
@@ -196,7 +197,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
   };
 
   const reasons = detection ? detection.reasons.filter((r) => REASON_TEXT[r]) : [];
-  const dateTitle = !detection ? 'Expiry date' : edited ? 'Expiry date (edited)' : confirmed ? 'Detected expiry date' : 'Check the expiry date';
+  const dateTitle = !detection ? tr("Expiry date") : edited ? tr("Expiry date (edited)") : confirmed ? tr("Detected expiry date") : tr("Check the expiry date");
 
   return (
     <View
@@ -220,11 +221,11 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
         bounces={false}
       >
         <View style={s.nameBlock}>
-          <Text style={s.nameLabel}>Product name</Text>
+          <Text style={s.nameLabel}>{tr("Product name")}</Text>
           <View style={[s.nameField, nameFocused && !nameError && { borderColor: withAlpha(t.mint, 0.55), backgroundColor: withAlpha(t.mint, 0.06) }, nameError && s.nameFieldWarn]}>
             <View style={s.nameArt}>
               {productImage ? (
-                <Image source={{ uri: productImage }} style={s.nameArtImage} accessibilityLabel={name || 'Product photo'} accessibilityRole="image" />
+                <Image source={{ uri: productImage }} style={s.nameArtImage} accessibilityLabel={name || tr("Product photo")} accessibilityRole="image" />
               ) : (
                 categoryArt(category, 28)
               )}
@@ -236,19 +237,19 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
                 setName(t);
                 if (nameError && t.trim()) setNameError(false);
               }}
-              placeholder="e.g. Greek yogurt"
+              placeholder={tr("e.g. Greek yogurt")}
               placeholderTextColor={colors.textMuted}
               style={s.nameInput}
               returnKeyType="done"
               maxLength={80}
               autoCorrect={false}
-              accessibilityLabel="Product name"
+              accessibilityLabel={tr("Product name")}
               onFocus={() => setNameFocused(true)}
               onBlur={() => setNameFocused(false)}
               onSubmitEditing={() => nameRef.current?.blur()}
             />
           </View>
-          {nameError && <Text style={s.nameError}>Give the product a name first.</Text>}
+          {nameError && <Text style={s.nameError}>{tr("Give the product a name first.")}</Text>}
         </View>
 
         <ScrollView ref={chipsScroll} horizontal showsHorizontalScrollIndicator={false} nestedScrollEnabled contentContainerStyle={s.chips} keyboardShouldPersistTaps="handled">
@@ -259,12 +260,12 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
                 selected={cat.id === category}
                 onPress={() => setCategory(cat.id)}
                 colors={sheetPillColors}
-                accessibilityLabel={`Category ${cat.name}`}
+                accessibilityLabel={tr("Category {0}", [cat.name])}
               />
             </View>
           ))}
         </ScrollView>
-        {categoryGuessed && <Text style={s.guessed}>Category picked from the label; tap another to change it.</Text>}
+        {categoryGuessed && <Text style={s.guessed}>{tr("Category picked from the label; tap another to change it.")}</Text>}
 
         <View style={s.divider} />
 
@@ -273,14 +274,14 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
           scaleTo={0.99}
           style={s.dateRow}
           accessibilityRole="button"
-          accessibilityLabel={`${dateTitle}: ${date ? formatDate(date) : 'not chosen'}. Edit date`}
+          accessibilityLabel={tr("{0}: {1}. Edit date", [dateTitle, date ? formatDate(date) : 'not chosen'])}
         >
           <View style={[s.calendar, !confirmed && s.calendarWarn]}>
             <Ionicons name="calendar" size={22} color={confirmed ? t.mint : colors.amber} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[s.dateLabel, !confirmed && { color: colors.amberText }]}>{dateTitle}</Text>
-            <Text style={s.dateValue}>{date ? formatDate(date) : 'Choose the date below'}</Text>
+            <Text style={s.dateValue}>{date ? formatDate(date) : tr("Choose the date below")}</Text>
           </View>
           <Ionicons name={editing ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.textMuted} />
         </PressScale>
@@ -288,7 +289,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
         {ambiguous && !autoRead && !edited && (
           <View style={s.block}>
             <Text style={s.question}>
-              {multipleDates ? 'More than one date was found. Which is the expiry date?' : 'The day and month could be either way round. Which is it?'}
+              {multipleDates ? tr("More than one date was found. Which is the expiry date?") : tr("The day and month could be either way round. Which is it?")}
             </Text>
             <View style={s.choiceRow}>
               {readings.map((r, i) => (
@@ -313,7 +314,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
           <View style={s.block}>
             <View style={s.reason}>
               <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
-              <Text style={s.autoNote}>Read as {assumedOrder === 'DMY' ? 'day/month/year' : 'month/day/year'} (your Date format setting). Tap the date to change it</Text>
+              <Text style={s.autoNote}>{tr("Read as")}{' '}{assumedOrder === 'DMY' ? 'day/month/year' : 'month/day/year'} {' '}{tr("(your Date format setting). Tap the date to change it")}</Text>
             </View>
           </View>
         )}
@@ -326,7 +327,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
                 <Text style={s.reasonText}>{REASON_TEXT[r]}</Text>
               </View>
             ))}
-            {detection && <Text style={s.raw}>Read on the label: “{detection.labelText ? `${detection.labelText} ` : ''}{detection.raw}”</Text>}
+            {detection && <Text style={s.raw}>{tr("Read on the label: “")}{detection.labelText ? `${detection.labelText} ` : ''}{detection.raw}”</Text>}
           </View>
         )}
 
@@ -347,11 +348,11 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
           accessibilityState={{ checked: ticked }}
         >
           <Ionicons name={ticked ? 'checkbox' : 'square-outline'} size={22} color={ticked ? t.mint : colors.textMuted} />
-          <Text style={s.tickText}>Yes, this is the expiry date</Text>
+          <Text style={s.tickText}>{tr("Yes, this is the expiry date")}</Text>
         </PressScale>
       )}
 
-      {save === 'error' && <Text style={s.error}>Couldn't save the item. Please try again.</Text>}
+      {save === 'error' && <Text style={s.error}>{tr("Couldn't save the item. Please try again.")}</Text>}
       <PressScale
         onPress={() => {
           if (canSave) tap('light');
@@ -362,17 +363,17 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
         style={[s.primary, { backgroundColor: t.mint }, !canSave && save !== 'saved' && s.disabled]}
         accessibilityRole="button"
         accessibilityState={{ disabled: !canSave, busy: save === 'saving' }}
-        accessibilityLabel={save === 'saved' ? 'Item added' : 'Add item'}
+        accessibilityLabel={save === 'saved' ? tr("Item added") : tr("Add item")}
       >
         {save === 'saving' ? (
           <ActivityIndicator color={t.scanInk} />
         ) : save === 'saved' ? (
           <View style={s.savedRow}>
             <Ionicons name="checkmark-circle" size={20} color={t.scanInk} />
-            <Text style={[s.primaryText, { color: t.scanInk }]}>Added</Text>
+            <Text style={[s.primaryText, { color: t.scanInk }]}>{tr("Added")}</Text>
           </View>
         ) : (
-          <Text style={[s.primaryText, { color: t.scanInk }]}>Add item</Text>
+          <Text style={[s.primaryText, { color: t.scanInk }]}>{tr("Add item")}</Text>
         )}
       </PressScale>
       <PressScale
@@ -388,7 +389,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
   );
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS = [tr("Jan"), tr("Feb"), tr("Mar"), tr("Apr"), tr("May"), tr("Jun"), tr("Jul"), tr("Aug"), tr("Sep"), tr("Oct"), tr("Nov"), tr("Dec")];
 
 // Day, month and year steppers. Works the same on iOS, Android and web
 // without a native picker. Inside the iOS app the date opens the app's own
@@ -407,10 +408,10 @@ function NativeDateField({ value, onChange }: { value: Interpretation; onChange:
     if (picked) onChange(picked.iso, picked.precision);
   };
   return (
-    <PressScale onPress={() => void open()} scaleTo={0.98} style={s.nativeDate} accessibilityRole="button" accessibilityLabel={`Expiry date ${formatDate(value.iso, value.precision)}. Change`}>
+    <PressScale onPress={() => void open()} scaleTo={0.98} style={s.nativeDate} accessibilityRole="button" accessibilityLabel={tr("Expiry date {0}. Change", [formatDate(value.iso, value.precision)])}>
       <Ionicons name="calendar-outline" size={20} color={t.mint} />
       <Text style={s.nativeDateText}>{formatDate(value.iso, value.precision)}</Text>
-      <Text style={[s.nativeDateAction, { color: t.mint }]}>Change</Text>
+      <Text style={[s.nativeDateAction, { color: t.mint }]}>{tr("Change")}</Text>
     </PressScale>
   );
 }
@@ -427,10 +428,10 @@ function StepperEditor({ value, onChange }: { value: Interpretation; onChange: (
   const thisYear = new Date().getFullYear();
   return (
     <View style={s.editor}>
-      <Stepper label="Day" value={String(d)} onDown={() => set(y, m, wrap(d - 1, 1, daysInMonth))} onUp={() => set(y, m, wrap(d + 1, 1, daysInMonth))} />
-      <Stepper label="Month" value={MONTHS[m - 1]} onDown={() => set(y, wrap(m - 1, 1, 12), d)} onUp={() => set(y, wrap(m + 1, 1, 12), d)} />
+      <Stepper label={tr("Day")} value={String(d)} onDown={() => set(y, m, wrap(d - 1, 1, daysInMonth))} onUp={() => set(y, m, wrap(d + 1, 1, daysInMonth))} />
+      <Stepper label={tr("Month")} value={MONTHS[m - 1]} onDown={() => set(y, wrap(m - 1, 1, 12), d)} onUp={() => set(y, wrap(m + 1, 1, 12), d)} />
       <Stepper
-        label="Year"
+        label={tr("Year")}
         value={String(y)}
         onDown={() => set(Math.max(y - 1, thisYear - 5), m, d)}
         onUp={() => set(Math.min(y + 1, thisYear + 15), m, d)}
@@ -442,14 +443,14 @@ function StepperEditor({ value, onChange }: { value: Interpretation; onChange: (
 function Stepper({ label, value, onDown, onUp }: { label: string; value: string; onDown: () => void; onUp: () => void }) {
   return (
     <View style={s.stepper} accessibilityLabel={`${label} ${value}`}>
-      <Pressable onPress={onDown} hitSlop={6} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={`Previous ${label.toLowerCase()}`}>
+      <Pressable onPress={onDown} hitSlop={6} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={tr("Previous {0}", [label.toLowerCase()])}>
         <Ionicons name="remove" size={18} color={colors.text} />
       </Pressable>
       <View style={s.stepValue}>
         <Text style={s.stepLabel}>{label}</Text>
         <Text style={s.stepText}>{value}</Text>
       </View>
-      <Pressable onPress={onUp} hitSlop={6} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={`Next ${label.toLowerCase()}`}>
+      <Pressable onPress={onUp} hitSlop={6} style={s.stepBtn} accessibilityRole="button" accessibilityLabel={tr("Next {0}", [label.toLowerCase()])}>
         <Ionicons name="add" size={18} color={colors.text} />
       </Pressable>
     </View>

@@ -9,6 +9,7 @@ import { useShopping } from '../shopping';
 import { daysUntil } from '../scanner/dateParser';
 import { FadeIn, PressScale } from './Press';
 
+import { tr } from '../i18n';
 // The in-app expiry alert. One alert is on screen at a time (the rest are
 // queued); it slides in gently below the header, answers with two clear
 // actions, and leaves on its own after a while. It appears only while the
@@ -128,19 +129,19 @@ function ExpiryAlertCard({ alert, onNavigate, onHeight }: { alert: { key: string
   }
 
   const when =
-    days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+    days <= 0 ? 'today' : days === 1 ? 'tomorrow' : tr("in {0} days", [days]);
   const body = inList
     ? expired
-      ? `Your ${alert.name} has expired. It is already on your Shopping List.`
-      : `Your ${alert.name} is expected to expire ${when}. It is already on your Shopping List.`
+      ? tr("Your {0} has expired. It is already on your Shopping List.", [alert.name])
+      : tr("Your {0} is expected to expire {1}. It is already on your Shopping List.", [alert.name, when])
     : expired
-      ? `Your ${alert.name} has expired. Would you like to add it to your Shopping List?`
-      : `Your ${alert.name} is expected to expire ${when}. Would you like to add it to your Shopping List?`;
+      ? tr("Your {0} has expired. Would you like to add it to your Shopping List?", [alert.name])
+      : tr("Your {0} is expected to expire {1}. Would you like to add it to your Shopping List?", [alert.name, when]);
 
   return (
     <Animated.View
       accessibilityRole="alert"
-      accessibilityLabel={`${alert.name} is ${expired ? 'expired' : 'expiring soon'}`}
+      accessibilityLabel={tr("{0} is {1}", [alert.name, expired ? 'expired' : 'expiring soon'])}
       // The measured height (plus its gap) is what every screen reserves, so
       // the card pushes content instead of covering it.
       onLayout={(e) => onHeight(Math.round(e.nativeEvent.layout.height) + CARD_GAP)}
@@ -153,7 +154,7 @@ function ExpiryAlertCard({ alert, onNavigate, onHeight }: { alert: { key: string
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={s.title} numberOfLines={1}>
-              {expired ? `${alert.name} has expired` : `${alert.name} is expiring soon`}
+              {expired ? tr("{0} has expired", [alert.name]) : tr("{0} is expiring soon", [alert.name])}
             </Text>
             <Text style={s.body}>{body}</Text>
           </View>
@@ -162,17 +163,17 @@ function ExpiryAlertCard({ alert, onNavigate, onHeight }: { alert: { key: string
           {added ? (
             <FadeIn style={s.added}>
               <Ionicons name="checkmark-circle" size={17} color={c.green} />
-              <Text style={s.addedText}>Added to your Shopping List</Text>
+              <Text style={s.addedText}>{tr("Added to your Shopping List")}</Text>
             </FadeIn>
           ) : inList ? (
             <>
-              <AlertButton label="View Shopping List" icon="cart-outline" tone="mint" onPress={() => act('later', 'tab:shop')} />
-              <AlertButton label="Not now" onPress={() => act('later')} />
+              <AlertButton label={tr("View Shopping List")} icon="cart-outline" tone="mint" onPress={() => act('later', 'tab:shop')} />
+              <AlertButton label={tr("Not now")} onPress={() => act('later')} />
             </>
           ) : (
             <>
-              <AlertButton label="Add to Shopping List" icon="cart-outline" tone="mint" onPress={() => act('add')} />
-              <AlertButton label="Not now" onPress={() => act('later')} />
+              <AlertButton label={tr("Add to Shopping List")} icon="cart-outline" tone="mint" onPress={() => act('add')} />
+              <AlertButton label={tr("Not now")} onPress={() => act('later')} />
             </>
           )}
         </View>

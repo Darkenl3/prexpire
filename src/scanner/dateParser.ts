@@ -5,6 +5,7 @@
 // (an ambiguous day/month order, a date without an EXP or BEST BEFORE label, and so on).
 // This file has no React Native imports so it can be tested with plain Node.
 
+import { intlLocale, language } from '../i18n.ts';
 export type DayOrder = 'DMY' | 'MDY';
 
 export type LabelKind = 'expiry' | 'manufacture' | 'lot' | 'sell';
@@ -1272,6 +1273,16 @@ export function formatDate(i: Interpretation | string): string {
   const iso = typeof i === 'string' ? i : i.iso;
   const precision = typeof i === 'string' ? 'day' : i.precision;
   const [y, m, d] = iso.split('-').map(Number);
+  // Other languages: the month as that language writes it (Intl).
+  if (language() !== 'en') {
+    try {
+      const date = new Date(Date.UTC(y, m - 1, d || 1, 12));
+      const opts: Intl.DateTimeFormatOptions = precision === 'month' ? { month: 'short', year: 'numeric', timeZone: 'UTC' } : { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' };
+      return new Intl.DateTimeFormat(intlLocale(), opts).format(date);
+    } catch {
+      // Fall through to the English form.
+    }
+  }
   return precision === 'month' ? `${MONTH_NAMES[m - 1]} ${y}` : `${d} ${MONTH_NAMES[m - 1]} ${y}`;
 }
 

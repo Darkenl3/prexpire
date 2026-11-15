@@ -1,0 +1,3350 @@
+[
+ {
+  "text": "{0} added · expires {1}",
+  "where": "App.tsx:305"
+ },
+ {
+  "text": "The product needs a name.",
+  "where": "App.tsx:345"
+ },
+ {
+  "text": "The expiry date could not be read.",
+  "where": "App.tsx:346"
+ },
+ {
+  "text": "Couldn't save the item. Please try again.",
+  "where": "App.tsx:357"
+ },
+ {
+  "text": "Keep your items safe",
+  "where": "App.tsx:586"
+ },
+ {
+  "text": "Without an account, your items live only on this phone. Create a free account and a lost, broken or new phone never loses them.",
+  "where": "App.tsx:587"
+ },
+ {
+  "text": "Update available",
+  "where": "src/appStore.tsx:148"
+ },
+ {
+  "text": "Prexpire",
+  "where": "src/appStore.tsx:153"
+ },
+ {
+  "text": "is on the App Store.",
+  "where": "src/appStore.tsx:153"
+ },
+ {
+  "text": "Update in the App Store",
+  "where": "src/appStore.tsx:162"
+ },
+ {
+  "text": "Too many emails were sent. Wait a few minutes, then try again.",
+  "where": "src/auth.tsx:69"
+ },
+ {
+  "text": "That email and password don't match. Check them, or reset your password.",
+  "where": "src/auth.tsx:70"
+ },
+ {
+  "text": "Confirm your email first. Enter the code we sent you.",
+  "where": "src/auth.tsx:71"
+ },
+ {
+  "text": "An account with this email already exists. Sign in instead.",
+  "where": "src/auth.tsx:72"
+ },
+ {
+  "text": "Choose a stronger password: at least {0} characters, not a common one.",
+  "where": "src/auth.tsx:73"
+ },
+ {
+  "text": "Choose a password different from your current one.",
+  "where": "src/auth.tsx:74"
+ },
+ {
+  "text": "That code isn't right or has expired. Check it, or send a new one.",
+  "where": "src/auth.tsx:76"
+ },
+ {
+  "text": "That email address doesn't look right. Check it and try again.",
+  "where": "src/auth.tsx:78"
+ },
+ {
+  "text": "The security check failed. Try again.",
+  "where": "src/auth.tsx:79"
+ },
+ {
+  "text": "New accounts are paused right now. Try again later.",
+  "where": "src/auth.tsx:80"
+ },
+ {
+  "text": "You're offline. Connect to the internet to continue.",
+  "where": "src/auth.tsx:81"
+ },
+ {
+  "text": "That didn't work just now. Try again in a minute.",
+  "where": "src/auth.tsx:82"
+ },
+ {
+  "text": "There is no account with this email yet. Create one instead.",
+  "where": "src/auth.tsx:251"
+ },
+ {
+  "text": "Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email.",
+  "where": "src/auth.tsx:281"
+ },
+ {
+  "text": " (Apple: {0})",
+  "where": "src/auth.tsx:281"
+ },
+ {
+  "text": "Sign in with Google didn't work. Try again, or use your email.",
+  "where": "src/auth.tsx:293"
+ },
+ {
+  "text": "Vegetables",
+  "where": "src/categories.tsx:130"
+ },
+ {
+  "text": "Fruit",
+  "where": "src/categories.tsx:131"
+ },
+ {
+  "text": "Dairy",
+  "where": "src/categories.tsx:132"
+ },
+ {
+  "text": "Pantry",
+  "where": "src/categories.tsx:133"
+ },
+ {
+  "text": "Skincare",
+  "where": "src/categories.tsx:134"
+ },
+ {
+  "text": "Medicine",
+  "where": "src/categories.tsx:135"
+ },
+ {
+  "text": "Frozen",
+  "where": "src/categories.tsx:136"
+ },
+ {
+  "text": "Drinks",
+  "where": "src/categories.tsx:137"
+ },
+ {
+  "text": "Coffee and tea",
+  "where": "src/categories.tsx:138"
+ },
+ {
+  "text": "Ready meals",
+  "where": "src/categories.tsx:139"
+ },
+ {
+  "text": "Groceries",
+  "where": "src/categories.tsx:140"
+ },
+ {
+  "text": "Home",
+  "where": "src/categories.tsx:141"
+ },
+ {
+  "text": "Food",
+  "where": "src/categories.tsx:142"
+ },
+ {
+  "text": "Cleaning",
+  "where": "src/categories.tsx:143"
+ },
+ {
+  "text": "DIY and paint",
+  "where": "src/categories.tsx:144"
+ },
+ {
+  "text": "Garden and plants",
+  "where": "src/categories.tsx:145"
+ },
+ {
+  "text": "Pets",
+  "where": "src/categories.tsx:146"
+ },
+ {
+  "text": "Clothes",
+  "where": "src/categories.tsx:147"
+ },
+ {
+  "text": "Beauty",
+  "where": "src/categories.tsx:148"
+ },
+ {
+  "text": "First aid",
+  "where": "src/categories.tsx:149"
+ },
+ {
+  "text": "Car",
+  "where": "src/categories.tsx:150"
+ },
+ {
+  "text": "Batteries",
+  "where": "src/categories.tsx:151"
+ },
+ {
+  "text": "Electronics",
+  "where": "src/categories.tsx:152"
+ },
+ {
+  "text": "Documents",
+  "where": "src/categories.tsx:153"
+ },
+ {
+  "text": "Vouchers and coupons",
+  "where": "src/categories.tsx:154"
+ },
+ {
+  "text": "Gifts",
+  "where": "src/categories.tsx:155"
+ },
+ {
+  "text": "Travel",
+  "where": "src/categories.tsx:156"
+ },
+ {
+  "text": "Storage",
+  "where": "src/categories.tsx:157"
+ },
+ {
+  "text": "Other",
+  "where": "src/categories.tsx:158"
+ },
+ {
+  "text": "Dairy and eggs",
+  "where": "src/categories.tsx:159"
+ },
+ {
+  "text": "Meat and fish",
+  "where": "src/categories.tsx:160"
+ },
+ {
+  "text": "Snacks",
+  "where": "src/categories.tsx:161"
+ },
+ {
+  "text": "Desserts",
+  "where": "src/categories.tsx:162"
+ },
+ {
+  "text": "Wine and spirits",
+  "where": "src/categories.tsx:163"
+ },
+ {
+  "text": "Water",
+  "where": "src/categories.tsx:164"
+ },
+ {
+  "text": "Flowers",
+  "where": "src/categories.tsx:165"
+ },
+ {
+  "text": "Art supplies",
+  "where": "src/categories.tsx:166"
+ },
+ {
+  "text": "Plasters",
+  "where": "src/categories.tsx:167"
+ },
+ {
+  "text": "Health",
+  "where": "src/categories.tsx:168"
+ },
+ {
+  "text": "Light bulbs",
+  "where": "src/categories.tsx:169"
+ },
+ {
+  "text": "Appliances",
+  "where": "src/categories.tsx:170"
+ },
+ {
+  "text": "Audio",
+  "where": "src/categories.tsx:171"
+ },
+ {
+  "text": "Tech parts",
+  "where": "src/categories.tsx:172"
+ },
+ {
+  "text": "Accessories",
+  "where": "src/categories.tsx:173"
+ },
+ {
+  "text": "Keys and passes",
+  "where": "src/categories.tsx:174"
+ },
+ {
+  "text": "Party",
+  "where": "src/categories.tsx:175"
+ },
+ {
+  "text": "Packages",
+  "where": "src/categories.tsx:176"
+ },
+ {
+  "text": "Close {0}",
+  "where": "src/components/BottomSheet.tsx:196"
+ },
+ {
+  "text": "{0}. Swipe down to close.",
+  "where": "src/components/BottomSheet.tsx:204"
+ },
+ {
+  "text": "Edit {0}",
+  "where": "src/components/CategoryManager.tsx:214"
+ },
+ {
+  "text": "1 item",
+  "where": "src/components/CategoryManager.tsx:225"
+ },
+ {
+  "text": "{0} items",
+  "where": "src/components/CategoryManager.tsx:225"
+ },
+ {
+  "text": "Reorder {0}",
+  "where": "src/components/CategoryManager.tsx:235"
+ },
+ {
+  "text": "Move down",
+  "where": "src/components/CategoryManager.tsx:237"
+ },
+ {
+  "text": "Move up",
+  "where": "src/components/CategoryManager.tsx:238"
+ },
+ {
+  "text": "Confirm removing {0}",
+  "where": "src/components/CategoryManager.tsx:264"
+ },
+ {
+  "text": "Remove {0}",
+  "where": "src/components/CategoryManager.tsx:264"
+ },
+ {
+  "text": "Removed",
+  "where": "src/components/CategoryManager.tsx:278"
+ },
+ {
+  "text": "1 item still filed here",
+  "where": "src/components/CategoryManager.tsx:292"
+ },
+ {
+  "text": "{0} items still filed here",
+  "where": "src/components/CategoryManager.tsx:292"
+ },
+ {
+  "text": "Restore",
+  "where": "src/components/CategoryManager.tsx:295"
+ },
+ {
+  "text": "Add category",
+  "where": "src/components/CategoryManager.tsx:307"
+ },
+ {
+  "text": "Close",
+  "where": "src/components/CategoryManager.tsx:321"
+ },
+ {
+  "text": "Remove",
+  "where": "src/components/CategoryManager.tsx:326"
+ },
+ {
+  "text": "It has 1 item.",
+  "where": "src/components/CategoryManager.tsx:328"
+ },
+ {
+  "text": "It has {0} items.",
+  "where": "src/components/CategoryManager.tsx:328"
+ },
+ {
+  "text": "Move",
+  "where": "src/components/CategoryManager.tsx:328"
+ },
+ {
+  "text": "to:",
+  "where": "src/components/CategoryManager.tsx:328"
+ },
+ {
+  "text": "Move to {0}",
+  "where": "src/components/CategoryManager.tsx:333"
+ },
+ {
+  "text": "Remove anyway (items show as \"Other\")",
+  "where": "src/components/CategoryManager.tsx:344"
+ },
+ {
+  "text": "Remove, keep items filed (restore later)",
+  "where": "src/components/CategoryManager.tsx:344"
+ },
+ {
+  "text": "Cancel",
+  "where": "src/components/CategoryManager.tsx:348"
+ },
+ {
+  "text": "The last change couldn't be saved in this browser's storage. It applies until you close the page.",
+  "where": "src/components/CategoryManager.tsx:355"
+ },
+ {
+  "text": "Preview of the {0} tile on Home",
+  "where": "src/components/CategoryManager.tsx:408"
+ },
+ {
+  "text": "0 items",
+  "where": "src/components/CategoryManager.tsx:410"
+ },
+ {
+  "text": "All good",
+  "where": "src/components/CategoryManager.tsx:410"
+ },
+ {
+  "text": "How it looks on Home",
+  "where": "src/components/CategoryManager.tsx:412"
+ },
+ {
+  "text": "Edit category",
+  "where": "src/components/CategoryManager.tsx:493"
+ },
+ {
+  "text": "New category",
+  "where": "src/components/CategoryManager.tsx:493"
+ },
+ {
+  "text": "A folder for a group of items you track. Its tile appears on Home, right after the ones you already keep.",
+  "where": "src/components/CategoryManager.tsx:505"
+ },
+ {
+  "text": "Choose a different icon or colour for this category. Its name stays the same, and every item in it keeps its place.",
+  "where": "src/components/CategoryManager.tsx:505"
+ },
+ {
+  "text": "Change the name, icon or colour. Every item in this folder stays in it.",
+  "where": "src/components/CategoryManager.tsx:505"
+ },
+ {
+  "text": "Name",
+  "where": "src/components/CategoryManager.tsx:508"
+ },
+ {
+  "text": "Name, e.g. Pet food",
+  "where": "src/components/CategoryManager.tsx:518"
+ },
+ {
+  "text": "Category name",
+  "where": "src/components/CategoryManager.tsx:528"
+ },
+ {
+  "text": "Give the category a name first.",
+  "where": "src/components/CategoryManager.tsx:530"
+ },
+ {
+  "text": "Preset categories keep their name.",
+  "where": "src/components/CategoryManager.tsx:531"
+ },
+ {
+  "text": "Icon",
+  "where": "src/components/CategoryManager.tsx:532"
+ },
+ {
+  "text": "Icon: {0}",
+  "where": "src/components/CategoryManager.tsx:543"
+ },
+ {
+  "text": "Colour",
+  "where": "src/components/CategoryManager.tsx:553"
+ },
+ {
+  "text": "Colour {0}",
+  "where": "src/components/CategoryManager.tsx:565"
+ },
+ {
+  "text": "Warning period",
+  "where": "src/components/CategoryManager.tsx:575"
+ },
+ {
+  "text": "How early items here show as expiring, get their first reminder, and join your Shopping List.",
+  "where": "src/components/CategoryManager.tsx:576"
+ },
+ {
+  "text": "Same as app ({0} days)",
+  "where": "src/components/CategoryManager.tsx:581"
+ },
+ {
+  "text": "{0} days",
+  "where": "src/components/CategoryManager.tsx:581"
+ },
+ {
+  "text": "Once opened, use within",
+  "where": "src/components/CategoryManager.tsx:589"
+ },
+ {
+  "text": "When you mark an item here as opened, its date moves to this many days from that day (never later than the printed date).",
+  "where": "src/components/CategoryManager.tsx:590"
+ },
+ {
+  "text": "1 day",
+  "where": "src/components/CategoryManager.tsx:595"
+ },
+ {
+  "text": "Save changes",
+  "where": "src/components/CategoryManager.tsx:606"
+ },
+ {
+  "text": "in {0} days",
+  "where": "src/components/ExpiryAlert.tsx:132"
+ },
+ {
+  "text": "Your {0} has expired. It is already on your Shopping List.",
+  "where": "src/components/ExpiryAlert.tsx:135"
+ },
+ {
+  "text": "Your {0} is expected to expire {1}. It is already on your Shopping List.",
+  "where": "src/components/ExpiryAlert.tsx:136"
+ },
+ {
+  "text": "Your {0} has expired. Would you like to add it to your Shopping List?",
+  "where": "src/components/ExpiryAlert.tsx:138"
+ },
+ {
+  "text": "Your {0} is expected to expire {1}. Would you like to add it to your Shopping List?",
+  "where": "src/components/ExpiryAlert.tsx:139"
+ },
+ {
+  "text": "{0} is {1}",
+  "where": "src/components/ExpiryAlert.tsx:144"
+ },
+ {
+  "text": "{0} has expired",
+  "where": "src/components/ExpiryAlert.tsx:157"
+ },
+ {
+  "text": "{0} is expiring soon",
+  "where": "src/components/ExpiryAlert.tsx:157"
+ },
+ {
+  "text": "Added to your Shopping List",
+  "where": "src/components/ExpiryAlert.tsx:166"
+ },
+ {
+  "text": "View Shopping List",
+  "where": "src/components/ExpiryAlert.tsx:170"
+ },
+ {
+  "text": "Not now",
+  "where": "src/components/ExpiryAlert.tsx:171"
+ },
+ {
+  "text": "Add to Shopping List",
+  "where": "src/components/ExpiryAlert.tsx:175"
+ },
+ {
+  "text": "Question",
+  "where": "src/components/FeedbackSheet.tsx:23"
+ },
+ {
+  "text": "Send question",
+  "where": "src/components/FeedbackSheet.tsx:23"
+ },
+ {
+  "text": "What do you need help with? Add your email below so we can answer.",
+  "where": "src/components/FeedbackSheet.tsx:23"
+ },
+ {
+  "text": "Bug",
+  "where": "src/components/FeedbackSheet.tsx:24"
+ },
+ {
+  "text": "Send report",
+  "where": "src/components/FeedbackSheet.tsx:24"
+ },
+ {
+  "text": "What happened, and what did you expect? Steps to repeat it help a lot.",
+  "where": "src/components/FeedbackSheet.tsx:24"
+ },
+ {
+  "text": "Feedback",
+  "where": "src/components/FeedbackSheet.tsx:25"
+ },
+ {
+  "text": "Send feedback",
+  "where": "src/components/FeedbackSheet.tsx:25"
+ },
+ {
+  "text": "What works for you, and what could be better?",
+  "where": "src/components/FeedbackSheet.tsx:25"
+ },
+ {
+  "text": "Idea",
+  "where": "src/components/FeedbackSheet.tsx:26"
+ },
+ {
+  "text": "Send idea",
+  "where": "src/components/FeedbackSheet.tsx:26"
+ },
+ {
+  "text": "What would you like Prexpire to do?",
+  "where": "src/components/FeedbackSheet.tsx:26"
+ },
+ {
+  "text": "Write a few words first.",
+  "where": "src/components/FeedbackSheet.tsx:60"
+ },
+ {
+  "text": "That email doesn’t look right. Fix it or leave it empty.",
+  "where": "src/components/FeedbackSheet.tsx:61"
+ },
+ {
+  "text": "You’ve sent a few already. Try again in an hour.",
+  "where": "src/components/FeedbackSheet.tsx:75"
+ },
+ {
+  "text": "It couldn’t be sent just now. Try again in a minute.",
+  "where": "src/components/FeedbackSheet.tsx:75"
+ },
+ {
+  "text": "You’re offline. Connect to the internet and try again.",
+  "where": "src/components/FeedbackSheet.tsx:82"
+ },
+ {
+  "text": "Thanks, it’s sent",
+  "where": "src/components/FeedbackSheet.tsx:91"
+ },
+ {
+  "text": "We read every message, and we’ll reply by email if needed.",
+  "where": "src/components/FeedbackSheet.tsx:92"
+ },
+ {
+  "text": "We read every message.",
+  "where": "src/components/FeedbackSheet.tsx:92"
+ },
+ {
+  "text": "A question, a bug, feedback or an idea: it comes straight to us at support@prexpire.com.",
+  "where": "src/components/FeedbackSheet.tsx:96"
+ },
+ {
+  "text": "Your message",
+  "where": "src/components/FeedbackSheet.tsx:114"
+ },
+ {
+  "text": "Your email (optional, so we can reply)",
+  "where": "src/components/FeedbackSheet.tsx:116"
+ },
+ {
+  "text": "Your email, optional",
+  "where": "src/components/FeedbackSheet.tsx:130"
+ },
+ {
+  "text": "Go back",
+  "where": "src/components/HomeComponents.tsx:176"
+ },
+ {
+  "text": "Menu",
+  "where": "src/components/HomeComponents.tsx:178"
+ },
+ {
+  "text": "{0} notifications",
+  "where": "src/components/HomeComponents.tsx:200"
+ },
+ {
+  "text": "Scan a label",
+  "where": "src/components/HomeComponents.tsx:318"
+ },
+ {
+  "text": "Add manually",
+  "where": "src/components/HomeComponents.tsx:319"
+ },
+ {
+  "text": "Lists",
+  "where": "src/components/HomeComponents.tsx:492"
+ },
+ {
+  "text": "Reminders",
+  "where": "src/components/HomeComponents.tsx:493"
+ },
+ {
+  "text": "Settings",
+  "where": "src/components/HomeComponents.tsx:494"
+ },
+ {
+  "text": "Expired",
+  "where": "src/components/ItemCard.tsx:100"
+ },
+ {
+  "text": "Today",
+  "where": "src/components/ItemCard.tsx:100"
+ },
+ {
+  "text": "{0} added to your list",
+  "where": "src/components/ItemCard.tsx:118"
+ },
+ {
+  "text": "That is already on your list",
+  "where": "src/components/ItemCard.tsx:118"
+ },
+ {
+  "text": "{0} marked as consumed",
+  "where": "src/components/ItemCard.tsx:130"
+ },
+ {
+  "text": "{0} consumed and added to your list",
+  "where": "src/components/ItemCard.tsx:134"
+ },
+ {
+  "text": "{0} consumed. It is already on your list",
+  "where": "src/components/ItemCard.tsx:134"
+ },
+ {
+  "text": "{0}: printed date restored",
+  "where": "src/components/ItemCard.tsx:145"
+ },
+ {
+  "text": "Opened. Use by {0}",
+  "where": "src/components/ItemCard.tsx:149"
+ },
+ {
+  "text": "Couldn't save that. Please try again.",
+  "where": "src/components/ItemCard.tsx:151"
+ },
+ {
+  "text": "Renamed to {0}",
+  "where": "src/components/ItemCard.tsx:164"
+ },
+ {
+  "text": "Couldn't rename the item. Please try again.",
+  "where": "src/components/ItemCard.tsx:166"
+ },
+ {
+  "text": "{0} moved to {1}",
+  "where": "src/components/ItemCard.tsx:177"
+ },
+ {
+  "text": "Couldn't change the category. Please try again.",
+  "where": "src/components/ItemCard.tsx:179"
+ },
+ {
+  "text": "{0} removed",
+  "where": "src/components/ItemCard.tsx:191"
+ },
+ {
+  "text": "{0} product photo",
+  "where": "src/components/ItemCard.tsx:201"
+ },
+ {
+  "text": " · opened",
+  "where": "src/components/ItemCard.tsx:224"
+ },
+ {
+  "text": "Actions for {0}",
+  "where": "src/components/ItemCard.tsx:238"
+ },
+ {
+  "text": "Mark {0} as consumed",
+  "where": "src/components/ItemCard.tsx:288"
+ },
+ {
+  "text": "Mark as consumed",
+  "where": "src/components/ItemCard.tsx:291"
+ },
+ {
+  "text": "Mark {0} as not opened",
+  "where": "src/components/ItemCard.tsx:298"
+ },
+ {
+  "text": "Mark {0} as opened",
+  "where": "src/components/ItemCard.tsx:298"
+ },
+ {
+  "text": "Not opened (printed date)",
+  "where": "src/components/ItemCard.tsx:302"
+ },
+ {
+  "text": "Mark as opened (use within {0} d)",
+  "where": "src/components/ItemCard.tsx:302"
+ },
+ {
+  "text": "Rename {0}",
+  "where": "src/components/ItemCard.tsx:314"
+ },
+ {
+  "text": "Rename",
+  "where": "src/components/ItemCard.tsx:317"
+ },
+ {
+  "text": "Change the category of {0}",
+  "where": "src/components/ItemCard.tsx:327"
+ },
+ {
+  "text": "Change category",
+  "where": "src/components/ItemCard.tsx:330"
+ },
+ {
+  "text": "Add {0} to your Shopping List",
+  "where": "src/components/ItemCard.tsx:332"
+ },
+ {
+  "text": "Tap again to remove",
+  "where": "src/components/ItemCard.tsx:338"
+ },
+ {
+  "text": "Remove item",
+  "where": "src/components/ItemCard.tsx:338"
+ },
+ {
+  "text": "Product name",
+  "where": "src/components/ItemCard.tsx:364"
+ },
+ {
+  "text": "Save name",
+  "where": "src/components/ItemCard.tsx:378"
+ },
+ {
+  "text": "Category of {0}",
+  "where": "src/components/ItemCard.tsx:395"
+ },
+ {
+  "text": "Move it to another category.",
+  "where": "src/components/ItemCard.tsx:401"
+ },
+ {
+  "text": "Move {0} to {1}",
+  "where": "src/components/ItemCard.tsx:412"
+ },
+ {
+  "text": "{0} consumed",
+  "where": "src/components/ItemCard.tsx:439"
+ },
+ {
+  "text": "Used it up? Add it to your Shopping List to buy it again.",
+  "where": "src/components/ItemCard.tsx:445"
+ },
+ {
+  "text": "Mark {0} as consumed and add it to your Shopping List",
+  "where": "src/components/ItemCard.tsx:446"
+ },
+ {
+  "text": "Consumed, add to Shopping List",
+  "where": "src/components/ItemCard.tsx:448"
+ },
+ {
+  "text": "Consumed, don't add",
+  "where": "src/components/ItemCard.tsx:452"
+ },
+ {
+  "text": "You're offline. Your saved items are still available.",
+  "where": "src/components/OfflineNotice.tsx:42"
+ },
+ {
+  "text": "Free with {0} new items every month. Pro tracks every shop, the pantry and the medicine cabinet, with no limit.",
+  "where": "src/components/Paywall.tsx:34"
+ },
+ {
+  "text": "You've added this month's {0} free items. Everything you track keeps working. Pro lets you keep adding.",
+  "where": "src/components/Paywall.tsx:35"
+ },
+ {
+  "text": "The free plan includes {0} category of your own. Pro lets you add as many as you need.",
+  "where": "src/components/Paywall.tsx:36"
+ },
+ {
+  "text": "Free with {0} new items every month. Pro takes the limit away.",
+  "where": "src/components/Paywall.tsx:37"
+ },
+ {
+  "text": "Unlimited items",
+  "where": "src/components/Paywall.tsx:42"
+ },
+ {
+  "text": "Add every shop, every week, without counting.",
+  "where": "src/components/Paywall.tsx:42"
+ },
+ {
+  "text": "Unlimited categories",
+  "where": "src/components/Paywall.tsx:43"
+ },
+ {
+  "text": "Make a category for the garage, the baby, the first-aid kit.",
+  "where": "src/components/Paywall.tsx:43"
+ },
+ {
+  "text": "Keeps Prexpire independent",
+  "where": "src/components/Paywall.tsx:44"
+ },
+ {
+  "text": "No ads and no tracking, now or later.",
+  "where": "src/components/Paywall.tsx:44"
+ },
+ {
+  "text": "Shared with your family",
+  "where": "src/components/Paywall.tsx:48"
+ },
+ {
+  "text": "Up to 5 family members get Pro too, through Family Sharing.",
+  "where": "src/components/Paywall.tsx:48"
+ },
+ {
+  "text": "No Pro purchase was found for this Apple ID.",
+  "where": "src/components/Paywall.tsx:147"
+ },
+ {
+  "text": "Choose a plan",
+  "where": "src/components/Paywall.tsx:151"
+ },
+ {
+  "text": "Try {0} days free",
+  "where": "src/components/Paywall.tsx:153"
+ },
+ {
+  "text": "Buy for {0}",
+  "where": "src/components/Paywall.tsx:155"
+ },
+ {
+  "text": "Subscribe for {0}",
+  "where": "src/components/Paywall.tsx:156"
+ },
+ {
+  "text": "One payment. Pro is yours for good, and Family Sharing gives it to up to 5 family members too.",
+  "where": "src/components/Paywall.tsx:160"
+ },
+ {
+  "text": "{0}{1} a {2}. Renews automatically until you cancel, at least 24 hours before the end of the period, in your Apple ID's subscriptions.",
+  "where": "src/components/Paywall.tsx:161"
+ },
+ {
+  "text": "Prexpire Pro",
+  "where": "src/components/Paywall.tsx:173"
+ },
+ {
+  "text": "Thank you. Pro is on: no limits on items or categories.",
+  "where": "src/components/Paywall.tsx:174"
+ },
+ {
+  "text": "{0} of {1} free items used this month",
+  "where": "src/components/Paywall.tsx:177"
+ },
+ {
+  "text": "{0} {1}, no limit",
+  "where": "src/components/Paywall.tsx:187"
+ },
+ {
+  "text": "{0} of {1} free items this month. Resets on {2}",
+  "where": "src/components/Paywall.tsx:187"
+ },
+ {
+  "text": "Scanning, reminders and backup stay free for everyone.",
+  "where": "src/components/Paywall.tsx:195"
+ },
+ {
+  "text": "Manage subscription",
+  "where": "src/components/Paywall.tsx:201"
+ },
+ {
+  "text": "Back to Prexpire",
+  "where": "src/components/Paywall.tsx:205"
+ },
+ {
+  "text": "Pro is available in the Prexpire iPhone app.",
+  "where": "src/components/Paywall.tsx:210"
+ },
+ {
+  "text": "Couldn't reach the App Store. Check your connection, then open this again.",
+  "where": "src/components/Paywall.tsx:214"
+ },
+ {
+  "text": "Yearly",
+  "where": "src/components/Paywall.tsx:224"
+ },
+ {
+  "text": "Monthly",
+  "where": "src/components/Paywall.tsx:224"
+ },
+ {
+  "text": "Lifetime",
+  "where": "src/components/Paywall.tsx:224"
+ },
+ {
+  "text": "{0} a month",
+  "where": "src/components/Paywall.tsx:227"
+ },
+ {
+  "text": "Billed yearly",
+  "where": "src/components/Paywall.tsx:227"
+ },
+ {
+  "text": ", {0} days free",
+  "where": "src/components/Paywall.tsx:227"
+ },
+ {
+  "text": "Billed monthly",
+  "where": "src/components/Paywall.tsx:229"
+ },
+ {
+  "text": "Pay once, share with your family",
+  "where": "src/components/Paywall.tsx:230"
+ },
+ {
+  "text": "Save",
+  "where": "src/components/Paywall.tsx:245"
+ },
+ {
+  "text": "Restore purchases",
+  "where": "src/components/Paywall.tsx:261"
+ },
+ {
+  "text": "Terms of Use",
+  "where": "src/components/Paywall.tsx:265"
+ },
+ {
+  "text": "Terms",
+  "where": "src/components/Paywall.tsx:266"
+ },
+ {
+  "text": "Privacy Policy",
+  "where": "src/components/Paywall.tsx:268"
+ },
+ {
+  "text": "Privacy",
+  "where": "src/components/Paywall.tsx:269"
+ },
+ {
+  "text": "No EXP or BEST BEFORE label was found next to this date.",
+  "where": "src/components/ResultSheet.tsx:71"
+ },
+ {
+  "text": "More than one date was found. Choose the expiry date.",
+  "where": "src/components/ResultSheet.tsx:72"
+ },
+ {
+  "text": "Only a month is printed. The item will expire at the end of that month.",
+  "where": "src/components/ResultSheet.tsx:73"
+ },
+ {
+  "text": "This date has already passed.",
+  "where": "src/components/ResultSheet.tsx:74"
+ },
+ {
+  "text": "This is a sell-by date, which can be earlier than the real expiry date.",
+  "where": "src/components/ResultSheet.tsx:75"
+ },
+ {
+  "text": "No year is printed, so the next time this date comes round was used. Check the year.",
+  "where": "src/components/ResultSheet.tsx:76"
+ },
+ {
+  "text": "This date was printed as a code (year and day of the year). Check it.",
+  "where": "src/components/ResultSheet.tsx:77"
+ },
+ {
+  "text": "Calculated from the production date and the printed shelf life. Check it.",
+  "where": "src/components/ResultSheet.tsx:78"
+ },
+ {
+  "text": "Expiry date",
+  "where": "src/components/ResultSheet.tsx:200"
+ },
+ {
+  "text": "Expiry date (edited)",
+  "where": "src/components/ResultSheet.tsx:200"
+ },
+ {
+  "text": "Detected expiry date",
+  "where": "src/components/ResultSheet.tsx:200"
+ },
+ {
+  "text": "Check the expiry date",
+  "where": "src/components/ResultSheet.tsx:200"
+ },
+ {
+  "text": "Product photo",
+  "where": "src/components/ResultSheet.tsx:228"
+ },
+ {
+  "text": "e.g. Greek yogurt",
+  "where": "src/components/ResultSheet.tsx:240"
+ },
+ {
+  "text": "Give the product a name first.",
+  "where": "src/components/ResultSheet.tsx:252"
+ },
+ {
+  "text": "Category {0}",
+  "where": "src/components/ResultSheet.tsx:263"
+ },
+ {
+  "text": "Category picked from the label; tap another to change it.",
+  "where": "src/components/ResultSheet.tsx:268"
+ },
+ {
+  "text": "{0}: {1}. Edit date",
+  "where": "src/components/ResultSheet.tsx:277"
+ },
+ {
+  "text": "Choose the date below",
+  "where": "src/components/ResultSheet.tsx:284"
+ },
+ {
+  "text": "More than one date was found. Which is the expiry date?",
+  "where": "src/components/ResultSheet.tsx:292"
+ },
+ {
+  "text": "The day and month could be either way round. Which is it?",
+  "where": "src/components/ResultSheet.tsx:292"
+ },
+ {
+  "text": "Read as",
+  "where": "src/components/ResultSheet.tsx:317"
+ },
+ {
+  "text": "(your Date format setting). Tap the date to change it",
+  "where": "src/components/ResultSheet.tsx:317"
+ },
+ {
+  "text": "Read on the label: “",
+  "where": "src/components/ResultSheet.tsx:330"
+ },
+ {
+  "text": "Yes, this is the expiry date",
+  "where": "src/components/ResultSheet.tsx:351"
+ },
+ {
+  "text": "Item added",
+  "where": "src/components/ResultSheet.tsx:366"
+ },
+ {
+  "text": "Add item",
+  "where": "src/components/ResultSheet.tsx:366"
+ },
+ {
+  "text": "Added",
+  "where": "src/components/ResultSheet.tsx:373"
+ },
+ {
+  "text": "Jan",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Feb",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Mar",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Apr",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "May",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Jun",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Jul",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Aug",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Sep",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Oct",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Nov",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Dec",
+  "where": "src/components/ResultSheet.tsx:392"
+ },
+ {
+  "text": "Expiry date {0}. Change",
+  "where": "src/components/ResultSheet.tsx:411"
+ },
+ {
+  "text": "Change",
+  "where": "src/components/ResultSheet.tsx:414"
+ },
+ {
+  "text": "Day",
+  "where": "src/components/ResultSheet.tsx:431"
+ },
+ {
+  "text": "Month",
+  "where": "src/components/ResultSheet.tsx:432"
+ },
+ {
+  "text": "Year",
+  "where": "src/components/ResultSheet.tsx:434"
+ },
+ {
+  "text": "Previous {0}",
+  "where": "src/components/ResultSheet.tsx:446"
+ },
+ {
+  "text": "Next {0}",
+  "where": "src/components/ResultSheet.tsx:453"
+ },
+ {
+  "text": "Date detected",
+  "where": "src/components/ScanFrame.tsx:58"
+ },
+ {
+  "text": "Scanning for an expiry date",
+  "where": "src/components/ScanFrame.tsx:58"
+ },
+ {
+  "text": "Scanning frame",
+  "where": "src/components/ScanFrame.tsx:58"
+ },
+ {
+  "text": "Search items…",
+  "where": "src/components/SearchField.tsx:20"
+ },
+ {
+  "text": "Clear search",
+  "where": "src/components/SearchField.tsx:40"
+ },
+ {
+  "text": "Check your email",
+  "where": "src/components/SignInSheet.tsx:38"
+ },
+ {
+  "text": "Reset your password",
+  "where": "src/components/SignInSheet.tsx:39"
+ },
+ {
+  "text": "Choose a new password",
+  "where": "src/components/SignInSheet.tsx:40"
+ },
+ {
+  "text": "Sign in with a code",
+  "where": "src/components/SignInSheet.tsx:41"
+ },
+ {
+  "text": "The security check couldn't load. Check your connection, then try again.",
+  "where": "src/components/SignInSheet.tsx:94"
+ },
+ {
+  "text": "One moment: the security check is still running.",
+  "where": "src/components/SignInSheet.tsx:94"
+ },
+ {
+  "text": "Enter an email address like name@example.com.",
+  "where": "src/components/SignInSheet.tsx:115"
+ },
+ {
+  "text": "Use at least {0} characters for your password.",
+  "where": "src/components/SignInSheet.tsx:122"
+ },
+ {
+  "text": "Enter your password.",
+  "where": "src/components/SignInSheet.tsx:129"
+ },
+ {
+  "text": "This account isn't confirmed yet. Enter the code from your email, or send a new one.",
+  "where": "src/components/SignInSheet.tsx:138"
+ },
+ {
+  "text": "Enter the 6-digit code from the email.",
+  "where": "src/components/SignInSheet.tsx:143"
+ },
+ {
+  "text": "Email address",
+  "where": "src/components/SignInSheet.tsx:204"
+ },
+ {
+  "text": "New password, {0}+ characters",
+  "where": "src/components/SignInSheet.tsx:218"
+ },
+ {
+  "text": "Password",
+  "where": "src/components/SignInSheet.tsx:218"
+ },
+ {
+  "text": "New password",
+  "where": "src/components/SignInSheet.tsx:226"
+ },
+ {
+  "text": "Hide password",
+  "where": "src/components/SignInSheet.tsx:233"
+ },
+ {
+  "text": "Show password",
+  "where": "src/components/SignInSheet.tsx:233"
+ },
+ {
+  "text": "There's no 6-digit code to paste. Copy the code from the email, then tap Paste code.",
+  "where": "src/components/SignInSheet.tsx:259"
+ },
+ {
+  "text": "Back",
+  "where": "src/components/SignInSheet.tsx:281"
+ },
+ {
+  "text": "Continue with Apple",
+  "where": "src/components/SignInSheet.tsx:321"
+ },
+ {
+  "text": "With Apple, choose “Hide My Email” to sign in smoothly.",
+  "where": "src/components/SignInSheet.tsx:330"
+ },
+ {
+  "text": "Continue with Google",
+  "where": "src/components/SignInSheet.tsx:336"
+ },
+ {
+  "text": "or with email",
+  "where": "src/components/SignInSheet.tsx:345"
+ },
+ {
+  "text": "Optional. An account keeps a copy of your items. We'll email you a code to confirm it.",
+  "where": "src/components/SignInSheet.tsx:357"
+ },
+ {
+  "text": "Your items stay on this phone either way.",
+  "where": "src/components/SignInSheet.tsx:357"
+ },
+ {
+  "text": "Forgot password?",
+  "where": "src/components/SignInSheet.tsx:363"
+ },
+ {
+  "text": "Email me a code instead",
+  "where": "src/components/SignInSheet.tsx:364"
+ },
+ {
+  "text": "Create account",
+  "where": "src/components/SignInSheet.tsx:369"
+ },
+ {
+  "text": "Sign in",
+  "where": "src/components/SignInSheet.tsx:369"
+ },
+ {
+  "text": "By creating an account you agree to the Terms and Privacy Policy.",
+  "where": "src/components/SignInSheet.tsx:370"
+ },
+ {
+  "text": "New to Prexpire?",
+  "where": "src/components/SignInSheet.tsx:372"
+ },
+ {
+  "text": "Already have an account?",
+  "where": "src/components/SignInSheet.tsx:372"
+ },
+ {
+  "text": "Create an account",
+  "where": "src/components/SignInSheet.tsx:373"
+ },
+ {
+  "text": "to confirm your account",
+  "where": "src/components/SignInSheet.tsx:378"
+ },
+ {
+  "text": "to reset your password",
+  "where": "src/components/SignInSheet.tsx:378"
+ },
+ {
+  "text": "to sign in",
+  "where": "src/components/SignInSheet.tsx:378"
+ },
+ {
+  "text": "Enter the 6-digit code we sent to",
+  "where": "src/components/SignInSheet.tsx:382"
+ },
+ {
+  "text": "6-digit code",
+  "where": "src/components/SignInSheet.tsx:411"
+ },
+ {
+  "text": "Paste code",
+  "where": "src/components/SignInSheet.tsx:415"
+ },
+ {
+  "text": "Check code",
+  "where": "src/components/SignInSheet.tsx:420"
+ },
+ {
+  "text": "Confirm account",
+  "where": "src/components/SignInSheet.tsx:420"
+ },
+ {
+  "text": "New code in {0}s",
+  "where": "src/components/SignInSheet.tsx:423"
+ },
+ {
+  "text": "Send a new code",
+  "where": "src/components/SignInSheet.tsx:423"
+ },
+ {
+  "text": "Can't find it? Check your spam folder.",
+  "where": "src/components/SignInSheet.tsx:426"
+ },
+ {
+  "text": "Enter your account's email. We'll send a code so you can choose a new password.",
+  "where": "src/components/SignInSheet.tsx:432"
+ },
+ {
+  "text": "Email me a reset code",
+  "where": "src/components/SignInSheet.tsx:436"
+ },
+ {
+  "text": "No password needed. We'll email you a code to sign in to your account.",
+  "where": "src/components/SignInSheet.tsx:443"
+ },
+ {
+  "text": "Email me a code",
+  "where": "src/components/SignInSheet.tsx:447"
+ },
+ {
+  "text": "Code accepted. Choose the new password for",
+  "where": "src/components/SignInSheet.tsx:454"
+ },
+ {
+  "text": "Save new password",
+  "where": "src/components/SignInSheet.tsx:457"
+ },
+ {
+  "text": "Create your account",
+  "where": "src/components/SignInSheet.tsx:462"
+ },
+ {
+  "text": "Welcome back",
+  "where": "src/components/SignInSheet.tsx:462"
+ },
+ {
+  "text": "Delete your account?",
+  "where": "src/components/SignInSheet.tsx:495"
+ },
+ {
+  "text": "Your account and everything saved in it (items, shopping list, categories) will be deleted for good after 30 days.",
+  "where": "src/components/SignInSheet.tsx:498"
+ },
+ {
+  "text": "You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.",
+  "where": "src/components/SignInSheet.tsx:500"
+ },
+ {
+  "text": "Apple asks you to confirm once, so Prexpire is also removed from the apps using your Apple ID.",
+  "where": "src/components/SignInSheet.tsx:501"
+ },
+ {
+  "text": "Delete account",
+  "where": "src/components/SignInSheet.tsx:503"
+ },
+ {
+  "text": "Keep my account",
+  "where": "src/components/SignInSheet.tsx:506"
+ },
+ {
+  "text": "Your account is being deleted",
+  "where": "src/components/SignInSheet.tsx:541"
+ },
+ {
+  "text": "It will be deleted for good tomorrow",
+  "where": "src/components/SignInSheet.tsx:544"
+ },
+ {
+  "text": "It will be deleted for good in {0} days",
+  "where": "src/components/SignInSheet.tsx:544"
+ },
+ {
+  "text": ", on",
+  "where": "src/components/SignInSheet.tsx:544"
+ },
+ {
+  "text": ", with everything saved in it.",
+  "where": "src/components/SignInSheet.tsx:544"
+ },
+ {
+  "text": "Restore it to keep using your account and get your items back.",
+  "where": "src/components/SignInSheet.tsx:545"
+ },
+ {
+  "text": "Restore my account",
+  "where": "src/components/SignInSheet.tsx:547"
+ },
+ {
+  "text": "Keep it deleted and sign out",
+  "where": "src/components/SignInSheet.tsx:550"
+ },
+ {
+  "text": "Account deleted",
+  "where": "src/components/SignInSheet.tsx:566"
+ },
+ {
+  "text": "You're signed out. Your account and everything in it will be deleted for good on",
+  "where": "src/components/SignInSheet.tsx:572"
+ },
+ {
+  "text": "Changed your mind? Sign in before then and choose Restore my account.",
+  "where": "src/components/SignInSheet.tsx:575"
+ },
+ {
+  "text": "Change password",
+  "where": "src/components/SignInSheet.tsx:611"
+ },
+ {
+  "text": "Password changed",
+  "where": "src/components/SignInSheet.tsx:637"
+ },
+ {
+  "text": "Get in touch",
+  "where": "src/components/SupportPage.tsx:49"
+ },
+ {
+  "text": "Email us",
+  "where": "src/components/SupportPage.tsx:54"
+ },
+ {
+  "text": "Prexpire {0}",
+  "where": "src/components/SupportPage.tsx:56"
+ },
+ {
+  "text": "Ask a question",
+  "where": "src/components/SupportPage.tsx:61"
+ },
+ {
+  "text": "Write to us from here. Add your email to get an answer",
+  "where": "src/components/SupportPage.tsx:62"
+ },
+ {
+  "text": "Open the support website",
+  "where": "src/components/SupportPage.tsx:65"
+ },
+ {
+  "text": "Search the answers",
+  "where": "src/components/SupportPage.tsx:70"
+ },
+ {
+  "text": "No answer matches “",
+  "where": "src/components/SupportPage.tsx:113"
+ },
+ {
+  "text": "Ask us instead, or email support@prexpire.com.",
+  "where": "src/components/SupportPage.tsx:114"
+ },
+ {
+  "text": "Didn't find your answer?",
+  "where": "src/components/SupportPage.tsx:119"
+ },
+ {
+  "text": "Security check",
+  "where": "src/components/TurnstileFrame.tsx:57"
+ },
+ {
+  "text": "Household",
+  "where": "src/items.tsx:19"
+ },
+ {
+  "text": "Notification",
+  "where": "src/platform/notifications.web.ts:57"
+ },
+ {
+  "text": "Basic",
+  "where": "src/preferences.ts:89"
+ },
+ {
+  "text": "Compact",
+  "where": "src/preferences.ts:89"
+ },
+ {
+  "text": "Detailed",
+  "where": "src/preferences.ts:89"
+ },
+ {
+  "text": "Dark",
+  "where": "src/preferences.ts:90"
+ },
+ {
+  "text": "Light",
+  "where": "src/preferences.ts:90"
+ },
+ {
+  "text": "System",
+  "where": "src/preferences.ts:90"
+ },
+ {
+  "text": "Recently added",
+  "where": "src/preferences.ts:102"
+ },
+ {
+  "text": "On the expiry day",
+  "where": "src/preferences.ts:105"
+ },
+ {
+  "text": "1 day before",
+  "where": "src/preferences.ts:105"
+ },
+ {
+  "text": "{0} days before",
+  "where": "src/preferences.ts:105"
+ },
+ {
+  "text": "Category",
+  "where": "src/preferences.ts:242"
+ },
+ {
+  "text": "Expires on",
+  "where": "src/preferences.ts:242"
+ },
+ {
+  "text": "Date precision",
+  "where": "src/preferences.ts:242"
+ },
+ {
+  "text": "Added at",
+  "where": "src/preferences.ts:242"
+ },
+ {
+  "text": "Source",
+  "where": "src/preferences.ts:242"
+ },
+ {
+  "text": "Couldn't reach the App Store. Check your connection and try again.",
+  "where": "src/pro.tsx:213"
+ },
+ {
+  "text": "{0} and {1}",
+  "where": "src/reminderPlan.ts:87"
+ },
+ {
+  "text": "{0}, {1} and {2}",
+  "where": "src/reminderPlan.ts:88"
+ },
+ {
+  "text": "{0}, {1} and {2} more",
+  "where": "src/reminderPlan.ts:89"
+ },
+ {
+  "text": "You've thrown away {0}% of your {1} lately, so here's an early heads-up.",
+  "where": "src/reminderPlan.ts:142"
+ },
+ {
+  "text": "These often go to waste for you, so here's an early heads-up.",
+  "where": "src/reminderPlan.ts:143"
+ },
+ {
+  "text": "{0} expires {1}",
+  "where": "src/reminderPlan.ts:146"
+ },
+ {
+  "text": "{0} items expire {1}",
+  "where": "src/reminderPlan.ts:146"
+ },
+ {
+  "text": "Use it today so it doesn't go to waste.",
+  "where": "src/reminderPlan.ts:155"
+ },
+ {
+  "text": "Use it soon so it doesn't go to waste.",
+  "where": "src/reminderPlan.ts:155"
+ },
+ {
+  "text": "{0}. Tap to see what to use first.",
+  "where": "src/reminderPlan.ts:155"
+ },
+ {
+  "text": "1 item to use soon",
+  "where": "src/reminderPlan.ts:171"
+ },
+ {
+  "text": "{0} items to use soon",
+  "where": "src/reminderPlan.ts:171"
+ },
+ {
+  "text": "No camera was found on this device.",
+  "where": "src/scanner/ScannerCamera.tsx:144"
+ },
+ {
+  "text": "Camera access is blocked for this site. Allow the camera in your browser settings, then try again.",
+  "where": "src/scanner/ScannerCamera.web.tsx:114"
+ },
+ {
+  "text": "The camera is being used by another app or tab. Close it and try again.",
+  "where": "src/scanner/ScannerCamera.web.tsx:118"
+ },
+ {
+  "text": "The camera could not start.",
+  "where": "src/scanner/ScannerCamera.web.tsx:120"
+ },
+ {
+  "text": "This browser cannot use the camera here. Open Prexpire over https in Safari, Chrome or Edge.",
+  "where": "src/scanner/ScannerCamera.web.tsx:232"
+ },
+ {
+  "text": "The text reader could not load. Check your connection and try again.",
+  "where": "src/scanner/ScannerCamera.web.tsx:273"
+ },
+ {
+  "text": "Camera preview",
+  "where": "src/scanner/ScannerCamera.web.tsx:358"
+ },
+ {
+  "text": "1 item needs attention",
+  "where": "src/screens/HomeScreen.tsx:167"
+ },
+ {
+  "text": "{0} items need attention",
+  "where": "src/screens/HomeScreen.tsx:167"
+ },
+ {
+  "text": "{0} expired",
+  "where": "src/screens/HomeScreen.tsx:169"
+ },
+ {
+  "text": "{0} expiring soon",
+  "where": "src/screens/HomeScreen.tsx:170"
+ },
+ {
+  "text": "All caught up!",
+  "where": "src/screens/HomeScreen.tsx:179"
+ },
+ {
+  "text": "Nothing to watch yet",
+  "where": "src/screens/HomeScreen.tsx:180"
+ },
+ {
+  "text": "Nothing needs attention  •  {0} tracked",
+  "where": "src/screens/HomeScreen.tsx:180"
+ },
+ {
+  "text": "Your categories",
+  "where": "src/screens/HomeScreen.tsx:192"
+ },
+ {
+  "text": "Show less",
+  "where": "src/screens/HomeScreen.tsx:193"
+ },
+ {
+  "text": "View all",
+  "where": "src/screens/HomeScreen.tsx:193"
+ },
+ {
+  "text": "Show fewer categories",
+  "where": "src/screens/HomeScreen.tsx:194"
+ },
+ {
+  "text": "Show all {0} categories",
+  "where": "src/screens/HomeScreen.tsx:194"
+ },
+ {
+  "text": "No categories yet",
+  "where": "src/screens/HomeScreen.tsx:207"
+ },
+ {
+  "text": "Create your first folder to organise what you track.",
+  "where": "src/screens/HomeScreen.tsx:208"
+ },
+ {
+  "text": "Coming up next",
+  "where": "src/screens/HomeScreen.tsx:250"
+ },
+ {
+  "text": "Nothing here yet",
+  "where": "src/screens/HomeScreen.tsx:263"
+ },
+ {
+  "text": "Scan a label or add a product by hand to start tracking it.",
+  "where": "src/screens/HomeScreen.tsx:264"
+ },
+ {
+  "text": "{0} expiring",
+  "where": "src/screens/HomeScreen.tsx:323"
+ },
+ {
+  "text": "Back up your {0} items",
+  "where": "src/screens/HomeScreen.tsx:379"
+ },
+ {
+  "text": "Back up your",
+  "where": "src/screens/HomeScreen.tsx:384"
+ },
+ {
+  "text": "items",
+  "where": "src/screens/HomeScreen.tsx:384"
+ },
+ {
+  "text": "They're only on this phone. A free account keeps them safe.",
+  "where": "src/screens/HomeScreen.tsx:385"
+ },
+ {
+  "text": "Hide this",
+  "where": "src/screens/HomeScreen.tsx:387"
+ },
+ {
+  "text": "Your {0} items live only on this phone. Create a free account and a lost, broken or new phone never loses them.",
+  "where": "src/screens/HomeScreen.tsx:398"
+ },
+ {
+  "text": "Recent",
+  "where": "src/screens/ItemsScreen.tsx:26"
+ },
+ {
+  "text": "Add an item to your Shopping List",
+  "where": "src/screens/ItemsScreen.tsx:85"
+ },
+ {
+  "text": "Add an item",
+  "where": "src/screens/ItemsScreen.tsx:85"
+ },
+ {
+  "text": "Shopping List",
+  "where": "src/screens/ItemsScreen.tsx:96"
+ },
+ {
+  "text": "Items",
+  "where": "src/screens/ItemsScreen.tsx:96"
+ },
+ {
+  "text": "What you need to buy next.",
+  "where": "src/screens/ItemsScreen.tsx:97"
+ },
+ {
+  "text": "Everything you're tracking.",
+  "where": "src/screens/ItemsScreen.tsx:97"
+ },
+ {
+  "text": "Lists view",
+  "where": "src/screens/ItemsScreen.tsx:110"
+ },
+ {
+  "text": "Tracked items",
+  "where": "src/screens/ItemsScreen.tsx:117"
+ },
+ {
+  "text": "Shopping list",
+  "where": "src/screens/ItemsScreen.tsx:129"
+ },
+ {
+  "text": "Filter and sort. Category: {0}. Sort by {1}.",
+  "where": "src/screens/ItemsScreen.tsx:154"
+ },
+ {
+  "text": "Filter",
+  "where": "src/screens/ItemsScreen.tsx:158"
+ },
+ {
+  "text": "expired",
+  "where": "src/screens/ItemsScreen.tsx:172"
+ },
+ {
+  "text": "valid",
+  "where": "src/screens/ItemsScreen.tsx:174"
+ },
+ {
+  "text": "1 expired item is hidden",
+  "where": "src/screens/ItemsScreen.tsx:180"
+ },
+ {
+  "text": "{0} expired items are hidden",
+  "where": "src/screens/ItemsScreen.tsx:180"
+ },
+ {
+  "text": ". You can show them again in Settings.",
+  "where": "src/screens/ItemsScreen.tsx:180"
+ },
+ {
+  "text": "No matches",
+  "where": "src/screens/ItemsScreen.tsx:197"
+ },
+ {
+  "text": "Nothing you track is called “",
+  "where": "src/screens/ItemsScreen.tsx:198"
+ },
+ {
+  "text": "Nothing here",
+  "where": "src/screens/ItemsScreen.tsx:206"
+ },
+ {
+  "text": "No items yet",
+  "where": "src/screens/ItemsScreen.tsx:206"
+ },
+ {
+  "text": "Scan a label or add a product by hand.",
+  "where": "src/screens/ItemsScreen.tsx:207"
+ },
+ {
+  "text": "Filter & sort",
+  "where": "src/screens/ItemsScreen.tsx:293"
+ },
+ {
+  "text": "Filter and sort",
+  "where": "src/screens/ItemsScreen.tsx:293"
+ },
+ {
+  "text": "All categories",
+  "where": "src/screens/ItemsScreen.tsx:301"
+ },
+ {
+  "text": "Sort by",
+  "where": "src/screens/ItemsScreen.tsx:306"
+ },
+ {
+  "text": "Sort order",
+  "where": "src/screens/ItemsScreen.tsx:307"
+ },
+ {
+  "text": "Soonest first",
+  "where": "src/screens/RemindersScreen.tsx:26"
+ },
+ {
+  "text": "Due today",
+  "where": "src/screens/RemindersScreen.tsx:51"
+ },
+ {
+  "text": "Keep track before it's too late.",
+  "where": "src/screens/RemindersScreen.tsx:113"
+ },
+ {
+  "text": "Expiry reminders are off",
+  "where": "src/screens/RemindersScreen.tsx:118"
+ },
+ {
+  "text": "Turn them on in Settings to see which items need a reminder.",
+  "where": "src/screens/RemindersScreen.tsx:119"
+ },
+ {
+  "text": "Open Settings",
+  "where": "src/screens/RemindersScreen.tsx:120"
+ },
+ {
+  "text": "Due now",
+  "where": "src/screens/RemindersScreen.tsx:131"
+ },
+ {
+  "text": "This week",
+  "where": "src/screens/RemindersScreen.tsx:132"
+ },
+ {
+  "text": "Later",
+  "where": "src/screens/RemindersScreen.tsx:133"
+ },
+ {
+  "text": "No reminders are due.",
+  "where": "src/screens/RemindersScreen.tsx:147"
+ },
+ {
+  "text": "1 reminder due",
+  "where": "src/screens/RemindersScreen.tsx:147"
+ },
+ {
+  "text": "{0} reminders due",
+  "where": "src/screens/RemindersScreen.tsx:147"
+ },
+ {
+  "text": "Nothing is due. Next up: {0}, {1}.",
+  "where": "src/screens/RemindersScreen.tsx:160"
+ },
+ {
+  "text": "Nothing is due, and nothing is being tracked yet.",
+  "where": "src/screens/RemindersScreen.tsx:160"
+ },
+ {
+  "text": "Upcoming (",
+  "where": "src/screens/RemindersScreen.tsx:169"
+ },
+ {
+  "text": "Sort order: {0}. Tap to change.",
+  "where": "src/screens/RemindersScreen.tsx:177"
+ },
+ {
+  "text": "No upcoming reminders.",
+  "where": "src/screens/RemindersScreen.tsx:204"
+ },
+ {
+  "text": "You get a notification before things expire, even when Prexpire is closed. Change when in Settings, Notifications.",
+  "where": "src/screens/RemindersScreen.tsx:211"
+ },
+ {
+  "text": "Expiry alerts appear while this page is open. For reminders when it's closed, use the iPhone app.",
+  "where": "src/screens/RemindersScreen.tsx:211"
+ },
+ {
+  "text": "Looking for the expiry date...",
+  "where": "src/screens/ScannerScreen.tsx:85"
+ },
+ {
+  "text": "Expiry date not in view. Point at the date.",
+  "where": "src/screens/ScannerScreen.tsx:86"
+ },
+ {
+  "text": "Hold still. Reading the date...",
+  "where": "src/screens/ScannerScreen.tsx:87"
+ },
+ {
+  "text": "Too dark. Improve the lighting.",
+  "where": "src/screens/ScannerScreen.tsx:88"
+ },
+ {
+  "text": "Move closer to the expiry date.",
+  "where": "src/screens/ScannerScreen.tsx:89"
+ },
+ {
+  "text": "That is a production date. Find the expiry date.",
+  "where": "src/screens/ScannerScreen.tsx:90"
+ },
+ {
+  "text": "Date hard to read. Move closer or tilt to avoid glare.",
+  "where": "src/screens/ScannerScreen.tsx:91"
+ },
+ {
+  "text": "Hold the camera steady.",
+  "where": "src/screens/ScannerScreen.tsx:92"
+ },
+ {
+  "text": "We couldn't read the expiry date. You can enter it manually.",
+  "where": "src/screens/ScannerScreen.tsx:93"
+ },
+ {
+  "text": "Live Scan",
+  "where": "src/screens/ScannerScreen.tsx:418"
+ },
+ {
+  "text": "Flashlight",
+  "where": "src/screens/ScannerScreen.tsx:432"
+ },
+ {
+  "text": "Flashlight unavailable",
+  "where": "src/screens/ScannerScreen.tsx:432"
+ },
+ {
+  "text": "Type the product details.",
+  "where": "src/screens/ScannerScreen.tsx:440"
+ },
+ {
+  "text": "Point at an expiry date or barcode.",
+  "where": "src/screens/ScannerScreen.tsx:440"
+ },
+ {
+  "text": "Camera access blocked",
+  "where": "src/screens/ScannerScreen.tsx:458"
+ },
+ {
+  "text": "Allow camera access",
+  "where": "src/screens/ScannerScreen.tsx:458"
+ },
+ {
+  "text": "Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.",
+  "where": "src/screens/ScannerScreen.tsx:460"
+ },
+ {
+  "text": "Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.",
+  "where": "src/screens/ScannerScreen.tsx:460"
+ },
+ {
+  "text": "Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.",
+  "where": "src/screens/ScannerScreen.tsx:460"
+ },
+ {
+  "text": "Try again",
+  "where": "src/screens/ScannerScreen.tsx:462"
+ },
+ {
+  "text": "Allow camera",
+  "where": "src/screens/ScannerScreen.tsx:462"
+ },
+ {
+  "text": "Enter date manually",
+  "where": "src/screens/ScannerScreen.tsx:468"
+ },
+ {
+  "text": "Text reader unavailable",
+  "where": "src/screens/ScannerScreen.tsx:477"
+ },
+ {
+  "text": "Camera unavailable",
+  "where": "src/screens/ScannerScreen.tsx:477"
+ },
+ {
+  "text": "Expiry date confirmed.",
+  "where": "src/screens/ScannerScreen.tsx:510"
+ },
+ {
+  "text": "Starting the scanner...",
+  "where": "src/screens/ScannerScreen.tsx:515"
+ },
+ {
+  "text": "Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.",
+  "where": "src/screens/ScannerScreen.tsx:521"
+ },
+ {
+  "text": "Checking the product...",
+  "where": "src/screens/ScannerScreen.tsx:532"
+ },
+ {
+  "text": "Product found: {0}",
+  "where": "src/screens/ScannerScreen.tsx:540"
+ },
+ {
+  "text": "Product identified",
+  "where": "src/screens/ScannerScreen.tsx:540"
+ },
+ {
+  "text": "Now scan the expiry date.",
+  "where": "src/screens/ScannerScreen.tsx:543"
+ },
+ {
+  "text": "Product name unavailable — you can type it in. Scan the expiry date.",
+  "where": "src/screens/ScannerScreen.tsx:543"
+ },
+ {
+  "text": "We couldn't identify this product. You can enter its name manually.",
+  "where": "src/screens/ScannerScreen.tsx:552"
+ },
+ {
+  "text": "No internet connection. You can continue below.",
+  "where": "src/screens/ScannerScreen.tsx:559"
+ },
+ {
+  "text": "Product details aren't available right now. Point at the expiry date.",
+  "where": "src/screens/ScannerScreen.tsx:559"
+ },
+ {
+  "text": "Enter the expiry date manually",
+  "where": "src/screens/ScannerScreen.tsx:595"
+ },
+ {
+  "text": "Enter date",
+  "where": "src/screens/ScannerScreen.tsx:598"
+ },
+ {
+  "text": "Enter the product name manually",
+  "where": "src/screens/ScannerScreen.tsx:605"
+ },
+ {
+  "text": "Enter product",
+  "where": "src/screens/ScannerScreen.tsx:608"
+ },
+ {
+  "text": "Scan again",
+  "where": "src/screens/ScannerScreen.tsx:645"
+ },
+ {
+  "text": "Account",
+  "where": "src/screens/SettingsScreen.tsx:91"
+ },
+ {
+  "text": "Profile",
+  "where": "src/screens/SettingsScreen.tsx:92"
+ },
+ {
+  "text": "Privacy & Security",
+  "where": "src/screens/SettingsScreen.tsx:93"
+ },
+ {
+  "text": "Notifications",
+  "where": "src/screens/SettingsScreen.tsx:94"
+ },
+ {
+  "text": "Categories",
+  "where": "src/screens/SettingsScreen.tsx:95"
+ },
+ {
+  "text": "Appearance",
+  "where": "src/screens/SettingsScreen.tsx:96"
+ },
+ {
+  "text": "Backup & Restore",
+  "where": "src/screens/SettingsScreen.tsx:97"
+ },
+ {
+  "text": "Waste stats",
+  "where": "src/screens/SettingsScreen.tsx:98"
+ },
+ {
+  "text": "Help & Support",
+  "where": "src/screens/SettingsScreen.tsx:99"
+ },
+ {
+  "text": "Terms & Privacy",
+  "where": "src/screens/SettingsScreen.tsx:100"
+ },
+ {
+  "text": "Apple account",
+  "where": "src/screens/SettingsScreen.tsx:122"
+ },
+ {
+  "text": "Your last change couldn't be saved in this browser's storage. It applies until you close the page",
+  "where": "src/screens/SettingsScreen.tsx:183"
+ },
+ {
+  "text": "Account, signed in as {0}",
+  "where": "src/screens/SettingsScreen.tsx:192"
+ },
+ {
+  "text": "Sign in to back up your items",
+  "where": "src/screens/SettingsScreen.tsx:192"
+ },
+ {
+  "text": "Signed in",
+  "where": "src/screens/SettingsScreen.tsx:206"
+ },
+ {
+  "text": "Back up your items to an account",
+  "where": "src/screens/SettingsScreen.tsx:206"
+ },
+ {
+  "text": "General",
+  "where": "src/screens/SettingsScreen.tsx:215"
+ },
+ {
+  "text": "Your library and storage",
+  "where": "src/screens/SettingsScreen.tsx:217"
+ },
+ {
+  "text": "Camera access and stored data",
+  "where": "src/screens/SettingsScreen.tsx:218"
+ },
+ {
+  "text": "App Preferences",
+  "where": "src/screens/SettingsScreen.tsx:222"
+ },
+ {
+  "text": "Expiry reminders and timing",
+  "where": "src/screens/SettingsScreen.tsx:224"
+ },
+ {
+  "text": "Your folders and defaults",
+  "where": "src/screens/SettingsScreen.tsx:225"
+ },
+ {
+  "text": "Theme, density and motion",
+  "where": "src/screens/SettingsScreen.tsx:226"
+ },
+ {
+  "text": "Language",
+  "where": "src/screens/SettingsScreen.tsx:230"
+ },
+ {
+  "text": "Phone language",
+  "where": "src/screens/SettingsScreen.tsx:234"
+ },
+ {
+  "text": "Expiry & Lists",
+  "where": "src/screens/SettingsScreen.tsx:248"
+ },
+ {
+  "text": "Days before expiry",
+  "where": "src/screens/SettingsScreen.tsx:255"
+ },
+ {
+  "text": "Automatic Shopping List",
+  "where": "src/screens/SettingsScreen.tsx:263"
+ },
+ {
+  "text": "Adds expiring products",
+  "where": "src/screens/SettingsScreen.tsx:264"
+ },
+ {
+  "text": "Automatically add expiring products to the Shopping List",
+  "where": "src/screens/SettingsScreen.tsx:265"
+ },
+ {
+  "text": "Date format",
+  "where": "src/screens/SettingsScreen.tsx:270"
+ },
+ {
+  "text": "Sorting",
+  "where": "src/screens/SettingsScreen.tsx:280"
+ },
+ {
+  "text": "Order items",
+  "where": "src/screens/SettingsScreen.tsx:282"
+ },
+ {
+  "text": "Show expired items",
+  "where": "src/screens/SettingsScreen.tsx:290"
+ },
+ {
+  "text": "Keep past-date items visible",
+  "where": "src/screens/SettingsScreen.tsx:291"
+ },
+ {
+  "text": "Insights",
+  "where": "src/screens/SettingsScreen.tsx:297"
+ },
+ {
+  "text": "What you used in time and what expired",
+  "where": "src/screens/SettingsScreen.tsx:299"
+ },
+ {
+  "text": "Data & Storage",
+  "where": "src/screens/SettingsScreen.tsx:303"
+ },
+ {
+  "text": "Save everything to a file, or restore one",
+  "where": "src/screens/SettingsScreen.tsx:309"
+ },
+ {
+  "text": "About",
+  "where": "src/screens/SettingsScreen.tsx:315"
+ },
+ {
+  "text": "App version",
+  "where": "src/screens/SettingsScreen.tsx:317"
+ },
+ {
+  "text": "Answers, and how to reach us",
+  "where": "src/screens/SettingsScreen.tsx:318"
+ },
+ {
+  "text": "Report a bug, or share feedback or an idea",
+  "where": "src/screens/SettingsScreen.tsx:319"
+ },
+ {
+  "text": "Clear all data",
+  "where": "src/screens/SettingsScreen.tsx:328"
+ },
+ {
+  "text": "Delete everything stored here",
+  "where": "src/screens/SettingsScreen.tsx:330"
+ },
+ {
+  "text": "Search settings",
+  "where": "src/screens/SettingsScreen.tsx:350"
+ },
+ {
+  "text": "Expiry reminders",
+  "where": "src/screens/SettingsScreen.tsx:440"
+ },
+ {
+  "text": "Get notified before items expire",
+  "where": "src/screens/SettingsScreen.tsx:440"
+ },
+ {
+  "text": "Reminder timing",
+  "where": "src/screens/SettingsScreen.tsx:441"
+ },
+ {
+  "text": "When a reminder appears before the expiry date",
+  "where": "src/screens/SettingsScreen.tsx:441"
+ },
+ {
+  "text": "Daily summary",
+  "where": "src/screens/SettingsScreen.tsx:442"
+ },
+ {
+  "text": "See what's expiring soon",
+  "where": "src/screens/SettingsScreen.tsx:442"
+ },
+ {
+  "text": "Browser notifications",
+  "where": "src/screens/SettingsScreen.tsx:443"
+ },
+ {
+  "text": "Allow notifications from this browser",
+  "where": "src/screens/SettingsScreen.tsx:443"
+ },
+ {
+  "text": "Allow notifications on this device",
+  "where": "src/screens/SettingsScreen.tsx:443"
+ },
+ {
+  "text": "Default category",
+  "where": "src/screens/SettingsScreen.tsx:445"
+ },
+ {
+  "text": "Preselected when you add an item",
+  "where": "src/screens/SettingsScreen.tsx:445"
+ },
+ {
+  "text": "Browse categories",
+  "where": "src/screens/SettingsScreen.tsx:446"
+ },
+ {
+  "text": "The lists for the categories you keep",
+  "where": "src/screens/SettingsScreen.tsx:446"
+ },
+ {
+  "text": "Theme",
+  "where": "src/screens/SettingsScreen.tsx:448"
+ },
+ {
+  "text": "Dark, light, or follow your device",
+  "where": "src/screens/SettingsScreen.tsx:448"
+ },
+ {
+  "text": "Layout",
+  "where": "src/screens/SettingsScreen.tsx:449"
+ },
+ {
+  "text": "Basic, Compact or Detailed",
+  "where": "src/screens/SettingsScreen.tsx:449"
+ },
+ {
+  "text": "Animations",
+  "where": "src/screens/SettingsScreen.tsx:450"
+ },
+ {
+  "text": "Fades, press feedback and the scanning line",
+  "where": "src/screens/SettingsScreen.tsx:450"
+ },
+ {
+  "text": "How dates are displayed",
+  "where": "src/screens/SettingsScreen.tsx:453"
+ },
+ {
+  "text": "Export data",
+  "where": "src/screens/SettingsScreen.tsx:458"
+ },
+ {
+  "text": "Download your items as JSON or CSV",
+  "where": "src/screens/SettingsScreen.tsx:458"
+ },
+ {
+  "text": "Your data, camera and exports",
+  "where": "src/screens/SettingsScreen.tsx:460"
+ },
+ {
+  "text": "Close search",
+  "where": "src/screens/SettingsScreen.tsx:481"
+ },
+ {
+  "text": "Type to find a setting by name or what it does",
+  "where": "src/screens/SettingsScreen.tsx:489"
+ },
+ {
+  "text": "No settings match “",
+  "where": "src/screens/SettingsScreen.tsx:491"
+ },
+ {
+  "text": "Update",
+  "where": "src/screens/SettingsScreen.tsx:571"
+ },
+ {
+  "text": "Prexpire {0} is on the App Store",
+  "where": "src/screens/SettingsScreen.tsx:573"
+ },
+ {
+  "text": "Lifetime. Thank you for your support",
+  "where": "src/screens/SettingsScreen.tsx:587"
+ },
+ {
+  "text": "Active. No limits on items or categories",
+  "where": "src/screens/SettingsScreen.tsx:588"
+ },
+ {
+  "text": "{0} of {1} items used this month. Resets {2}",
+  "where": "src/screens/SettingsScreen.tsx:589"
+ },
+ {
+  "text": "Plan",
+  "where": "src/screens/SettingsScreen.tsx:591"
+ },
+ {
+  "text": "Free plan",
+  "where": "src/screens/SettingsScreen.tsx:599"
+ },
+ {
+  "text": "Get Pro",
+  "where": "src/screens/SettingsScreen.tsx:601"
+ },
+ {
+  "text": "Change or cancel your plan in your Apple ID settings",
+  "where": "src/screens/SettingsScreen.tsx:607"
+ },
+ {
+  "text": "Just now",
+  "where": "src/screens/SettingsScreen.tsx:631"
+ },
+ {
+  "text": "Not yet",
+  "where": "src/screens/SettingsScreen.tsx:635"
+ },
+ {
+  "text": "Backing up…",
+  "where": "src/screens/SettingsScreen.tsx:636"
+ },
+ {
+  "text": "Offline",
+  "where": "src/screens/SettingsScreen.tsx:636"
+ },
+ {
+  "text": "Didn't finish",
+  "where": "src/screens/SettingsScreen.tsx:636"
+ },
+ {
+  "text": "Signed out",
+  "where": "src/screens/SettingsScreen.tsx:643"
+ },
+ {
+  "text": "Account since {0}",
+  "where": "src/screens/SettingsScreen.tsx:644"
+ },
+ {
+  "text": "Backup and sync",
+  "where": "src/screens/SettingsScreen.tsx:646"
+ },
+ {
+  "text": "Last backed up",
+  "where": "src/screens/SettingsScreen.tsx:648"
+ },
+ {
+  "text": "Back up now",
+  "where": "src/screens/SettingsScreen.tsx:649"
+ },
+ {
+  "text": "Also brings in changes from your other phones",
+  "where": "src/screens/SettingsScreen.tsx:649"
+ },
+ {
+  "text": "You're offline. Your items are safe on this phone, and they'll back up when you're connected.",
+  "where": "src/screens/SettingsScreen.tsx:653"
+ },
+ {
+  "text": "The last backup didn't finish. It tries again on its own; you can also tap Back up now.",
+  "where": "src/screens/SettingsScreen.tsx:653"
+ },
+ {
+  "text": "Session",
+  "where": "src/screens/SettingsScreen.tsx:657"
+ },
+ {
+  "text": "Choose a new password for this account",
+  "where": "src/screens/SettingsScreen.tsx:659"
+ },
+ {
+  "text": "Signing out…",
+  "where": "src/screens/SettingsScreen.tsx:663"
+ },
+ {
+  "text": "Sign out",
+  "where": "src/screens/SettingsScreen.tsx:663"
+ },
+ {
+  "text": "Removes your items from this phone. They stay in your account",
+  "where": "src/screens/SettingsScreen.tsx:664"
+ },
+ {
+  "text": "Deleted for good after 30 days",
+  "where": "src/screens/SettingsScreen.tsx:680"
+ },
+ {
+  "text": "Preferences",
+  "where": "src/screens/SettingsScreen.tsx:701"
+ },
+ {
+  "text": "Saved in this browser",
+  "where": "src/screens/SettingsScreen.tsx:702"
+ },
+ {
+  "text": "Saved on this device",
+  "where": "src/screens/SettingsScreen.tsx:702"
+ },
+ {
+  "text": "Library",
+  "where": "src/screens/SettingsScreen.tsx:704"
+ },
+ {
+  "text": "Items added",
+  "where": "src/screens/SettingsScreen.tsx:706"
+ },
+ {
+  "text": "Shopping list entries",
+  "where": "src/screens/SettingsScreen.tsx:707"
+ },
+ {
+  "text": "Where data lives",
+  "where": "src/screens/SettingsScreen.tsx:713"
+ },
+ {
+  "text": "This browser",
+  "where": "src/screens/SettingsScreen.tsx:713"
+ },
+ {
+  "text": "This device",
+  "where": "src/screens/SettingsScreen.tsx:713"
+ },
+ {
+  "text": "Synced",
+  "where": "src/screens/SettingsScreen.tsx:714"
+ },
+ {
+  "text": "Never",
+  "where": "src/screens/SettingsScreen.tsx:714"
+ },
+ {
+  "text": "Camera access",
+  "where": "src/screens/SettingsScreen.tsx:728"
+ },
+ {
+  "text": "The scanner asks your browser for the camera when you open it. Frames are read in the browser and never uploaded. To change access, use your browser's site settings",
+  "where": "src/screens/SettingsScreen.tsx:730"
+ },
+ {
+  "text": "The scanner asks for the camera when you open it. Frames are read on the device and never uploaded. To change access, use the Settings app",
+  "where": "src/screens/SettingsScreen.tsx:730"
+ },
+ {
+  "text": "Open scanner",
+  "where": "src/screens/SettingsScreen.tsx:732"
+ },
+ {
+  "text": "Data storage",
+  "where": "src/screens/SettingsScreen.tsx:737"
+ },
+ {
+  "text": "Items, categories and settings are stored only in this browser's local storage, on this device. Nothing is uploaded, synced or backed up, and clearing your browser data removes them",
+  "where": "src/screens/SettingsScreen.tsx:739"
+ },
+ {
+  "text": "Items, categories and settings are stored only on this device. Nothing is uploaded, synced or backed up.",
+  "where": "src/screens/SettingsScreen.tsx:739"
+ },
+ {
+  "text": "Reminder time",
+  "where": "src/screens/SettingsScreen.tsx:773"
+ },
+ {
+  "text": "When reminders arrive on the day",
+  "where": "src/screens/SettingsScreen.tsx:775"
+ },
+ {
+  "text": "Earlier for what you waste",
+  "where": "src/screens/SettingsScreen.tsx:783"
+ },
+ {
+  "text": "An extra heads-up for categories you often throw away, from your waste stats",
+  "where": "src/screens/SettingsScreen.tsx:784"
+ },
+ {
+  "text": "Delivery",
+  "where": "src/screens/SettingsScreen.tsx:796"
+ },
+ {
+  "text": "Allowed",
+  "where": "src/screens/SettingsScreen.tsx:822"
+ },
+ {
+  "text": "Blocked",
+  "where": "src/screens/SettingsScreen.tsx:823"
+ },
+ {
+  "text": "Not set",
+  "where": "src/screens/SettingsScreen.tsx:824"
+ },
+ {
+  "text": "Unavailable",
+  "where": "src/screens/SettingsScreen.tsx:825"
+ },
+ {
+  "text": "This browser allows PREXPIRE to show notifications. Expiry alerts appear while the app is open; nothing is delivered in the background",
+  "where": "src/screens/SettingsScreen.tsx:829"
+ },
+ {
+  "text": "Notifications are blocked for this site. To allow them, change the site's notification setting in your browser, then come back. In-app expiry alerts still appear while the app is open",
+  "where": "src/screens/SettingsScreen.tsx:830"
+ },
+ {
+  "text": "Your browser will ask for permission when you select Allow. In-app expiry alerts appear while the app is open either way",
+  "where": "src/screens/SettingsScreen.tsx:831"
+ },
+ {
+  "text": "This browser doesn't support web notifications. In-app expiry alerts still appear while the app is open",
+  "where": "src/screens/SettingsScreen.tsx:832"
+ },
+ {
+  "text": "System notifications are not set up in this version of the app. In-app expiry alerts appear while it is open",
+  "where": "src/screens/SettingsScreen.tsx:832"
+ },
+ {
+  "text": "Browsers only allow notifications on secure (https) pages. In-app expiry alerts still appear while the app is open",
+  "where": "src/screens/SettingsScreen.tsx:833"
+ },
+ {
+  "text": "Reminders are set automatically from your items and arrive even when Prexpire is closed",
+  "where": "src/screens/SettingsScreen.tsx:841"
+ },
+ {
+  "text": "Notifications are off for Prexpire. Turn them on in iPhone Settings, then come back",
+  "where": "src/screens/SettingsScreen.tsx:842"
+ },
+ {
+  "text": "Allow notifications to get reminded before your items expire, even when Prexpire is closed",
+  "where": "src/screens/SettingsScreen.tsx:843"
+ },
+ {
+  "text": "Expiry reminders on this iPhone",
+  "where": "src/screens/SettingsScreen.tsx:860"
+ },
+ {
+  "text": "Test sent. It arrives in a few seconds, even if you close the app now",
+  "where": "src/screens/SettingsScreen.tsx:865"
+ },
+ {
+  "text": "Waiting…",
+  "where": "src/screens/SettingsScreen.tsx:868"
+ },
+ {
+  "text": "Allow notifications",
+  "where": "src/screens/SettingsScreen.tsx:868"
+ },
+ {
+  "text": "Open iPhone Settings",
+  "where": "src/screens/SettingsScreen.tsx:869"
+ },
+ {
+  "text": "Sending…",
+  "where": "src/screens/SettingsScreen.tsx:870"
+ },
+ {
+  "text": "Send a test notification",
+  "where": "src/screens/SettingsScreen.tsx:870"
+ },
+ {
+  "text": "Waiting for browser…",
+  "where": "src/screens/SettingsScreen.tsx:893"
+ },
+ {
+  "text": "The built-ins you keep and the folders you add, all in one place",
+  "where": "src/screens/SettingsScreen.tsx:914"
+ },
+ {
+  "text": "Defaults",
+  "where": "src/screens/SettingsScreen.tsx:919"
+ },
+ {
+  "text": "Last used",
+  "where": "src/screens/SettingsScreen.tsx:929"
+ },
+ {
+  "text": "Browse",
+  "where": "src/screens/SettingsScreen.tsx:933"
+ },
+ {
+  "text": "System follows your device’s appearance and switches live",
+  "where": "src/screens/SettingsScreen.tsx:960"
+ },
+ {
+  "text": "A bright take on the same design",
+  "where": "src/screens/SettingsScreen.tsx:960"
+ },
+ {
+  "text": "The classic near-black look",
+  "where": "src/screens/SettingsScreen.tsx:960"
+ },
+ {
+  "text": "How much each screen shows at once",
+  "where": "src/screens/SettingsScreen.tsx:970"
+ },
+ {
+  "text": "One column with only what’s coming up, in bigger rows",
+  "where": "src/screens/SettingsScreen.tsx:977"
+ },
+ {
+  "text": "More on screen: shorter rows with dates, extra columns",
+  "where": "src/screens/SettingsScreen.tsx:977"
+ },
+ {
+  "text": "More on screen: shorter rows with dates",
+  "where": "src/screens/SettingsScreen.tsx:977"
+ },
+ {
+  "text": "Categories and your list side by side",
+  "where": "src/screens/SettingsScreen.tsx:977"
+ },
+ {
+  "text": "Categories and your list",
+  "where": "src/screens/SettingsScreen.tsx:977"
+ },
+ {
+  "text": "Fades and press feedback",
+  "where": "src/screens/SettingsScreen.tsx:986"
+ },
+ {
+  "text": "Your device asks for reduced motion, so animations stay off",
+  "where": "src/screens/SettingsScreen.tsx:988"
+ },
+ {
+  "text": "Scanning Line Animation",
+  "where": "src/screens/SettingsScreen.tsx:993"
+ },
+ {
+  "text": "Show or hide the moving scanning line during product scanning",
+  "where": "src/screens/SettingsScreen.tsx:994"
+ },
+ {
+  "text": "The file could not be created. Your browser may be blocking downloads on this page.",
+  "where": "src/screens/SettingsScreen.tsx:1018"
+ },
+ {
+  "text": "Backup file created. Keep it somewhere safe, such as iCloud Drive or Files.",
+  "where": "src/screens/SettingsScreen.tsx:1031"
+ },
+ {
+  "text": "The backup file couldn't be created here.",
+  "where": "src/screens/SettingsScreen.tsx:1033"
+ },
+ {
+  "text": "The backup couldn't be restored. Nothing was changed.",
+  "where": "src/screens/SettingsScreen.tsx:1062"
+ },
+ {
+  "text": "Backup",
+  "where": "src/screens/SettingsScreen.tsx:1067"
+ },
+ {
+  "text": "Save a backup",
+  "where": "src/screens/SettingsScreen.tsx:1072"
+ },
+ {
+  "text": "Items, categories, settings, Shopping List and stats, in one file",
+  "where": "src/screens/SettingsScreen.tsx:1073"
+ },
+ {
+  "text": "Save backup",
+  "where": "src/screens/SettingsScreen.tsx:1076"
+ },
+ {
+  "text": "Restore a backup",
+  "where": "src/screens/SettingsScreen.tsx:1083"
+ },
+ {
+  "text": "Replaces everything here with the backup's contents",
+  "where": "src/screens/SettingsScreen.tsx:1084"
+ },
+ {
+  "text": "Restore {0} {1}{2}? What is here now will be replaced.",
+  "where": "src/screens/SettingsScreen.tsx:1090"
+ },
+ {
+  "text": "Choose file",
+  "where": "src/screens/SettingsScreen.tsx:1099"
+ },
+ {
+  "text": "Sync",
+  "where": "src/screens/SettingsScreen.tsx:1108"
+ },
+ {
+  "text": "PREXPIRE has no cloud: items, categories and settings live only in this browser, on this device",
+  "where": "src/screens/SettingsScreen.tsx:1114"
+ },
+ {
+  "text": "PREXPIRE has no cloud: items, categories and settings live only on this device",
+  "where": "src/screens/SettingsScreen.tsx:1114"
+ },
+ {
+  "text": "Off",
+  "where": "src/screens/SettingsScreen.tsx:1115"
+ },
+ {
+  "text": "Download your {0} added {1}: name, category, expiry date, date precision, when added and source",
+  "where": "src/screens/SettingsScreen.tsx:1121"
+ },
+ {
+  "text": "Nothing to export yet. Items you add will be exported here (sample items are not included)",
+  "where": "src/screens/SettingsScreen.tsx:1121"
+ },
+ {
+  "text": "Export items as JSON",
+  "where": "src/screens/SettingsScreen.tsx:1125"
+ },
+ {
+  "text": "Export items as CSV",
+  "where": "src/screens/SettingsScreen.tsx:1126"
+ },
+ {
+  "text": "To keep a copy, export before clearing your browser data or moving devices",
+  "where": "src/screens/SettingsScreen.tsx:1134"
+ },
+ {
+  "text": "{0} from {1}% in {2}",
+  "where": "src/screens/SettingsScreen.tsx:1179"
+ },
+ {
+  "text": "This month",
+  "where": "src/screens/SettingsScreen.tsx:1188"
+ },
+ {
+  "text": "{0} used in time this month. {1} used, {2} expired.",
+  "where": "src/screens/SettingsScreen.tsx:1189"
+ },
+ {
+  "text": "used in time",
+  "where": "src/screens/SettingsScreen.tsx:1192"
+ },
+ {
+  "text": "{0} used  ·  {1} expired",
+  "where": "src/screens/SettingsScreen.tsx:1196"
+ },
+ {
+  "text": "Nothing used or expired yet this month.",
+  "where": "src/screens/SettingsScreen.tsx:1196"
+ },
+ {
+  "text": "Used in time, last 6 months",
+  "where": "src/screens/SettingsScreen.tsx:1200"
+ },
+ {
+  "text": "Share of items used in time, per month",
+  "where": "src/screens/SettingsScreen.tsx:1204"
+ },
+ {
+  "text": "All time",
+  "where": "src/screens/SettingsScreen.tsx:1227"
+ },
+ {
+  "text": "Used in time",
+  "where": "src/screens/SettingsScreen.tsx:1229"
+ },
+ {
+  "text": "Items used",
+  "where": "src/screens/SettingsScreen.tsx:1230"
+ },
+ {
+  "text": "Expired before use",
+  "where": "src/screens/SettingsScreen.tsx:1231"
+ },
+ {
+  "text": "Expiring soon now",
+  "where": "src/screens/SettingsScreen.tsx:1232"
+ },
+ {
+  "text": "By category",
+  "where": "src/screens/SettingsScreen.tsx:1236"
+ },
+ {
+  "text": "Use \"Mark as consumed\" when you finish something: it counts as used. Anything past its date counts as expired, whether it's still in your list or removed.",
+  "where": "src/screens/SettingsScreen.tsx:1255"
+ },
+ {
+  "text": "Nothing yet. Use \"Mark as consumed\" in an item's menu when you finish it; anything past its date counts as expired.",
+  "where": "src/screens/SettingsScreen.tsx:1255"
+ },
+ {
+  "text": "Last updated {0}",
+  "where": "src/screens/SettingsScreen.tsx:1268"
+ },
+ {
+  "text": "In short",
+  "where": "src/screens/SettingsScreen.tsx:1272"
+ },
+ {
+  "text": "Your data",
+  "where": "src/screens/SettingsScreen.tsx:1277"
+ },
+ {
+  "text": "Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones",
+  "where": "src/screens/SettingsScreen.tsx:1278"
+ },
+ {
+  "text": "Camera",
+  "where": "src/screens/SettingsScreen.tsx:1280"
+ },
+ {
+  "text": "Labels are read on the phone; images are never uploaded or kept",
+  "where": "src/screens/SettingsScreen.tsx:1280"
+ },
+ {
+  "text": "Barcodes",
+  "where": "src/screens/SettingsScreen.tsx:1281"
+ },
+ {
+  "text": "Only the barcode number is sent to product databases, to find the name",
+  "where": "src/screens/SettingsScreen.tsx:1281"
+ },
+ {
+  "text": "No ads, no tracking",
+  "where": "src/screens/SettingsScreen.tsx:1282"
+ },
+ {
+  "text": "Questions: {0}",
+  "where": "src/screens/SettingsScreen.tsx:1282"
+ },
+ {
+  "text": "Keep track of what matters before it expires.",
+  "where": "src/screens/SettingsScreen.tsx:1287"
+ },
+ {
+  "text": "Version",
+  "where": "src/screens/SettingsScreen.tsx:1288"
+ },
+ {
+  "text": "Last updated",
+  "where": "src/screens/SettingsScreen.tsx:1301"
+ },
+ {
+  "text": "The short version",
+  "where": "src/screens/SettingsScreen.tsx:1303"
+ },
+ {
+  "text": "Also at prexpire.com/",
+  "where": "src/screens/SettingsScreen.tsx:1333"
+ },
+ {
+  "text": "Clear all data?",
+  "where": "src/screens/SettingsScreen.tsx:1368"
+ },
+ {
+  "text": "This permanently deletes from",
+  "where": "src/screens/SettingsScreen.tsx:1369"
+ },
+ {
+  "text": "this browser",
+  "where": "src/screens/SettingsScreen.tsx:1369"
+ },
+ {
+  "text": "this device",
+  "where": "src/screens/SettingsScreen.tsx:1369"
+ },
+ {
+  "text": "1 item you added",
+  "where": "src/screens/SettingsScreen.tsx:1371"
+ },
+ {
+  "text": "{0} items you added",
+  "where": "src/screens/SettingsScreen.tsx:1371"
+ },
+ {
+  "text": "1 Shopping List entry",
+  "where": "src/screens/SettingsScreen.tsx:1372"
+ },
+ {
+  "text": "{0} Shopping List entries",
+  "where": "src/screens/SettingsScreen.tsx:1372"
+ },
+ {
+  "text": "1 category you added",
+  "where": "src/screens/SettingsScreen.tsx:1374"
+ },
+ {
+  "text": "{0} categories you added",
+  "where": "src/screens/SettingsScreen.tsx:1374"
+ },
+ {
+  "text": "•  Every setting on this page (back to the defaults)",
+  "where": "src/screens/SettingsScreen.tsx:1376"
+ },
+ {
+  "text": "•  The remembered last-used category and expiration events",
+  "where": "src/screens/SettingsScreen.tsx:1377"
+ },
+ {
+  "text": "This can't be undone; export your items first if you want a copy",
+  "where": "src/screens/SettingsScreen.tsx:1379"
+ },
+ {
+  "text": "Nothing could be deleted because this browser's storage refused the change. Try again",
+  "where": "src/screens/SettingsScreen.tsx:1380"
+ },
+ {
+  "text": "Deleting…",
+  "where": "src/screens/SettingsScreen.tsx:1383"
+ },
+ {
+  "text": "Delete everything",
+  "where": "src/screens/SettingsScreen.tsx:1383"
+ },
+ {
+  "text": "Moved to Purchased",
+  "where": "src/screens/ShoppingScreen.tsx:71"
+ },
+ {
+  "text": "Removed from your list",
+  "where": "src/screens/ShoppingScreen.tsx:82"
+ },
+ {
+  "text": "Cleared purchased items",
+  "where": "src/screens/ShoppingScreen.tsx:102"
+ },
+ {
+  "text": "Your last change couldn't be saved in this browser's storage. It applies until you close the page.",
+  "where": "src/screens/ShoppingScreen.tsx:111"
+ },
+ {
+  "text": "Your list is empty",
+  "where": "src/screens/ShoppingScreen.tsx:125"
+ },
+ {
+  "text": "Add what you need to buy. Products that are expiring soon can land here automatically.",
+  "where": "src/screens/ShoppingScreen.tsx:126"
+ },
+ {
+  "text": "To buy ({0})",
+  "where": "src/screens/ShoppingScreen.tsx:132"
+ },
+ {
+  "text": "To buy",
+  "where": "src/screens/ShoppingScreen.tsx:132"
+ },
+ {
+  "text": "Everything on your list is bought.",
+  "where": "src/screens/ShoppingScreen.tsx:150"
+ },
+ {
+  "text": "Purchased ({0})",
+  "where": "src/screens/ShoppingScreen.tsx:158"
+ },
+ {
+  "text": "Tap again to clear",
+  "where": "src/screens/ShoppingScreen.tsx:158"
+ },
+ {
+  "text": "Clear",
+  "where": "src/screens/ShoppingScreen.tsx:158"
+ },
+ {
+  "text": "Purchased items stay until you clear them.",
+  "where": "src/screens/ShoppingScreen.tsx:173"
+ },
+ {
+  "text": "Expiring soon",
+  "where": "src/screens/ShoppingScreen.tsx:235"
+ },
+ {
+  "text": "Manually added",
+  "where": "src/screens/ShoppingScreen.tsx:235"
+ },
+ {
+  "text": "Bought",
+  "where": "src/screens/ShoppingScreen.tsx:241"
+ },
+ {
+  "text": "Mark bought",
+  "where": "src/screens/ShoppingScreen.tsx:241"
+ },
+ {
+  "text": "{0} quantity of {1}",
+  "where": "src/screens/ShoppingScreen.tsx:323"
+ },
+ {
+  "text": "Decrease",
+  "where": "src/screens/ShoppingScreen.tsx:331"
+ },
+ {
+  "text": "Quantity of {0}: {1}",
+  "where": "src/screens/ShoppingScreen.tsx:332"
+ },
+ {
+  "text": "Increase",
+  "where": "src/screens/ShoppingScreen.tsx:335"
+ },
+ {
+  "text": "Purchased today",
+  "where": "src/screens/ShoppingScreen.tsx:346"
+ },
+ {
+  "text": "Purchased yesterday",
+  "where": "src/screens/ShoppingScreen.tsx:346"
+ },
+ {
+  "text": "Purchased {0}",
+  "where": "src/screens/ShoppingScreen.tsx:346"
+ },
+ {
+  "text": "That is already on your list.",
+  "where": "src/screens/ShoppingScreen.tsx:390"
+ },
+ {
+  "text": "Type a name first.",
+  "where": "src/screens/ShoppingScreen.tsx:390"
+ },
+ {
+  "text": "What do you need?",
+  "where": "src/screens/ShoppingScreen.tsx:410"
+ },
+ {
+  "text": "Item name",
+  "where": "src/screens/ShoppingScreen.tsx:414"
+ },
+ {
+  "text": "Quantity",
+  "where": "src/screens/ShoppingScreen.tsx:423"
+ },
+ {
+  "text": "the item",
+  "where": "src/screens/ShoppingScreen.tsx:424"
+ },
+ {
+  "text": "Adding…",
+  "where": "src/screens/ShoppingScreen.tsx:439"
+ },
+ {
+  "text": "Add to list",
+  "where": "src/screens/ShoppingScreen.tsx:439"
+ },
+ {
+  "text": "Expires in",
+  "where": "src/screens/WelcomeScreen.tsx:42"
+ },
+ {
+  "text": "4 days",
+  "where": "src/screens/WelcomeScreen.tsx:42"
+ },
+ {
+  "text": "3 days",
+  "where": "src/screens/WelcomeScreen.tsx:43"
+ },
+ {
+  "text": "Use it soon",
+  "where": "src/screens/WelcomeScreen.tsx:44"
+ },
+ {
+  "text": "2 days",
+  "where": "src/screens/WelcomeScreen.tsx:44"
+ },
+ {
+  "text": "7 months",
+  "where": "src/screens/WelcomeScreen.tsx:48"
+ },
+ {
+  "text": "Use it today",
+  "where": "src/screens/WelcomeScreen.tsx:53"
+ },
+ {
+  "text": "Past its date",
+  "where": "src/screens/WelcomeScreen.tsx:56"
+ },
+ {
+  "text": "Never forget an expiry date again.",
+  "where": "src/screens/WelcomeScreen.tsx:125"
+ },
+ {
+  "text": "Scan the date once. Prexpire shows you what to use first.",
+  "where": "src/screens/WelcomeScreen.tsx:126"
+ },
+ {
+  "text": "Get started",
+  "where": "src/screens/WelcomeScreen.tsx:132"
+ },
+ {
+  "text": "Sign in to back up and sync",
+  "where": "src/screens/WelcomeScreen.tsx:136"
+ },
+ {
+  "text": "Have an account?",
+  "where": "src/screens/WelcomeScreen.tsx:138"
+ },
+ {
+  "text": "No account needed. Works offline.",
+  "where": "src/screens/WelcomeScreen.tsx:142"
+ },
+ {
+  "text": "You're offline. Connect to the internet to delete your account.",
+  "where": "src/sync.tsx:203"
+ },
+ {
+  "text": "You're offline, and your latest changes haven't backed up yet. Connect to the internet, then sign out.",
+  "where": "src/sync.tsx:396"
+ },
+ {
+  "text": "Your latest changes couldn't be backed up just now. Try signing out again in a minute.",
+  "where": "src/sync.tsx:404"
+ },
+ {
+  "text": "Your account couldn't be deleted just now. Try again in a minute.",
+  "where": "src/sync.tsx:444"
+ },
+ {
+  "text": "You're offline. Connect to the internet to restore your account.",
+  "where": "src/sync.tsx:453"
+ },
+ {
+  "text": "Your account couldn't be restored just now. Try again in a minute.",
+  "where": "src/sync.tsx:453"
+ },
+ {
+  "text": "English",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Romanian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Hebrew",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Russian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "German",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "French",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Spanish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Italian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Portuguese",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Polish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Dutch",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Swedish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Czech",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Bulgarian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Ukrainian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Turkish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Arabic",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Japanese",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Korean",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Chinese (Simplified)",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Chinese (Traditional)",
+  "where": "src/i18n.ts"
+ }
+]

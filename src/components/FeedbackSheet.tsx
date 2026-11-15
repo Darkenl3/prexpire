@@ -8,6 +8,7 @@ import { makeStyles, useTheme } from '../theme';
 import { useAuth } from '../auth';
 import { tap } from '../platform/haptics';
 
+import { tr } from '../i18n';
 // Settings, About, Send feedback: a bug report, feedback or an idea, written
 // here and sent to the developer (support@prexpire.com) through
 // prexpire.com/api/feedback, which keeps every message and emails it on. The
@@ -19,13 +20,13 @@ const EMAIL_OK = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
 export type FeedbackKind = 'question' | 'bug' | 'feedback' | 'idea';
 type Kind = FeedbackKind;
 const KINDS: { id: Kind; label: string; send: string; icon: 'help-circle-outline' | 'bug-outline' | 'chatbubble-ellipses-outline' | 'bulb-outline'; prompt: string }[] = [
-  { id: 'question', label: 'Question', send: 'Send question', icon: 'help-circle-outline', prompt: 'What do you need help with? Add your email below so we can answer.' },
-  { id: 'bug', label: 'Bug', send: 'Send report', icon: 'bug-outline', prompt: 'What happened, and what did you expect? Steps to repeat it help a lot.' },
-  { id: 'feedback', label: 'Feedback', send: 'Send feedback', icon: 'chatbubble-ellipses-outline', prompt: 'What works for you, and what could be better?' },
-  { id: 'idea', label: 'Idea', send: 'Send idea', icon: 'bulb-outline', prompt: 'What would you like Prexpire to do?' },
+  { id: 'question', label: tr("Question"), send: tr("Send question"), icon: 'help-circle-outline', prompt: tr("What do you need help with? Add your email below so we can answer.") },
+  { id: 'bug', label: tr("Bug"), send: tr("Send report"), icon: 'bug-outline', prompt: tr("What happened, and what did you expect? Steps to repeat it help a lot.") },
+  { id: 'feedback', label: tr("Feedback"), send: tr("Send feedback"), icon: 'chatbubble-ellipses-outline', prompt: tr("What works for you, and what could be better?") },
+  { id: 'idea', label: tr("Idea"), send: tr("Send idea"), icon: 'bulb-outline', prompt: tr("What would you like Prexpire to do?") },
 ];
 
-export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug', title = 'Send feedback' }: { visible: boolean; onClose: () => void; appVersion: string; initialKind?: Kind; title?: string }) {
+export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug', title = tr("Send feedback") }: { visible: boolean; onClose: () => void; appVersion: string; initialKind?: Kind; title?: string }) {
   const c = useTheme();
   const s = useStyles();
   const { email: accountEmail } = useAuth();
@@ -56,8 +57,8 @@ export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug
     if (state !== 'idle') return;
     const text = message.trim();
     const mail = email.trim();
-    if (text.length < 3) return setError('Write a few words first.');
-    if (mail && !EMAIL_OK.test(mail)) return setError('That email doesn’t look right. Fix it or leave it empty.');
+    if (text.length < 3) return setError(tr("Write a few words first."));
+    if (mail && !EMAIL_OK.test(mail)) return setError(tr("That email doesn’t look right. Fix it or leave it empty."));
     setError(null);
     setState('sending');
     tap('light');
@@ -71,14 +72,14 @@ export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug
       const out = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !out?.ok) {
         setState('idle');
-        return setError(out?.error === 'too-many' ? 'You’ve sent a few already. Try again in an hour.' : 'It couldn’t be sent just now. Try again in a minute.');
+        return setError(out?.error === 'too-many' ? tr("You’ve sent a few already. Try again in an hour.") : tr("It couldn’t be sent just now. Try again in a minute."));
       }
       setState('sent');
       tap('success');
       closeTimer.current = setTimeout(onClose, 1400);
     } catch {
       setState('idle');
-      setError('You’re offline. Connect to the internet and try again.');
+      setError(tr("You’re offline. Connect to the internet and try again."));
     }
   };
 
@@ -87,12 +88,12 @@ export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug
       {state === 'sent' ? (
         <View style={s.done}>
           <Ionicons name="checkmark-circle" size={46} color={c.green} />
-          <Text style={s.doneTitle}>Thanks, it&apos;s sent</Text>
-          <Text style={s.lede}>{mail(email) ? 'We read every message, and we’ll reply by email if needed.' : 'We read every message.'}</Text>
+          <Text style={s.doneTitle}>{tr("Thanks, it’s sent")}</Text>
+          <Text style={s.lede}>{mail(email) ? tr("We read every message, and we’ll reply by email if needed.") : tr("We read every message.")}</Text>
         </View>
       ) : (
         <View style={s.body}>
-          <Text style={s.lede}>A question, a bug, feedback or an idea: it comes straight to us at support@prexpire.com.</Text>
+          <Text style={s.lede}>{tr("A question, a bug, feedback or an idea: it comes straight to us at support@prexpire.com.")}</Text>
           <View style={s.kinds} accessibilityRole={'radiogroup' as never}>
             {KINDS.map((k) => (
               <ChoicePill key={k.id} label={k.label} icon={k.icon} selected={kind === k.id} onPress={() => setKind(k.id)} colors={pills} size="small" />
@@ -110,9 +111,9 @@ export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug
             maxLength={4000}
             textAlignVertical="top"
             style={[s.input, s.message]}
-            accessibilityLabel="Your message"
+            accessibilityLabel={tr("Your message")}
           />
-          <Text style={s.label}>Your email (optional, so we can reply)</Text>
+          <Text style={s.label}>{tr("Your email (optional, so we can reply)")}</Text>
           <TextInput
             value={email}
             onChangeText={(v) => {
@@ -126,7 +127,7 @@ export function FeedbackSheet({ visible, onClose, appVersion, initialKind = 'bug
             keyboardType="email-address"
             autoComplete="email"
             style={s.input}
-            accessibilityLabel="Your email, optional"
+            accessibilityLabel={tr("Your email, optional")}
           />
           {error ? <Text style={s.error}>{error}</Text> : null}
           <PressScale onPress={send} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={current.send} style={[s.primary, state === 'sending' && { opacity: 0.7 }]}>

@@ -8,6 +8,7 @@ import { useDensity } from '../density';
 import { ExpiryRow } from './HomeComponents';
 import { categoryArt } from './ResultSheet';
 
+import { tr } from '../i18n';
 // Every tracked item's row art is its category's illustration; the category
 // tile art is shared so a row always matches the tile it came from. A scanned
 // product with a retrieved photo shows the photo instead, so the real product
@@ -26,7 +27,7 @@ export function itemRowArt(item: Item, compact: boolean) {
         source={{ uri: item.image }}
         style={compact ? { width: 36, height: 32, borderRadius: 12 } : { width: 44, height: 42, borderRadius: 12 }}
         resizeMode="cover"
-        accessibilityLabel={`${item.name} product photo`}
+        accessibilityLabel={tr("{0} product photo", [item.name])}
         accessibilityRole="image"
       />
     );
@@ -37,9 +38,9 @@ export function itemRowArt(item: Item, compact: boolean) {
 // Amber from today through the warning period chosen in Settings, green after that.
 export function itemPill(item: Item, warningDays: number, today = new Date()) {
   const status = expiryStatus(item.expiresOn, warningDays, today);
-  if (status === 'expired') return { pill: 'Expired', tone: 'amber' as const };
+  if (status === 'expired') return { pill: tr("Expired"), tone: 'amber' as const };
   const days = daysUntil(item.expiresOn, today);
-  const pill = days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
+  const pill = days === 0 ? tr("Today") : days === 1 ? tr("1 day") : tr("{0} days", [days]);
   return { pill, tone: status === 'soon' ? ('amber' as const) : ('green' as const) };
 }
 

@@ -40,6 +40,7 @@ import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
 
+import { tr } from '../i18n';
 type Props = {
   onClose: () => void;
   onSaved: (item: Item) => void;
@@ -81,15 +82,15 @@ type ProductContext = {
 };
 
 const HINTS: Record<ScanHint, { icon: keyof typeof Ionicons.glyphMap; text: string }> = {
-  aim: { icon: 'scan-outline', text: 'Looking for the expiry date...' },
-  'text-found': { icon: 'text-outline', text: 'Expiry date not in view. Point at the date.' },
-  'hold-steady': { icon: 'hourglass-outline', text: 'Hold still. Reading the date...' },
-  'low-light': { icon: 'sunny-outline', text: 'Too dark. Improve the lighting.' },
-  closer: { icon: 'resize-outline', text: 'Move closer to the expiry date.' },
-  manufacture: { icon: 'alert-circle-outline', text: 'That is a production date. Find the expiry date.' },
-  unclear: { icon: 'eye-outline', text: 'Date hard to read. Move closer or tilt to avoid glare.' },
-  'ocr-error': { icon: 'refresh-outline', text: 'Hold the camera steady.' },
-  manual: { icon: 'create-outline', text: "We couldn't read the expiry date. You can enter it manually." },
+  aim: { icon: 'scan-outline', text: tr("Looking for the expiry date...") },
+  'text-found': { icon: 'text-outline', text: tr("Expiry date not in view. Point at the date.") },
+  'hold-steady': { icon: 'hourglass-outline', text: tr("Hold still. Reading the date...") },
+  'low-light': { icon: 'sunny-outline', text: tr("Too dark. Improve the lighting.") },
+  closer: { icon: 'resize-outline', text: tr("Move closer to the expiry date.") },
+  manufacture: { icon: 'alert-circle-outline', text: tr("That is a production date. Find the expiry date.") },
+  unclear: { icon: 'eye-outline', text: tr("Date hard to read. Move closer or tilt to avoid glare.") },
+  'ocr-error': { icon: 'refresh-outline', text: tr("Hold the camera steady.") },
+  manual: { icon: 'create-outline', text: tr("We couldn't read the expiry date. You can enter it manually.") },
 };
 
 // A product name for the status banner: shortened to fit one line WITHOUT
@@ -410,11 +411,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   const header = (
     <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (side && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
-        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.94} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel="Back">
+        <PressScale onPress={onClose} hitSlop={8} scaleTo={0.94} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel={tr("Back")}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </PressScale>
         <Text style={s.title} accessibilityRole="header">
-          {manual ? 'Add item' : 'Live Scan'}
+          {manual ? tr("Add item") : tr("Live Scan")}
         </Text>
         {manual ? (
           // Typing a product in has no camera, so no flashlight: an empty
@@ -428,7 +429,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           scaleTo={0.94}
           style={[s.roundBtn, GLASS_FX as ViewStyle, torch && { backgroundColor: lime }, !torchAvailable && s.disabled]}
           accessibilityRole="switch"
-          accessibilityLabel={torchAvailable ? 'Flashlight' : 'Flashlight unavailable'}
+          accessibilityLabel={torchAvailable ? tr("Flashlight") : tr("Flashlight unavailable")}
           accessibilityState={{ checked: torch, disabled: !torchAvailable }}
         >
           <Ionicons name={torch ? 'flash' : 'flash-outline'} size={21} color={torch ? t.scanInk : colors.text} />
@@ -436,7 +437,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
         )}
       </View>
       <Text style={s.instruction}>
-        {manual ? 'Type the product details.' : 'Point at an expiry date or barcode.'}
+        {manual ? tr("Type the product details.") : tr("Point at an expiry date or barcode.")}
       </Text>
     </View>
   );
@@ -454,21 +455,17 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     body = (
       <Notice
         icon={askedPermission && permission.status === 'denied' ? 'lock-closed-outline' : 'camera-outline'}
-        title={askedPermission && permission.status === 'denied' ? 'Camera access blocked' : 'Allow camera access'}
+        title={askedPermission && permission.status === 'denied' ? tr("Camera access blocked") : tr("Allow camera access")}
         text={
-          askedPermission && permission.status === 'denied'
-            ? Platform.OS === 'web'
-              ? 'Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.'
-              : 'Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.'
-            : 'Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.'
+          askedPermission && permission.status === 'denied' ? Platform.OS === 'web' ? tr("Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.") : tr("Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.") : tr("Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.")
         }
-        action={permission.canAskAgain || Platform.OS === 'web' ? (askedPermission ? 'Try again' : 'Allow camera') : 'Open Settings'}
+        action={permission.canAskAgain || Platform.OS === 'web' ? (askedPermission ? tr("Try again") : tr("Allow camera")) : tr("Open Settings")}
         onAction={() => {
           setAskedPermission(true);
           if (permission.canAskAgain || Platform.OS === 'web') requestPermission();
           else Linking.openSettings();
         }}
-        secondary="Enter date manually"
+        secondary={tr("Enter date manually")}
         onSecondary={() => openManual('date')}
         hidden={manual}
       />
@@ -477,11 +474,11 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     body = (
       <Notice
         icon={cameraError.kind === 'ocr' ? 'document-text-outline' : cameraError.kind === 'denied' ? 'lock-closed-outline' : 'videocam-off-outline'}
-        title={cameraError.kind === 'ocr' ? 'Text reader unavailable' : cameraError.kind === 'denied' ? 'Camera access blocked' : 'Camera unavailable'}
+        title={cameraError.kind === 'ocr' ? tr("Text reader unavailable") : cameraError.kind === 'denied' ? tr("Camera access blocked") : tr("Camera unavailable")}
         text={cameraError.message}
-        action="Try again"
+        action={tr("Try again")}
         onAction={retryCamera}
-        secondary="Enter date manually"
+        secondary={tr("Enter date manually")}
         onSecondary={() => openManual('date')}
         hidden={manual}
       />
@@ -510,21 +507,20 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
           {detected ? (
             <View style={[s.hint, { borderColor: withAlpha(lime, 0.55) }]} accessibilityLiveRegion="polite">
               <Ionicons name="checkmark-circle" size={18} color={lime} />
-              <Text style={[s.hintText, { color: lime }]}>Expiry date confirmed.</Text>
+              <Text style={[s.hintText, { color: lime }]}>{tr("Expiry date confirmed.")}</Text>
             </View>
           ) : !cameraReady ? (
             <View style={s.hint} accessibilityLiveRegion="polite">
               <ActivityIndicator size="small" color={lime} />
-              <Text style={s.hintText}>Starting the scanner...</Text>
+              <Text style={s.hintText}>{tr("Starting the scanner...")}</Text>
             </View>
           ) : !ocrReady ? (
             manual ? null : (
               <View style={s.unavailable}>
                 <Text style={s.unavailableText}>
-                  Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.
-                </Text>
+                  {tr("Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.")}</Text>
                 <PressScale onPress={() => openManual('date')} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
-                  <Text style={[s.linkText, { color: lime }]}>Enter date manually</Text>
+                  <Text style={[s.linkText, { color: lime }]}>{tr("Enter date manually")}</Text>
                 </PressScale>
               </View>
             )
@@ -533,7 +529,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
               {productStatus === 'checking' && (
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <ActivityIndicator size="small" color={lime} />
-                  <Text style={s.hintText}>Checking the product...</Text>
+                  <Text style={s.hintText}>{tr("Checking the product...")}</Text>
                 </View>
               )}
               {product && productStatus === 'found' && (
@@ -541,10 +537,10 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                   <Ionicons name="checkmark-circle" size={18} color={lime} />
                   <View style={s.hintTextCol}>
                     <Text style={[s.hintText, { color: lime, fontWeight: '700' }]} numberOfLines={1}>
-                      {product.name ? `Product found: ${pillName(product.name)}` : 'Product identified'}
+                      {product.name ? tr("Product found: {0}", [pillName(product.name)]) : tr("Product identified")}
                     </Text>
                     <Text style={s.hintSub} numberOfLines={2}>
-                      {product.name ? 'Now scan the expiry date.' : 'Product name unavailable — you can type it in. Scan the expiry date.'}
+                      {product.name ? tr("Now scan the expiry date.") : tr("Product name unavailable — you can type it in. Scan the expiry date.")}
                     </Text>
                   </View>
                 </View>
@@ -553,17 +549,14 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <Ionicons name="help-circle-outline" size={18} color={colors.amberText} />
                   <Text style={s.hintText} numberOfLines={2}>
-                    We couldn't identify this product. You can enter its name manually.
-                  </Text>
+                    {tr("We couldn't identify this product. You can enter its name manually.")}</Text>
                 </View>
               )}
               {productStatus === 'unreachable' && (
                 <View style={s.hint} accessibilityLiveRegion="polite">
                   <Ionicons name="cloud-offline-outline" size={18} color={colors.amberText} />
                   <Text style={s.hintText} numberOfLines={2}>
-                    {offline
-                      ? 'No internet connection. You can continue below.'
-                      : "Product details aren't available right now. Point at the expiry date."}
+                    {offline ? tr("No internet connection. You can continue below.") : tr("Product details aren't available right now. Point at the expiry date.")}
                   </Text>
                 </View>
               )}
@@ -599,20 +592,20 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
                 scaleTo={0.94}
                 style={s.manualBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Enter the expiry date manually"
+                accessibilityLabel={tr("Enter the expiry date manually")}
               >
                 <Ionicons name="calendar-outline" size={15} color={lime} />
-                <Text style={s.manualBtnText}>Enter date</Text>
+                <Text style={s.manualBtnText}>{tr("Enter date")}</Text>
               </PressScale>
               <PressScale
                 onPress={() => openManual('product')}
                 scaleTo={0.94}
                 style={s.manualBtn}
                 accessibilityRole="button"
-                accessibilityLabel="Enter the product name manually"
+                accessibilityLabel={tr("Enter the product name manually")}
               >
                 <Ionicons name="create-outline" size={15} color={lime} />
-                <Text style={s.manualBtnText}>Enter product</Text>
+                <Text style={s.manualBtnText}>{tr("Enter product")}</Text>
               </PressScale>
             </View>
           )}
@@ -649,7 +642,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
       // is Cancel (there is no camera session to return to). Switched over
       // from a live scan: "Scan again" brings the camera back - inside the
       // native shell, it reopens the shell's own native scanner.
-      secondaryLabel={manualOnly ? 'Cancel' : seeded && inShell ? 'Scan again' : ocrReady && granted && !cameraError ? 'Scan again' : 'Cancel'}
+      secondaryLabel={manualOnly ? tr("Cancel") : seeded && inShell ? tr("Scan again") : ocrReady && granted && !cameraError ? tr("Scan again") : tr("Cancel")}
       onAdd={onAdd}
       onSecondary={manualOnly ? onClose : seeded && inShell ? scanAgainInShell : ocrReady && granted && !cameraError ? scanAgain : onClose}
     />

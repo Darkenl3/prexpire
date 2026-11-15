@@ -2,6 +2,7 @@ import { warningFor, type Settings } from './preferences.ts';
 import { withExpiredInList } from './stats.ts';
 import type { HistoryEntry } from './items.tsx';
 
+import { tr } from './i18n.ts';
 // Works out every expiry reminder from the saved items, automatically: nobody
 // sets a reminder by hand. Re-run whenever items or settings change; the
 // iPhone app replaces what it had scheduled with the new plan.
@@ -83,12 +84,12 @@ function daysFrom(fromIso: string, toIso: string): number {
 function names(list: PlanItem[]): string {
   const n = list.map((i) => i.name);
   if (n.length === 1) return n[0];
-  if (n.length === 2) return `${n[0]} and ${n[1]}`;
-  if (n.length === 3) return `${n[0]}, ${n[1]} and ${n[2]}`;
-  return `${n[0]}, ${n[1]} and ${n.length - 2} more`;
+  if (n.length === 2) return tr("{0} and {1}", [n[0], n[1]]);
+  if (n.length === 3) return tr("{0}, {1} and {2}", [n[0], n[1], n[2]]);
+  return tr("{0}, {1} and {2} more", [n[0], n[1], n.length - 2]);
 }
 function when(days: number): string {
-  return days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+  return days === 0 ? 'today' : days === 1 ? 'tomorrow' : tr("in {0} days", [days]);
 }
 
 export function planReminders(items: PlanItem[], settings: PlanSettings, now = new Date(), risk: WasteRisk = {}): PlannedReminder[] {
@@ -138,11 +139,11 @@ export function planReminders(items: PlanItem[], settings: PlanSettings, now = n
       const cats = [...new Set(list.map((i) => i.category))];
       const r = cats.length === 1 ? risk[cats[0]] : null;
       const why = r
-        ? `You've thrown away ${Math.round(r.share * 100)}% of your ${r.name} lately, so here's an early heads-up.`
-        : "These often go to waste for you, so here's an early heads-up.";
+        ? tr("You've thrown away {0}% of your {1} lately, so here's an early heads-up.", [Math.round(r.share * 100), r.name])
+        : tr("These often go to waste for you, so here's an early heads-up.");
       out.push({
         id: `w-${g.fire}-${g.lead}`,
-        title: one ? `${list[0].name} expires ${when(g.lead)}` : `${list.length} items expire ${when(g.lead)}`,
+        title: one ? tr("{0} expires {1}", [list[0].name, when(g.lead)]) : tr("{0} items expire {1}", [list.length, when(g.lead)]),
         body: one ? why : `${names(list)}. ${why}`,
         at,
       });
@@ -150,12 +151,8 @@ export function planReminders(items: PlanItem[], settings: PlanSettings, now = n
     }
     out.push({
       id: `r-${g.fire}-${g.lead}`,
-      title: one ? `${list[0].name} expires ${when(g.lead)}` : `${list.length} items expire ${when(g.lead)}`,
-      body: one
-        ? g.lead === 0
-          ? 'Use it today so it doesn\'t go to waste.'
-          : 'Use it soon so it doesn\'t go to waste.'
-        : `${names(list)}. Tap to see what to use first.`,
+      title: one ? tr("{0} expires {1}", [list[0].name, when(g.lead)]) : tr("{0} items expire {1}", [list.length, when(g.lead)]),
+      body: one ? g.lead === 0 ? tr("Use it today so it doesn't go to waste.") : tr("Use it soon so it doesn't go to waste.") : tr("{0}. Tap to see what to use first.", [names(list)]),
       at,
     });
   }
@@ -171,7 +168,7 @@ export function planReminders(items: PlanItem[], settings: PlanSettings, now = n
       const sorted = [...soon].sort((a, b) => a.expiresOn.localeCompare(b.expiresOn));
       out.push({
         id: `s-${day}`,
-        title: soon.length === 1 ? '1 item to use soon' : `${soon.length} items to use soon`,
+        title: soon.length === 1 ? tr("1 item to use soon") : tr("{0} items to use soon", [soon.length]),
         body: `${names(sorted)}.`,
         at,
       });
