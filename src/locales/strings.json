@@ -665,15 +665,15 @@
  },
  {
   "text": "Lists",
-  "where": "src/components/HomeComponents.tsx:492"
+  "where": "src/components/HomeComponents.tsx:494"
  },
  {
   "text": "Reminders",
-  "where": "src/components/HomeComponents.tsx:493"
+  "where": "src/components/HomeComponents.tsx:495"
  },
  {
   "text": "Settings",
-  "where": "src/components/HomeComponents.tsx:494"
+  "where": "src/components/HomeComponents.tsx:496"
  },
  {
   "text": "Expired",

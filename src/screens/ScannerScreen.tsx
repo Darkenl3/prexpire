@@ -40,7 +40,7 @@ import type { Size } from '../scanner/cropMath';
 import { ScannerCamera } from '../scanner/ScannerCamera';
 import type { CameraErrorKind, FrameGeometry, ScannerCameraHandle } from '../scanner/ScannerCamera.types';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 type Props = {
   onClose: () => void;
   onSaved: (item: Item) => void;
@@ -412,7 +412,7 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
     <View style={[s.header, { paddingTop: insets.top + 6, paddingLeft: insets.left + 16, paddingRight: (side && sheetOpen ? 0 : insets.right) + 16 }]}>
       <View style={s.headerRow}>
         <PressScale onPress={onClose} hitSlop={8} scaleTo={0.94} style={[s.roundBtn, GLASS_FX as ViewStyle]} accessibilityRole="button" accessibilityLabel={tr("Back")}>
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Ionicons name={dirIcon('chevron-back')} size={24} color={colors.text} />
         </PressScale>
         <Text style={s.title} accessibilityRole="header">
           {manual ? tr("Add item") : tr("Live Scan")}

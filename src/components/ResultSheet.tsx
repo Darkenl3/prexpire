@@ -14,7 +14,7 @@ import { useSettings } from '../settings';
 import { nativeDatePicker, pickNativeDate } from '../platform/nativeDate';
 import { tap } from '../platform/haptics';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 // The sheet's category pills: the same solid "selected" language as the
 // Items filters and sort row — the ACTIVE theme's lime fill with its ink on
 // top (built per render, since the scanner's accent follows the app theme).
@@ -283,7 +283,7 @@ export function ResultSheet({ detection, initialName = '', productImage = null, 
             <Text style={[s.dateLabel, !confirmed && { color: colors.amberText }]}>{dateTitle}</Text>
             <Text style={s.dateValue}>{date ? formatDate(date) : tr("Choose the date below")}</Text>
           </View>
-          <Ionicons name={editing ? 'chevron-down' : 'chevron-forward'} size={20} color={colors.textMuted} />
+          <Ionicons name={editing ? 'chevron-down' : dirIcon('chevron-forward')} size={20} color={colors.textMuted} />
         </PressScale>
 
         {ambiguous && !autoRead && !edited && (

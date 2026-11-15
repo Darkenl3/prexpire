@@ -14,7 +14,9 @@
 // Only languages whose translation is complete are offered (TRANSLATIONS);
 // the rest of LANGUAGES waits for its file.
 
+import he from './locales/he.ts';
 import ro from './locales/ro.ts';
+import ru from './locales/ru.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -49,6 +51,8 @@ export const LANGUAGES: { code: LanguageCode; native: string; english: string; r
 // The finished translations. A language is offered only once it is here.
 const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   ro,
+  he,
+  ru,
 };
 
 export function availableLanguages() {
@@ -109,6 +113,15 @@ export function isRTL(code: LanguageCode = current): boolean {
 if (typeof document !== 'undefined') {
   document.documentElement.lang = current;
   document.documentElement.dir = isRTL() ? 'rtl' : 'ltr';
+  // Text that is itself English (product names people typed) would line up
+  // on the left inside a right-to-left screen; it follows the screen's right
+  // edge instead. :where() keeps this weaker than any alignment a screen sets
+  // on purpose (centred titles stay centred).
+  if (isRTL()) {
+    const style = document.createElement('style');
+    style.textContent = ':where(html[dir="rtl"] [dir="auto"]){text-align:right}';
+    document.head.appendChild(style);
+  }
 }
 
 type Vars = (string | number)[] | Record<string, string | number>;
@@ -130,6 +143,13 @@ export function applyLanguage(choice: LanguageChoice) {
   const next = resolve(choice);
   if (next === current) return;
   if (typeof window !== 'undefined' && window.location) setTimeout(() => window.location.reload(), 120);
+}
+
+// Arrows that mean "back" and "forward" point the other way in Hebrew and
+// Arabic: chevron-back <-> chevron-forward, arrow-back <-> arrow-forward.
+export function dirIcon<T extends string>(name: T): T {
+  if (!isRTL()) return name;
+  return name.replace(/-(forward|back)\b/, (m) => (m === '-forward' ? '-back' : '-forward')) as T;
 }
 
 // The locale for dates and numbers (Intl), matching the app's language.

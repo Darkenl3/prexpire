@@ -7,7 +7,7 @@ import { useSettings } from '../settings';
 import { PressScale } from './Press';
 import { chromeId, nativeChrome, registerChrome, updateChrome, type ChromeButton } from '../platform/nativeChrome';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 // The brand wordmark: the user's own logo artwork, cut pixel-exact from
 // their file (transparent PNGs): the solid filled four-leaf lime icon stays
 // lime in both themes, with near-white ink for the dark page and deep
@@ -98,7 +98,7 @@ export function GlassIconButton({
   // Inside the iOS app the button is drawn natively in liquid glass (see
   // platform/nativeChrome): here it keeps its place, invisible, and reports
   // where it is.
-  const { native, ref } = useNativeGlass({ icon: icon ?? 'chevron-back', iconSize, badge, label, onPress });
+  const { native, ref } = useNativeGlass({ icon: dirIcon(icon ?? 'chevron-back'), iconSize, badge, label, onPress });
   if (native) {
     return (
       // The app draws the button in the slot kept here: Home's menu and bell
@@ -125,7 +125,7 @@ export function GlassIconButton({
         style,
       ]}
     >
-      {children ?? <Ionicons name={icon ?? 'chevron-back'} size={iconSize} color={c === LIGHT ? '#10231E' : c.text} />}
+      {children ?? <Ionicons name={dirIcon(icon ?? 'chevron-back')} size={iconSize} color={c === LIGHT ? '#10231E' : c.text} />}
     </PressScale>
   );
 }
@@ -235,7 +235,7 @@ export function AttentionCard({
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
         <Text style={[s.alertSub, { color: c.textMuted }]}>{subtitle.join('  •  ')}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
+      <Ionicons name={dirIcon('chevron-forward')} size={20} color={c.textMuted} />
     </PressScale>
   );
 }
@@ -348,7 +348,7 @@ export function SectionHeader({ title, action, first = false, actionLabel, onAct
           accessibilityLabel={actionLabel ?? action}
         >
           <Text style={[s.sectionLink, { color: c.green }]}>{action}</Text>
-          <Ionicons name="chevron-forward" size={17} color={c.green} />
+          <Ionicons name={dirIcon('chevron-forward')} size={17} color={c.green} />
         </PressScale>
       )}
     </View>
@@ -396,6 +396,8 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
           <Text
             style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : c.green }]}
             numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
             {status.label}
           </Text>
@@ -468,7 +470,7 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
       <View style={[s.pill, compact && s.pillCompact, { backgroundColor: p.bg }]}>
         <Text style={[s.pillText, compact && s.pillTextCompact, { color: p.text }]}>{pill}</Text>
       </View>
-      {onPress && <Ionicons name="chevron-forward" size={20} color={c.textMuted} style={{ marginLeft: 2 }} />}
+      {onPress && <Ionicons name={dirIcon('chevron-forward')} size={20} color={c.textMuted} style={{ marginLeft: 2 }} />}
     </>
   );
   // Rows without a destination are plain text, not buttons.
@@ -784,10 +786,11 @@ const useStyles = makeStyles((c) => ({
   textCompact: { fontSize: 12.5 },
   tileName: { color: c.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
   tileSub: { color: c.textMuted, fontSize: 13.5, fontWeight: '400', textAlign: 'center', marginTop: 2 },
-  status: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4, height: 18 },
+  // Stays inside the tile in any language: the label shrinks a little, then ends in an ellipsis.
+  status: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 4, height: 18, alignSelf: 'stretch', paddingHorizontal: 8 },
   statusSpacer: { height: 18, marginTop: 4 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontSize: 13.5, fontWeight: '600' },
+  statusText: { fontSize: 13.5, fontWeight: '600', flexShrink: 1 },
   row: {
     minHeight: 58,
     paddingVertical: 8,

@@ -5,7 +5,7 @@ import { accents, makeStyles, useTheme, LIGHT, CARD_SHADOW, CARD_SHADOW_LIFTED, 
 import { FadeIn, PressScale } from './Press';
 import { BottomSheet } from './BottomSheet';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 // Building blocks of the Settings page, styled after the reference's grouped
 // card design: white cards on a cool-white page, fine #E5EDF3 hairlines, soft
 // pastel icon tiles, crisp SF-style typography and gentle press feedback.
@@ -115,7 +115,7 @@ export function SettingRow({ icon, accent, title, description, value, right, bel
         {value}
       </Text>}
       {right}
-      {onPress && <Ionicons name="chevron-forward" size={18} color={c.textMuted} style={s.chevron} />}
+      {onPress && <Ionicons name={dirIcon('chevron-forward')} size={18} color={c.textMuted} style={s.chevron} />}
     </View>
   );
   return (

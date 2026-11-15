@@ -16,7 +16,7 @@ import { nativeReminders } from '../platform/notifications';
 import { TwoUpList } from '../components/TwoUp';
 import { useDensity } from '../density';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 type Props = { badge: number; onNavigate: (route: string) => void };
 
 // The sort control's labels (the reference's "Soonest first" wording). The
@@ -81,7 +81,7 @@ function ReminderCard({ item, compact = false, onPress }: { item: Item; compact?
           {pill}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={17} color={t.textMuted} />
+      <Ionicons name={dirIcon('chevron-forward')} size={17} color={t.textMuted} />
     </PressScale>
   );
 }

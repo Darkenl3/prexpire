@@ -9,7 +9,7 @@ import { TurnstileFrame } from './TurnstileFrame';
 import { useSync } from '../sync';
 import { canRevokeApple, signsInWithApple } from '../appleRevoke';
 
-import { tr } from '../i18n';
+import { tr, dirIcon } from '../i18n';
 // Signing in, creating an account, and resetting a password, in one sheet.
 // Every email carries a 6-digit code the person types here:
 //
@@ -279,7 +279,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
 
   const back = (to: Step) => (
     <PressScale onPress={() => (setError(null), setStep(to))} scaleTo={0.97} accessibilityRole="button" accessibilityLabel={tr("Back")} style={[s.linkBtn, { alignSelf: 'flex-start' }]}>
-      <Ionicons name="arrow-back" size={15} color={c.textMuted} />
+      <Ionicons name={dirIcon('arrow-back')} size={15} color={c.textMuted} />
       <Text style={s.link}>{tr("Back")}</Text>
     </PressScale>
   );

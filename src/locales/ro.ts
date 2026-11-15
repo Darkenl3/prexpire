@@ -101,7 +101,7 @@ const table: Record<string, string> = {
   "The last change couldn't be saved in this browser's storage. It applies until you close the page.": "Ultima modificare nu a putut fi salvată în memoria acestui browser. Se aplică până închizi pagina.",
   "Preview of the {0} tile on Home": "Previzualizarea plăcii {0} de pe ecranul principal",
   "0 items": "0 produse",
-  "All good": "Totul e în regulă",
+  "All good": "În regulă",
   "How it looks on Home": "Cum arată pe ecranul principal",
   "Edit category": "Editează categoria",
   "New category": "Categorie nouă",

@@ -54,7 +54,7 @@ import { TwoColumns, TwoUpList } from '../components/TwoUp';
 import { SupportPage } from '../components/SupportPage';
 import { openStore, useStoreUpdate } from '../appStore';
 
-import { LANGUAGES, applyLanguage, availableLanguages, language, phoneLanguage, tr, type LanguageChoice } from '../i18n';
+import { LANGUAGES, applyLanguage, availableLanguages, language, phoneLanguage, tr, type LanguageChoice, dirIcon } from '../i18n';
 export type LegalDoc = { title: string; updated: string; short: string[]; sections: { title: string; body: (string | { list: string[] })[] }[] };
 
 // Inside the iPhone app: the installed app's own version and build
@@ -206,7 +206,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
             {email ? tr("Signed in") : tr("Back up your items to an account")}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
+        <Ionicons name={dirIcon('chevron-forward')} size={18} color={t.textMuted} style={{ marginLeft: 4, opacity: 0.75 }} />
       </PressScale>
 
       <UpdateRow />
@@ -518,7 +518,7 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
                             {PAGE_TITLES[e.page]}
                           </Text>
                         )}
-                        <Ionicons name="chevron-forward" size={16} color={t.textMuted} />
+                        <Ionicons name={dirIcon('chevron-forward')} size={16} color={t.textMuted} />
                       </PressScale>
                     </Fragment>
                   ))}
