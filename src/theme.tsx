@@ -297,7 +297,7 @@ export const LIGHT: Palette = {
     add: { top: '#F4F9F4', bottom: '#EDF4ED', border: '#D5E4D6' },
   },
   // The Add-category tile: a borderless soft card with fine diagonal lines.
-  addTile: { bg: '#EAF3EE', line: 'rgba(80,120,110,0.20)' },
+  addTile: { bg: '#E6F0EA', line: 'rgba(80,120,110,0.22)' },
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance. The green pill is the
