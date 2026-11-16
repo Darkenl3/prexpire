@@ -272,11 +272,11 @@ export const LIGHT: Palette = {
   // palette - the category cards read as gentle colour cards with no borders,
   // like the reference.
   tints: {
-    food: { top: '#E4F6E7', bottom: '#CDEFD3', border: '#B5E3BC' },
-    medicine: { top: '#E6F1F8', bottom: '#CCE3F0', border: '#B0D2E4' },
-    household: { top: '#EFEAF9', bottom: '#DED6F1', border: '#CFC4E9' },
-    skincare: { top: '#FAE9F0', bottom: '#F3D3E0', border: '#EBBED1' },
-    pantry: { top: '#FBF1DC', bottom: '#F5E5C2', border: '#EAD69F' },
+    food: { top: '#DDF3E1', bottom: '#BFE8C7', border: '#A2D9AC' },
+    medicine: { top: '#DEECF7', bottom: '#BBD8EE', border: '#9CC5E2' },
+    household: { top: '#EAE4F8', bottom: '#D3C8EF', border: '#BFB0E4' },
+    skincare: { top: '#F9E3EC', bottom: '#F0C6D7', border: '#E5ADC4' },
+    pantry: { top: '#FAEDD3', bottom: '#F3DDAE', border: '#E5C987' },
     // The extended palette: the same soft-pastel treatment, one family each.
     forest: { top: '#E1F3E6', bottom: '#C8E7D1', border: '#AFDABC' },
     ocean: { top: '#DFEBF8', bottom: '#C3D9EE', border: '#A9C9E2' },
@@ -297,7 +297,7 @@ export const LIGHT: Palette = {
     add: { top: '#F4F9F4', bottom: '#EDF4ED', border: '#D5E4D6' },
   },
   // The Add-category tile: a borderless soft card with fine diagonal lines.
-  addTile: { bg: '#F2F7F2', line: 'rgba(108,137,137,0.16)' },
+  addTile: { bg: '#EAF3EE', line: 'rgba(80,120,110,0.20)' },
   pills: {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance. The green pill is the

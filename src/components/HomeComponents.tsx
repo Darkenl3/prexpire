@@ -55,9 +55,9 @@ export const GLASS_STRIP_FX = {
 export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
   const light = c === LIGHT;
   return {
-    backgroundColor: light ? 'rgba(236,245,239,0.8)' : 'rgba(255,255,255,0.08)',
+    backgroundColor: light ? 'rgba(200,226,214,0.78)' : 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: light ? 'rgba(16,35,30,0.10)' : 'rgba(255,255,255,0.14)',
+    borderColor: light ? 'rgba(16,35,30,0.16)' : 'rgba(255,255,255,0.14)',
     ...(GLASS_FX as ViewStyle),
   } as ViewStyle;
 }
@@ -422,13 +422,15 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
       style={[{ width, borderRadius: 16 }, ...(c === LIGHT ? [CARD_SHADOW, { backgroundColor: outerBg }] : [])]}
     >
       {ghost ? (
-        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }, hatchFx(c.addTile.line)]}>{body}</View>
+        <View style={[...tileStyle, s.tileAdd, { backgroundColor: c.addTile.bg }, c === LIGHT && s.tileAddLight, hatchFx(c.addTile.line)]}>{body}</View>
       ) : (
         <LinearGradient
           colors={[t.top, t.bottom]}
           start={{ x: 0.5, y: 0 }}
           end={{ x: 0.5, y: 1 }}
-          style={tileStyle}
+          // On the light page each pastel card gets its own family's rim, so
+          // it holds its edge against the near-white background.
+          style={[...tileStyle, c === LIGHT && { borderWidth: 1, borderColor: t.border }]}
         >
           {body}
         </LinearGradient>
@@ -778,6 +780,9 @@ const useStyles = makeStyles((c) => ({
   },
   // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},
+  // On the light page the empty slot reads as a slot: a dashed rim around
+  // the hatched fill, so it never fades into the background.
+  tileAddLight: { borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#AFCBBE' },
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },
