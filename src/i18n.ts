@@ -37,6 +37,11 @@ import bg from './locales/bg.ts';
 import da from './locales/da.ts';
 import nb from './locales/nb.ts';
 import fi from './locales/fi.ts';
+import el from './locales/el.ts';
+import hu from './locales/hu.ts';
+import sk from './locales/sk.ts';
+import sl from './locales/sl.ts';
+import hr from './locales/hr.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -102,6 +107,11 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   da,
   nb,
   fi,
+  el,
+  hu,
+  sk,
+  sl,
+  hr,
 };
 
 export function availableLanguages() {
