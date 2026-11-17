@@ -33,6 +33,7 @@ import ja from './locales/ja.ts';
 import ko from './locales/ko.ts';
 import zhHans from './locales/zh-Hans.ts';
 import zhHant from './locales/zh-Hant.ts';
+import bg from './locales/bg.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -85,6 +86,7 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   ko,
   'zh-Hans': zhHans,
   'zh-Hant': zhHant,
+  bg,
 };
 
 export function availableLanguages() {

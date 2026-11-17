@@ -216,7 +216,8 @@ export const LIGHT: Palette = {
   textBody: '#33504D',
   textSub: '#547373',
   mint: '#A5E86B',
-  green: '#4E8F2B',
+  // 5:1 on the light page (was 4:1): links like View all and green labels.
+  green: '#3D7A20',
   // The selected side of the segmented control / tabs: the pale lime with
   // the deep lime ink (scanInk).
   selBg: '#B5EF8A',
@@ -302,7 +303,7 @@ export const LIGHT: Palette = {
     // Day pills with real presence: a clearly-tinted fill and a deep-toned
     // ink, so "1 day" / "3 days" read at a glance. The green pill is the
     // days-left badge: a pale capsule of the one green with its deep ink.
-    amber: { bg: '#FCF0D6', text: '#8F6217' },
+    amber: { bg: '#F9E2AE', text: '#6B4507' },
     green: { bg: '#C9F3A7', text: '#174B28' },
     red: { bg: '#FBE5E3', text: '#C03A34' },
   },
