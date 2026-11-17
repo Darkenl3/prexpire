@@ -34,10 +34,14 @@ import ko from './locales/ko.ts';
 import zhHans from './locales/zh-Hans.ts';
 import zhHant from './locales/zh-Hant.ts';
 import bg from './locales/bg.ts';
+import da from './locales/da.ts';
+import nb from './locales/nb.ts';
+import fi from './locales/fi.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
-  | 'ar' | 'ja' | 'ko' | 'zh-Hans' | 'zh-Hant';
+  | 'ar' | 'ja' | 'ko' | 'zh-Hans' | 'zh-Hant'
+  | 'da' | 'nb' | 'fi' | 'el' | 'hu' | 'sk' | 'sl' | 'hr';
 
 // Each language in its own name (what people look for in a list), with the
 // English name for the line underneath.
@@ -63,6 +67,14 @@ export const LANGUAGES: { code: LanguageCode; native: string; english: string; r
   { code: 'ko', native: '한국어', english: 'Korean' },
   { code: 'zh-Hans', native: '简体中文', english: 'Chinese (Simplified)' },
   { code: 'zh-Hant', native: '繁體中文', english: 'Chinese (Traditional)' },
+  { code: 'da', native: 'Dansk', english: 'Danish' },
+  { code: 'nb', native: 'Norsk', english: 'Norwegian' },
+  { code: 'fi', native: 'Suomi', english: 'Finnish' },
+  { code: 'el', native: 'Ελληνικά', english: 'Greek' },
+  { code: 'hu', native: 'Magyar', english: 'Hungarian' },
+  { code: 'sk', native: 'Slovenčina', english: 'Slovak' },
+  { code: 'sl', native: 'Slovenščina', english: 'Slovenian' },
+  { code: 'hr', native: 'Hrvatski', english: 'Croatian' },
 ];
 
 // The finished translations. A language is offered only once it is here.
@@ -87,6 +99,9 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   'zh-Hans': zhHans,
   'zh-Hant': zhHant,
   bg,
+  da,
+  nb,
+  fi,
 };
 
 export function availableLanguages() {
@@ -110,7 +125,9 @@ export function phoneLanguage(): LanguageCode {
       if (TRANSLATIONS[code]) return code;
       continue;
     }
-    const base = (lower.split(/[-_]/)[0] === 'iw' ? 'he' : lower.split(/[-_]/)[0]) as LanguageCode;
+    const first = lower.split(/[-_]/)[0];
+    // Hebrew's old code, and every Norwegian tag, onto the codes used here.
+    const base = (first === 'iw' ? 'he' : first === 'no' || first === 'nn' ? 'nb' : first) as LanguageCode;
     if (base === 'en') return 'en';
     if (TRANSLATIONS[base]) return base;
   }

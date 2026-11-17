@@ -645,35 +645,35 @@
  },
  {
   "text": "Go back",
-  "where": "src/components/HomeComponents.tsx:176"
+  "where": "src/components/HomeComponents.tsx:180"
  },
  {
   "text": "Menu",
-  "where": "src/components/HomeComponents.tsx:178"
+  "where": "src/components/HomeComponents.tsx:182"
  },
  {
   "text": "{0} notifications",
-  "where": "src/components/HomeComponents.tsx:200"
+  "where": "src/components/HomeComponents.tsx:204"
  },
  {
   "text": "Scan a label",
-  "where": "src/components/HomeComponents.tsx:318"
+  "where": "src/components/HomeComponents.tsx:336"
  },
  {
   "text": "Add manually",
-  "where": "src/components/HomeComponents.tsx:319"
+  "where": "src/components/HomeComponents.tsx:337"
  },
  {
   "text": "Lists",
-  "where": "src/components/HomeComponents.tsx:494"
+  "where": "src/components/HomeComponents.tsx:537"
  },
  {
   "text": "Reminders",
-  "where": "src/components/HomeComponents.tsx:495"
+  "where": "src/components/HomeComponents.tsx:538"
  },
  {
   "text": "Settings",
-  "where": "src/components/HomeComponents.tsx:496"
+  "where": "src/components/HomeComponents.tsx:539"
  },
  {
   "text": "Expired",
@@ -1801,99 +1801,99 @@
  },
  {
   "text": "Add an item to your Shopping List",
-  "where": "src/screens/ItemsScreen.tsx:85"
+  "where": "src/screens/ItemsScreen.tsx:86"
  },
  {
   "text": "Add an item",
-  "where": "src/screens/ItemsScreen.tsx:85"
+  "where": "src/screens/ItemsScreen.tsx:86"
  },
  {
   "text": "Shopping List",
-  "where": "src/screens/ItemsScreen.tsx:96"
+  "where": "src/screens/ItemsScreen.tsx:97"
  },
  {
   "text": "Items",
-  "where": "src/screens/ItemsScreen.tsx:96"
+  "where": "src/screens/ItemsScreen.tsx:97"
  },
  {
   "text": "Lists view",
-  "where": "src/screens/ItemsScreen.tsx:109"
+  "where": "src/screens/ItemsScreen.tsx:110"
  },
  {
   "text": "Tracked items",
-  "where": "src/screens/ItemsScreen.tsx:116"
+  "where": "src/screens/ItemsScreen.tsx:117"
  },
  {
   "text": "Shopping list",
-  "where": "src/screens/ItemsScreen.tsx:128"
+  "where": "src/screens/ItemsScreen.tsx:129"
  },
  {
   "text": "Filter and sort. Category: {0}. Sort by {1}.",
-  "where": "src/screens/ItemsScreen.tsx:153"
+  "where": "src/screens/ItemsScreen.tsx:154"
  },
  {
   "text": "Filter",
-  "where": "src/screens/ItemsScreen.tsx:157"
+  "where": "src/screens/ItemsScreen.tsx:158"
  },
  {
   "text": "expired",
-  "where": "src/screens/ItemsScreen.tsx:171"
+  "where": "src/screens/ItemsScreen.tsx:172"
  },
  {
   "text": "valid",
-  "where": "src/screens/ItemsScreen.tsx:173"
+  "where": "src/screens/ItemsScreen.tsx:174"
  },
  {
   "text": "1 expired item is hidden",
-  "where": "src/screens/ItemsScreen.tsx:179"
+  "where": "src/screens/ItemsScreen.tsx:180"
  },
  {
   "text": "{0} expired items are hidden",
-  "where": "src/screens/ItemsScreen.tsx:179"
+  "where": "src/screens/ItemsScreen.tsx:180"
  },
  {
   "text": ". You can show them again in Settings.",
-  "where": "src/screens/ItemsScreen.tsx:179"
+  "where": "src/screens/ItemsScreen.tsx:180"
  },
  {
   "text": "No matches",
-  "where": "src/screens/ItemsScreen.tsx:196"
- },
- {
-  "text": "Nothing you track is called “",
   "where": "src/screens/ItemsScreen.tsx:197"
  },
  {
+  "text": "Nothing you track is called “",
+  "where": "src/screens/ItemsScreen.tsx:198"
+ },
+ {
   "text": "Nothing here",
-  "where": "src/screens/ItemsScreen.tsx:205"
- },
- {
-  "text": "No items yet",
-  "where": "src/screens/ItemsScreen.tsx:205"
- },
- {
-  "text": "Scan a label or add a product by hand.",
   "where": "src/screens/ItemsScreen.tsx:206"
  },
  {
+  "text": "No items yet",
+  "where": "src/screens/ItemsScreen.tsx:206"
+ },
+ {
+  "text": "Scan a label or add a product by hand.",
+  "where": "src/screens/ItemsScreen.tsx:207"
+ },
+ {
   "text": "Filter & sort",
-  "where": "src/screens/ItemsScreen.tsx:292"
+  "where": "src/screens/ItemsScreen.tsx:293"
  },
  {
   "text": "Filter and sort",
-  "where": "src/screens/ItemsScreen.tsx:292"
+  "where": "src/screens/ItemsScreen.tsx:293"
  },
  {
   "text": "All categories",
-  "where": "src/screens/ItemsScreen.tsx:300"
+  "where": "src/screens/ItemsScreen.tsx:301"
  },
  {
   "text": "Sort by",
-  "where": "src/screens/ItemsScreen.tsx:305"
+  "where": "src/screens/ItemsScreen.tsx:306"
  },
  {
   "text": "Sort order",
-  "where": "src/screens/ItemsScreen.tsx:306"
+  "where": "src/screens/ItemsScreen.tsx:307"
  },
  {
   "text": "Soonest first",
@@ -3149,35 +3149,35 @@
  },
  {
   "text": "That is already on your list.",
-  "where": "src/screens/ShoppingScreen.tsx:390"
+  "where": "src/screens/ShoppingScreen.tsx:391"
  },
  {
   "text": "Type a name first.",
-  "where": "src/screens/ShoppingScreen.tsx:390"
+  "where": "src/screens/ShoppingScreen.tsx:391"
  },
  {
   "text": "What do you need?",
-  "where": "src/screens/ShoppingScreen.tsx:410"
+  "where": "src/screens/ShoppingScreen.tsx:411"
  },
  {
   "text": "Item name",
-  "where": "src/screens/ShoppingScreen.tsx:414"
+  "where": "src/screens/ShoppingScreen.tsx:415"
  },
  {
   "text": "Quantity",
-  "where": "src/screens/ShoppingScreen.tsx:423"
- },
- {
-  "text": "the item",
   "where": "src/screens/ShoppingScreen.tsx:424"
  },
  {
+  "text": "the item",
+  "where": "src/screens/ShoppingScreen.tsx:425"
+ },
+ {
   "text": "Adding…",
-  "where": "src/screens/ShoppingScreen.tsx:439"
+  "where": "src/screens/ShoppingScreen.tsx:440"
  },
  {
   "text": "Add to list",
-  "where": "src/screens/ShoppingScreen.tsx:439"
+  "where": "src/screens/ShoppingScreen.tsx:440"
  },
  {
   "text": "Expires in",
@@ -3341,6 +3341,38 @@
  },
  {
   "text": "Chinese (Traditional)",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Danish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Norwegian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Finnish",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Greek",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Hungarian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Slovak",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Slovenian",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Croatian",
   "where": "src/i18n.ts"
  },
  {

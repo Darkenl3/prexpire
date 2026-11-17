@@ -403,13 +403,13 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
         accessibilityRole="button"
         accessibilityLabel={name}
         scaleTo={0.98}
-        style={[{ width, borderRadius: 16 }, light ? [CARD_SHADOW, { backgroundColor: '#E2F7D8' }] : null]}
+        style={[{ width, borderRadius: 16 }, light ? { backgroundColor: '#F2FAEE' } : null]}
       >
         <View style={[s.tile, compact && s.tileCompact, s.tileCentered, light ? s.addLight : s.addDark]}>
-          <View style={[s.addBadge, compact && s.addBadgeCompact, { backgroundColor: light ? '#A9E58C' : '#36A04A' }]}>
-            <Ionicons name="add" size={compact ? 26 : 30} color={light ? '#103A20' : '#FFFFFF'} />
+          <View style={[s.addBadge, compact && s.addBadgeCompact, { backgroundColor: light ? '#D9F2CB' : '#1D4D30' }]}>
+            <Ionicons name="add" size={compact ? 26 : 30} color={light ? '#2F6F1A' : '#B6F48A'} />
           </View>
-          <Text style={[s.addLabel, compact && s.tileNameCompact, { color: light ? '#123B2C' : '#F2F7F5' }]} numberOfLines={2}>
+          <Text style={[s.addLabel, compact && s.tileNameCompact, { color: light ? '#2E4A44' : '#D6E3E0' }]} numberOfLines={2}>
             {name}
           </Text>
         </View>
@@ -821,11 +821,13 @@ const useStyles = makeStyles((c) => ({
   },
   // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},
-  addLight: { backgroundColor: '#E2F7D8', borderWidth: 2, borderColor: '#5DBA48' },
-  addDark: { backgroundColor: '#0F2C1D', borderWidth: 1.5, borderColor: '#2F8F45' },
+  // A quiet slot, not a headline: the content tiles stay the loudest thing
+  // on the grid, and this reads as the place to add one more.
+  addLight: { backgroundColor: '#F2FAEE', borderWidth: 1.5, borderColor: '#B7E0A3' },
+  addDark: { backgroundColor: '#0D1E16', borderWidth: 1.5, borderColor: '#24553A' },
   addBadge: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   addBadgeCompact: { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
-  addLabel: { fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 20 },
+  addLabel: { fontSize: 15, fontWeight: '700', textAlign: 'center', lineHeight: 19 },
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },

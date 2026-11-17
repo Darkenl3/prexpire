@@ -9,7 +9,9 @@ import path from 'node:path';
 
 const ROOT = path.resolve(process.argv[1], '../..');
 const [lang, ...files] = process.argv.slice(2);
-const list = JSON.parse(fs.readFileSync(path.join(ROOT, 'src/locales/strings.json'), 'utf8'));
+// I18N_LIST: a saved copy of strings.json to number against (when texts were
+// added after the numbered list was written).
+const list = JSON.parse(fs.readFileSync(process.env.I18N_LIST || path.join(ROOT, 'src/locales/strings.json'), 'utf8'));
 const out = {};
 let lines = 0;
 for (const f of files) {
