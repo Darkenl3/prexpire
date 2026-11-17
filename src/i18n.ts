@@ -19,6 +19,9 @@ import ro from './locales/ro.ts';
 import ru from './locales/ru.ts';
 import de from './locales/de.ts';
 import fr from './locales/fr.ts';
+import es from './locales/es.ts';
+import it from './locales/it.ts';
+import pt from './locales/pt.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -57,6 +60,9 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   ru,
   de,
   fr,
+  es,
+  it,
+  pt,
 };
 
 export function availableLanguages() {
