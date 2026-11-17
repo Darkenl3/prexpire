@@ -344,8 +344,8 @@ export function CategoryManager() {
                     {from.custom ? tr("Remove anyway (items show as \"Other\")") : tr("Remove, keep items filed (restore later)")}
                   </Text>
                 </PressScale>
-                <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
-                  <SmallButton label={tr("Cancel")} onPress={close} />
+                <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                  <SmallButton wide label={tr("Cancel")} onPress={close} />
                 </View>
               </View>
             </View>
@@ -601,11 +601,11 @@ function CategoryPage({
               ))}
             </View>
             <View style={s.pageActions}>
-              <SmallButton label={tr("Cancel")} onPress={onClose} />
+              <SmallButton wide label={tr("Cancel")} onPress={onClose} />
               {editing ? (
-                <SmallButton label={tr("Save changes")} icon="checkmark-circle-outline" tone="mint" onPress={submit} />
+                <SmallButton wide label={tr("Save changes")} icon="checkmark-circle-outline" tone="mint" onPress={submit} />
               ) : (
-                <SmallButton label={tr("Add category")} icon="add-circle-outline" tone="mint" onPress={submit} />
+                <SmallButton wide label={tr("Add category")} icon="add-circle-outline" tone="mint" onPress={submit} />
               )}
             </View>
           </ScrollView>
@@ -721,5 +721,5 @@ const useStyles = makeStyles((c) => ({
   tintDotOn: { borderColor: c.mint },
   // The swatch centres its checkmark (it used to sit in the top-left corner).
   tintFill: { width: 30, height: 30, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  pageActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 16 },
+  pageActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
 }));

@@ -43,6 +43,9 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
   const { all, custom } = useCategories();
   const c = useTheme();
   const s = useStyles();
+  // Ink on the lime Add item button and the selected switch side: the app's
+  // white in dark mode, the deep lime ink on the light page.
+  const onLime = c === LIGHT ? c.scanInk : '#FFFFFF';
   const [filter, setFilter] = useState<'all' | CategoryId>(category ?? 'all');
   const [query, setQuery] = useState('');
   // Shopping-list toasts are hoisted here so they float at the screen bottom,
@@ -84,7 +87,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
       accessibilityRole="button"
       accessibilityLabel={shopping ? tr("Add an item to your Shopping List") : tr("Add an item")}
     >
-      <Ionicons name="add" size={19} color={c.scanInk} />
+      <Ionicons name="add" size={19} color={onLime} />
       <Text style={s.addBtnText}>{tr("Add item")}</Text>
     </PressScale>
   );
@@ -115,7 +118,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             aria-checked={!shopping}
             accessibilityLabel={tr("Tracked items")}
           >
-            <Ionicons name="list" size={16} color={!shopping ? c.scanInk : c.textMuted} />
+            <Ionicons name="list" size={16} color={!shopping ? onLime : c.textMuted} />
             <Text style={[s.segText, !shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               {tr("Items")}</Text>
           </PressScale>
@@ -127,7 +130,7 @@ export function ItemsScreen({ badge, category, shopping, onNavigate }: Props) {
             aria-checked={!!shopping}
             accessibilityLabel={tr("Shopping list")}
           >
-            <Ionicons name="cart-outline" size={16} color={shopping ? c.scanInk : c.textMuted} />
+            <Ionicons name="cart-outline" size={16} color={shopping ? onLime : c.textMuted} />
             <Text style={[s.segText, shopping && s.segTextOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               {tr("Shopping list")}</Text>
           </PressScale>
@@ -344,7 +347,7 @@ const useStyles = makeStyles((t) => ({
   // while touched.
   addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 44, paddingHorizontal: 18, borderRadius: 999, backgroundColor: t.mint },
   addBtnPressed: { backgroundColor: t.mintPressed },
-  addBtnText: { color: t.scanInk, fontSize: 15, fontWeight: '700' },
+  addBtnText: { color: t === LIGHT ? t.scanInk : '#FFFFFF', fontSize: 15, fontWeight: '700' },
 
   // The Items / Shopping list segmented control (the tab's two views), in
   // the reference's language: a compact rounded capsule (white on light, the
@@ -367,7 +370,7 @@ const useStyles = makeStyles((t) => ({
   seg: { flex: 1, height: 44, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingHorizontal: 6 },
   segOn: { backgroundColor: t.selBg },
   segText: { color: t.textMuted, fontSize: 14, fontWeight: '600' },
-  segTextOn: { color: t.scanInk, fontWeight: '700' },
+  segTextOn: { color: t === LIGHT ? t.scanInk : '#FFFFFF', fontWeight: '700' },
   // The reference's one control row: the search field is the main control
   // (flex), the Filter button a smaller secondary capsule beside it.
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },

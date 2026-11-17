@@ -429,7 +429,10 @@ export function Note({ children, tone = 'muted' }: { children: ReactNode; tone?:
   );
 }
 
-export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled = false, accessibilityLabel }: { label: string; onPress: () => void; icon?: IconName; tone?: 'neutral' | 'mint' | 'danger'; disabled?: boolean; accessibilityLabel?: string }) {
+// wide: a dialog's action. The buttons share the row equally at a full
+// 50 pt height, so a dialog's choices read as real buttons in any language
+// and either reading direction.
+export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled = false, accessibilityLabel, wide = false }: { label: string; onPress: () => void; icon?: IconName; tone?: 'neutral' | 'mint' | 'danger'; disabled?: boolean; accessibilityLabel?: string; wide?: boolean }) {
   const c = useTheme();
   const s = useStyles();
   // The mint tone speaks the app's green accent at its mid, readable grade
@@ -448,13 +451,16 @@ export function SmallButton({ label, onPress, icon, tone = 'neutral', disabled =
       aria-disabled={disabled}
       style={[
         s.button,
+        wide && s.buttonWide,
         tone === 'mint' && { borderColor: c.btnMintBorder, backgroundColor: c.btnMintBg },
         tone === 'danger' && { borderColor: c.btnDangerBorder, backgroundColor: c.btnDangerBg },
         disabled && s.chipDisabled,
       ]}
     >
-      {icon && <Ionicons name={icon} size={16} color={color} />}
-      <Text style={[s.buttonText, { color }]}>{label}</Text>
+      {/* A dialog's half-width action gives its words the room: no icon, and
+          a long label (Russian, Romanian) may take a second line. */}
+      {icon && !wide && <Ionicons name={icon} size={16} color={color} />}
+      <Text style={[s.buttonText, wide && s.buttonTextWide, { color }]} numberOfLines={wide ? 2 : 1}>{label}</Text>
     </PressScale>
   );
 }
@@ -578,4 +584,6 @@ const useStyles = makeStyles((c) => ({
     ...(c === LIGHT ? { shadowColor: '#6B8073', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } } : null),
   },
   buttonText: { fontSize: 14, fontWeight: '600' },
+  buttonWide: { flex: 1, minHeight: 50, borderRadius: 14, justifyContent: 'center', paddingHorizontal: 12 },
+  buttonTextWide: { fontSize: 16, lineHeight: 19, flexShrink: 1, textAlign: 'center' },
 }));

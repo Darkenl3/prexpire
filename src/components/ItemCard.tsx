@@ -374,8 +374,8 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 style={[s.nameInput, { color: t.text, borderColor: draftFocused ? t.chipOnBorder : t.surfaceBorder, backgroundColor: t === LIGHT ? '#FFFFFF' : t.cardAlt }]}
               />
               <View style={s.renameButtons}>
-                <SmallButton label={tr("Cancel")} onPress={() => setRenameOpen(false)} />
-                <SmallButton label={tr("Save name")} icon="checkmark" tone="mint" onPress={() => void saveName()} />
+                <SmallButton wide label={tr("Cancel")} onPress={() => setRenameOpen(false)} />
+                <SmallButton wide label={tr("Save name")} icon="checkmark" tone="mint" onPress={() => void saveName()} />
               </View>
             </View>
           </FadeIn>
@@ -421,7 +421,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 })}
               </ScrollView>
               <View style={s.menuClose}>
-                <SmallButton label={tr("Cancel")} onPress={() => setCategoryOpen(false)} />
+                <SmallButton wide label={tr("Cancel")} onPress={() => setCategoryOpen(false)} />
               </View>
             </View>
           </FadeIn>
@@ -452,7 +452,7 @@ export function ItemCard({ item, compact = false, onToast }: Props) {
                 <Text style={[s.menuRowText, { color: t.text }]}>{tr("Consumed, don't add")}</Text>
               </PressScale>
               <View style={s.menuClose}>
-                <SmallButton label={tr("Cancel")} onPress={() => setConsumeOpen(false)} />
+                <SmallButton wide label={tr("Cancel")} onPress={() => setConsumeOpen(false)} />
               </View>
             </View>
           </FadeIn>
@@ -540,10 +540,10 @@ const useStyles = makeStyles((t) => ({
     backgroundColor: t.cardAlt,
   },
   menuRowText: { fontSize: 15, fontWeight: '600' },
-  menuClose: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
+  menuClose: { flexDirection: 'row', marginTop: 8 },
   // The Rename dialog's field (the shopping list's input box) and buttons.
   nameInput: { borderWidth: 1, borderRadius: 16, fontSize: 16, paddingHorizontal: 14, minHeight: 52 },
-  renameButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 6 },
+  renameButtons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   // The Change category dialog: a scrolling list of menu rows, art first.
   categoryMenu: { maxHeight: '80%' },
   categoryList: { flexGrow: 0 },

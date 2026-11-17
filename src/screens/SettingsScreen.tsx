@@ -1095,8 +1095,8 @@ function BackupDetail() {
                       {tr("Restore {0} {1}{2}? What is here now will be replaced.", [pending.items, pending.items === 1 ? 'item' : 'items', pending.createdAt ? ` saved ${new Date(pending.createdAt).toLocaleDateString()}` : ''])}
                     </Note>
                     <View style={s.buttons}>
-                      <SmallButton label={tr("Cancel")} onPress={() => setPending(null)} />
-                      <SmallButton label={tr("Restore")} icon="refresh-outline" tone="mint" onPress={() => void restore()} />
+                      <SmallButton wide label={tr("Cancel")} onPress={() => setPending(null)} />
+                      <SmallButton wide label={tr("Restore")} icon="refresh-outline" tone="mint" onPress={() => void restore()} />
                     </View>
                   </>
                 ) : (
@@ -1384,8 +1384,8 @@ function ClearDataDialog({ visible, itemCount, categoryCount, listCount, onCance
           <Text style={s.dialogMuted}>{tr("This can't be undone; export your items first if you want a copy")}</Text>
           {error && <Note tone="warn">{tr("Nothing could be deleted because this browser's storage refused the change. Try again")}</Note>}
           <View style={s.dialogButtons}>
-            <SmallButton label={tr("Cancel")} onPress={onCancel} disabled={busy} />
-            <SmallButton label={busy ? tr("Deleting…") : tr("Delete everything")} icon="trash-outline" tone="danger" onPress={confirm} disabled={busy} />
+            <SmallButton wide label={tr("Cancel")} onPress={onCancel} disabled={busy} />
+            <SmallButton wide label={busy ? tr("Deleting…") : tr("Delete everything")} icon="trash-outline" tone="danger" onPress={confirm} disabled={busy} />
           </View>
         </View>
       </View>
@@ -1475,7 +1475,7 @@ const useStyles = makeStyles((t) => ({
   dialogText: { color: t.text, fontSize: 14.5, lineHeight: 20 },
   dialogList: { gap: 2 },
   dialogMuted: { color: t.textMuted, fontSize: 13, lineHeight: 18 },
-  dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
+  dialogButtons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   // The settings search sheet: the page's own frame and header language, with
   // results as one grouped card of compact rows.
   searchRoot: { flex: 1, backgroundColor: t.bg },

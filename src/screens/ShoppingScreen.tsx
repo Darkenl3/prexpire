@@ -312,7 +312,7 @@ function CheckButton({ checked, label, onPress }: { checked: boolean; label: str
 
 // The quantity stepper. Deliberately a plain Pressable (like the scanner's
 // steppers): it must answer rapid repeated taps instantly.
-function QtyStepper({ value, onChange, label }: { value: number; onChange: (q: number) => void; label: string }) {
+function QtyStepper({ value, onChange, label, big = false }: { value: number; onChange: (q: number) => void; label: string; big?: boolean }) {
   const c = useStyles();
   const t = useTheme();
   const btn = (icon: keyof typeof Ionicons.glyphMap, delta: number, disabled: boolean, a11y: string) => (
@@ -321,15 +321,15 @@ function QtyStepper({ value, onChange, label }: { value: number; onChange: (q: n
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={tr("{0} quantity of {1}", [a11y, label])}
-      style={({ pressed }) => [c.stepBtn, pressed && c.stepPressed, disabled && c.stepDisabled]}
+      style={({ pressed }) => [c.stepBtn, big && c.stepBtnBig, pressed && c.stepPressed, disabled && c.stepDisabled]}
     >
-      <Ionicons name={icon} size={14} color={disabled ? t.textMuted : t.text} />
+      <Ionicons name={icon} size={big ? 20 : 14} color={disabled ? t.textMuted : t.text} />
     </Pressable>
   );
   return (
-    <View style={c.stepper}>
+    <View style={[c.stepper, big && c.stepperBig]}>
       {btn('remove', -1, value <= 1, tr("Decrease"))}
-      <Text style={c.qty} accessibilityLabel={tr("Quantity of {0}: {1}", [label, value])}>
+      <Text style={[c.qty, big && c.qtyBig]} accessibilityLabel={tr("Quantity of {0}: {1}", [label, value])}>
         {value}
       </Text>
       {btn('add', 1, value >= 99, tr("Increase"))}
@@ -352,9 +352,10 @@ function purchasedLabel(purchasedAt: string, format: DateFormat): string {
 function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClose: () => void; onAdded: (name: string) => void }) {
   const t = useTheme();
   const c = useStyles();
-  // The phone keyboard's footprint on the web (0 everywhere else): the
-  // backdrop pads by it, so the centered dialog rides above the keys and the
-  // name input is never covered while typing.
+  // The phone keyboard's footprint on the web (0 everywhere else): while it
+  // is up the dialog sits just above the keys instead of re-centering on
+  // every step of the keyboard's slide (which made it jump), and the name
+  // input is never covered while typing.
   const webKeyboard = useWebKeyboardInset();
   const { addManual } = useShopping();
   const { all } = useCategories();
@@ -394,7 +395,7 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => {} : onClose}>
-      <View style={[c.backdrop, webKeyboard > 0 && { paddingBottom: webKeyboard }]}>
+      <View style={[c.backdrop, webKeyboard > 0 && { justifyContent: 'flex-end', paddingBottom: webKeyboard + 12 }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={busy ? undefined : onClose} accessibilityLabel={tr("Close")} importantForAccessibility="no" />
         <View
           style={[c.dialog, { backgroundColor: t.dialogBg, borderColor: t.surfaceBorder }]}
@@ -421,7 +422,7 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
             onSubmitEditing={() => void save()}
           />
           <Text style={c.fieldLabel}>{tr("Quantity")}</Text>
-          <QtyStepper value={quantity} onChange={setQuantity} label={name || tr("the item")} />
+          <QtyStepper big value={quantity} onChange={setQuantity} label={name || tr("the item")} />
           <Text style={c.fieldLabel}>{tr("Category")}</Text>
           <Options
             label={tr("Category")}
@@ -435,8 +436,8 @@ function AddItemDialog({ visible, onClose, onAdded }: { visible: boolean; onClos
             </FadeIn>
           ) : null}
           <View style={c.dialogButtons}>
-            <SmallButton label={tr("Cancel")} onPress={onClose} disabled={busy} />
-            <SmallButton label={busy ? tr("Adding…") : tr("Add to list")} icon="add" tone="mint" onPress={() => void save()} disabled={busy || !name.trim()} />
+            <SmallButton wide label={tr("Cancel")} onPress={onClose} disabled={busy} />
+            <SmallButton wide label={busy ? tr("Adding…") : tr("Add to list")} icon="add" tone="mint" onPress={() => void save()} disabled={busy || !name.trim()} />
           </View>
         </View>
       </View>
@@ -543,6 +544,10 @@ const useStyles = makeStyles((t) => ({
   pillTextAmber: { color: t.pills.amber.text },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   stepBtn: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: t.cardAlt },
+  // The add dialog's stepper: full 40 pt buttons and a readable count.
+  stepBtnBig: { width: 40, height: 40, borderRadius: 20 },
+  stepperBig: { gap: 6, alignSelf: 'flex-start' },
+  qtyBig: { minWidth: 32, fontSize: 18 },
   stepPressed: { opacity: 0.6 },
   stepDisabled: { opacity: 0.35 },
   qty: { minWidth: 20, textAlign: 'center', color: t.text, fontSize: 13.5, fontWeight: '600' },
@@ -570,7 +575,7 @@ const useStyles = makeStyles((t) => ({
     minHeight: 52,
   },
   fieldLabel: { color: t.textMuted, fontSize: 13, fontWeight: '600', marginTop: 4 },
-  dialogButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8, flexWrap: 'wrap' },
+  dialogButtons: { flexDirection: 'row', gap: 10, marginTop: 10 },
 
   toastWrap: { position: 'absolute', left: 16, right: 16, bottom: 110, alignItems: 'center' },
   toast: {
