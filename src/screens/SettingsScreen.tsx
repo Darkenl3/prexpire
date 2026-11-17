@@ -1181,7 +1181,9 @@ function StatsDetail() {
   const firstMonth = months[rates.findIndex((r) => r !== null)];
   const trend =
     first != null && last != null && firstMonth && firstMonth.key !== months[months.length - 1].key && Math.round(first * 100) !== Math.round(last * 100)
-      ? tr("{0} from {1}% in {2}", [last > first ? 'Up' : 'Down', Math.round(first * 100), MONTH[firstMonth.month]])
+      ? last > first
+        ? tr("Up from {0}% in {1}", [Math.round(first * 100), MONTH[firstMonth.month]])
+        : tr("Down from {0}% in {1}", [Math.round(first * 100), MONTH[firstMonth.month]])
       : null;
   // On a wide landscape screen: this month and the chart on the left, the
   // totals and the categories on the right.

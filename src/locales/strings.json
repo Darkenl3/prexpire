@@ -2864,192 +2864,196 @@
   "where": "src/screens/SettingsScreen.tsx:1139"
  },
  {
-  "text": "{0} from {1}% in {2}",
-  "where": "src/screens/SettingsScreen.tsx:1184"
+  "text": "Up from {0}% in {1}",
+  "where": "src/screens/SettingsScreen.tsx:1185"
+ },
+ {
+  "text": "Down from {0}% in {1}",
+  "where": "src/screens/SettingsScreen.tsx:1186"
  },
  {
   "text": "This month",
-  "where": "src/screens/SettingsScreen.tsx:1193"
+  "where": "src/screens/SettingsScreen.tsx:1195"
  },
  {
   "text": "{0} used in time this month. {1} used, {2} expired.",
-  "where": "src/screens/SettingsScreen.tsx:1194"
+  "where": "src/screens/SettingsScreen.tsx:1196"
  },
  {
   "text": "used in time",
-  "where": "src/screens/SettingsScreen.tsx:1197"
+  "where": "src/screens/SettingsScreen.tsx:1199"
  },
  {
   "text": "{0} used  ·  {1} expired",
-  "where": "src/screens/SettingsScreen.tsx:1201"
+  "where": "src/screens/SettingsScreen.tsx:1203"
  },
  {
   "text": "Nothing used or expired yet this month.",
-  "where": "src/screens/SettingsScreen.tsx:1201"
+  "where": "src/screens/SettingsScreen.tsx:1203"
  },
  {
   "text": "Used in time, last 6 months",
-  "where": "src/screens/SettingsScreen.tsx:1205"
+  "where": "src/screens/SettingsScreen.tsx:1207"
  },
  {
   "text": "Share of items used in time, per month",
-  "where": "src/screens/SettingsScreen.tsx:1209"
+  "where": "src/screens/SettingsScreen.tsx:1211"
  },
  {
   "text": "All time",
-  "where": "src/screens/SettingsScreen.tsx:1232"
- },
- {
-  "text": "Used in time",
   "where": "src/screens/SettingsScreen.tsx:1234"
  },
  {
-  "text": "Items used",
-  "where": "src/screens/SettingsScreen.tsx:1235"
- },
- {
-  "text": "Expired before use",
+  "text": "Used in time",
   "where": "src/screens/SettingsScreen.tsx:1236"
  },
  {
-  "text": "Expiring soon now",
+  "text": "Items used",
   "where": "src/screens/SettingsScreen.tsx:1237"
  },
  {
+  "text": "Expired before use",
+  "where": "src/screens/SettingsScreen.tsx:1238"
+ },
+ {
+  "text": "Expiring soon now",
+  "where": "src/screens/SettingsScreen.tsx:1239"
+ },
+ {
   "text": "By category",
-  "where": "src/screens/SettingsScreen.tsx:1241"
+  "where": "src/screens/SettingsScreen.tsx:1243"
  },
  {
   "text": "Use \"Mark as consumed\" when you finish something: it counts as used. Anything past its date counts as expired, whether it's still in your list or removed.",
-  "where": "src/screens/SettingsScreen.tsx:1260"
+  "where": "src/screens/SettingsScreen.tsx:1262"
  },
  {
   "text": "Nothing yet. Use \"Mark as consumed\" in an item's menu when you finish it; anything past its date counts as expired.",
-  "where": "src/screens/SettingsScreen.tsx:1260"
+  "where": "src/screens/SettingsScreen.tsx:1262"
  },
  {
   "text": "Last updated {0}",
-  "where": "src/screens/SettingsScreen.tsx:1273"
+  "where": "src/screens/SettingsScreen.tsx:1275"
  },
  {
   "text": "In short",
-  "where": "src/screens/SettingsScreen.tsx:1277"
+  "where": "src/screens/SettingsScreen.tsx:1279"
  },
  {
   "text": "Your data",
-  "where": "src/screens/SettingsScreen.tsx:1282"
+  "where": "src/screens/SettingsScreen.tsx:1284"
  },
  {
   "text": "Stored on this phone. With an optional account, a copy is backed up so it's the same on your other phones",
-  "where": "src/screens/SettingsScreen.tsx:1283"
+  "where": "src/screens/SettingsScreen.tsx:1285"
  },
  {
   "text": "Camera",
-  "where": "src/screens/SettingsScreen.tsx:1285"
+  "where": "src/screens/SettingsScreen.tsx:1287"
  },
  {
   "text": "Labels are read on the phone; images are never uploaded or kept",
-  "where": "src/screens/SettingsScreen.tsx:1285"
+  "where": "src/screens/SettingsScreen.tsx:1287"
  },
  {
   "text": "Barcodes",
-  "where": "src/screens/SettingsScreen.tsx:1286"
+  "where": "src/screens/SettingsScreen.tsx:1288"
  },
  {
   "text": "Only the barcode number is sent to product databases, to find the name",
-  "where": "src/screens/SettingsScreen.tsx:1286"
+  "where": "src/screens/SettingsScreen.tsx:1288"
  },
  {
   "text": "No ads, no tracking",
-  "where": "src/screens/SettingsScreen.tsx:1287"
+  "where": "src/screens/SettingsScreen.tsx:1289"
  },
  {
   "text": "Questions: {0}",
-  "where": "src/screens/SettingsScreen.tsx:1287"
+  "where": "src/screens/SettingsScreen.tsx:1289"
  },
  {
   "text": "Keep track of what matters before it expires.",
-  "where": "src/screens/SettingsScreen.tsx:1292"
+  "where": "src/screens/SettingsScreen.tsx:1294"
  },
  {
   "text": "Version",
-  "where": "src/screens/SettingsScreen.tsx:1293"
+  "where": "src/screens/SettingsScreen.tsx:1295"
  },
  {
   "text": "Last updated",
-  "where": "src/screens/SettingsScreen.tsx:1306"
- },
- {
-  "text": "The short version",
   "where": "src/screens/SettingsScreen.tsx:1308"
  },
  {
+  "text": "The short version",
+  "where": "src/screens/SettingsScreen.tsx:1310"
+ },
+ {
   "text": "Also at prexpire.com/",
-  "where": "src/screens/SettingsScreen.tsx:1338"
+  "where": "src/screens/SettingsScreen.tsx:1340"
  },
  {
   "text": "Clear all data?",
-  "where": "src/screens/SettingsScreen.tsx:1373"
+  "where": "src/screens/SettingsScreen.tsx:1375"
  },
  {
   "text": "This permanently deletes from",
-  "where": "src/screens/SettingsScreen.tsx:1374"
+  "where": "src/screens/SettingsScreen.tsx:1376"
  },
  {
   "text": "this browser",
-  "where": "src/screens/SettingsScreen.tsx:1374"
+  "where": "src/screens/SettingsScreen.tsx:1376"
  },
  {
   "text": "this device",
-  "where": "src/screens/SettingsScreen.tsx:1374"
+  "where": "src/screens/SettingsScreen.tsx:1376"
  },
  {
   "text": "1 item you added",
-  "where": "src/screens/SettingsScreen.tsx:1376"
+  "where": "src/screens/SettingsScreen.tsx:1378"
  },
  {
   "text": "{0} items you added",
-  "where": "src/screens/SettingsScreen.tsx:1376"
+  "where": "src/screens/SettingsScreen.tsx:1378"
  },
  {
   "text": "1 Shopping List entry",
-  "where": "src/screens/SettingsScreen.tsx:1377"
+  "where": "src/screens/SettingsScreen.tsx:1379"
  },
  {
   "text": "{0} Shopping List entries",
-  "where": "src/screens/SettingsScreen.tsx:1377"
+  "where": "src/screens/SettingsScreen.tsx:1379"
  },
  {
   "text": "1 category you added",
-  "where": "src/screens/SettingsScreen.tsx:1379"
- },
- {
-  "text": "{0} categories you added",
-  "where": "src/screens/SettingsScreen.tsx:1379"
- },
- {
-  "text": "•  Every setting on this page (back to the defaults)",
   "where": "src/screens/SettingsScreen.tsx:1381"
  },
  {
-  "text": "•  The remembered last-used category and expiration events",
-  "where": "src/screens/SettingsScreen.tsx:1382"
+  "text": "{0} categories you added",
+  "where": "src/screens/SettingsScreen.tsx:1381"
  },
  {
-  "text": "This can't be undone; export your items first if you want a copy",
+  "text": "•  Every setting on this page (back to the defaults)",
+  "where": "src/screens/SettingsScreen.tsx:1383"
+ },
+ {
+  "text": "•  The remembered last-used category and expiration events",
   "where": "src/screens/SettingsScreen.tsx:1384"
  },
  {
+  "text": "This can't be undone; export your items first if you want a copy",
+  "where": "src/screens/SettingsScreen.tsx:1386"
+ },
+ {
   "text": "Nothing could be deleted because this browser's storage refused the change. Try again",
-  "where": "src/screens/SettingsScreen.tsx:1385"
+  "where": "src/screens/SettingsScreen.tsx:1387"
  },
  {
   "text": "Deleting…",
-  "where": "src/screens/SettingsScreen.tsx:1388"
+  "where": "src/screens/SettingsScreen.tsx:1390"
  },
  {
   "text": "Delete everything",
-  "where": "src/screens/SettingsScreen.tsx:1388"
+  "where": "src/screens/SettingsScreen.tsx:1390"
  },
  {
   "text": "Moved to Purchased",
