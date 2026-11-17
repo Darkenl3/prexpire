@@ -25,6 +25,8 @@ import pt from './locales/pt.ts';
 import pl from './locales/pl.ts';
 import nl from './locales/nl.ts';
 import sv from './locales/sv.ts';
+import cs from './locales/cs.ts';
+import uk from './locales/uk.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -69,6 +71,8 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   pl,
   nl,
   sv,
+  cs,
+  uk,
 };
 
 export function availableLanguages() {
