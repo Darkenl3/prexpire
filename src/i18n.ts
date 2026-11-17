@@ -42,11 +42,16 @@ import hu from './locales/hu.ts';
 import sk from './locales/sk.ts';
 import sl from './locales/sl.ts';
 import hr from './locales/hr.ts';
+import hi from './locales/hi.ts';
+import ur from './locales/ur.ts';
+import th from './locales/th.ts';
+import vi from './locales/vi.ts';
+import id from './locales/id.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
   | 'ar' | 'ja' | 'ko' | 'zh-Hans' | 'zh-Hant'
-  | 'da' | 'nb' | 'fi' | 'el' | 'hu' | 'sk' | 'sl' | 'hr';
+  | 'da' | 'nb' | 'fi' | 'el' | 'hu' | 'sk' | 'sl' | 'hr' | 'hi' | 'ur' | 'th' | 'vi' | 'id';
 
 // Each language in its own name (what people look for in a list), with the
 // English name for the line underneath.
@@ -80,6 +85,11 @@ export const LANGUAGES: { code: LanguageCode; native: string; english: string; r
   { code: 'sk', native: 'Slovenčina', english: 'Slovak' },
   { code: 'sl', native: 'Slovenščina', english: 'Slovenian' },
   { code: 'hr', native: 'Hrvatski', english: 'Croatian' },
+  { code: 'hi', native: 'हिन्दी', english: 'Hindi' },
+  { code: 'ur', native: 'اردو', english: 'Urdu', rtl: true },
+  { code: 'th', native: 'ไทย', english: 'Thai' },
+  { code: 'vi', native: 'Tiếng Việt', english: 'Vietnamese' },
+  { code: 'id', native: 'Bahasa Indonesia', english: 'Indonesian' },
 ];
 
 // The finished translations. A language is offered only once it is here.
@@ -112,6 +122,11 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   sk,
   sl,
   hr,
+  hi,
+  ur,
+  th,
+  vi,
+  id,
 };
 
 export function availableLanguages() {
@@ -137,7 +152,7 @@ export function phoneLanguage(): LanguageCode {
     }
     const first = lower.split(/[-_]/)[0];
     // Hebrew's old code, and every Norwegian tag, onto the codes used here.
-    const base = (first === 'iw' ? 'he' : first === 'no' || first === 'nn' ? 'nb' : first) as LanguageCode;
+    const base = (first === 'iw' ? 'he' : first === 'in' ? 'id' : first === 'no' || first === 'nn' ? 'nb' : first) as LanguageCode;
     if (base === 'en') return 'en';
     if (TRANSLATIONS[base]) return base;
   }

@@ -3376,6 +3376,26 @@
   "where": "src/i18n.ts"
  },
  {
+  "text": "Hindi",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Urdu",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Thai",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Vietnamese",
+  "where": "src/i18n.ts"
+ },
+ {
+  "text": "Indonesian",
+  "where": "src/i18n.ts"
+ },
+ {
   "text": "Scanning",
   "where": "src/support.json"
  },
