@@ -55,9 +55,11 @@ export const GLASS_STRIP_FX = {
 export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
   const light = c === LIGHT;
   return {
-    backgroundColor: light ? 'rgba(226,230,229,0.85)' : 'rgba(255,255,255,0.08)',
+    // The light page carries the same smoked dark glass as dark mode, so the
+    // round buttons look alike in both themes.
+    backgroundColor: light ? 'rgba(16,30,32,0.86)' : 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: light ? 'rgba(16,35,30,0.16)' : 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(255,255,255,0.14)',
     ...(GLASS_FX as ViewStyle),
   } as ViewStyle;
 }
@@ -125,7 +127,7 @@ export function GlassIconButton({
         style,
       ]}
     >
-      {children ?? <Ionicons name={dirIcon(icon ?? 'chevron-back')} size={iconSize} color={c === LIGHT ? '#10231E' : c.text} />}
+      {children ?? <Ionicons name={dirIcon(icon ?? 'chevron-back')} size={iconSize} color={c === LIGHT ? '#F2F7F5' : c.text} />}
     </PressScale>
   );
 }
@@ -198,7 +200,7 @@ export function Header({
           the shopping count.) */}
       {onBell && (
         <GlassIconButton icon="notifications-outline" iconSize={22} badge={badge} label={tr("{0} notifications", [badge])} onPress={onBell}>
-          <Ionicons name="notifications-outline" size={22} color={c.text} />
+          <Ionicons name="notifications-outline" size={22} color={c === LIGHT ? '#F2F7F5' : c.text} />
           {badge > 0 && (
             <View style={[s.bellBadge, { borderColor: c.bg }]}>
               <Text style={s.bellBadgeText}>{badge > 99 ? '99+' : badge}</Text>
