@@ -57,7 +57,9 @@ export function liquidGlass(c: ReturnType<typeof useTheme>): ViewStyle {
   return {
     // The light page carries the same smoked dark glass as dark mode, so the
     // round buttons look alike in both themes.
-    backgroundColor: light ? 'rgba(16,30,32,0.86)' : 'rgba(255,255,255,0.08)',
+    // Light mode shows the exact dark-mode button: the colour the dark glass
+    // renders on the dark page (8% white over #030709), opaque here.
+    backgroundColor: light ? '#171B1D' : 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.14)',
     ...(GLASS_FX as ViewStyle),
@@ -127,7 +129,7 @@ export function GlassIconButton({
         style,
       ]}
     >
-      {children ?? <Ionicons name={dirIcon(icon ?? 'chevron-back')} size={iconSize} color={c === LIGHT ? '#F2F7F5' : c.text} />}
+      {children ?? <Ionicons name={dirIcon(icon ?? 'chevron-back')} size={iconSize} color={c === LIGHT ? '#F3F6F5' : c.text} />}
     </PressScale>
   );
 }
@@ -200,7 +202,7 @@ export function Header({
           the shopping count.) */}
       {onBell && (
         <GlassIconButton icon="notifications-outline" iconSize={22} badge={badge} label={tr("{0} notifications", [badge])} onPress={onBell}>
-          <Ionicons name="notifications-outline" size={22} color={c === LIGHT ? '#F2F7F5' : c.text} />
+          <Ionicons name="notifications-outline" size={22} color={c === LIGHT ? '#F3F6F5' : c.text} />
           {badge > 0 && (
             <View style={[s.bellBadge, { borderColor: c.bg }]}>
               <Text style={s.bellBadgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -219,9 +221,10 @@ export function Header({
 function homeInk(c: ReturnType<typeof useTheme>) {
   const light = c === LIGHT;
   return {
-    sub: light ? '#4A6660' : '#B4C6C8',
-    chevron: light ? '#4A6660' : '#C2D2D4',
-    status: light ? '#2F6F1A' : c.green,
+    sub: light ? '#3A524D' : '#B4C6C8',
+    chevron: light ? '#2E4A44' : '#C2D2D4',
+    status: light ? '#22600F' : c.green,
+    amber: light ? '#734A08' : c.amberText,
   };
 }
 
@@ -400,10 +403,10 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
         accessibilityRole="button"
         accessibilityLabel={name}
         scaleTo={0.98}
-        style={[{ width, borderRadius: 16 }, light ? [CARD_SHADOW, { backgroundColor: '#EEFBEA' }] : null]}
+        style={[{ width, borderRadius: 16 }, light ? [CARD_SHADOW, { backgroundColor: '#E2F7D8' }] : null]}
       >
         <View style={[s.tile, compact && s.tileCompact, s.tileCentered, light ? s.addLight : s.addDark]}>
-          <View style={[s.addBadge, compact && s.addBadgeCompact, { backgroundColor: light ? '#C9F2B4' : '#36A04A' }]}>
+          <View style={[s.addBadge, compact && s.addBadgeCompact, { backgroundColor: light ? '#A9E58C' : '#36A04A' }]}>
             <Ionicons name="add" size={compact ? 26 : 30} color={light ? '#103A20' : '#FFFFFF'} />
           </View>
           <Text style={[s.addLabel, compact && s.tileNameCompact, { color: light ? '#123B2C' : '#F2F7F5' }]} numberOfLines={2}>
@@ -434,7 +437,7 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
         <View style={s.status}>
           <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : ink.status }]} />
           <Text
-            style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : ink.status }]}
+            style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? ink.amber : ink.status }, light && { fontWeight: '700' }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -818,7 +821,7 @@ const useStyles = makeStyles((c) => ({
   },
   // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},
-  addLight: { backgroundColor: '#EEFBEA', borderWidth: 1.5, borderColor: '#9ADB86' },
+  addLight: { backgroundColor: '#E2F7D8', borderWidth: 2, borderColor: '#5DBA48' },
   addDark: { backgroundColor: '#0F2C1D', borderWidth: 1.5, borderColor: '#2F8F45' },
   addBadge: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   addBadgeCompact: { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
