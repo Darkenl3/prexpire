@@ -646,6 +646,27 @@ const PATTERNS: Pattern[] = [
       return dayMonthNoYear(Number(m[1]), Number(m[2]), opts);
     },
   },
+  // 07/12 14:07 — a day and month with the packing time right after it, the
+  // usual dairy stamp: no label and no year. The time marks it as a date
+  // (a lot code or a price has none), so it reads like the labelled form
+  // above: the next time that day comes round (this year unless it has
+  // passed), both orders when both are dates, and the user checks the year.
+  {
+    re: new RegExp(`${NB}(\\d{1,2})[./](\\d{1,2})(?=\\s+(?:[01]?\\d|2[0-3])[:.][0-5]\\d)`, 'g'),
+    read: (m, opts) => dayMonthNoYear(Number(m[1]), Number(m[2]), opts),
+  },
+  // 07/12 alone on its line (two digits each side) that cannot be a month
+  // and year: a day and month with no year, in its next occurrence. A lone
+  // "10/27" that could be October 2027 stays unread without a label, as
+  // before (too easy to mistake).
+  {
+    re: /^\s*(\d{2})[./](\d{2})\s*$/g,
+    read: (m, opts) => {
+      const monthYear = toMonth(makeYear(m[2]), Number(m[1]));
+      if (monthYear && inRange(monthYear, opts.today)) return [];
+      return dayMonthNoYear(Number(m[1]), Number(m[2]), opts);
+    },
+  },
   // BEST BEFORE 27 OCT (no year), only right after an expiry label. The year is the next
   // time that day comes round, and the user is asked to check it.
   {

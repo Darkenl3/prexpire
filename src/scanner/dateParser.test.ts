@@ -613,8 +613,13 @@ test('photo: ZUZU yogurt "Expiră la data de: 14/11" reads 14 Nov with the year 
     assert.ok(r.reasons.includes('no-year'), JSON.stringify(lines));
     assert.equal(r.confidence, 'medium', JSON.stringify(lines));
   }
-  // Without any expiry label a bare "14/11" is not a date (it could be anything).
-  assert.equal(parseExpiry(['14/11 16:38 B'], uk).kind, 'none');
+  // Without a label, a day and month with the packing time beside it is
+  // still the date (the usual dairy stamp), its year to check.
+  const bare = found(['14/11 16:38 B']);
+  assert.equal(bare.primary.iso, '2026-11-14');
+  assert.ok(bare.reasons.includes('no-year'));
+  // A bare day/month next to nothing that marks it as a date stays unread.
+  assert.equal(parseExpiry(['Price 14/11 offer'], uk).kind, 'none');
   // A day/month already passed this year rolls to next year.
   assert.equal(found(['EXP 03/02']).primary.iso, '2027-02-03');
   // "EXP 10/27" stays month/year (October 2027), never 10 Jan... of a guessed year.
@@ -727,4 +732,16 @@ test('photo: "EXPIRATION: 27280" is the US Julian code for 7 Oct 2027', () => {
   assert.equal(parseExpiry(['LOT: 1687054'], uk).kind, 'none');
   // A 5-digit stamp that IS a day/month/year keeps that reading.
   assert.equal(found(['EXP 20627']).primary.iso, '2027-06-20');
+});
+
+test('photo: Tara milk "07/12 14:07 6" (no label, no year) reads 7 Dec in day-first regions', () => {
+  for (const lines of [['07/12 14:07 6'], ['07/12 14:076'], ['07.12 14:07'], ['07/12']]) {
+    const r = found(lines);
+    assert.equal(r.primary.iso, '2026-12-07', JSON.stringify(lines));
+    assert.ok(r.reasons.includes('no-year'), JSON.stringify(lines));
+  }
+  // Month-first regions read it as 12 July, next year (it has passed this year).
+  assert.equal(found(['07/12 14:07'], us).primary.iso, '2027-07-12');
+  // Alone on its line, "10/27" (could be October 2027) still needs a label.
+  assert.equal(parseExpiry(['10/27'], uk).kind, 'none');
 });
