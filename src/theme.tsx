@@ -194,7 +194,7 @@ export const DARK: Palette = {
     amber: { bg: '#3A2C14', text: '#FFB454' },
     // The green days-left badge: a deep green capsule carrying the bright
     // lime (the fill grade) as its text, so the badge glows like the buttons.
-    green: { bg: '#093426', text: '#A6E878' },
+    green: { bg: '#0B3A28', text: '#B6F48A' },
     // Expired items: the red family of the attention card, as a day pill.
     red: { bg: '#331613', text: '#FF8A8A' },
   },
@@ -246,7 +246,7 @@ export const LIGHT: Palette = {
   alertBorder: '#F2CDCB',
   alertIconBg: '#F8DAD6',
   okBg: '#EAF6E2',
-  okBorder: '#CBEAB4',
+  okBorder: '#9FD67E',
   okIconBg: '#D8F2C4',
   dangerBg: '#FDF0EF',
   dangerBorder: '#F5CBCA',

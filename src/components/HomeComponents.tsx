@@ -212,6 +212,19 @@ export function Header({
   );
 }
 
+// Light mode's stronger grades for the Home cards: a deeper secondary text
+// and a deeper status green than the page-wide tokens, so counts, labels and
+// "All good" clear 4.5:1 on the pastel tiles. Dark mode keeps its tokens,
+// with the upcoming rows' secondary text and chevrons a step brighter.
+function homeInk(c: ReturnType<typeof useTheme>) {
+  const light = c === LIGHT;
+  return {
+    sub: light ? '#4A6660' : '#B4C6C8',
+    chevron: light ? '#4A6660' : '#C2D2D4',
+    status: light ? '#2F6F1A' : c.green,
+  };
+}
+
 export function AttentionCard({
   title,
   subtitle,
@@ -235,9 +248,9 @@ export function AttentionCard({
       <StatusMedallion tone={ok ? 'ok' : 'alert'} size={38} />
       <View style={{ flex: 1 }}>
         <Text style={[s.alertTitle, { color: c.text }]}>{title}</Text>
-        <Text style={[s.alertSub, { color: c.textMuted }]}>{subtitle.join('  •  ')}</Text>
+        <Text style={[s.alertSub, { color: c === LIGHT ? homeInk(c).sub : c.textMuted }]}>{subtitle.join('  •  ')}</Text>
       </View>
-      <Ionicons name={dirIcon('chevron-forward')} size={20} color={c.textMuted} />
+      <Ionicons name={dirIcon('chevron-forward')} size={20} color={c === LIGHT ? homeInk(c).chevron : c.textMuted} />
     </PressScale>
   );
 }
@@ -375,6 +388,31 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
   // The Add-category tile is a ghost card: a borderless soft fill crossed by
   // fine diagonal lines, so it reads as an empty slot waiting for a new folder.
   const ghost = tint === 'add';
+  const ink = homeInk(c);
+  const light = c === LIGHT;
+  // The Add-category tile: a plain green slot with a round plus badge (pale
+  // mint with a deep plus on the light page; deep green with a lit green
+  // badge and white plus in dark mode), its label in full ink.
+  if (ghost) {
+    return (
+      <PressScale
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={name}
+        scaleTo={0.98}
+        style={[{ width, borderRadius: 16 }, light ? [CARD_SHADOW, { backgroundColor: '#EEFBEA' }] : null]}
+      >
+        <View style={[s.tile, compact && s.tileCompact, s.tileCentered, light ? s.addLight : s.addDark]}>
+          <View style={[s.addBadge, compact && s.addBadgeCompact, { backgroundColor: light ? '#C9F2B4' : '#36A04A' }]}>
+            <Ionicons name="add" size={compact ? 26 : 30} color={light ? '#103A20' : '#FFFFFF'} />
+          </View>
+          <Text style={[s.addLabel, compact && s.tileNameCompact, { color: light ? '#123B2C' : '#F2F7F5' }]} numberOfLines={2}>
+            {name}
+          </Text>
+        </View>
+      </PressScale>
+    );
+  }
   const body = (
     <>
       <View style={[s.tileArt, compact && s.tileArtCompact, !status && s.tileArtTight]}>{art}</View>
@@ -388,15 +426,15 @@ export function CategoryTile({ tint, art, name, sub, status, width, compact = fa
         {name}
       </Text>
       {!!sub && (
-        <Text style={[s.tileSub, { color: c.textMuted }, compact && s.textCompact]} numberOfLines={1}>
+        <Text style={[s.tileSub, { color: light ? ink.sub : c.textMuted }, compact && s.textCompact]} numberOfLines={1}>
           {sub}
         </Text>
       )}
       {status ? (
         <View style={s.status}>
-          <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : c.green }]} />
+          <View style={[s.dot, { backgroundColor: status.tone === 'amber' ? c.amber : ink.status }]} />
           <Text
-            style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : c.green }]}
+            style={[s.statusText, compact && s.textCompact, { color: status.tone === 'amber' ? c.amberText : ink.status }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -465,14 +503,14 @@ export function ExpiryRow({ art, title, sub, pill, tone, compact = false, onPres
         <Text style={[s.rowTitle, { color: c.text }, compact && s.rowTitleCompact]} numberOfLines={1} ellipsizeMode="tail">
           {title}
         </Text>
-        <Text style={[s.rowSub, { color: c.textMuted }]} numberOfLines={compact ? 1 : 2}>
+        <Text style={[s.rowSub, { color: homeInk(c).sub }]} numberOfLines={compact ? 1 : 2}>
           {sub.join('  •  ')}
         </Text>
       </View>
       <View style={[s.pill, compact && s.pillCompact, { backgroundColor: p.bg }]}>
         <Text style={[s.pillText, compact && s.pillTextCompact, { color: p.text }]}>{pill}</Text>
       </View>
-      {onPress && <Ionicons name={dirIcon('chevron-forward')} size={20} color={c.textMuted} style={{ marginLeft: 2 }} />}
+      {onPress && <Ionicons name={dirIcon('chevron-forward')} size={20} color={homeInk(c).chevron} style={{ marginLeft: 2 }} />}
     </>
   );
   // Rows without a destination are plain text, not buttons.
@@ -780,6 +818,11 @@ const useStyles = makeStyles((c) => ({
   },
   // The Add-category tile: a borderless soft card with diagonal lines.
   tileAdd: {},
+  addLight: { backgroundColor: '#EEFBEA', borderWidth: 1.5, borderColor: '#9ADB86' },
+  addDark: { backgroundColor: '#0F2C1D', borderWidth: 1.5, borderColor: '#2F8F45' },
+  addBadge: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  addBadgeCompact: { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
+  addLabel: { fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 20 },
   tileArt: { height: 68, width: '100%', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileCompact: { height: 146, paddingHorizontal: 6, paddingTop: 10 },
   tileArtCompact: { height: 58, marginBottom: 6 },
