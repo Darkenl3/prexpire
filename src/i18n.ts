@@ -29,6 +29,10 @@ import cs from './locales/cs.ts';
 import uk from './locales/uk.ts';
 import trTable from './locales/tr.ts';
 import ar from './locales/ar.ts';
+import ja from './locales/ja.ts';
+import ko from './locales/ko.ts';
+import zhHans from './locales/zh-Hans.ts';
+import zhHant from './locales/zh-Hant.ts';
 
 export type LanguageCode =
   | 'en' | 'ro' | 'he' | 'ru' | 'de' | 'fr' | 'es' | 'it' | 'pt' | 'pl' | 'nl' | 'sv' | 'cs' | 'bg' | 'uk' | 'tr'
@@ -77,6 +81,10 @@ const TRANSLATIONS: Partial<Record<LanguageCode, Record<string, string>>> = {
   uk,
   tr: trTable,
   ar,
+  ja,
+  ko,
+  'zh-Hans': zhHans,
+  'zh-Hant': zhHant,
 };
 
 export function availableLanguages() {
