@@ -127,5 +127,6 @@
  "Month and year",
  "Saved as the last day of that month.",
  "Turn the wheels to the date printed on the pack.",
- "Live Scan"
+ "Live Scan",
+ "{0}: {1}. Edit date"
 ]
