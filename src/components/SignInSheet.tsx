@@ -325,9 +325,6 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
           <Text style={[s.appleText, { color: c === LIGHT ? '#fff' : '#000' }]}>{tr("Continue with Apple")}</Text>
         </PressScale>
       ) : null}
-      {/* Apple's sheet can stop at "Sign-Up Not Completed" when a real address
-          is shared; Hide My Email always goes through. */}
-      {hasApple ? <Text style={[s.orText, { textAlign: 'center', marginTop: -2 }]}>{tr("With Apple, choose “Hide My Email” to sign in smoothly.")}</Text> : null}
       {hasGoogle ? (
         <PressScale
           onPress={() => viaProvider(auth.signInWithGoogle)}

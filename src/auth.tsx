@@ -278,7 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = randomNonce();
       const apple = await nativeIdToken('apple', { nonce: sha256Hex(raw) });
       if (apple.error === 'canceled') return { error: 'canceled' };
-      if (!apple.token) return { error: tr("Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email.") + (apple.detail ? tr(" (Apple: {0})", [apple.detail]) : '') };
+      if (!apple.token) return { error: tr("Apple couldn't finish signing you in. Try again, or use Google or your email.") + (apple.detail ? tr(" (Apple: {0})", [apple.detail]) : '') };
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: apple.token, nonce: raw });
       return { error: explain(error) };
     } catch (e) {

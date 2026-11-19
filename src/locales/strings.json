@@ -92,7 +92,7 @@
   "where": "src/auth.tsx:251"
  },
  {
-  "text": "Apple couldn't finish signing you in. Try again and choose “Hide My Email” on Apple's screen, or use Google or your email.",
+  "text": "Apple couldn't finish signing you in. Try again, or use Google or your email.",
   "where": "src/auth.tsx:281"
  },
  {
@@ -1304,208 +1304,204 @@
   "where": "src/components/SignInSheet.tsx:321"
  },
  {
-  "text": "With Apple, choose “Hide My Email” to sign in smoothly.",
-  "where": "src/components/SignInSheet.tsx:330"
- },
- {
   "text": "Continue with Google",
-  "where": "src/components/SignInSheet.tsx:336"
+  "where": "src/components/SignInSheet.tsx:333"
  },
  {
   "text": "or with email",
-  "where": "src/components/SignInSheet.tsx:345"
+  "where": "src/components/SignInSheet.tsx:342"
  },
  {
   "text": "Optional. An account keeps a copy of your items. We'll email you a code to confirm it.",
-  "where": "src/components/SignInSheet.tsx:357"
+  "where": "src/components/SignInSheet.tsx:354"
  },
  {
   "text": "Your items stay on this phone either way.",
-  "where": "src/components/SignInSheet.tsx:357"
+  "where": "src/components/SignInSheet.tsx:354"
  },
  {
   "text": "Forgot password?",
-  "where": "src/components/SignInSheet.tsx:363"
+  "where": "src/components/SignInSheet.tsx:360"
  },
  {
   "text": "Email me a code instead",
-  "where": "src/components/SignInSheet.tsx:364"
+  "where": "src/components/SignInSheet.tsx:361"
  },
  {
   "text": "Create account",
-  "where": "src/components/SignInSheet.tsx:369"
+  "where": "src/components/SignInSheet.tsx:366"
  },
  {
   "text": "Sign in",
-  "where": "src/components/SignInSheet.tsx:369"
+  "where": "src/components/SignInSheet.tsx:366"
  },
  {
   "text": "By creating an account you agree to the Terms and Privacy Policy.",
-  "where": "src/components/SignInSheet.tsx:370"
+  "where": "src/components/SignInSheet.tsx:367"
  },
  {
   "text": "New to Prexpire?",
-  "where": "src/components/SignInSheet.tsx:372"
+  "where": "src/components/SignInSheet.tsx:369"
  },
  {
   "text": "Already have an account?",
-  "where": "src/components/SignInSheet.tsx:372"
+  "where": "src/components/SignInSheet.tsx:369"
  },
  {
   "text": "Create an account",
-  "where": "src/components/SignInSheet.tsx:373"
+  "where": "src/components/SignInSheet.tsx:370"
  },
  {
   "text": "to confirm your account",
-  "where": "src/components/SignInSheet.tsx:378"
+  "where": "src/components/SignInSheet.tsx:375"
  },
  {
   "text": "to reset your password",
-  "where": "src/components/SignInSheet.tsx:378"
+  "where": "src/components/SignInSheet.tsx:375"
  },
  {
   "text": "to sign in",
-  "where": "src/components/SignInSheet.tsx:378"
+  "where": "src/components/SignInSheet.tsx:375"
  },
  {
   "text": "Enter the 6-digit code we sent to",
-  "where": "src/components/SignInSheet.tsx:382"
+  "where": "src/components/SignInSheet.tsx:379"
  },
  {
   "text": "6-digit code",
-  "where": "src/components/SignInSheet.tsx:411"
+  "where": "src/components/SignInSheet.tsx:408"
  },
  {
   "text": "Paste code",
-  "where": "src/components/SignInSheet.tsx:415"
+  "where": "src/components/SignInSheet.tsx:412"
  },
  {
   "text": "Check code",
-  "where": "src/components/SignInSheet.tsx:420"
+  "where": "src/components/SignInSheet.tsx:417"
  },
  {
   "text": "Confirm account",
-  "where": "src/components/SignInSheet.tsx:420"
+  "where": "src/components/SignInSheet.tsx:417"
  },
  {
   "text": "New code in {0}s",
-  "where": "src/components/SignInSheet.tsx:423"
+  "where": "src/components/SignInSheet.tsx:420"
  },
  {
   "text": "Send a new code",
-  "where": "src/components/SignInSheet.tsx:423"
+  "where": "src/components/SignInSheet.tsx:420"
  },
  {
   "text": "Can't find it? Check your spam folder.",
-  "where": "src/components/SignInSheet.tsx:426"
+  "where": "src/components/SignInSheet.tsx:423"
  },
  {
   "text": "Enter your account's email. We'll send a code so you can choose a new password.",
-  "where": "src/components/SignInSheet.tsx:432"
+  "where": "src/components/SignInSheet.tsx:429"
  },
  {
   "text": "Email me a reset code",
-  "where": "src/components/SignInSheet.tsx:436"
+  "where": "src/components/SignInSheet.tsx:433"
  },
  {
   "text": "No password needed. We'll email you a code to sign in to your account.",
-  "where": "src/components/SignInSheet.tsx:443"
+  "where": "src/components/SignInSheet.tsx:440"
  },
  {
   "text": "Email me a code",
-  "where": "src/components/SignInSheet.tsx:447"
+  "where": "src/components/SignInSheet.tsx:444"
  },
  {
   "text": "Code accepted. Choose the new password for",
-  "where": "src/components/SignInSheet.tsx:454"
+  "where": "src/components/SignInSheet.tsx:451"
  },
  {
   "text": "Save new password",
-  "where": "src/components/SignInSheet.tsx:457"
+  "where": "src/components/SignInSheet.tsx:454"
  },
  {
   "text": "Create your account",
-  "where": "src/components/SignInSheet.tsx:462"
+  "where": "src/components/SignInSheet.tsx:459"
  },
  {
   "text": "Welcome back",
-  "where": "src/components/SignInSheet.tsx:462"
+  "where": "src/components/SignInSheet.tsx:459"
  },
  {
   "text": "Delete your account?",
-  "where": "src/components/SignInSheet.tsx:495"
+  "where": "src/components/SignInSheet.tsx:492"
  },
  {
   "text": "Your account and everything saved in it (items, shopping list, categories) will be deleted for good after 30 days.",
-  "where": "src/components/SignInSheet.tsx:498"
+  "where": "src/components/SignInSheet.tsx:495"
  },
  {
   "text": "You'll be signed out and your items are removed from this phone. Changed your mind? Sign back in within 30 days to restore it.",
-  "where": "src/components/SignInSheet.tsx:500"
+  "where": "src/components/SignInSheet.tsx:497"
  },
  {
   "text": "Apple asks you to confirm once, so Prexpire is also removed from the apps using your Apple ID.",
-  "where": "src/components/SignInSheet.tsx:501"
+  "where": "src/components/SignInSheet.tsx:498"
  },
  {
   "text": "Delete account",
-  "where": "src/components/SignInSheet.tsx:503"
+  "where": "src/components/SignInSheet.tsx:500"
  },
  {
   "text": "Keep my account",
-  "where": "src/components/SignInSheet.tsx:506"
+  "where": "src/components/SignInSheet.tsx:503"
  },
  {
   "text": "Your account is being deleted",
-  "where": "src/components/SignInSheet.tsx:541"
+  "where": "src/components/SignInSheet.tsx:538"
  },
  {
   "text": "It will be deleted for good tomorrow",
-  "where": "src/components/SignInSheet.tsx:544"
+  "where": "src/components/SignInSheet.tsx:541"
  },
  {
   "text": "It will be deleted for good in {0} days",
-  "where": "src/components/SignInSheet.tsx:544"
+  "where": "src/components/SignInSheet.tsx:541"
  },
  {
   "text": ", on",
-  "where": "src/components/SignInSheet.tsx:544"
+  "where": "src/components/SignInSheet.tsx:541"
  },
  {
   "text": ", with everything saved in it.",
-  "where": "src/components/SignInSheet.tsx:544"
+  "where": "src/components/SignInSheet.tsx:541"
  },
  {
   "text": "Restore it to keep using your account and get your items back.",
-  "where": "src/components/SignInSheet.tsx:545"
+  "where": "src/components/SignInSheet.tsx:542"
  },
  {
   "text": "Restore my account",
-  "where": "src/components/SignInSheet.tsx:547"
+  "where": "src/components/SignInSheet.tsx:544"
  },
  {
   "text": "Keep it deleted and sign out",
-  "where": "src/components/SignInSheet.tsx:550"
+  "where": "src/components/SignInSheet.tsx:547"
  },
  {
   "text": "Account deleted",
-  "where": "src/components/SignInSheet.tsx:566"
+  "where": "src/components/SignInSheet.tsx:563"
  },
  {
   "text": "You're signed out. Your account and everything in it will be deleted for good on",
-  "where": "src/components/SignInSheet.tsx:572"
+  "where": "src/components/SignInSheet.tsx:569"
  },
  {
   "text": "Changed your mind? Sign in before then and choose Restore my account.",
-  "where": "src/components/SignInSheet.tsx:575"
+  "where": "src/components/SignInSheet.tsx:572"
  },
  {
   "text": "Change password",
-  "where": "src/components/SignInSheet.tsx:611"
+  "where": "src/components/SignInSheet.tsx:608"
  },
  {
   "text": "Password changed",
-  "where": "src/components/SignInSheet.tsx:637"
+  "where": "src/components/SignInSheet.tsx:634"
  },
  {
   "text": "Get in touch",
