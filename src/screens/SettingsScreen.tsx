@@ -870,7 +870,7 @@ function BrowserNotificationsRow() {
               <Note tone={appNote[status].tone}>{testSent ? tr("Test sent. It arrives in a few seconds, even if you close the app now") : appNote[status].text}</Note>
             </FadeIn>
             <View style={s.buttons}>
-              {status === 'default' && <SmallButton label={asking ? tr("Waiting…") : tr("Allow notifications")} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />}
+              {status === 'default' && <SmallButton label={asking ? tr("Waiting…") : tr("Continue")} icon="notifications-outline" tone="mint" disabled={asking} onPress={ask} />}
               {status === 'denied' && <SmallButton label={tr("Open iPhone Settings")} icon="settings-outline" tone="mint" onPress={openNotificationSettings} />}
               {status !== 'denied' && <SmallButton label={testing ? tr("Sending…") : tr("Send a test notification")} icon="paper-plane-outline" disabled={testing} onPress={test} />}
             </View>
