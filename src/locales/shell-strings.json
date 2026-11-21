@@ -128,5 +128,8 @@
  "Saved as the last day of that month.",
  "Turn the wheels to the date printed on the pack.",
  "Live Scan",
- "{0}: {1}. Edit date"
+ "{0}: {1}. Edit date",
+ "Continue",
+ "Camera for scanning",
+ "Open Settings"
 ]

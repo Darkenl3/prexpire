@@ -2025,107 +2025,107 @@
  },
  {
   "text": "Camera access blocked",
-  "where": "src/screens/ScannerScreen.tsx:458"
+  "where": "src/screens/ScannerScreen.tsx:462"
  },
  {
-  "text": "Allow camera access",
-  "where": "src/screens/ScannerScreen.tsx:458"
+  "text": "Camera for scanning",
+  "where": "src/screens/ScannerScreen.tsx:462"
  },
  {
   "text": "Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.",
-  "where": "src/screens/ScannerScreen.tsx:460"
+  "where": "src/screens/ScannerScreen.tsx:464"
  },
  {
   "text": "Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.",
-  "where": "src/screens/ScannerScreen.tsx:460"
+  "where": "src/screens/ScannerScreen.tsx:464"
  },
  {
   "text": "Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.",
-  "where": "src/screens/ScannerScreen.tsx:460"
+  "where": "src/screens/ScannerScreen.tsx:464"
+ },
+ {
+  "text": "Continue",
+  "where": "src/screens/ScannerScreen.tsx:466"
  },
  {
   "text": "Try again",
-  "where": "src/screens/ScannerScreen.tsx:462"
- },
- {
-  "text": "Allow camera",
-  "where": "src/screens/ScannerScreen.tsx:462"
+  "where": "src/screens/ScannerScreen.tsx:466"
  },
  {
   "text": "Enter date manually",
-  "where": "src/screens/ScannerScreen.tsx:468"
+  "where": "src/screens/ScannerScreen.tsx:472"
  },
  {
   "text": "Text reader unavailable",
-  "where": "src/screens/ScannerScreen.tsx:477"
+  "where": "src/screens/ScannerScreen.tsx:481"
  },
  {
   "text": "Camera unavailable",
-  "where": "src/screens/ScannerScreen.tsx:477"
+  "where": "src/screens/ScannerScreen.tsx:481"
  },
  {
   "text": "Expiry date confirmed.",
-  "where": "src/screens/ScannerScreen.tsx:510"
+  "where": "src/screens/ScannerScreen.tsx:514"
  },
  {
   "text": "Starting the scanner...",
-  "where": "src/screens/ScannerScreen.tsx:515"
+  "where": "src/screens/ScannerScreen.tsx:519"
  },
  {
   "text": "Reading dates needs the Prexpire development build. Expo Go can show the camera but cannot read text.",
-  "where": "src/screens/ScannerScreen.tsx:521"
+  "where": "src/screens/ScannerScreen.tsx:525"
  },
  {
   "text": "Checking the product...",
-  "where": "src/screens/ScannerScreen.tsx:532"
+  "where": "src/screens/ScannerScreen.tsx:536"
  },
  {
   "text": "Product found: {0}",
-  "where": "src/screens/ScannerScreen.tsx:540"
+  "where": "src/screens/ScannerScreen.tsx:544"
  },
  {
   "text": "Product identified",
-  "where": "src/screens/ScannerScreen.tsx:540"
+  "where": "src/screens/ScannerScreen.tsx:544"
  },
  {
   "text": "Now scan the expiry date.",
-  "where": "src/screens/ScannerScreen.tsx:543"
+  "where": "src/screens/ScannerScreen.tsx:547"
  },
  {
   "text": "Product name unavailable — you can type it in. Scan the expiry date.",
-  "where": "src/screens/ScannerScreen.tsx:543"
+  "where": "src/screens/ScannerScreen.tsx:547"
  },
  {
   "text": "We couldn't identify this product. You can enter its name manually.",
-  "where": "src/screens/ScannerScreen.tsx:552"
+  "where": "src/screens/ScannerScreen.tsx:556"
  },
  {
   "text": "No internet connection. You can continue below.",
-  "where": "src/screens/ScannerScreen.tsx:559"
+  "where": "src/screens/ScannerScreen.tsx:563"
  },
  {
   "text": "Product details aren't available right now. Point at the expiry date.",
-  "where": "src/screens/ScannerScreen.tsx:559"
+  "where": "src/screens/ScannerScreen.tsx:563"
  },
  {
   "text": "Enter the expiry date manually",
-  "where": "src/screens/ScannerScreen.tsx:595"
+  "where": "src/screens/ScannerScreen.tsx:599"
  },
  {
   "text": "Enter date",
-  "where": "src/screens/ScannerScreen.tsx:598"
+  "where": "src/screens/ScannerScreen.tsx:602"
  },
  {
   "text": "Enter the product name manually",
-  "where": "src/screens/ScannerScreen.tsx:605"
+  "where": "src/screens/ScannerScreen.tsx:609"
  },
  {
   "text": "Enter product",
-  "where": "src/screens/ScannerScreen.tsx:608"
+  "where": "src/screens/ScannerScreen.tsx:612"
  },
  {
   "text": "Scan again",
-  "where": "src/screens/ScannerScreen.tsx:645"
+  "where": "src/screens/ScannerScreen.tsx:649"
  },
  {
   "text": "Account",
@@ -3556,7 +3556,15 @@
   "where": "shell"
  },
  {
+  "text": "Allow camera access",
+  "where": "shell"
+ },
+ {
   "text": "Prexpire reads expiry dates through your camera, on this device only.",
+  "where": "shell"
+ },
+ {
+  "text": "Allow camera",
   "where": "shell"
  },
  {

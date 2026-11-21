@@ -452,20 +452,24 @@ export function ScannerScreen({ onClose, onSaved, category, initialDetection, in
   } else if (!permission) {
     body = null;
   } else if (!granted) {
+    // App Review 5.1.1(iv): before the system prompt there is one way on,
+    // "Continue", straight to the camera question. Other ways out only after a no.
+    const firstAsk = !askedPermission && permission.status !== 'denied';
+    const blocked = !firstAsk && permission.status === 'denied';
     body = (
       <Notice
-        icon={askedPermission && permission.status === 'denied' ? 'lock-closed-outline' : 'camera-outline'}
-        title={askedPermission && permission.status === 'denied' ? tr("Camera access blocked") : tr("Allow camera access")}
+        icon={blocked ? 'lock-closed-outline' : 'camera-outline'}
+        title={blocked ? tr("Camera access blocked") : tr("Camera for scanning")}
         text={
-          askedPermission && permission.status === 'denied' ? Platform.OS === 'web' ? tr("Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.") : tr("Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.") : tr("Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.")
+          blocked ? Platform.OS === 'web' ? tr("Your browser blocked the camera for this site. Allow it in the browser’s site settings (in Safari: the aA button → Website Settings → Camera), then try again.") : tr("Prexpire needs the camera to read expiry dates. Allow it in Settings, then come back.") : tr("Prexpire reads expiry dates through your camera. Images are processed on this device and never uploaded.")
         }
-        action={permission.canAskAgain || Platform.OS === 'web' ? (askedPermission ? tr("Try again") : tr("Allow camera")) : tr("Open Settings")}
+        action={firstAsk ? tr("Continue") : permission.canAskAgain || Platform.OS === 'web' ? tr("Try again") : tr("Open Settings")}
         onAction={() => {
           setAskedPermission(true);
           if (permission.canAskAgain || Platform.OS === 'web') requestPermission();
           else Linking.openSettings();
         }}
-        secondary={tr("Enter date manually")}
+        secondary={firstAsk ? undefined : tr("Enter date manually")}
         onSecondary={() => openManual('date')}
         hidden={manual}
       />
@@ -698,7 +702,7 @@ type NoticeProps = {
   text: string;
   action?: string;
   onAction?: () => void;
-  secondary: string;
+  secondary?: string;
   onSecondary: () => void;
   hidden: boolean;
 };
@@ -719,9 +723,11 @@ function Notice({ icon, title, text, action, onAction, secondary, onSecondary, h
             <Text style={[s.noticeBtnText, { color: t.scanInk }]}>{action}</Text>
           </PressScale>
         )}
-        <PressScale onPress={onSecondary} scaleTo={0.97} style={s.linkBtn} accessibilityRole="button">
-          <Text style={[s.linkText, { color: t.mint }]}>{secondary}</Text>
-        </PressScale>
+        {secondary && (
+          <PressScale onPress={onSecondary} scaleTo={0.98} style={[s.noticeBtnOutline, { borderColor: t.mint }]} accessibilityRole="button">
+            <Text style={[s.noticeBtnText, { color: t.mint, fontWeight: '600' }]}>{secondary}</Text>
+          </PressScale>
+        )}
       </View>
     </View>
   );
@@ -798,4 +804,5 @@ const s = StyleSheet.create({
   noticeText: { color: colors.textMuted, fontSize: 14.5, lineHeight: 21, textAlign: 'center', marginBottom: 16 },
   noticeBtn: { height: 50, alignSelf: 'stretch', borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   noticeBtnText: { fontSize: 16, fontWeight: '700' },
+  noticeBtnOutline: { height: 50, alignSelf: 'stretch', borderRadius: radius.pill, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
 });
