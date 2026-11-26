@@ -178,6 +178,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // "Last seen" for the admin page, by day only (supabase/003_last_seen_day.sql):
+  // at most one call a day per account; the date is all that is kept.
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    const key = `prexpire.seenDay.${userId}`;
+    const today = new Date().toISOString().slice(0, 10);
+    let cancelled = false;
+    AsyncStorage.getItem(key)
+      .then((last) => {
+        if (cancelled || last === today) return;
+        return supabase.rpc('mark_seen').then(({ error }) => {
+          if (!error) return AsyncStorage.setItem(key, today);
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   const signUp = useCallback(async (email: string, password: string, captchaToken?: string): Promise<Outcome> => {
     try {
       const { data, error } = await supabase.auth.signUp({ email: norm(email), password, options: { captchaToken } });
