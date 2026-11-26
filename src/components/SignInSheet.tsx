@@ -61,12 +61,18 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [captchaBroken, setCaptchaBroken] = useState(false);
+  // The check only starts once the person goes for email (taps or fills a
+  // field, or opens a code/reset step): Apple and Google sign-in never use a
+  // token, so starting it on open only made checks that nobody verified.
+  const [emailChosen, setEmailChosen] = useState(false);
+  const chooseEmail = () => setEmailChosen(true);
 
   // Every opening starts fresh.
   useEffect(() => {
     if (!visible) return;
     setMode(initialMode);
     setStep('start');
+    setEmailChosen(false);
     setPassword('');
     setCode('');
     setError(null);
@@ -189,8 +195,10 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
       value={email}
       onChangeText={(v) => {
         setEmail(v);
+        chooseEmail();
         clear();
       }}
+      onFocus={chooseEmail}
       onSubmitEditing={onSubmit}
       placeholder="you@example.com"
       placeholderTextColor={c.textMuted}
@@ -212,8 +220,10 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
         value={password}
         onChangeText={(v) => {
           setPassword(v);
+          chooseEmail();
           clear();
         }}
+        onFocus={chooseEmail}
         onSubmitEditing={onSubmit}
         placeholder={isNew ? tr("New password, {0}+ characters", [MIN_PASSWORD]) : tr("Password")}
         placeholderTextColor={c.textMuted}
@@ -286,7 +296,7 @@ export function SignInSheet({ visible, onClose, onSignedIn, initialMode = 'signi
 
   // The security check sits right above the button it protects, so the
   // sheet reads top to bottom: details, check, action.
-  const check = visible ? (
+  const check = visible && (emailChosen || step !== 'start') ? (
     <TurnstileFrame
       resetKey={resetKey}
       onToken={(t) => {
