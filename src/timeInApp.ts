@@ -41,8 +41,12 @@ export function useTimeInApp(supabase: SupabaseClient, userId: string | undefine
       if (sending || pending < 5) return;
       sending = true;
       const batch = Math.min(Math.round(pending), BATCH_MAX_S);
+      // A send that iOS froze on the way out may never answer: give up after
+      // 10 s so the next open sends again (the seconds are still here).
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 10_000);
       try {
-        const { error } = await supabase.rpc('add_time_in_app', { seconds: batch });
+        const { error } = await supabase.rpc('add_time_in_app', { seconds: batch }).abortSignal(ctrl.signal);
         if (!error) {
           pending = Math.max(0, pending - batch);
           lastFlush = Date.now();
@@ -50,6 +54,7 @@ export function useTimeInApp(supabase: SupabaseClient, userId: string | undefine
       } catch {
         // Offline: the seconds stay here and go with the next batch.
       } finally {
+        clearTimeout(timeout);
         sending = false;
         save();
       }
