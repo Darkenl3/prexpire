@@ -6,13 +6,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // Total time in the app, for the admin page (supabase/005_time_in_app.sql).
 // Counts only while the app is on screen: not in the background, not while
 // the phone is locked. The seconds wait here and are added to the account's
-// total in batches: when the app goes to the background, or at most every
-// 15 minutes while it stays open. Nothing else is recorded: no screens, no
-// taps, no times of day.
+// total in batches: when the app opens or comes back (iOS often freezes the
+// app before a send on the way out can finish, so the saved seconds go then),
+// when it goes to the background, and every 5 minutes while it stays open.
+// Nothing else is recorded: no screens, no taps, no times of day.
 
 const TICK_MS = 15_000;
 const MAX_STEP_S = 30; // a gap longer than this (sleep, a stuck timer) counts as 30 s at most
-const FLUSH_EVERY_MS = 15 * 60_000;
+const FLUSH_EVERY_MS = 5 * 60_000;
 const BATCH_MAX_S = 900; // the server caps each batch at this too
 
 const onScreen = () =>
@@ -27,13 +28,6 @@ export function useTimeInApp(supabase: SupabaseClient, userId: string | undefine
     let lastFlush = Date.now();
     let sending = false;
     let alive = true;
-
-    AsyncStorage.getItem(key)
-      .then((v) => {
-        const saved = Number(v);
-        if (alive && Number.isFinite(saved) && saved > 0) pending += Math.min(saved, BATCH_MAX_S * 4);
-      })
-      .catch(() => {});
 
     const save = () => AsyncStorage.setItem(key, String(Math.round(pending))).catch(() => {});
 
@@ -61,6 +55,15 @@ export function useTimeInApp(supabase: SupabaseClient, userId: string | undefine
       }
     };
 
+    AsyncStorage.getItem(key)
+      .then((v) => {
+        const saved = Number(v);
+        if (alive && Number.isFinite(saved) && saved > 0) pending += Math.min(saved, BATCH_MAX_S * 4);
+        // Seconds left from last time (the send on the way out didn't make it).
+        if (alive) void flush();
+      })
+      .catch(() => {});
+
     const timer = setInterval(() => {
       count();
       save();
@@ -69,10 +72,12 @@ export function useTimeInApp(supabase: SupabaseClient, userId: string | undefine
 
     const leave = () => {
       count();
+      save();
       void flush();
     };
     const back = () => {
       last = Date.now();
+      void flush();
     };
     const app = AppState.addEventListener('change', (s) => (s === 'active' ? back() : leave()));
     const vis = () => (typeof document !== 'undefined' && document.visibilityState === 'visible' ? back() : leave());
