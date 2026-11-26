@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type Session } from '@supabase/supabase-js';
 
 import { tr } from './i18n';
+import { useTimeInApp } from './timeInApp';
 // Accounts (optional). Prexpire works fully without one; signing in is for
 // people who want their list backed up and, later, synced across phones.
 //
@@ -198,6 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [userId]);
+  // Total time in the app, same purpose and limits (supabase/005_time_in_app.sql).
+  useTimeInApp(supabase, userId);
 
   const signUp = useCallback(async (email: string, password: string, captchaToken?: string): Promise<Outcome> => {
     try {
