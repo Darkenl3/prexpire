@@ -8,7 +8,7 @@ import { presetIcon, useCategories } from '../categories';
 import { useItems } from '../items';
 import { useSettings } from '../settings';
 import { expiryStatus } from '../preferences';
-import { AddActions, AttentionCard, CategoryTile, NAV_HEIGHT, navOffset, SectionHeader } from '../components/HomeComponents';
+import { AddActions, AttentionCard, CategoryTile, SectionHeader, useNavSpace } from '../components/HomeComponents';
 import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from '../components/navAutohide';
 import { TabTransition } from '../components/TabTransition';
 import { ItemRow } from '../components/ItemRow';
@@ -62,6 +62,7 @@ type HomeProps = {
 
 export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProps) {
   const insets = useSafeAreaInsets();
+  const nav = useNavSpace(insets.bottom);
   const layout = useLayout();
   const { items, saved } = useItems();
   const { settings, motion, warning } = useSettings();
@@ -104,12 +105,21 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { mode, gutter } = layout;
   const split = mode === 'split' && !basic;
   const gridGap = mode === 'phone' ? space.gridGap : 12;
-  const columnGap = layout.width >= 900 ? 28 : 18;
-
   // Width of the content area after safe-area insets, max width and gutters.
-  const usable = layout.width - insets.left - insets.right;
+  const usable = layout.width - insets.left - insets.right - nav.right;
   const bodyWidth = Math.min(usable, basic ? 760 : layout.maxContentWidth) - 2 * gutter;
-  const leftWidth = split ? Math.min(Math.round((bodyWidth - columnGap) * layout.leftFraction), 560) : bodyWidth;
+  // A wide screen under 1000 pt (a foldable opened flat, like iPhone Duo at
+  // 951 pt) folds down its middle: the columns meet there, with a gap the
+  // width of the fold band, so nothing sits on the crease. Wider screens
+  // (iPad) keep their own proportions.
+  const FOLD_GAP = 28;
+  const foldSplit = split && layout.width < 1000;
+  const columnGap = foldSplit ? FOLD_GAP : layout.width >= 900 ? 28 : 18;
+  const leftWidth = !split
+    ? bodyWidth
+    : foldSplit
+      ? Math.max(200, Math.round(layout.width / 2 - FOLD_GAP / 2 - insets.left - gutter))
+      : Math.min(Math.round((bodyWidth - columnGap) * layout.leftFraction), 560);
 
   // The grid is measured once laid out (split view, multitasking); the estimate covers the first frame.
   const [measuredGrid, setMeasuredGrid] = useState(0);
@@ -158,7 +168,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const overflow = catTiles.length + 1 > cap;
   const shownCats = gridExpanded || !overflow ? catTiles : catTiles.slice(0, cap - 1);
 
-  const bottomClearance = NAV_HEIGHT + navOffset(insets.bottom) + 16;
+  const bottomClearance = nav.bottom + 16;
 
   const needAttention = attention.expired + attention.soon;
   const summary =
@@ -277,7 +287,7 @@ export function HomeScreen({ onNavigate, badge, notice, onNoticeDone }: HomeProp
   const { hidden, onScroll } = useNavAutohide();
 
   return (
-    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right + nav.right }]}>
       {/* The tab-switch transition wraps the header AND the scrolling body:
           Home's title IS the wordmark, so the header and the content enter as
           ONE screen - the same unified fade Settings has always had. The

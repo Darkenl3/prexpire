@@ -551,6 +551,22 @@ type BottomNavProps = {
 export const navOffset = (bottomInset: number) => Math.max(bottomInset - 6, 12);
 export const NAV_HEIGHT = 68;
 
+// Inside the iPhone/iPad app, a wide screen held sideways (a foldable opened
+// flat like iPhone Duo, an iPad on its side) carries the tab bar as a vertical
+// rail on the trailing edge, so no button sits on a fold and navigation is on
+// the side as the system's own apps do. The shell's GlassTabBar uses the same
+// rule. Pages leave room for the rail on the right instead of at the bottom.
+export const RAIL_ZONE = 100;
+// Only a shell that draws the rail says so (window.__prexpireNavRail, set by
+// the app since the build after 1.0.5): older builds keep their bottom bar,
+// so their pages keep the bottom space.
+const inShell = () => typeof window !== 'undefined' && !!(window as { __prexpireNavRail?: unknown }).__prexpireNavRail;
+export function useNavSpace(bottomInset: number): { rail: boolean; right: number; bottom: number } {
+  const { width, height } = useWindowDimensions();
+  const rail = inShell() && width > height && Math.min(width, height) >= 600;
+  return rail ? { rail, right: RAIL_ZONE, bottom: Math.max(bottomInset, 12) } : { rail, right: 0, bottom: NAV_HEIGHT + navOffset(bottomInset) };
+}
+
 // Slot layout inside the nav pill: [home, lists, SCAN, reminders, settings] —
 // the scan button owns slot 2, so the four tabs live at 0, 1, 3 and 4. The
 // tab-to-tab TRAVEL of the selected chip is measured in these slots.

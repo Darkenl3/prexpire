@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles } from '../theme';
 import { useLayout } from '../layout';
-import { NAV_HEIGHT, navOffset, type TabId } from './HomeComponents';
+import { useNavSpace, type TabId } from './HomeComponents';
 import { AutohideHeader, HEADER_HEIGHT, NO_RUBBER_BAND, useNavAutohide } from './navAutohide';
 import { TabTransition } from './TabTransition';
 import { AlertSpacer } from './ExpiryAlert';
@@ -39,6 +39,7 @@ type Props = {
 // room for the floating bottom nav.
 export function Page({ tab, title, subtitle, badge, maxWidth = 1240, headerAction, dense = false, onNavigate, children }: Props) {
   const insets = useSafeAreaInsets();
+  const nav = useNavSpace(insets.bottom);
   const layout = useLayout();
   const c = useStyles();
   // YouTube-style: ONLY the header hides while scrolling down (the bottom
@@ -46,7 +47,7 @@ export function Page({ tab, title, subtitle, badge, maxWidth = 1240, headerActio
   const { hidden, onScroll } = useNavAutohide();
   const frame = { maxWidth: Math.min(layout.maxContentWidth, maxWidth), paddingHorizontal: layout.gutter };
   return (
-    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+    <View style={[c.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right + nav.right }]}>
       {/* The tab-switch transition wraps the header AND the body: the strip's
           title IS this section's title, so both enter as ONE screen - the
           same unified fade Settings has always had (its own header rides its
@@ -67,7 +68,7 @@ export function Page({ tab, title, subtitle, badge, maxWidth = 1240, headerActio
         <ScrollView
           style={[c.scroll, NO_RUBBER_BAND]}
           onScroll={onScroll}
-          contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingBottom: NAV_HEIGHT + navOffset(insets.bottom) + 24 }}
+          contentContainerStyle={{ paddingTop: HEADER_HEIGHT, paddingBottom: nav.bottom + 24 }}
           showsVerticalScrollIndicator={false}
         >
           <View style={[c.frame, frame]}>

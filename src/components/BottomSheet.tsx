@@ -3,7 +3,7 @@ import { Animated, Easing, Modal, PanResponder, Pressable, ScrollView, StyleShee
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeStyles, useTheme } from '../theme';
 import { useSettings } from '../settings';
-import { NAV_HEIGHT, navOffset } from './HomeComponents';
+import { NAV_HEIGHT, navOffset, useNavSpace } from './HomeComponents';
 import { useWebKeyboardInset } from './WebKeyboardInset';
 
 import { tr } from '../i18n';
@@ -77,6 +77,7 @@ function shellEmbedded(): boolean {
 export function BottomSheet({ visible, onClose, title, accessibilityLabel, children, footer, scrollable = true, maxHeightRatio = 0.8, maxWidth = 480, locked = false }: Props) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
+  const { rail } = useNavSpace(insets.bottom);
   const win = useWindowDimensions();
   const s = useStyles();
   const { motion } = useSettings();
@@ -186,7 +187,7 @@ export function BottomSheet({ visible, onClose, title, accessibilityLabel, child
   // zone (the app's pill on the web, the native glass bar inside the shell)
   // so the last row and every action button sit fully clear of it. With the
   // keyboard up, both are behind the keys: a small margin is enough.
-  const navZone = shellEmbedded() ? SHELL_NAV_ZONE : NAV_HEIGHT + navOffset(insets.bottom) + 12;
+  const navZone = rail ? 0 : shellEmbedded() ? SHELL_NAV_ZONE : NAV_HEIGHT + navOffset(insets.bottom) + 12;
   const bottomPad = keyboard ? 12 : Math.max(insets.bottom, 12) + 8 + navZone;
 
   return (

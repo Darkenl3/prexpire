@@ -27,7 +27,7 @@ import {
   type DefaultCategory,
 } from '../preferences';
 import { isoToday } from '../scanner/dateParser';
-import { Brandmark, GlassIconButton, NAV_HEIGHT, navOffset } from '../components/HomeComponents';
+import { Brandmark, GlassIconButton, useNavSpace } from '../components/HomeComponents';
 import { TAB_MS, TAB_SLIDE, tabEnterDirection } from '../components/TabTransition';
 import { CategoryManager } from '../components/CategoryManager';
 import { FadeIn, PressScale } from '../components/Press';
@@ -110,6 +110,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const t = useTheme();
   const s = useStyles();
   const insets = useSafeAreaInsets();
+  const nav = useNavSpace(insets.bottom);
   const { width } = useWindowDimensions();
   const { settings, update, saveError, reset, motion, formatDate } = useSettings();
   const { saved, clearSaved } = useItems();
@@ -173,7 +174,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   const open = (p: PageId) => setPage(p);
 
   const customCount = all.filter((cat) => cat.custom).length;
-  const bottomPad = NAV_HEIGHT + navOffset(insets.bottom) + 24;
+  const bottomPad = nav.bottom + 24;
   const root = (
     <TwoColumns
       left={
@@ -339,7 +340,7 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
   );
 
   return (
-    <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
+    <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right + nav.right }]}>
       <Animated.View style={{ flex: 1, opacity: appear, transform: [{ translateX: rootShift }, { translateX: enterX }] }}>
         <View style={[s.frame, s.rootFrame]}>
           <View style={s.header}>
@@ -468,6 +469,7 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
   const t = useTheme();
   const s = useStyles();
   const insets = useSafeAreaInsets();
+  const nav = useNavSpace(insets.bottom);
   const [query, setQuery] = useState('');
   useEffect(() => {
     if (!visible) setQuery('');
@@ -477,7 +479,7 @@ function SettingsSearch({ visible, onClose, onOpenPage }: { visible: boolean; on
   const results = q ? entries.filter((e) => `${e.title} ${e.description ?? ''}`.toLowerCase().includes(q)) : [];
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} {...({ 'aria-modal': true } as object)}>
-      <View style={[s.searchRoot, { paddingTop: insets.top + 6, paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <View style={[s.searchRoot, { paddingTop: insets.top + 6, paddingLeft: insets.left, paddingRight: insets.right + nav.right }]}>
         <View style={[s.frame, s.rootFrame, s.searchBody]}>
           <View style={s.header}>
             <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Close search")} onPress={onClose} />
