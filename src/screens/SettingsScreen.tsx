@@ -360,7 +360,10 @@ export function SettingsScreen({ onNavigate, initialPage }: Props) {
 
       {page && (
         <Animated.View style={[s.overlay, { transform: [{ translateX: slideX }], opacity: pageFade }]}>
-          <View style={[s.root, { paddingTop: insets.top }]}>
+          {/* The overlay covers the whole root, padding included: it keeps the
+              side safe areas itself (iPhone Duo's status column is on the
+              trailing side), as the main page does. */}
+          <View style={[s.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right + nav.right }]}>
             <View style={[s.frame, s.rootFrame]}>
               <View style={s.header}>
                 <GlassIconButton icon="chevron-back" iconSize={20} size={38} label={tr("Go back")} onPress={closePage} />
